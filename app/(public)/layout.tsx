@@ -1,4 +1,5 @@
-import { HeaderLogoLink } from "@/components/HeaderLogoLink";
+import Link from "next/link";
+import { AjoloteLogo } from "@/components/AjoloteLogo";
 
 const NAV = [
   { href: "#servicios", label: "Servicios" },
@@ -11,7 +12,12 @@ export default function PublicLayout({ children }: LayoutProps<"/">) {
     <div className="flex flex-1 flex-col">
       <header className="fixed top-0 z-40 w-full border-b border-line/60 bg-bg/70 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <HeaderLogoLink />
+          <Link href="/" className="flex items-center gap-2.5">
+            <AjoloteLogo className="h-6 w-auto text-fg" priority />
+            <span className="font-mono text-xs tracking-[0.2em] uppercase">
+              Versión definitiva
+            </span>
+          </Link>
           <nav className="hidden gap-8 font-mono text-xs tracking-widest uppercase sm:flex">
             {NAV.map((item) => (
               <a
