@@ -36,7 +36,7 @@ export function AjoloteSplashOverlay() {
         >
           <video
             ref={videoRef}
-            src="/ajolote-splash.webm"
+            src="/ajolote-splash.mp4"
             muted
             playsInline
             className="h-72 w-72 sm:h-96 sm:w-96"
