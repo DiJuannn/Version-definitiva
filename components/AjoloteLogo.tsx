@@ -4,8 +4,11 @@ import { motion } from "motion/react";
 import {
   AJOLOTE_BODY_PATHS,
   AJOLOTE_EYE,
+  AJOLOTE_EYE_2,
+  AJOLOTE_PUPIL_2_RADIUS,
   AJOLOTE_PUPIL_RADIUS,
   AJOLOTE_PUPIL_REST_OFFSET,
+  AJOLOTE_TAIL_GROOVE,
   AJOLOTE_VIEWBOX,
 } from "@/lib/ajolote-shape";
 
@@ -28,6 +31,13 @@ export function AjoloteLogo({ className, animate = true }: AjoloteLogoProps) {
       {AJOLOTE_BODY_PATHS.map((d, i) => (
         <path key={i} d={d} fill="currentColor" />
       ))}
+      <path
+        d={AJOLOTE_TAIL_GROOVE}
+        stroke="var(--bg)"
+        strokeWidth={1.5}
+        fill="none"
+        strokeLinecap="round"
+      />
       <circle
         cx={AJOLOTE_EYE.cx}
         cy={AJOLOTE_EYE.cy}
@@ -38,6 +48,18 @@ export function AjoloteLogo({ className, animate = true }: AjoloteLogoProps) {
         cx={AJOLOTE_EYE.cx + AJOLOTE_PUPIL_REST_OFFSET.x}
         cy={AJOLOTE_EYE.cy + AJOLOTE_PUPIL_REST_OFFSET.y}
         r={AJOLOTE_PUPIL_RADIUS}
+        fill="currentColor"
+      />
+      <circle
+        cx={AJOLOTE_EYE_2.cx}
+        cy={AJOLOTE_EYE_2.cy}
+        r={AJOLOTE_EYE_2.r}
+        fill="var(--bg)"
+      />
+      <circle
+        cx={AJOLOTE_EYE_2.cx + AJOLOTE_PUPIL_REST_OFFSET.x}
+        cy={AJOLOTE_EYE_2.cy + AJOLOTE_PUPIL_REST_OFFSET.y}
+        r={AJOLOTE_PUPIL_2_RADIUS}
         fill="currentColor"
       />
     </motion.svg>

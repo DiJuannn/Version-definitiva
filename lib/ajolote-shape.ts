@@ -12,24 +12,31 @@ function petal(bx: number, by: number, tx: number, ty: number, width: number) {
 }
 
 const TAIL =
-  "M12,52 C38,44 64,52 84,63 C93,68 98,73 102,80 C93,81 84,79 76,81 C57,74 36,68 16,62 Z";
+  "M15,52 C40,46 66,54 88,72 C95,78 97,82 98,86 C90,86 82,83 74,84 C55,78 34,70 17,63 Z";
+
+const TAIL_GROOVE = "M22,57 C46,54 68,62 87,78";
 
 const BODY =
-  "M85,97 C85,59 117,42 158,42 C200,42 219,64 219,97 C219,130 200,152 158,152 C117,152 85,135 85,97 Z";
+  "M88,92 C86,64 108,52 138,54 C162,56 160,76 158,92 C157,116 152,148 122,158 C97,166 79,150 77,122 C76,110 80,99 88,92 Z";
 
 const UPPER_GILLS = [
-  petal(199, 55, 226, 26, 7),
-  petal(202, 60, 235, 40, 7),
-  petal(203, 67, 238, 58, 6),
+  petal(150, 80, 169, 72, 5),
+  petal(153, 84, 175, 82, 5),
+  petal(154, 90, 168, 94, 4.5),
+  petal(152, 96, 158, 102, 4),
 ];
 
-const LOWER_GILLS = [petal(191, 118, 212, 142, 6), petal(196, 123, 226, 130, 6)];
+const LOWER_GILLS = [
+  petal(131, 149, 151, 155, 5),
+  petal(133, 154, 144, 163, 4.5),
+  petal(129, 158, 135, 168, 4),
+];
 
-const TOP_LEGS = [petal(128, 46, 116, 20, 6), petal(143, 43, 146, 17, 6)];
+const TOP_LEGS = [petal(100, 76, 87, 69, 5), petal(112, 71, 98, 66, 5)];
 
-const BACK_LEG = [petal(97, 140, 76, 163, 6)];
+const BACK_LEG = [petal(88, 106, 70, 113, 5), petal(96, 138, 89, 148, 4.5)];
 
-export const AJOLOTE_VIEWBOX = "0 0 240 180";
+export const AJOLOTE_VIEWBOX = "0 0 220 200";
 
 export const AJOLOTE_BODY_PATHS = [
   TAIL,
@@ -40,6 +47,10 @@ export const AJOLOTE_BODY_PATHS = [
   ...LOWER_GILLS,
 ];
 
-export const AJOLOTE_EYE = { cx: 187, cy: 79, r: 11 };
-export const AJOLOTE_PUPIL_RADIUS = 4.5;
-export const AJOLOTE_PUPIL_REST_OFFSET = { x: 3, y: 3 };
+export const AJOLOTE_TAIL_GROOVE = TAIL_GROOVE;
+
+export const AJOLOTE_EYE = { cx: 143, cy: 104, r: 9 };
+export const AJOLOTE_EYE_2 = { cx: 140, cy: 140, r: 5.5 };
+export const AJOLOTE_PUPIL_RADIUS = 3.6;
+export const AJOLOTE_PUPIL_2_RADIUS = 2.2;
+export const AJOLOTE_PUPIL_REST_OFFSET = { x: 2, y: 2 };
