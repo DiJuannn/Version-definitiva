@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Archivo, JetBrains_Mono } from "next/font/google";
+import { AjoloteMascot } from "@/components/AjoloteMascot";
 import "./globals.css";
 
 const archivo = Archivo({
@@ -34,6 +35,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           }}
         />
         {children}
+        <AjoloteMascot />
       </body>
     </html>
   );
