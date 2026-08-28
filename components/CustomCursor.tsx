@@ -1,49 +1,45 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { motion, useMotionValue, useSpring } from "motion/react";
+import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 
-const HOVER_SELECTOR = "a, button, [data-cursor-hover]";
+type RecMark = { id: number; x: number; y: number };
 
 export function CustomCursor() {
-  const [enabled, setEnabled] = useState(false);
-  const [hovering, setHovering] = useState(false);
-  const x = useMotionValue(-100);
-  const y = useMotionValue(-100);
-  const springX = useSpring(x, { stiffness: 500, damping: 40, mass: 0.5 });
-  const springY = useSpring(y, { stiffness: 500, damping: 40, mass: 0.5 });
+  const [marks, setMarks] = useState<RecMark[]>([]);
+  const nextId = useRef(0);
 
   useEffect(() => {
-    if (!window.matchMedia("(pointer: fine)").matches) return;
-    // matchMedia solo existe en el cliente: el estado inicial debe ser
-    // `false` (igual que en el servidor) para no desajustar la hidratación.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setEnabled(true);
-    document.documentElement.classList.add("custom-cursor-active");
-
-    function handleMove(e: PointerEvent) {
-      x.set(e.clientX);
-      y.set(e.clientY);
-      const target = e.target as HTMLElement | null;
-      setHovering(!!target?.closest(HOVER_SELECTOR));
+    function handleClick(e: MouseEvent) {
+      const id = nextId.current++;
+      setMarks((prev) => [...prev, { id, x: e.clientX, y: e.clientY }]);
+      setTimeout(() => {
+        setMarks((prev) => prev.filter((m) => m.id !== id));
+      }, 900);
     }
 
-    window.addEventListener("pointermove", handleMove, { passive: true });
-    return () => {
-      window.removeEventListener("pointermove", handleMove);
-      document.documentElement.classList.remove("custom-cursor-active");
-    };
-  }, [x, y]);
-
-  if (!enabled) return null;
+    window.addEventListener("click", handleClick);
+    return () => window.removeEventListener("click", handleClick);
+  }, []);
 
   return (
-    <motion.div
-      aria-hidden
-      className="pointer-events-none fixed left-0 top-0 z-[90] rounded-full bg-fg mix-blend-difference"
-      style={{ x: springX, y: springY, translateX: "-50%", translateY: "-50%" }}
-      animate={{ width: hovering ? 44 : 10, height: hovering ? 44 : 10 }}
-      transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-    />
+    <div className="pointer-events-none fixed inset-0 z-[90]">
+      <AnimatePresence>
+        {marks.map((mark) => (
+          <motion.div
+            key={mark.id}
+            className="absolute flex items-center gap-1.5 font-mono text-[11px] tracking-widest text-accent uppercase"
+            style={{ left: mark.x, top: mark.y }}
+            initial={{ opacity: 0, y: 0, scale: 0.9 }}
+            animate={{ opacity: 1, y: -14, scale: 1 }}
+            exit={{ opacity: 0, y: -26 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+            REC
+          </motion.div>
+        ))}
+      </AnimatePresence>
+    </div>
   );
 }
