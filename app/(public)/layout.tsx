@@ -3,38 +3,43 @@ import { AjoloteLogo } from "@/components/AjoloteLogo";
 
 const NAV = [
   { href: "#servicios", label: "Servicios" },
+  { href: "#nosotros", label: "Sobre nosotros" },
   { href: "#portfolio", label: "Portfolio" },
-  { href: "#contacto", label: "Contacto" },
 ];
 
 export default function PublicLayout({ children }: LayoutProps<"/">) {
   return (
     <div className="flex flex-1 flex-col">
-      <header className="sticky top-0 z-40 border-b border-ink/10 bg-paper/90 backdrop-blur-sm">
+      <header className="fixed top-0 z-40 w-full border-b border-line/60 bg-bg/70 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link href="/" className="flex items-center gap-3">
-            <AjoloteLogo className="h-9 w-auto" playOnce={false} />
-            <span className="font-display text-lg tracking-tight">
+          <Link href="/" className="flex items-center gap-2.5">
+            <AjoloteLogo className="h-6 w-auto text-fg" />
+            <span className="font-mono text-xs tracking-[0.2em] uppercase">
               Versión definitiva
             </span>
           </Link>
-          <nav className="hidden gap-8 font-sans text-sm sm:flex">
+          <nav className="hidden gap-8 font-mono text-xs tracking-widest uppercase sm:flex">
             {NAV.map((item) => (
               <a
                 key={item.href}
                 href={item.href}
-                className="text-ink/70 transition-colors hover:text-accent"
+                className="text-muted transition-colors hover:text-accent"
               >
                 {item.label}
               </a>
             ))}
           </nav>
+          <a
+            href="#contacto"
+            className="font-mono text-xs tracking-widest text-fg uppercase transition-colors hover:text-accent"
+          >
+            Contacto
+          </a>
         </div>
       </header>
       <main className="flex-1">{children}</main>
-      <footer className="border-t border-ink/10 px-6 py-10 text-center font-sans text-sm text-ink/60">
-        © {new Date().getFullYear()} Versión definitiva. Todos los derechos
-        reservados.
+      <footer className="border-t border-line px-6 py-8 text-center font-mono text-xs tracking-widest text-muted uppercase">
+        © {new Date().getFullYear()} Versión definitiva
       </footer>
     </div>
   );

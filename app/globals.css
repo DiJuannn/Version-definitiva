@@ -1,22 +1,36 @@
 @import "tailwindcss";
 
 :root {
-  --paper: #f3ead9;
-  --paper-soft: #ece0c9;
-  --ink: #1b1712;
-  --accent: #c1440e;
+  --bg: #0a0a0a;
+  --bg-raised: #131313;
+  --fg: #f2f0ea;
+  --muted: #8a8a84;
+  --line: #2a2a27;
+  --accent: #ff4d1c;
 }
 
 @theme inline {
-  --color-paper: var(--paper);
-  --color-paper-soft: var(--paper-soft);
-  --color-ink: var(--ink);
+  --color-bg: var(--bg);
+  --color-bg-raised: var(--bg-raised);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
   --color-accent: var(--accent);
-  --font-display: var(--font-fraunces);
-  --font-sans: var(--font-work-sans);
+  --font-display: var(--font-archivo);
+  --font-mono: var(--font-jetbrains-mono);
+  --font-sans: var(--font-archivo);
 }
 
 body {
-  background: var(--paper);
-  color: var(--ink);
+  background: var(--bg);
+  color: var(--fg);
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
 }

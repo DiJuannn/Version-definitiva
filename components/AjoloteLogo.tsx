@@ -4,7 +4,7 @@ import { motion } from "motion/react";
 
 type AjoloteLogoProps = {
   className?: string;
-  playOnce?: boolean;
+  animate?: boolean;
 };
 
 function petal(bx: number, by: number, tx: number, ty: number, width: number) {
@@ -41,96 +41,24 @@ const BACK_LEG = [petal(97, 140, 76, 163, 6)];
 const EYE = { cx: 187, cy: 79, r: 11 };
 const PUPIL = { cx: 190, cy: 82, r: 4.5 };
 
-const ease = [0.65, 0, 0.35, 1] as const;
+const ALL_PATHS = [TAIL, BODY, ...TOP_LEGS, ...BACK_LEG, ...UPPER_GILLS, ...LOWER_GILLS];
 
-function strokeThenFill(delay: number, duration = 0.9) {
-  return {
-    initial: { pathLength: 0, opacity: 1, fillOpacity: 0 },
-    animate: { pathLength: 1, fillOpacity: 1 },
-    transition: {
-      pathLength: { delay, duration, ease },
-      fillOpacity: {
-        delay: delay + duration,
-        duration: 0.35,
-        ease: "easeOut" as const,
-      },
-    },
-  };
-}
-
-export function AjoloteLogo({ className, playOnce = true }: AjoloteLogoProps) {
+export function AjoloteLogo({ className, animate = true }: AjoloteLogoProps) {
   return (
     <motion.svg
       viewBox="0 0 240 180"
       className={className}
       role="img"
       aria-label="Versión definitiva"
-      initial={playOnce ? "hidden" : false}
-      animate="visible"
+      initial={animate ? { opacity: 0, scale: 0.85 } : false}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
     >
-      <motion.path
-        d={TAIL}
-        stroke="var(--ink)"
-        strokeWidth={3}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill="var(--ink)"
-        {...strokeThenFill(0, 0.7)}
-      />
-      <motion.path
-        d={BODY}
-        stroke="var(--ink)"
-        strokeWidth={3}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill="var(--ink)"
-        {...strokeThenFill(0.5, 1)}
-      />
-      {[...TOP_LEGS, ...BACK_LEG].map((d, i) => (
-        <motion.path
-          key={`leg-${i}`}
-          d={d}
-          stroke="var(--ink)"
-          strokeWidth={2.5}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="var(--ink)"
-          {...strokeThenFill(1.2 + i * 0.08, 0.4)}
-        />
+      {ALL_PATHS.map((d, i) => (
+        <path key={i} d={d} fill="currentColor" />
       ))}
-      {[...UPPER_GILLS, ...LOWER_GILLS].map((d, i) => (
-        <motion.path
-          key={`gill-${i}`}
-          d={d}
-          stroke="var(--ink)"
-          strokeWidth={2.5}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="var(--ink)"
-          {...strokeThenFill(1.4 + i * 0.08, 0.4)}
-        />
-      ))}
-      <motion.circle
-        cx={EYE.cx}
-        cy={EYE.cy}
-        r={EYE.r}
-        fill="var(--paper)"
-        stroke="var(--ink)"
-        strokeWidth={3}
-        initial={{ pathLength: 0, opacity: 0 }}
-        animate={{ pathLength: 1, opacity: 1 }}
-        transition={{ delay: 1.7, duration: 0.5, ease }}
-      />
-      <motion.circle
-        cx={PUPIL.cx}
-        cy={PUPIL.cy}
-        r={PUPIL.r}
-        fill="var(--ink)"
-        style={{ originX: `${PUPIL.cx}px`, originY: `${PUPIL.cy}px` }}
-        initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 2, duration: 0.5, type: "spring", stiffness: 320, damping: 14 }}
-      />
+      <circle cx={EYE.cx} cy={EYE.cy} r={EYE.r} fill="var(--bg)" />
+      <circle cx={PUPIL.cx} cy={PUPIL.cy} r={PUPIL.r} fill="currentColor" />
     </motion.svg>
   );
 }
