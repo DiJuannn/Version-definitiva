@@ -13,7 +13,7 @@ export default function PublicLayout({ children }: LayoutProps<"/">) {
       <header className="fixed top-0 z-40 w-full border-b border-line/60 bg-bg/70 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link href="/" className="flex items-center gap-2.5">
-            <AjoloteLogo className="h-6 w-auto text-fg" />
+            <AjoloteLogo className="h-6 w-auto text-fg" priority />
             <span className="font-mono text-xs tracking-[0.2em] uppercase">
               Versión definitiva
             </span>
