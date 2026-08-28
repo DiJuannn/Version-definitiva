@@ -1,3 +1,4 @@
+import { HeroReveal } from "@/components/HeroReveal";
 import { Marquee } from "@/components/Marquee";
 import { PlaceholderFrame } from "@/components/PlaceholderFrame";
 import { Reveal } from "@/components/Reveal";
@@ -50,18 +51,20 @@ export default function PublicHomePage() {
       <section className="relative h-screen w-full">
         <PlaceholderFrame className="absolute inset-0">
           <div className="relative mx-auto flex h-full max-w-6xl flex-col justify-end px-6 pb-20 pt-32">
-            <div className="mb-6 flex items-center gap-2 font-mono text-xs tracking-[0.25em] text-accent uppercase">
-              <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-              Productora audiovisual
-            </div>
-            <h1 className="max-w-3xl font-display text-6xl leading-[0.95] font-black tracking-tight text-fg uppercase sm:text-7xl lg:text-8xl">
-              Historias que
-              <br />
-              se quedan.
-            </h1>
-            <p className="mt-6 max-w-md font-mono text-sm text-muted">
-              Versión definitiva — de la idea al montaje final.
-            </p>
+            <HeroReveal>
+              <div className="mb-6 flex items-center gap-2 font-mono text-xs tracking-[0.25em] text-accent uppercase">
+                <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                Productora audiovisual
+              </div>
+              <h1 className="max-w-3xl font-display text-6xl leading-[0.95] font-black tracking-tight text-fg uppercase sm:text-7xl lg:text-8xl">
+                Historias que
+                <br />
+                se quedan.
+              </h1>
+              <p className="mt-6 max-w-md font-mono text-sm text-muted">
+                Versión definitiva — de la idea al montaje final.
+              </p>
+            </HeroReveal>
           </div>
           <div className="absolute bottom-8 right-6 flex items-center gap-3 font-mono text-[11px] tracking-widest text-muted uppercase">
             <span className="h-8 w-px bg-line" />
@@ -128,7 +131,7 @@ export default function PublicHomePage() {
           </Reveal>
 
           <Reveal delay={0.1}>
-            <PlaceholderFrame className="mt-8 aspect-[16/8]">
+            <PlaceholderFrame className="mt-8 aspect-[16/8] transition-transform duration-500 hover:scale-[1.01]">
               <div className="absolute left-6 top-6 font-mono text-[11px] tracking-widest text-accent uppercase">
                 En producción
               </div>
@@ -140,8 +143,11 @@ export default function PublicHomePage() {
                   Proyecto destacado
                 </div>
               </div>
-              <div className="absolute bottom-6 right-6 font-mono text-xs tracking-widest text-fg uppercase">
-                Explorar →
+              <div className="absolute bottom-6 right-6 flex items-center gap-2 font-mono text-xs tracking-widest text-fg uppercase">
+                Explorar
+                <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">
+                  →
+                </span>
               </div>
             </PlaceholderFrame>
           </Reveal>
@@ -149,7 +155,7 @@ export default function PublicHomePage() {
           <div className="mt-6 grid gap-6 sm:grid-cols-3">
             {PROYECTOS.map((proyecto, i) => (
               <Reveal key={proyecto.title} delay={i * 0.06}>
-                <PlaceholderFrame className="aspect-video">
+                <PlaceholderFrame className="aspect-video transition-transform duration-500 hover:scale-[1.03]">
                   <div className="absolute inset-0 flex flex-col items-start justify-end p-5 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
                     <div className="font-mono text-[11px] tracking-widest text-accent uppercase">
                       {proyecto.category}

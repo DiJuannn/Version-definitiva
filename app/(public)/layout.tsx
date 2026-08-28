@@ -23,7 +23,7 @@ export default function PublicLayout({ children }: LayoutProps<"/">) {
               <a
                 key={item.href}
                 href={item.href}
-                className="text-muted transition-colors hover:text-accent"
+                className="relative text-muted transition-colors after:absolute after:-bottom-1 after:left-0 after:h-px after:w-0 after:bg-accent after:transition-all after:duration-300 hover:text-fg hover:after:w-full"
               >
                 {item.label}
               </a>
@@ -31,7 +31,7 @@ export default function PublicLayout({ children }: LayoutProps<"/">) {
           </nav>
           <a
             href="#contacto"
-            className="font-mono text-xs tracking-widest text-fg uppercase transition-colors hover:text-accent"
+            className="relative font-mono text-xs tracking-widest text-fg uppercase transition-colors after:absolute after:-bottom-1 after:left-0 after:h-px after:w-0 after:bg-accent after:transition-all after:duration-300 hover:text-accent hover:after:w-full"
           >
             Contacto
           </a>

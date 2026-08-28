@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Archivo, JetBrains_Mono } from "next/font/google";
+import { CustomCursor } from "@/components/CustomCursor";
+import { IntroOverlay } from "@/components/IntroOverlay";
 import "./globals.css";
 
 const archivo = Archivo({
@@ -34,6 +36,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           }}
         />
         {children}
+        <CustomCursor />
+        <IntroOverlay />
       </body>
     </html>
   );

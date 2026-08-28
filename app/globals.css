@@ -34,3 +34,8 @@ body {
     transform: translateX(-50%);
   }
 }
+
+.custom-cursor-active,
+.custom-cursor-active * {
+  cursor: none !important;
+}
