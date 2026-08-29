@@ -44,8 +44,10 @@ export default function LoginPage() {
         </button>
       </form>
 
-      <div className="mt-6 text-center font-mono text-xs text-muted">
-        ¿No tienes cuenta?{" "}
+      <div className="mt-6 flex items-center justify-between font-mono text-xs text-muted">
+        <Link href="/forgot-password" className="hover:text-accent">
+          ¿Olvidaste tu contraseña?
+        </Link>
         <Link href="/signup" className="text-fg hover:text-accent">
           Crear cuenta
         </Link>

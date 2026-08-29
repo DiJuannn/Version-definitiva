@@ -1,5 +1,6 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
@@ -86,4 +87,51 @@ export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
   redirect("/login");
+}
+
+export async function requestPasswordReset(
+  _prevState: AuthActionState,
+  formData: FormData,
+): Promise<AuthActionState> {
+  const email = String(formData.get("email") ?? "").trim();
+  if (!email) {
+    return { error: "Escribe tu email." };
+  }
+
+  const supabase = await createClient();
+  const origin = (await headers()).get("origin");
+
+  // No comprobamos el resultado a propósito: si el email no existe, damos
+  // la misma respuesta que si existiera, para no revelar qué cuentas hay.
+  await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${origin}/reset-password`,
+  });
+
+  redirect("/forgot-password?sent=1");
+}
+
+export async function updatePassword(
+  _prevState: AuthActionState,
+  formData: FormData,
+): Promise<AuthActionState> {
+  const password = String(formData.get("password") ?? "");
+  const confirmPassword = String(formData.get("confirmPassword") ?? "");
+
+  if (password.length < 8) {
+    return { error: "La contraseña debe tener al menos 8 caracteres." };
+  }
+  if (password !== confirmPassword) {
+    return { error: "Las contraseñas no coinciden." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.updateUser({ password });
+
+  if (error) {
+    return {
+      error: "No se pudo actualizar la contraseña. Pide un enlace nuevo.",
+    };
+  }
+
+  redirect("/taller");
 }

@@ -21,5 +21,5 @@ export async function createProject(formData: FormData) {
     data: { name, organizationId: profile.organizationId },
   });
 
-  revalidatePath("/taller");
+  revalidatePath("/taller/proyectos");
 }

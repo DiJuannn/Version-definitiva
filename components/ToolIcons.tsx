@@ -1,0 +1,101 @@
+type IconProps = { className?: string };
+
+const shared = {
+  viewBox: "0 0 24 24",
+  fill: "none",
+  strokeWidth: 1.5,
+} as const;
+
+export function ProjectsIcon({ className }: IconProps) {
+  return (
+    <svg {...shared} className={className}>
+      <path
+        d="M4 10h16v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-9Z"
+        stroke="currentColor"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M4 10 5 5h3l-1 5M9 10l1-5h3l-1 5M14 10l1-5h3l-1 5"
+        stroke="currentColor"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function SceneIcon({ className }: IconProps) {
+  return (
+    <svg {...shared} className={className}>
+      <rect x="3" y="4" width="18" height="16" rx="1" stroke="currentColor" />
+      <path d="M3 9h18M3 15h18M8 4v16M16 4v16" stroke="currentColor" />
+    </svg>
+  );
+}
+
+export function CastIcon({ className }: IconProps) {
+  return (
+    <svg {...shared} className={className}>
+      <circle cx="12" cy="8" r="3.5" stroke="currentColor" />
+      <path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6" stroke="currentColor" />
+    </svg>
+  );
+}
+
+export function LocationIcon({ className }: IconProps) {
+  return (
+    <svg {...shared} className={className}>
+      <path
+        d="M12 21s7-7.5 7-12a7 7 0 1 0-14 0c0 4.5 7 12 7 12Z"
+        stroke="currentColor"
+      />
+      <circle cx="12" cy="9" r="2.5" stroke="currentColor" />
+    </svg>
+  );
+}
+
+export function BudgetIcon({ className }: IconProps) {
+  return (
+    <svg {...shared} className={className}>
+      <rect x="3" y="7" width="18" height="12" rx="1.5" stroke="currentColor" />
+      <path d="M3 10.5h18" stroke="currentColor" />
+      <circle cx="16" cy="14.5" r="1.5" stroke="currentColor" />
+    </svg>
+  );
+}
+
+export function CalendarIcon({ className }: IconProps) {
+  return (
+    <svg {...shared} className={className}>
+      <rect x="3" y="5" width="18" height="16" rx="1.5" stroke="currentColor" />
+      <path
+        d="M3 10h18M8 3v4M16 3v4"
+        stroke="currentColor"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+export function ShotListIcon({ className }: IconProps) {
+  return (
+    <svg {...shared} className={className}>
+      <rect x="3" y="4" width="8" height="6" rx="1" stroke="currentColor" />
+      <rect x="13" y="4" width="8" height="6" rx="1" stroke="currentColor" />
+      <rect x="3" y="14" width="8" height="6" rx="1" stroke="currentColor" />
+      <rect x="13" y="14" width="8" height="6" rx="1" stroke="currentColor" />
+    </svg>
+  );
+}
+
+export function DocumentIcon({ className }: IconProps) {
+  return (
+    <svg {...shared} className={className}>
+      <path
+        d="M7 3h7l4 4v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"
+        stroke="currentColor"
+        strokeLinejoin="round"
+      />
+      <path d="M9 12h6M9 16h6" stroke="currentColor" strokeLinecap="round" />
+    </svg>
+  );
+}
