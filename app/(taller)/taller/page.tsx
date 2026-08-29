@@ -1,39 +1,69 @@
-import { ToolCard } from "@/components/ToolCard";
-import {
-  BudgetIcon,
-  CalendarIcon,
-  CastIcon,
-  DocumentIcon,
-  LocationIcon,
-  ProjectsIcon,
-  SceneIcon,
-  ShotListIcon,
-} from "@/components/ToolIcons";
+import Link from "next/link";
+import { createProject } from "@/lib/actions/projects";
+import { prisma } from "@/lib/prisma";
+import { createClient } from "@/lib/supabase/server";
 
-const TOOLS = [
-  { href: "/taller/proyectos", icon: <ProjectsIcon />, label: "Proyectos" },
-  { icon: <SceneIcon />, label: "Escenas" },
-  { icon: <CastIcon />, label: "Personajes" },
-  { icon: <LocationIcon />, label: "Localizaciones" },
-  { icon: <BudgetIcon />, label: "Presupuesto" },
-  { icon: <CalendarIcon />, label: "Plan de rodaje" },
-  { icon: <ShotListIcon />, label: "Shot list" },
-  { icon: <DocumentIcon />, label: "Documentos" },
-];
+export default async function ProyectosPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-export default function TallerHomePage() {
+  const profile = user
+    ? await prisma.user.findUnique({ where: { id: user.id } })
+    : null;
+
+  const projects = profile
+    ? await prisma.project.findMany({
+        where: { organizationId: profile.organizationId },
+        orderBy: { createdAt: "desc" },
+      })
+    : [];
+
   return (
     <div>
-      <h1 className="font-display text-2xl font-bold uppercase">Taller</h1>
+      <h1 className="font-display text-2xl font-bold uppercase">Proyectos</h1>
       <p className="mt-2 font-mono text-xs text-muted">
-        Elige una herramienta.
+        Elige un proyecto para abrir su Taller, o crea uno nuevo.
       </p>
 
-      <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-        {TOOLS.map((tool) => (
-          <ToolCard key={tool.label} {...tool} />
-        ))}
-      </div>
+      <form action={createProject} className="mt-6 flex max-w-md gap-2">
+        <input
+          name="name"
+          placeholder="Nombre del proyecto"
+          required
+          className="w-full border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+        />
+        <button
+          type="submit"
+          className="shrink-0 rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+        >
+          Crear
+        </button>
+      </form>
+
+      {projects.length === 0 ? (
+        <p className="mt-10 font-mono text-sm text-muted">
+          Todavía no hay proyectos. Crea el primero arriba.
+        </p>
+      ) : (
+        <div className="mt-10 border-t border-line">
+          {projects.map((project) => (
+            <Link
+              key={project.id}
+              href={`/taller/${project.id}`}
+              className="group flex items-center justify-between border-b border-line py-4 transition-colors hover:border-accent"
+            >
+              <span className="font-display text-lg font-bold uppercase transition-colors group-hover:text-accent">
+                {project.name}
+              </span>
+              <span className="font-mono text-xs text-muted">
+                {project.createdAt.toLocaleDateString("es-ES")}
+              </span>
+            </Link>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
