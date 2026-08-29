@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useMotionValue, useSpring } from "motion/react";
 
 const HOVER_SELECTOR = "a, button, [data-cursor-hover]";
+const INTERACTIVE_SELECTOR = "a, button, input, textarea, select, [role='button']";
 
 type RecMark = { id: number; x: number; y: number };
 
@@ -34,6 +35,9 @@ export function CustomCursor() {
     }
 
     function handleClick(e: MouseEvent) {
+      const target = e.target as HTMLElement | null;
+      if (target?.closest(INTERACTIVE_SELECTOR)) return;
+
       const id = nextId.current++;
       setMarks((prev) => [...prev, { id, x: e.clientX, y: e.clientY }]);
       setTimeout(() => {
@@ -71,17 +75,27 @@ export function CustomCursor() {
       )}
       <AnimatePresence>
         {marks.map((mark) => (
-          <motion.div
-            key={mark.id}
-            className="absolute flex items-center gap-1.5 font-mono text-[11px] tracking-widest text-accent uppercase"
-            style={{ left: mark.x, top: mark.y }}
-            initial={{ opacity: 0, y: 0, scale: 0.9 }}
-            animate={{ opacity: 1, y: -14, scale: 1 }}
-            exit={{ opacity: 0, y: -26 }}
-            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-            REC
+          <motion.div key={mark.id} className="absolute" style={{ left: mark.x, top: mark.y }}>
+            <motion.span
+              className="absolute rounded-full border border-accent"
+              initial={{ width: 8, height: 8, x: -4, y: -4, opacity: 0.9 }}
+              animate={{ width: 46, height: 46, x: -23, y: -23, opacity: 0 }}
+              transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+            />
+            <motion.div
+              className="absolute flex items-center gap-1.5 whitespace-nowrap font-mono text-[11px] tracking-widest text-accent uppercase"
+              initial={{ opacity: 0, y: 0, scale: 0.8, x: 12 }}
+              animate={{ opacity: 1, y: -16, scale: 1, x: 12 }}
+              exit={{ opacity: 0, y: -28 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            >
+              <motion.span
+                className="h-1.5 w-1.5 rounded-full bg-accent"
+                animate={{ opacity: [1, 0.3, 1] }}
+                transition={{ duration: 0.6, repeat: 1 }}
+              />
+              REC
+            </motion.div>
           </motion.div>
         ))}
       </AnimatePresence>

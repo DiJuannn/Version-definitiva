@@ -5,6 +5,7 @@ const NAV = [
   { href: "#servicios", label: "Servicios" },
   { href: "#nosotros", label: "Sobre nosotros" },
   { href: "#portfolio", label: "Portfolio" },
+  { href: "#contacto", label: "Contacto" },
 ];
 
 export default function PublicLayout({ children }: LayoutProps<"/">) {
@@ -29,12 +30,13 @@ export default function PublicLayout({ children }: LayoutProps<"/">) {
               </a>
             ))}
           </nav>
-          <a
-            href="#contacto"
-            className="relative font-mono text-xs tracking-widest text-fg uppercase transition-colors after:absolute after:-bottom-1 after:left-0 after:h-px after:w-0 after:bg-accent after:transition-all after:duration-300 hover:text-accent hover:after:w-full"
+          <Link
+            href="/login"
+            className="group relative overflow-hidden border border-accent px-4 py-2 font-mono text-xs tracking-widest text-accent uppercase transition-colors hover:text-bg"
           >
-            Contacto
-          </a>
+            <span className="absolute inset-0 -translate-x-full bg-accent transition-transform duration-300 group-hover:translate-x-0" />
+            <span className="relative">Área privada</span>
+          </Link>
         </div>
       </header>
       <main className="flex-1">{children}</main>
