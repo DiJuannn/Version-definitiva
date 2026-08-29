@@ -35,7 +35,7 @@ export default function PublicLayout({ children }: LayoutProps<"/">) {
             className="group relative overflow-hidden border border-accent px-4 py-2 font-mono text-xs tracking-widest text-accent uppercase transition-colors hover:text-bg"
           >
             <span className="absolute inset-0 -translate-x-full bg-accent transition-transform duration-300 group-hover:translate-x-0" />
-            <span className="relative">Área privada</span>
+            <span className="relative">Taller</span>
           </Link>
         </div>
       </header>

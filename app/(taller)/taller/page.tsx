@@ -2,7 +2,7 @@ import { createProject } from "@/lib/actions/projects";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
 
-export default async function DashboardHomePage() {
+export default async function TallerHomePage() {
   const supabase = await createClient();
   const {
     data: { user },

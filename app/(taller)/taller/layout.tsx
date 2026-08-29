@@ -5,7 +5,7 @@ import { signOut } from "@/lib/actions/auth";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
 
-export default async function DashboardLayout({
+export default async function TallerLayout({
   children,
 }: {
   children: ReactNode;
@@ -25,7 +25,7 @@ export default async function DashboardLayout({
   return (
     <div className="flex min-h-screen flex-col bg-bg text-fg">
       <header className="flex items-center justify-between border-b border-line px-6 py-4">
-        <Link href="/dashboard" className="flex items-center gap-2.5">
+        <Link href="/taller" className="flex items-center gap-2.5">
           <AjoloteLogo className="h-6 w-auto text-fg" />
           <span className="font-mono text-xs tracking-[0.2em] uppercase">
             {profile?.organization.name ?? "Versión definitiva"}

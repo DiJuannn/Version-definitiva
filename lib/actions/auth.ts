@@ -20,7 +20,7 @@ export async function logIn(
     return { error: "Email o contraseña incorrectos." };
   }
 
-  redirect("/dashboard");
+  redirect("/taller");
 }
 
 export async function signUp(
@@ -79,7 +79,7 @@ export async function signUp(
     redirect("/login?confirm=1");
   }
 
-  redirect("/dashboard");
+  redirect("/taller");
 }
 
 export async function signOut() {

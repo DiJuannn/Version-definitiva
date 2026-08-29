@@ -33,7 +33,7 @@ export async function updateSession(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
   const isAuthPage = path === "/login" || path === "/signup";
-  const isProtectedPage = path.startsWith("/dashboard");
+  const isProtectedPage = path.startsWith("/taller");
 
   if (!user && isProtectedPage) {
     const url = request.nextUrl.clone();
@@ -43,7 +43,7 @@ export async function updateSession(request: NextRequest) {
 
   if (user && isAuthPage) {
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    url.pathname = "/taller";
     return NextResponse.redirect(url);
   }
 
