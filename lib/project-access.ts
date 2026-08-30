@@ -1,14 +1,8 @@
 import { prisma } from "@/lib/prisma";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentProfile } from "@/lib/current-user";
 
 export async function getProjectForCurrentUser(projectId: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
-
-  const profile = await prisma.user.findUnique({ where: { id: user.id } });
+  const profile = await getCurrentProfile();
   if (!profile) return null;
 
   return prisma.project.findFirst({
