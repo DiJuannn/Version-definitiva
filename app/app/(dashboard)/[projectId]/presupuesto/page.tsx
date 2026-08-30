@@ -9,6 +9,7 @@ import {
   deleteBudgetItem,
 } from "@/lib/actions/budget";
 import { DeleteButton } from "@/components/DeleteButton";
+import { EmptyState } from "@/components/EmptyState";
 import { PdfLink } from "@/components/PdfLink";
 
 function currency(value: number) {
@@ -109,9 +110,10 @@ export default async function PresupuestoPage({
       </form>
 
       {categoriesWithTotals.length === 0 ? (
-        <p className="mt-10 font-mono text-sm text-muted">
-          Todavía no hay categorías de presupuesto.
-        </p>
+        <EmptyState
+          title="Todavía no hay categorías de presupuesto"
+          description="Crea la primera con el formulario de arriba (por ejemplo, Localizaciones o Equipo técnico)."
+        />
       ) : (
         <div className="mt-10 space-y-10">
           {categoriesWithTotals.map((category) => {

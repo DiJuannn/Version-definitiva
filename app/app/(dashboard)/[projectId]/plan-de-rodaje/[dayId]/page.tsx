@@ -14,6 +14,7 @@ import { getAvailabilityWarnings } from "@/lib/availability-warnings";
 import { getReservationConflicts } from "@/lib/reservation-conflicts";
 import { DAY_PART_LABELS, INT_EXT_LABELS, INVENTORY_CATEGORY_LABELS } from "@/lib/labels";
 import { DeleteButton } from "@/components/DeleteButton";
+import { EmptyState } from "@/components/EmptyState";
 
 function toDateInputValue(date: Date): string {
   return date.toISOString().slice(0, 10);
@@ -177,13 +178,12 @@ export default async function ShootingDayDetailPage({
           Escenas del día
         </h2>
         {allScenes.length === 0 ? (
-          <p className="mt-4 font-mono text-sm text-muted">
-            No hay escenas creadas todavía en{" "}
-            <Link href={`/app/${projectId}/guion`} className="text-fg hover:text-accent">
-              Guion
-            </Link>
-            .
-          </p>
+          <EmptyState
+            title="No hay escenas creadas todavía"
+            description="Créalas en Guion para poder asignarlas a este día."
+            actionLabel="Ir a Guion"
+            actionHref={`/app/${projectId}/guion`}
+          />
         ) : (
           <form action={updateAssignmentsAction} className="mt-4">
             <div className="border-t border-line">

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
+import { EmptyState } from "@/components/EmptyState";
 
 export default async function CallSheetsPage({
   params,
@@ -39,9 +40,12 @@ export default async function CallSheetsPage({
       </p>
 
       {days.length === 0 ? (
-        <p className="mt-10 font-mono text-sm text-muted">
-          Todavía no hay días de rodaje planificados.
-        </p>
+        <EmptyState
+          title="Todavía no hay días de rodaje planificados"
+          description="Crea un día de rodaje para poder generar su hoja de convocatoria."
+          actionLabel="Ir a Plan de rodaje"
+          actionHref={`/app/${projectId}/plan-de-rodaje`}
+        />
       ) : (
         <div className="mt-10 border-t border-line">
           {days.map((day) => (

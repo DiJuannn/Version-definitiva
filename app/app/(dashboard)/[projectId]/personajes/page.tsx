@@ -9,6 +9,7 @@ import {
   deleteCharacter,
   updateCharacterActor,
 } from "@/lib/actions/characters";
+import { EmptyState } from "@/components/EmptyState";
 
 export default async function PersonajesPage({
   params,
@@ -120,9 +121,10 @@ export default async function PersonajesPage({
         </form>
 
         {actors.length === 0 ? (
-          <p className="mt-6 font-mono text-sm text-muted">
-            Todavía no hay actores en este proyecto.
-          </p>
+          <EmptyState
+            title="Todavía no hay actores"
+            description="Añade el primero con el formulario de arriba."
+          />
         ) : (
           <div className="mt-6 border-t border-line">
             {actors.map((actor) => (
@@ -197,9 +199,10 @@ export default async function PersonajesPage({
         </form>
 
         {characters.length === 0 ? (
-          <p className="mt-6 font-mono text-sm text-muted">
-            Todavía no hay personajes en este proyecto.
-          </p>
+          <EmptyState
+            title="Todavía no hay personajes"
+            description="Añade el primero con el formulario de arriba."
+          />
         ) : (
           <div className="mt-6 border-t border-line">
             {characters.map((character) => (

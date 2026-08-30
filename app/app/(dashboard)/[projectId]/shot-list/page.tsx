@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { createShot } from "@/lib/actions/shots";
+import { EmptyState } from "@/components/EmptyState";
 import { PdfLink } from "@/components/PdfLink";
 
 export default async function ShotListPage({
@@ -37,13 +38,12 @@ export default async function ShotListPage({
       </h1>
 
       {scenes.length === 0 ? (
-        <p className="mt-10 font-mono text-sm text-muted">
-          No hay escenas creadas todavía en{" "}
-          <Link href={`/app/${projectId}/guion`} className="text-fg hover:text-accent">
-            Guion
-          </Link>
-          .
-        </p>
+        <EmptyState
+          title="No hay escenas creadas todavía"
+          description="Crea las escenas del proyecto en Guion antes de definir sus planos."
+          actionLabel="Ir a Guion"
+          actionHref={`/app/${projectId}/guion`}
+        />
       ) : (
         <div className="mt-10 space-y-10">
           {scenes.map((scene) => {

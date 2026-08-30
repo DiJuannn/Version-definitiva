@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { deleteDocument, uploadDocument } from "@/lib/actions/documents";
 import { DeleteButton } from "@/components/DeleteButton";
+import { EmptyState } from "@/components/EmptyState";
 
 export default async function DocumentosPage({
   params,
@@ -190,9 +191,10 @@ export default async function DocumentosPage({
         </form>
 
         {documents.length === 0 ? (
-          <p className="mt-4 font-mono text-sm text-muted">
-            Todavía no hay otros documentos.
-          </p>
+          <EmptyState
+            title="Todavía no hay otros documentos"
+            description="Súbelos con el formulario de arriba (contratos, permisos, etc.)."
+          />
         ) : (
           <div className="mt-4 border-t border-line">
             {documents.map((doc) => (

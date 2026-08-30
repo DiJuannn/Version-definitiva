@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getCurrentProfile } from "@/lib/current-user";
 import { createPerson } from "@/lib/actions/people";
+import { EmptyState } from "@/components/EmptyState";
 
 export default async function EquipoPage() {
   const profile = await getCurrentProfile();
@@ -77,9 +78,10 @@ export default async function EquipoPage() {
       </form>
 
       {people.length === 0 ? (
-        <p className="mt-10 font-mono text-sm text-muted">
-          Todavía no hay nadie en el equipo.
-        </p>
+        <EmptyState
+          title="Todavía no hay nadie en el equipo"
+          description="Añade a la primera persona con el formulario de arriba."
+        />
       ) : (
         <div className="mt-10 border-t border-line">
           {people.map((person) => (

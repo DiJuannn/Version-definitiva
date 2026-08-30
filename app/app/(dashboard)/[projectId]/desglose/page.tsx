@@ -10,6 +10,7 @@ import {
   deleteCrewMember,
 } from "@/lib/actions/breakdown";
 import { BREAKDOWN_CATEGORY_LABELS } from "@/lib/labels";
+import { EmptyState } from "@/components/EmptyState";
 import { BreakdownCategory } from "@/lib/generated/prisma";
 
 export default async function DesglosePage({
@@ -149,9 +150,10 @@ export default async function DesglosePage({
             ))}
         </div>
         {elements.length === 0 && (
-          <p className="mt-6 font-mono text-sm text-muted">
-            Todavía no hay elementos de desglose.
-          </p>
+          <EmptyState
+            title="Todavía no hay elementos de desglose"
+            description="Añade el primero con el formulario de arriba."
+          />
         )}
       </section>
 
@@ -208,9 +210,10 @@ export default async function DesglosePage({
         </form>
 
         {crewMembers.length === 0 ? (
-          <p className="mt-6 font-mono text-sm text-muted">
-            Todavía no hay equipo técnico en este proyecto.
-          </p>
+          <EmptyState
+            title="Todavía no hay equipo técnico"
+            description="Añade el primer miembro con el formulario de arriba."
+          />
         ) : (
           <div className="mt-6 border-t border-line">
             {crewMembers.map((member) => (

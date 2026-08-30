@@ -3,6 +3,7 @@ import { createProject } from "@/lib/actions/projects";
 import { prisma } from "@/lib/prisma";
 import { getCurrentProfile } from "@/lib/current-user";
 import { StatusPill } from "@/components/StatusPill";
+import { EmptyState } from "@/components/EmptyState";
 
 export default async function ProyectosPage() {
   const profile = await getCurrentProfile();
@@ -45,9 +46,10 @@ export default async function ProyectosPage() {
       </form>
 
       {projects.length === 0 ? (
-        <p className="mt-10 font-mono text-sm text-muted">
-          Todavía no hay proyectos. Crea el primero arriba.
-        </p>
+        <EmptyState
+          title="Todavía no hay proyectos"
+          description="Crea el primero con el formulario de arriba."
+        />
       ) : (
         <div className="mt-10 border-t border-line">
           {projects.map((project) => (

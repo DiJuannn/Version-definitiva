@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { addStoryboardFrame, deleteStoryboardFrame } from "@/lib/actions/storyboard";
 import { DeleteButton } from "@/components/DeleteButton";
+import { EmptyState } from "@/components/EmptyState";
 import { PrintButton } from "@/components/PrintButton";
 
 export default async function StoryboardPage({
@@ -46,13 +47,12 @@ export default async function StoryboardPage({
       </h1>
 
       {scenesWithShots.length === 0 ? (
-        <p className="mt-10 font-mono text-sm text-muted">
-          Todavía no hay planos creados en{" "}
-          <Link href={`/app/${projectId}/shot-list`} className="text-fg hover:text-accent">
-            Shot list
-          </Link>
-          .
-        </p>
+        <EmptyState
+          title="Todavía no hay planos creados"
+          description="Define al menos un plano en Shot list para poder dibujar su storyboard."
+          actionLabel="Ir a Shot list"
+          actionHref={`/app/${projectId}/shot-list`}
+        />
       ) : (
         <div className="mt-10 space-y-12">
           {scenesWithShots.map((scene) => (

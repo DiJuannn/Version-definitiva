@@ -9,6 +9,7 @@ import { runContinuityCheck } from "@/lib/actions/continuity";
 import { SubmitButton } from "@/components/SubmitButton";
 import { DeleteButton } from "@/components/DeleteButton";
 import { HelpTip } from "@/components/HelpTip";
+import { EmptyState } from "@/components/EmptyState";
 import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
 
 export default async function GuionPage({
@@ -159,9 +160,10 @@ export default async function GuionPage({
         </form>
 
         {scenes.length === 0 ? (
-          <p className="mt-10 font-mono text-sm text-muted">
-            Todavía no hay escenas. Crea la primera arriba.
-          </p>
+          <EmptyState
+            title="Todavía no hay escenas"
+            description="Crea la primera con el formulario de arriba."
+          />
         ) : (
           <div className="mt-10 border-t border-line">
             {scenes.map((scene) => (

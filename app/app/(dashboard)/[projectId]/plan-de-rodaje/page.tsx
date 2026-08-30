@@ -6,6 +6,7 @@ import { getCurrentProfile } from "@/lib/current-user";
 import { createShootingDay } from "@/lib/actions/shooting-days";
 import { getProjectScheduleConflicts } from "@/lib/schedule-conflicts";
 import { ShootingTimeline } from "@/components/ShootingTimeline";
+import { EmptyState } from "@/components/EmptyState";
 import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
 
 export default async function PlanDeRodajePage({
@@ -69,13 +70,12 @@ export default async function PlanDeRodajePage({
       </h1>
 
       {scenes.length === 0 ? (
-        <p className="mt-10 font-mono text-sm text-muted">
-          Todavía no hay escenas.{" "}
-          <Link href={`/app/${projectId}/guion`} className="text-fg hover:text-accent">
-            Créalas en Guion
-          </Link>{" "}
-          para poder planificarlas aquí.
-        </p>
+        <EmptyState
+          title="Todavía no hay escenas"
+          description="Créalas en Guion para poder planificarlas en días de rodaje."
+          actionLabel="Ir a Guion"
+          actionHref={`/app/${projectId}/guion`}
+        />
       ) : (
         <ShootingTimeline
           projectId={projectId}

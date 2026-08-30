@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { createTask } from "@/lib/actions/tasks";
+import { EmptyState } from "@/components/EmptyState";
 import { TaskPriority } from "@/lib/generated/prisma";
 
 const PRIORITY_LABELS: Record<TaskPriority, string> = {
@@ -75,9 +76,10 @@ export default async function ProjectTareasPage({
       </form>
 
       {tasks.length === 0 ? (
-        <p className="mt-10 font-mono text-sm text-muted">
-          Todavía no hay tareas en este proyecto.
-        </p>
+        <EmptyState
+          title="Todavía no hay tareas"
+          description="Crea la primera con el formulario de arriba."
+        />
       ) : (
         <div className="mt-10 border-t border-line">
           {tasks.map((task) => (

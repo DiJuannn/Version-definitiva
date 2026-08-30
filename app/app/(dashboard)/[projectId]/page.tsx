@@ -5,6 +5,7 @@ import { ProjectSummaryCard } from "@/components/ProjectSummaryCard";
 import { ProjectRoadmap } from "@/components/ProjectRoadmap";
 import { ProjectHealthMini } from "@/components/ProjectHealthMini";
 import { DashboardStagger } from "@/components/DashboardMotion";
+import { ToolGroupCarousel } from "@/components/ToolGroupCarousel";
 import { PdfLink } from "@/components/PdfLink";
 import { getProjectOverview } from "@/lib/project-roadmap";
 import {
@@ -126,6 +127,18 @@ export default async function ProjectTallerPage({
     project.budgetTarget !== null ? Number(project.budgetTarget) : null;
   const { steps, healthMetrics } = await getProjectOverview(project.id, budgetTarget);
 
+  // Los hrefs deben llegar ya resueltos: una función no se puede pasar de
+  // un Server Component (esta página) a ToolGroupCarousel (Client Component).
+  const resolvedToolGroups = TOOL_GROUPS.map((group) => ({
+    label: group.label,
+    tools: group.tools.map((tool) => ({
+      icon: tool.icon,
+      label: tool.label,
+      description: tool.description,
+      href: "absolute" in tool && tool.absolute ? tool.href : `/app/${project.id}/${tool.href}`,
+    })),
+  }));
+
   return (
     <div>
       <Link
@@ -165,28 +178,34 @@ export default async function ProjectTallerPage({
           </div>
         </div>
 
-        {TOOL_GROUPS.map((group) => (
-          <div key={group.label} className="mt-6 first:mt-4">
-            <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
-              {group.label}
-            </p>
-            <DashboardStagger className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-3">
-              {group.tools.map((tool) => (
-                <ToolCard
-                  key={tool.label}
-                  icon={tool.icon}
-                  label={tool.label}
-                  description={tool.description}
-                  href={
-                    "absolute" in tool && tool.absolute
-                      ? tool.href
-                      : `/app/${project.id}/${tool.href}`
-                  }
-                />
-              ))}
-            </DashboardStagger>
-          </div>
-        ))}
+        <div className="mt-4">
+          <ToolGroupCarousel groups={resolvedToolGroups} />
+        </div>
+
+        <div className="hidden sm:block">
+          {TOOL_GROUPS.map((group) => (
+            <div key={group.label} className="mt-6 first:mt-4">
+              <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                {group.label}
+              </p>
+              <DashboardStagger className="mt-3 grid grid-cols-3 gap-4">
+                {group.tools.map((tool) => (
+                  <ToolCard
+                    key={tool.label}
+                    icon={tool.icon}
+                    label={tool.label}
+                    description={tool.description}
+                    href={
+                      "absolute" in tool && tool.absolute
+                        ? tool.href
+                        : `/app/${project.id}/${tool.href}`
+                    }
+                  />
+                ))}
+              </DashboardStagger>
+            </div>
+          ))}
+        </div>
       </div>
 
       <ProjectHealthMini metrics={healthMetrics} />
