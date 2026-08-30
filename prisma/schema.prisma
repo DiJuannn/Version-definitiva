@@ -57,6 +57,8 @@ model Invite {
   acceptedAt     DateTime?
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
 }
 
 model SiteContent {
@@ -87,6 +89,8 @@ model ServiceItem {
   order         Int     @default(0)
 
   siteContent SiteContent @relation(fields: [siteContentId], references: [id], onDelete: Cascade)
+
+  @@index([siteContentId])
 }
 
 model PortfolioItem {
@@ -103,6 +107,8 @@ model PortfolioItem {
   updatedAt     DateTime @updatedAt
 
   siteContent SiteContent @relation(fields: [siteContentId], references: [id], onDelete: Cascade)
+
+  @@index([siteContentId])
 }
 
 // El id coincide con el id de Supabase Auth (auth.users.id), no se autogenera aquí.
@@ -116,6 +122,8 @@ model User {
   updatedAt      DateTime @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId])
 }
 
 enum ProjectStatus {
@@ -156,6 +164,8 @@ model Project {
   calendarEvents    CalendarEvent[]
   scriptAnalyses    ScriptAnalysis[]
   continuityChecks  ContinuityCheck[]
+
+  @@index([organizationId])
 }
 
 model Actor {
@@ -176,6 +186,9 @@ model Actor {
   characters  Character[]
   budgetItems BudgetItem[]
   documents   Document[]
+
+  @@index([projectId])
+  @@index([personId])
 }
 
 model Character {
@@ -190,6 +203,9 @@ model Character {
   project Project          @relation(fields: [projectId], references: [id])
   actor   Actor?           @relation(fields: [actorId], references: [id])
   scenes  SceneCharacter[]
+
+  @@index([projectId])
+  @@index([actorId])
 }
 
 enum LocationCharacteristic {
@@ -229,6 +245,8 @@ model Location {
   scenes       Scene[]
   budgetItems  BudgetItem[]
   documents    Document[]
+
+  @@index([organizationId])
 }
 
 model ScriptFile {
@@ -240,6 +258,8 @@ model ScriptFile {
 
   project  Project          @relation(fields: [projectId], references: [id])
   analyses ScriptAnalysis[]
+
+  @@index([projectId])
 }
 
 enum ScriptAnalysisStatus {
@@ -258,6 +278,9 @@ model ScriptAnalysis {
 
   project    Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
   scriptFile ScriptFile? @relation(fields: [scriptFileId], references: [id], onDelete: SetNull)
+
+  @@index([projectId])
+  @@index([scriptFileId])
 }
 
 enum ContinuityCheckStatus {
@@ -274,6 +297,8 @@ model ContinuityCheck {
 
   project Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
   issues  ContinuityIssue[]
+
+  @@index([projectId])
 }
 
 enum ContinuityIssueStatus {
@@ -293,6 +318,8 @@ model ContinuityIssue {
   createdAt    DateTime              @default(now())
 
   check ContinuityCheck @relation(fields: [checkId], references: [id], onDelete: Cascade)
+
+  @@index([checkId])
 }
 
 enum IntExt {
@@ -332,6 +359,9 @@ model Scene {
   crewMembers       SceneCrewMember[]
   shootingDayScenes ShootingDayScene[]
   shots             Shot[]
+
+  @@index([projectId])
+  @@index([locationId])
 }
 
 model SceneCharacter {
@@ -342,6 +372,7 @@ model SceneCharacter {
   character Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
 
   @@id([sceneId, characterId])
+  @@index([characterId])
 }
 
 enum BreakdownCategory {
@@ -367,6 +398,8 @@ model BreakdownElement {
   project     Project                 @relation(fields: [projectId], references: [id])
   scenes      SceneBreakdownElement[]
   budgetItems BudgetItem[]
+
+  @@index([projectId])
 }
 
 model SceneBreakdownElement {
@@ -378,6 +411,7 @@ model SceneBreakdownElement {
   breakdownElement BreakdownElement @relation(fields: [breakdownElementId], references: [id], onDelete: Cascade)
 
   @@id([sceneId, breakdownElementId])
+  @@index([breakdownElementId])
 }
 
 model CrewMember {
@@ -396,6 +430,9 @@ model CrewMember {
   person      Person?           @relation(fields: [personId], references: [id])
   scenes      SceneCrewMember[]
   budgetItems BudgetItem[]
+
+  @@index([projectId])
+  @@index([personId])
 }
 
 model SceneCrewMember {
@@ -406,6 +443,7 @@ model SceneCrewMember {
   crewMember CrewMember @relation(fields: [crewMemberId], references: [id], onDelete: Cascade)
 
   @@id([sceneId, crewMemberId])
+  @@index([crewMemberId])
 }
 
 model ShootingDay {
@@ -422,6 +460,8 @@ model ShootingDay {
   tasks               Task[]
   itemReservations    ItemReservation[]
   vehicleReservations VehicleReservation[]
+
+  @@index([projectId])
 }
 
 enum InventoryItemCategory {
@@ -447,6 +487,8 @@ model InventoryItem {
 
   organization Organization      @relation(fields: [organizationId], references: [id])
   reservations ItemReservation[]
+
+  @@index([organizationId])
 }
 
 model ItemReservation {
@@ -459,6 +501,7 @@ model ItemReservation {
   shootingDay   ShootingDay   @relation(fields: [shootingDayId], references: [id], onDelete: Cascade)
 
   @@unique([inventoryItemId, shootingDayId])
+  @@index([shootingDayId])
 }
 
 model Vehicle {
@@ -473,6 +516,8 @@ model Vehicle {
 
   organization Organization         @relation(fields: [organizationId], references: [id])
   reservations VehicleReservation[]
+
+  @@index([organizationId])
 }
 
 model VehicleReservation {
@@ -484,6 +529,7 @@ model VehicleReservation {
   shootingDay ShootingDay @relation(fields: [shootingDayId], references: [id], onDelete: Cascade)
 
   @@unique([vehicleId, shootingDayId])
+  @@index([shootingDayId])
 }
 
 model ShootingDayScene {
@@ -497,6 +543,7 @@ model ShootingDayScene {
   scene       Scene       @relation(fields: [sceneId], references: [id], onDelete: Cascade)
 
   @@unique([shootingDayId, sceneId])
+  @@index([sceneId])
 }
 
 model CallSheet {
@@ -533,6 +580,8 @@ model Shot {
 
   scene      Scene             @relation(fields: [sceneId], references: [id], onDelete: Cascade)
   storyboard StoryboardFrame[]
+
+  @@index([sceneId])
 }
 
 model StoryboardFrame {
@@ -545,6 +594,8 @@ model StoryboardFrame {
   updatedAt   DateTime @updatedAt
 
   shot Shot @relation(fields: [shotId], references: [id], onDelete: Cascade)
+
+  @@index([shotId])
 }
 
 model BudgetCategory {
@@ -557,6 +608,8 @@ model BudgetCategory {
 
   project Project      @relation(fields: [projectId], references: [id])
   items   BudgetItem[]
+
+  @@index([projectId])
 }
 
 model BudgetItem {
@@ -579,6 +632,12 @@ model BudgetItem {
   location         Location?         @relation(fields: [locationId], references: [id])
   crewMember       CrewMember?       @relation(fields: [crewMemberId], references: [id])
   breakdownElement BreakdownElement? @relation(fields: [breakdownElementId], references: [id])
+
+  @@index([categoryId])
+  @@index([actorId])
+  @@index([locationId])
+  @@index([crewMemberId])
+  @@index([breakdownElementId])
 }
 
 model Document {
@@ -596,6 +655,11 @@ model Document {
   actor    Actor?    @relation(fields: [actorId], references: [id])
   location Location? @relation(fields: [locationId], references: [id])
   person   Person?   @relation(fields: [personId], references: [id])
+
+  @@index([projectId])
+  @@index([actorId])
+  @@index([locationId])
+  @@index([personId])
 }
 
 enum PersonAvailabilityStatus {
@@ -624,6 +688,8 @@ model Person {
   actors       Actor[]
   crewMembers  CrewMember[]
   documents    Document[]
+
+  @@index([organizationId])
 }
 
 model PersonAvailability {
@@ -671,6 +737,10 @@ model Task {
   project      Project?      @relation(fields: [projectId], references: [id], onDelete: Cascade)
   shootingDay  ShootingDay?  @relation(fields: [shootingDayId], references: [id], onDelete: Cascade)
   comments     TaskComment[]
+
+  @@index([organizationId])
+  @@index([projectId])
+  @@index([shootingDayId])
 }
 
 model TaskComment {
@@ -680,6 +750,8 @@ model TaskComment {
   createdAt DateTime @default(now())
 
   task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
 }
 
 model ChecklistTemplate {
@@ -690,6 +762,8 @@ model ChecklistTemplate {
 
   organization Organization            @relation(fields: [organizationId], references: [id])
   items        ChecklistTemplateItem[]
+
+  @@index([organizationId])
 }
 
 model ChecklistTemplateItem {
@@ -699,6 +773,8 @@ model ChecklistTemplateItem {
   order      Int    @default(0)
 
   template ChecklistTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@index([templateId])
 }
 
 enum CalendarEventType {
@@ -722,4 +798,7 @@ model CalendarEvent {
 
   organization Organization @relation(fields: [organizationId], references: [id])
   project      Project?     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+  @@index([projectId])
 }
