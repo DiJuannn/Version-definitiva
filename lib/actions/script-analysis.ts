@@ -12,16 +12,34 @@ function cleanText(value: string | undefined | null): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
-export async function analyzeScript(projectId: string, scriptFileId: string) {
+export type AnalyzeScriptState = { error: string } | undefined;
+
+export async function analyzeScript(
+  projectId: string,
+  scriptFileId: string,
+  // Firma exigida por useActionState (prevState, formData), sin usarlos.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _prevState: AnalyzeScriptState,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _formData: FormData,
+): Promise<AnalyzeScriptState> {
   const project = await getProjectForCurrentUser(projectId);
-  if (!project) return;
+  if (!project) return { error: "No tienes acceso a este proyecto." };
 
   const scriptFile = await prisma.scriptFile.findFirst({
     where: { id: scriptFileId, projectId },
   });
-  if (!scriptFile) return;
+  if (!scriptFile) return { error: "No se encontró el guion. Recarga la página." };
 
-  const proposal = await analyzeScriptPdf(scriptFile.fileUrl);
+  let proposal;
+  try {
+    proposal = await analyzeScriptPdf(scriptFile.fileUrl);
+  } catch {
+    return {
+      error:
+        "La IA no está disponible en este momento. Tus datos están seguros — inténtalo de nuevo en un rato.",
+    };
+  }
 
   const analysis = await prisma.scriptAnalysis.create({
     data: {

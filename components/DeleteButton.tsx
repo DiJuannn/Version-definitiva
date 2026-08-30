@@ -1,10 +1,13 @@
 "use client";
 
-import type { ComponentPropsWithoutRef } from "react";
+import { useEffect, useState, type ComponentPropsWithoutRef } from "react";
 
+// Confirmación en dos clics en vez de window.confirm(): el diálogo nativo no
+// es fiable en todos los navegadores/webviews móviles (puede quedar
+// deshabilitado o no aparecer), lo que hacía que "Eliminar" pareciera no
+// hacer nada. Este patrón funciona igual en cualquier navegador.
 export function DeleteButton({
   children = "Eliminar",
-  confirmMessage = "¿Seguro que quieres eliminarlo? No se puede deshacer.",
   className,
   ...rest
 }: {
@@ -12,16 +15,31 @@ export function DeleteButton({
   confirmMessage?: string;
   className?: string;
 } & Omit<ComponentPropsWithoutRef<"button">, "type" | "onClick" | "children" | "className">) {
+  const [confirming, setConfirming] = useState(false);
+
+  useEffect(() => {
+    if (!confirming) return;
+    const timer = setTimeout(() => setConfirming(false), 3000);
+    return () => clearTimeout(timer);
+  }, [confirming]);
+
+  const baseClassName =
+    className ??
+    "font-mono text-[11px] tracking-widest text-muted uppercase transition hover:text-accent active:scale-[0.97]";
+
+  if (confirming) {
+    return (
+      <button type="submit" className={`${baseClassName} text-accent`} {...rest}>
+        ¿Seguro? Confirmar
+      </button>
+    );
+  }
+
   return (
     <button
-      type="submit"
-      onClick={(e) => {
-        if (!confirm(confirmMessage)) e.preventDefault();
-      }}
-      className={
-        className ??
-        "font-mono text-[11px] tracking-widest text-muted uppercase transition hover:text-accent active:scale-[0.97]"
-      }
+      type="button"
+      onClick={() => setConfirming(true)}
+      className={baseClassName}
       {...rest}
     >
       {children}

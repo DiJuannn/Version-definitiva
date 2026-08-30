@@ -8,9 +8,18 @@ import { analyzeContinuity, type ContinuitySceneInput } from "@/lib/mistral";
 import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
 import { ContinuityIssueStatus } from "@/lib/generated/prisma";
 
-export async function runContinuityCheck(projectId: string) {
+export type RunContinuityState = { error: string } | undefined;
+
+export async function runContinuityCheck(
+  projectId: string,
+  // Firma exigida por useActionState (prevState, formData), sin usarlos.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _prevState: RunContinuityState,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _formData: FormData,
+): Promise<RunContinuityState> {
   const project = await getProjectForCurrentUser(projectId);
-  if (!project) return;
+  if (!project) return { error: "No tienes acceso a este proyecto." };
 
   const scenes = await prisma.scene.findMany({
     where: { projectId },
@@ -21,7 +30,9 @@ export async function runContinuityCheck(projectId: string) {
     },
   });
 
-  if (scenes.length === 0) return;
+  if (scenes.length === 0) {
+    return { error: "Añade escenas antes de revisar la continuidad." };
+  }
 
   const ordered = [...scenes].sort(
     (a, b) => (a.storyOrder ?? a.order) - (b.storyOrder ?? b.order),
@@ -42,7 +53,15 @@ export async function runContinuityCheck(projectId: string) {
     action: scene.action,
   }));
 
-  const issues = await analyzeContinuity(payload);
+  let issues;
+  try {
+    issues = await analyzeContinuity(payload);
+  } catch {
+    return {
+      error:
+        "La IA no está disponible en este momento. Tus datos están seguros — inténtalo de nuevo en un rato.",
+    };
+  }
 
   const check = await prisma.continuityCheck.create({
     data: {

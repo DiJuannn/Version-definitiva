@@ -5,33 +5,53 @@ import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { deleteProjectFile, uploadProjectFile } from "@/lib/storage";
 
+export type UploadScriptState = { error: string } | undefined;
+
 // Un único guion "actual" por proyecto: subir uno nuevo reemplaza al
 // anterior en vez de acumularlo, ya que nada en la app usa un historial de
 // versiones de guion todavía.
-export async function uploadScript(projectId: string, formData: FormData) {
+export async function uploadScript(
+  projectId: string,
+  _prevState: UploadScriptState,
+  formData: FormData,
+): Promise<UploadScriptState> {
   const project = await getProjectForCurrentUser(projectId);
-  if (!project) return;
+  if (!project) return { error: "No tienes acceso a este proyecto." };
 
   const file = formData.get("file");
-  if (!(file instanceof File) || file.size === 0) return;
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: "Selecciona un archivo antes de subir." };
+  }
 
   const uploaded = await uploadProjectFile(projectId, file);
-  if (!uploaded) return;
+  if (!uploaded) {
+    return {
+      error: "No se pudo subir el archivo. Comprueba tu conexión e inténtalo de nuevo.",
+    };
+  }
 
   const previous = await prisma.scriptFile.findMany({ where: { projectId } });
 
-  await prisma.scriptFile.create({
-    data: { projectId, fileUrl: uploaded.url, fileName: uploaded.name },
-  });
+  try {
+    await prisma.scriptFile.create({
+      data: { projectId, fileUrl: uploaded.url, fileName: uploaded.name },
+    });
+  } catch {
+    return { error: "No se pudo guardar el guion. Inténtalo de nuevo." };
+  }
 
   if (previous.length > 0) {
     await prisma.scriptFile.deleteMany({
       where: { id: { in: previous.map((p) => p.id) } },
     });
-    await Promise.all(previous.map((p) => deleteProjectFile(p.fileUrl)));
+    // allSettled a propósito: el guion nuevo ya quedó guardado (lo
+    // importante), así que si falla borrar el archivo antiguo del
+    // almacenamiento no debe tirar abajo toda la subida.
+    await Promise.allSettled(previous.map((p) => deleteProjectFile(p.fileUrl)));
   }
 
   revalidatePath(`/app/${projectId}/guion`);
+  return undefined;
 }
 
 export async function deleteScriptFile(
