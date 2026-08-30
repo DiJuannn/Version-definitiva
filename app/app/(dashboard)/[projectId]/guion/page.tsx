@@ -41,7 +41,14 @@ export default async function GuionPage({
       prisma.scene.findMany({
         where: { projectId },
         orderBy: [{ order: "asc" }, { number: "asc" }],
-        include: { location: true, _count: { select: { characters: true } } },
+        select: {
+          id: true,
+          number: true,
+          intExt: true,
+          dayPart: true,
+          location: { select: { name: true } },
+          _count: { select: { characters: true } },
+        },
       }),
       prisma.scriptAnalysis.findMany({
         where: { projectId, status: "PENDING" },

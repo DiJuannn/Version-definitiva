@@ -27,17 +27,25 @@ export default async function DocumentosPage({
       prisma.document.findMany({
         where: { projectId },
         orderBy: { uploadedAt: "desc" },
-        include: { actor: true, location: true },
+        include: {
+          actor: { select: { name: true } },
+          location: { select: { name: true } },
+        },
       }),
-      prisma.actor.findMany({ where: { projectId }, orderBy: { name: "asc" } }),
+      prisma.actor.findMany({
+        where: { projectId },
+        orderBy: { name: "asc" },
+        select: { id: true, name: true },
+      }),
       prisma.location.findMany({
         where: { organizationId: project.organizationId },
         orderBy: { name: "asc" },
+        select: { id: true, name: true },
       }),
       prisma.shootingDay.findMany({
         where: { projectId },
         orderBy: { date: "asc" },
-        include: { callSheet: true },
+        select: { id: true, date: true, callSheet: { select: { id: true } } },
       }),
     ]);
 

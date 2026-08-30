@@ -38,11 +38,11 @@ export default async function PersonDetailPage({
     }),
     prisma.actor.findMany({
       where: { personId },
-      include: { project: true },
+      include: { project: { select: { name: true } } },
     }),
     prisma.crewMember.findMany({
       where: { personId },
-      include: { project: true },
+      include: { project: { select: { name: true } } },
     }),
   ]);
 

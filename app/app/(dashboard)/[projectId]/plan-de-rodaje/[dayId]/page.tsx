@@ -37,7 +37,13 @@ export default async function ShootingDayDetailPage({
       prisma.scene.findMany({
         where: { projectId },
         orderBy: [{ order: "asc" }, { number: "asc" }],
-        include: { location: true },
+        select: {
+          id: true,
+          number: true,
+          intExt: true,
+          dayPart: true,
+          location: { select: { name: true } },
+        },
       }),
       prisma.inventoryItem.findMany({
         where: { organizationId: project.organizationId },

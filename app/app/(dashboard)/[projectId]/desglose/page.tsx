@@ -38,6 +38,7 @@ export default async function DesglosePage({
     prisma.person.findMany({
       where: { organizationId: project.organizationId },
       orderBy: { firstName: "asc" },
+      select: { id: true, firstName: true, lastName: true },
     }),
   ]);
 

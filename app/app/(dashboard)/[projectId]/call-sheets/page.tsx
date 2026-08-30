@@ -18,7 +18,7 @@ export default async function CallSheetsPage({
   const days = await prisma.shootingDay.findMany({
     where: { projectId },
     orderBy: { date: "asc" },
-    include: { callSheet: true, _count: { select: { scenes: true } } },
+    include: { callSheet: { select: { id: true } }, _count: { select: { scenes: true } } },
   });
 
   return (

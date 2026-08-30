@@ -28,15 +28,16 @@ export default async function PersonajesPage({
     prisma.actor.findMany({
       where: { projectId },
       orderBy: { createdAt: "desc" },
+      select: { id: true, name: true, email: true, phone: true, availability: true },
     }),
     prisma.character.findMany({
       where: { projectId },
       orderBy: { createdAt: "desc" },
-      include: { actor: true },
     }),
     prisma.person.findMany({
       where: { organizationId: project.organizationId },
       orderBy: { firstName: "asc" },
+      select: { id: true, firstName: true, lastName: true },
     }),
   ]);
 

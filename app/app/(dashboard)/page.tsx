@@ -55,6 +55,7 @@ export default async function DashboardPage() {
         where: { organizationId },
         orderBy: { updatedAt: "desc" },
         take: 6,
+        select: { id: true, name: true, status: true, budgetTarget: true },
       }),
       prisma.project.count({
         where: { organizationId, status: { not: ProjectStatus.FINISHED } },
@@ -63,22 +64,43 @@ export default async function DashboardPage() {
         where: { project: { organizationId }, date: { gte: now } },
         orderBy: { date: "asc" },
         take: 5,
-        include: { project: true, scenes: { include: { scene: true } } },
+        select: {
+          id: true,
+          date: true,
+          projectId: true,
+          project: { select: { name: true } },
+        },
       }),
       prisma.task.findMany({
         where: { organizationId, status: { not: TaskStatus.DONE } },
         orderBy: [{ dueDate: "asc" }, { createdAt: "desc" }],
         take: 6,
-        include: { project: true },
+        select: {
+          id: true,
+          title: true,
+          project: { select: { name: true } },
+        },
       }),
       prisma.calendarEvent.findMany({
         where: { organizationId, date: { gte: now, lte: twoWeeksOut } },
         orderBy: { date: "asc" },
-        include: { project: true },
+        select: {
+          id: true,
+          title: true,
+          type: true,
+          date: true,
+          project: { select: { name: true } },
+        },
       }),
+      // Solo se necesita la suma total, no cada elemento entero —
+      // seleccionar únicamente los 3 campos que entran en el cálculo evita
+      // traer notas, ids de vínculos y timestamps de cada línea de gasto de
+      // toda la organización solo para este número del dashboard.
       prisma.budgetCategory.findMany({
         where: { project: { organizationId } },
-        include: { items: true },
+        select: {
+          items: { select: { quantity: true, unitPrice: true, taxRate: true } },
+        },
       }),
     ]);
 

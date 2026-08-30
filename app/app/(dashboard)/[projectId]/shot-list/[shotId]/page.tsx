@@ -18,7 +18,7 @@ export default async function ShotDetailPage({
 
   const shot = await prisma.shot.findFirst({
     where: { id: shotId, scene: { projectId } },
-    include: { scene: true },
+    include: { scene: { select: { number: true } } },
   });
   if (!shot) notFound();
 

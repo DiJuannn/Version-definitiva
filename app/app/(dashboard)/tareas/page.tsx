@@ -29,7 +29,7 @@ export default async function TareasPage() {
     prisma.task.findMany({
       where: { organizationId, status: { not: "DONE" } },
       orderBy: [{ dueDate: "asc" }, { createdAt: "desc" }],
-      include: { project: true },
+      include: { project: { select: { name: true } } },
     }),
     prisma.project.findMany({ where: { organizationId }, orderBy: { name: "asc" } }),
     prisma.checklistTemplate.findMany({

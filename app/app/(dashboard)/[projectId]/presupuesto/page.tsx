@@ -34,19 +34,34 @@ export default async function PresupuestoPage({
         include: {
           items: {
             orderBy: { createdAt: "asc" },
-            include: { actor: true, location: true, crewMember: true, breakdownElement: true },
+            include: {
+              actor: { select: { name: true } },
+              location: { select: { name: true } },
+              crewMember: { select: { name: true } },
+              breakdownElement: { select: { name: true } },
+            },
           },
         },
       }),
-      prisma.actor.findMany({ where: { projectId }, orderBy: { name: "asc" } }),
+      prisma.actor.findMany({
+        where: { projectId },
+        orderBy: { name: "asc" },
+        select: { id: true, name: true },
+      }),
       prisma.location.findMany({
         where: { organizationId: project.organizationId },
         orderBy: { name: "asc" },
+        select: { id: true, name: true },
       }),
-      prisma.crewMember.findMany({ where: { projectId }, orderBy: { name: "asc" } }),
+      prisma.crewMember.findMany({
+        where: { projectId },
+        orderBy: { name: "asc" },
+        select: { id: true, name: true },
+      }),
       prisma.breakdownElement.findMany({
         where: { projectId },
         orderBy: { name: "asc" },
+        select: { id: true, name: true },
       }),
     ]);
 
