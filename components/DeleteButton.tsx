@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ComponentPropsWithoutRef } from "react";
+import { useFormStatus } from "react-dom";
 
 // Confirmación en dos clics en vez de window.confirm(): el diálogo nativo no
 // es fiable en todos los navegadores/webviews móviles (puede quedar
@@ -16,6 +17,7 @@ export function DeleteButton({
   className?: string;
 } & Omit<ComponentPropsWithoutRef<"button">, "type" | "onClick" | "children" | "className">) {
   const [confirming, setConfirming] = useState(false);
+  const { pending } = useFormStatus();
 
   useEffect(() => {
     if (!confirming) return;
@@ -26,6 +28,22 @@ export function DeleteButton({
   const baseClassName =
     className ??
     "font-mono text-[11px] tracking-widest text-muted uppercase transition hover:text-accent active:scale-[0.97]";
+
+  // Borrar tarda un momento real (servidor + revalidar) — sin este aviso,
+  // el botón se queda quieto y parece que el clic no hizo nada.
+  if (pending) {
+    return (
+      <button
+        type="submit"
+        disabled
+        className={`${baseClassName} inline-flex items-center gap-1.5 opacity-70`}
+        {...rest}
+      >
+        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current" />
+        Eliminando…
+      </button>
+    );
+  }
 
   if (confirming) {
     return (
