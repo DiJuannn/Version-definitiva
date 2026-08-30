@@ -134,7 +134,7 @@ export function ProjectRoadmap({ steps }: { steps: RoadmapStep[] }) {
             <p className="font-display text-xl font-bold uppercase">
               Todo listo para rodar
             </p>
-            <p className="mt-2 font-mono text-sm text-muted">
+            <p className="mt-2 font-sans text-sm text-muted">
               Has completado los pasos clave de preproducción. Revisa los
               detalles cuando quieras desde el mapa de abajo.
             </p>
@@ -147,7 +147,7 @@ export function ProjectRoadmap({ steps }: { steps: RoadmapStep[] }) {
             <p className="mt-1 font-display text-xl font-bold uppercase">
               {current!.title}
             </p>
-            <p className="mt-2 font-mono text-sm text-muted">
+            <p className="mt-2 font-sans text-sm text-muted">
               {current!.instruction}
             </p>
             <p className="mt-1 font-mono text-xs text-muted">{current!.detail}</p>

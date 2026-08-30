@@ -15,7 +15,7 @@ export function EmptyState({
     <div className="mt-10 border border-dashed border-line p-8 text-center">
       <p className="font-display text-sm font-bold uppercase">{title}</p>
       {description && (
-        <p className="mt-2 font-mono text-sm text-muted">{description}</p>
+        <p className="mt-2 font-sans text-sm text-muted">{description}</p>
       )}
       {actionLabel && actionHref && (
         <Link

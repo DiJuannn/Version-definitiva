@@ -6,6 +6,7 @@ import { AjoloteLogo } from "@/components/AjoloteLogo";
 import { StatusPill } from "@/components/StatusPill";
 import { DashboardReveal, DashboardStagger } from "@/components/DashboardMotion";
 import { createProject } from "@/lib/actions/projects";
+import { getProjectOverview } from "@/lib/project-roadmap";
 
 function currency(value: number) {
   return value.toLocaleString("es-ES", { style: "currency", currency: "EUR" });
@@ -110,94 +111,163 @@ export default async function DashboardPage() {
     .slice(0, 6);
 
   const nextShoot = upcomingShootingDays[0];
+  const heroProject = recentProjects[0] ?? null;
+  const heroOverview = heroProject
+    ? await getProjectOverview(
+        heroProject.id,
+        heroProject.budgetTarget !== null ? Number(heroProject.budgetTarget) : null,
+      )
+    : null;
+  const heroDone = heroOverview?.steps.filter((s) => s.isDone).length ?? 0;
+  const heroTotal = heroOverview?.steps.length ?? 0;
+  const heroCurrent = heroOverview?.steps.find((s) => !s.isDone) ?? null;
+  const heroProgressPct = heroTotal > 0 ? Math.round((heroDone / heroTotal) * 100) : 0;
 
   return (
     <div>
-      <div className="flex items-center gap-4">
-        <AjoloteLogo className="h-11 w-auto shrink-0" />
+      <div className="flex items-center gap-5">
+        <AjoloteLogo className="h-16 w-auto shrink-0 sm:h-20" priority />
         <div>
           <p className="font-mono text-xs tracking-widest text-accent uppercase">
             {greeting(now.getHours())}
           </p>
-          <h1 className="mt-0.5 font-display text-2xl font-bold uppercase sm:text-3xl">
+          <h1 className="mt-0.5 font-display text-3xl font-bold uppercase sm:text-4xl">
             {profile.organization.name}
           </h1>
         </div>
       </div>
 
-      <DashboardStagger className="mt-6 grid gap-3 sm:mt-10 sm:grid-cols-3 sm:gap-4">
-        <div className="border border-line p-4 transition-colors hover:border-accent/50 sm:p-5">
-          <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
-            Proyectos activos
+      {!heroProject ? (
+        <DashboardReveal className="mt-8 border border-accent p-8 text-center sm:p-12">
+          <p className="font-mono text-xs tracking-widest text-accent uppercase">
+            Empieza aquí
           </p>
-          <p className="mt-2 font-display text-3xl font-bold">
-            {activeProjectsCount}
+          <h2 className="mt-2 font-display text-2xl font-bold uppercase sm:text-3xl">
+            Crea tu primer proyecto
+          </h2>
+          <p className="mx-auto mt-3 max-w-sm font-sans text-sm text-muted">
+            Todo en Taller —guion, presupuesto, plan de rodaje— cuelga de un
+            proyecto. Empieza dándole un nombre.
           </p>
-        </div>
-
-        <div className="border border-line p-4 transition-colors hover:border-accent/50 sm:p-5">
-          <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
-            Próximo rodaje
-          </p>
-          {nextShoot ? (
-            <Link href={`/app/${nextShoot.projectId}/plan-de-rodaje/${nextShoot.id}`}>
-              <p className="mt-2 font-display text-3xl font-bold text-accent">
-                {relativeDay(nextShoot.date, now)}
+          <form
+            action={createProject}
+            className="mx-auto mt-6 flex max-w-sm flex-col gap-2 sm:flex-row"
+          >
+            <input
+              name="name"
+              placeholder="Nombre del proyecto"
+              required
+              autoFocus
+              className="w-full border border-line bg-transparent px-3 py-2.5 text-sm outline-none transition-colors focus:border-accent"
+            />
+            <button
+              type="submit"
+              className="shrink-0 rounded-full bg-accent px-6 py-2.5 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+            >
+              Crear
+            </button>
+          </form>
+        </DashboardReveal>
+      ) : (
+        <DashboardReveal className="mt-8 border border-accent p-6 sm:p-8">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="min-w-0">
+              <p className="font-mono text-xs tracking-widest text-accent uppercase">
+                Continuar
               </p>
+              <h2 className="mt-1 truncate font-display text-2xl font-bold uppercase sm:text-3xl">
+                {heroProject.name}
+              </h2>
               <p className="mt-1 font-mono text-xs text-muted">
-                {nextShoot.project.name} · {nextShoot.scenes.length} escena
-                {nextShoot.scenes.length === 1 ? "" : "s"}
+                {heroCurrent
+                  ? `Siguiente: ${heroCurrent.title}`
+                  : "Todos los pasos clave completados"}
+                {" · "}
+                {heroDone}/{heroTotal} pasos
               </p>
+            </div>
+            <Link
+              href={`/app/${heroProject.id}`}
+              className="shrink-0 rounded-full bg-accent px-6 py-2.5 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+            >
+              Continuar →
             </Link>
-          ) : (
-            <p className="mt-2 font-mono text-sm text-muted">
+          </div>
+          <div className="mt-5 h-1.5 w-full overflow-hidden rounded-full bg-line">
+            <div
+              className="h-full rounded-full bg-accent transition-[width] duration-700"
+              style={{ width: `${heroProgressPct}%` }}
+            />
+          </div>
+        </DashboardReveal>
+      )}
+
+      <div className="mt-6 flex flex-wrap items-center gap-x-8 gap-y-3 border-y border-line py-3 sm:mt-8">
+        <div className="flex items-baseline gap-2">
+          <span className="font-display text-xl font-bold">{activeProjectsCount}</span>
+          <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+            Proyectos activos
+          </span>
+        </div>
+        {nextShoot ? (
+          <Link
+            href={`/app/${nextShoot.projectId}/plan-de-rodaje/${nextShoot.id}`}
+            className="flex items-baseline gap-2 transition-colors hover:text-accent"
+          >
+            <span className="font-display text-xl font-bold text-accent">
+              {relativeDay(nextShoot.date, now)}
+            </span>
+            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+              Próximo rodaje · {nextShoot.project.name}
+            </span>
+          </Link>
+        ) : (
+          <div className="flex items-baseline gap-2">
+            <span className="font-display text-xl font-bold text-muted">—</span>
+            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
               Sin rodajes planificados
-            </p>
-          )}
-        </div>
-
-        <div className="border border-line p-4 transition-colors hover:border-accent/50 sm:p-5">
-          <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
+            </span>
+          </div>
+        )}
+        <div className="flex items-baseline gap-2">
+          <span className="font-display text-xl font-bold">{currency(budgetTotal)}</span>
+          <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
             Presupuesto general
-          </p>
-          <p className="mt-2 font-display text-3xl font-bold">
-            {currency(budgetTotal)}
-          </p>
-          <p className="mt-1 font-mono text-xs text-muted">
-            Suma de todos los proyectos
-          </p>
+          </span>
         </div>
-      </DashboardStagger>
+      </div>
 
-      <DashboardReveal className="mt-8 sm:mt-10" delay={0.1}>
+      <DashboardReveal className="mt-8" delay={0.1}>
         <div className="flex items-center justify-between">
           <p className="font-mono text-[10px] tracking-widest text-accent uppercase">
             Proyectos recientes
           </p>
           <div className="flex items-center gap-4">
-            <details className="group relative">
-              <summary className="cursor-pointer list-none font-mono text-[10px] tracking-widest text-muted uppercase hover:text-accent [&::-webkit-details-marker]:hidden">
-                + Nuevo proyecto
-              </summary>
-              <form
-                action={createProject}
-                className="absolute right-0 z-10 mt-2 flex w-64 gap-2 border border-line bg-bg p-3"
-              >
-                <input
-                  name="name"
-                  placeholder="Nombre del proyecto"
-                  required
-                  autoFocus
-                  className="w-full border border-line bg-transparent px-2 py-1.5 text-xs outline-none transition-colors focus:border-accent"
-                />
-                <button
-                  type="submit"
-                  className="shrink-0 rounded-full bg-fg px-4 py-1.5 font-mono text-[10px] tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+            {recentProjects.length > 0 && (
+              <details className="group relative">
+                <summary className="cursor-pointer list-none font-mono text-[10px] tracking-widest text-muted uppercase hover:text-accent [&::-webkit-details-marker]:hidden">
+                  + Nuevo proyecto
+                </summary>
+                <form
+                  action={createProject}
+                  className="absolute right-0 z-10 mt-2 flex w-64 gap-2 border border-line bg-bg p-3"
                 >
-                  Crear
-                </button>
-              </form>
-            </details>
+                  <input
+                    name="name"
+                    placeholder="Nombre del proyecto"
+                    required
+                    autoFocus
+                    className="w-full border border-line bg-transparent px-2 py-1.5 text-xs outline-none transition-colors focus:border-accent"
+                  />
+                  <button
+                    type="submit"
+                    className="shrink-0 rounded-full bg-fg px-4 py-1.5 font-mono text-[10px] tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+                  >
+                    Crear
+                  </button>
+                </form>
+              </details>
+            )}
             <Link
               href="/app/proyectos"
               className="font-mono text-[10px] tracking-widest text-muted uppercase hover:text-accent"
@@ -206,13 +276,8 @@ export default async function DashboardPage() {
             </Link>
           </div>
         </div>
-        {recentProjects.length === 0 ? (
-          <p className="mt-4 font-mono text-sm text-muted">
-            Todavía no hay proyectos. Pulsa &ldquo;+ Nuevo proyecto&rdquo;
-            arriba para crear el primero.
-          </p>
-        ) : (
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {recentProjects.length > 0 && (
+          <DashboardStagger className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {recentProjects.map((project) => (
               <Link
                 key={project.id}
@@ -227,7 +292,7 @@ export default async function DashboardPage() {
                 </div>
               </Link>
             ))}
-          </div>
+          </DashboardStagger>
         )}
       </DashboardReveal>
 

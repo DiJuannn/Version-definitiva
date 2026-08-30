@@ -38,3 +38,13 @@ export async function uploadProjectFile(
   const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
   return { url: data.publicUrl, name: file.name };
 }
+
+export async function deleteProjectFile(url: string) {
+  const marker = `/object/public/${BUCKET}/`;
+  const index = url.indexOf(marker);
+  if (index === -1) return;
+
+  const path = url.slice(index + marker.length);
+  const supabase = createAdminClient();
+  await supabase.storage.from(BUCKET).remove([path]);
+}

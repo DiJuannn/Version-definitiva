@@ -13,26 +13,44 @@ function MiniRing({ ratio }: { ratio: number | null }) {
     return () => cancelAnimationFrame(id);
   }, []);
 
-  const clamped = ratio === null ? 0 : Math.min(ratio, 1);
-  const offset = CIRCUMFERENCE * (1 - (mounted ? clamped : 0));
-
-  return (
-    <svg viewBox="0 0 52 52" className="h-11 w-11 -rotate-90">
-      <circle cx="26" cy="26" r={RADIUS} fill="none" stroke="var(--line)" strokeWidth="4" />
-      {ratio !== null && (
+  // ratio === null significa "todavía no aplica" (p.ej. 0 personajes en
+  // total), no "0% completado" — un anillo relleno al 0% diría "vas mal"
+  // cuando en realidad es "aún no has empezado". Se distingue con un
+  // trazo discontinuo en vez de un relleno real.
+  if (ratio === null) {
+    return (
+      <svg viewBox="0 0 52 52" className="h-11 w-11">
         <circle
           cx="26"
           cy="26"
           r={RADIUS}
           fill="none"
-          stroke="var(--accent)"
+          stroke="var(--line)"
           strokeWidth="4"
-          strokeLinecap="round"
-          strokeDasharray={CIRCUMFERENCE}
-          strokeDashoffset={offset}
-          style={{ transition: "stroke-dashoffset 900ms cubic-bezier(0.16,1,0.3,1)" }}
+          strokeDasharray="3 5"
         />
-      )}
+      </svg>
+    );
+  }
+
+  const clamped = Math.min(ratio, 1);
+  const offset = CIRCUMFERENCE * (1 - (mounted ? clamped : 0));
+
+  return (
+    <svg viewBox="0 0 52 52" className="h-11 w-11 -rotate-90">
+      <circle cx="26" cy="26" r={RADIUS} fill="none" stroke="var(--line)" strokeWidth="4" />
+      <circle
+        cx="26"
+        cy="26"
+        r={RADIUS}
+        fill="none"
+        stroke="var(--accent)"
+        strokeWidth="4"
+        strokeLinecap="round"
+        strokeDasharray={CIRCUMFERENCE}
+        strokeDashoffset={offset}
+        style={{ transition: "stroke-dashoffset 900ms cubic-bezier(0.16,1,0.3,1)" }}
+      />
     </svg>
   );
 }
@@ -48,8 +66,8 @@ export function ProjectHealthMini({ metrics }: { metrics: HealthMetric[] }) {
           <div key={metric.key} className="flex items-center gap-3">
             <div className="relative flex h-11 w-11 shrink-0 items-center justify-center">
               <MiniRing ratio={metric.ratio} />
-              <span className="absolute font-mono text-[9px] font-bold">
-                {metric.ratio !== null ? `${Math.round(metric.ratio * 100)}%` : "—"}
+              <span className="absolute font-mono text-[9px] font-bold text-fg data-[empty=true]:text-muted/50" data-empty={metric.ratio === null}>
+                {metric.ratio !== null ? `${Math.round(metric.ratio * 100)}%` : "N/A"}
               </span>
             </div>
             <div>

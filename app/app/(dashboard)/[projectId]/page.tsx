@@ -22,79 +22,89 @@ import {
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { updateProjectDetails } from "@/lib/actions/project-details";
 
-const TOOLS = [
+// Mismas categorías que ProjectSubNav — misma taxonomía en toda la app.
+const TOOL_GROUPS = [
   {
-    icon: <SummaryIcon />,
-    label: "Resumen",
-    href: "resumen",
-    description: "Todo el proyecto de un vistazo, como tu propio dossier.",
+    label: "Preproducción",
+    tools: [
+      {
+        icon: <DocumentIcon />,
+        label: "Guion",
+        href: "guion",
+        description: "Sube el guion y gestiona las escenas.",
+      },
+      {
+        icon: <ProjectsIcon />,
+        label: "Desglose",
+        href: "desglose",
+        description: "Catálogo de atrezzo, vestuario y equipo por escena.",
+      },
+      {
+        icon: <CastIcon />,
+        label: "Personajes",
+        href: "personajes",
+        description: "El reparto: qué actor interpreta a cada personaje.",
+      },
+      {
+        icon: <ShotListIcon />,
+        label: "Shot list",
+        href: "shot-list",
+        description: "Los planos definidos para cada escena.",
+      },
+      {
+        icon: <SceneIcon />,
+        label: "Storyboard",
+        href: "storyboard",
+        description: "Viñetas visuales de los planos clave.",
+      },
+    ],
   },
   {
-    icon: <DocumentIcon />,
-    label: "Guion",
-    href: "guion",
-    description: "Sube el guion y gestiona las escenas.",
+    label: "Producción",
+    tools: [
+      {
+        icon: <CalendarIcon />,
+        label: "Plan de rodaje",
+        href: "plan-de-rodaje",
+        description: "Agrupa las escenas en días de rodaje concretos.",
+      },
+      {
+        icon: <DocumentIcon />,
+        label: "Call sheets",
+        href: "call-sheets",
+        description: "La hoja de convocatoria de cada día de rodaje.",
+      },
+      {
+        icon: <BudgetIcon />,
+        label: "Presupuesto",
+        href: "presupuesto",
+        description: "Categorías de gasto, importes y coste total.",
+      },
+    ],
   },
   {
-    icon: <ProjectsIcon />,
-    label: "Desglose",
-    href: "desglose",
-    description: "Catálogo de atrezzo, vestuario y equipo por escena.",
-  },
-  {
-    icon: <CastIcon />,
-    label: "Personajes",
-    href: "personajes",
-    description: "El reparto: qué actor interpreta a cada personaje.",
-  },
-  {
-    icon: <LocationIcon />,
-    label: "Localizaciones",
-    href: "/app/localizaciones",
-    absolute: true,
-    description: "Todas las localizaciones de la productora.",
-  },
-  {
-    icon: <CalendarIcon />,
-    label: "Plan de rodaje",
-    href: "plan-de-rodaje",
-    description: "Agrupa las escenas en días de rodaje concretos.",
-  },
-  {
-    icon: <DocumentIcon />,
-    label: "Call sheets",
-    href: "call-sheets",
-    description: "La hoja de convocatoria de cada día de rodaje.",
-  },
-  {
-    icon: <ShotListIcon />,
-    label: "Shot list",
-    href: "shot-list",
-    description: "Los planos definidos para cada escena.",
-  },
-  {
-    icon: <SceneIcon />,
-    label: "Storyboard",
-    href: "storyboard",
-    description: "Viñetas visuales de los planos clave.",
-  },
-  {
-    icon: <BudgetIcon />,
-    label: "Presupuesto",
-    href: "presupuesto",
-    description: "Categorías de gasto, importes y coste total.",
-  },
-  {
-    icon: <TaskIcon />,
-    label: "Tareas",
-    href: "tareas",
-    description: "Pendientes del proyecto, con prioridad y fecha.",
-  },
-  {
-    icon: <DocumentIcon />,
-    label: "Documentos",
-    href: "documentos",
-    description: "Contratos, permisos y archivos del proyecto.",
+    label: "Organización",
+    tools: [
+      {
+        icon: <TaskIcon />,
+        label: "Tareas",
+        href: "tareas",
+        description: "Pendientes del proyecto, con prioridad y fecha.",
+      },
+      {
+        icon: <DocumentIcon />,
+        label: "Documentos",
+        href: "documentos",
+        description: "Contratos, permisos y archivos del proyecto.",
+      },
+      {
+        icon: <LocationIcon />,
+        label: "Localizaciones",
+        href: "/app/localizaciones",
+        absolute: true,
+        description: "Todas las localizaciones de la productora.",
+      },
+    ],
   },
 ];
 
@@ -136,32 +146,47 @@ export default async function ProjectTallerPage({
       <ProjectRoadmap steps={steps} />
 
       <div className="mt-10 border border-line p-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="font-mono text-[10px] tracking-widest text-accent uppercase">
             Herramientas
           </p>
-          <PdfLink
-            href={`/api/pdf/dossier/${project.id}`}
-            label="Descargar dossier"
-          />
-        </div>
-        <DashboardStagger className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {TOOLS.map((tool) => (
-            <ToolCard
-              key={tool.label}
-              icon={tool.icon}
-              label={tool.label}
-              description={tool.description}
-              href={
-                !tool.href
-                  ? undefined
-                  : "absolute" in tool && tool.absolute
-                    ? tool.href
-                    : `/app/${project.id}/${tool.href}`
-              }
+          <div className="flex items-center gap-4">
+            <Link
+              href={`/app/${project.id}/resumen`}
+              className="flex items-center gap-1.5 font-mono text-[10px] tracking-widest text-muted uppercase transition-colors hover:text-accent"
+            >
+              <SummaryIcon />
+              Resumen completo →
+            </Link>
+            <PdfLink
+              href={`/api/pdf/dossier/${project.id}`}
+              label="Descargar dossier"
             />
-          ))}
-        </DashboardStagger>
+          </div>
+        </div>
+
+        {TOOL_GROUPS.map((group) => (
+          <div key={group.label} className="mt-6 first:mt-4">
+            <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
+              {group.label}
+            </p>
+            <DashboardStagger className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-3">
+              {group.tools.map((tool) => (
+                <ToolCard
+                  key={tool.label}
+                  icon={tool.icon}
+                  label={tool.label}
+                  description={tool.description}
+                  href={
+                    "absolute" in tool && tool.absolute
+                      ? tool.href
+                      : `/app/${project.id}/${tool.href}`
+                  }
+                />
+              ))}
+            </DashboardStagger>
+          </div>
+        ))}
       </div>
 
       <ProjectHealthMini metrics={healthMetrics} />
