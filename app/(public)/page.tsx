@@ -1,9 +1,11 @@
+import { prisma } from "@/lib/prisma";
 import { HeroReveal } from "@/components/HeroReveal";
 import { Marquee } from "@/components/Marquee";
 import { PlaceholderFrame } from "@/components/PlaceholderFrame";
 import { Reveal } from "@/components/Reveal";
+import { PortfolioSection } from "@/components/PortfolioSection";
 
-const TAGS = [
+const DEFAULT_TAGS = [
   "FICCIÓN",
   "PUBLICIDAD",
   "DOCUMENTAL",
@@ -13,68 +15,134 @@ const TAGS = [
   "MONTAJE",
 ];
 
-const SERVICIOS = [
+const DEFAULT_SERVICIOS = [
   {
     num: "01",
     title: "Ficción",
     description: "Cortometrajes y largometrajes, del guion al montaje final.",
+    details: null as string | null,
   },
   {
     num: "02",
     title: "Publicidad",
     description: "Spots y branded content con mirada cinematográfica.",
+    details: null as string | null,
   },
   {
     num: "03",
     title: "Documental",
     description: "Historias reales, contadas con tiempo y cuidado.",
+    details: null as string | null,
   },
   {
     num: "04",
     title: "Corporativo",
     description: "Vídeo institucional, eventos y contenido de marca.",
+    details: null as string | null,
   },
 ];
 
-const PROYECTOS = [
-  { category: "Ficción", title: "Proyecto 01" },
-  { category: "Publicidad", title: "Proyecto 02" },
-  { category: "Documental", title: "Proyecto 03" },
-  { category: "Corporativo", title: "Proyecto 04" },
-  { category: "Ficción", title: "Proyecto 05" },
-  { category: "Publicidad", title: "Proyecto 06" },
-];
+export default async function PublicHomePage() {
+  const site = await prisma.siteContent.findFirst({
+    include: {
+      services: { orderBy: { order: "asc" } },
+      portfolioItems: {
+        where: { published: true },
+        orderBy: [{ featured: "desc" }, { order: "asc" }],
+      },
+    },
+  });
 
-export default function PublicHomePage() {
+  const heroTitleLines = (site?.heroTitle ?? "Historias que\nse quedan.").split(
+    "\n",
+  );
+  const heroSubtitle =
+    site?.heroSubtitle ?? "Versión definitiva — de la idea al montaje final.";
+  const tags = site?.marqueeTags.length ? site.marqueeTags : DEFAULT_TAGS;
+  const servicios =
+    site && site.services.length > 0
+      ? site.services.map((s, i) => ({
+          num: String(i + 1).padStart(2, "0"),
+          title: s.title,
+          description: s.description,
+          details: s.details,
+        }))
+      : DEFAULT_SERVICIOS;
+  const aboutQuestion = site?.aboutQuestion ?? "¿Qué historia merece contarse?";
+  const aboutText =
+    site?.aboutText ??
+    "Somos un equipo pequeño que trabaja como uno grande: desde el guion hasta la entrega final, cuidando cada decisión de imagen, ritmo y sonido.";
+  const contactEmail = site?.contactEmail ?? "hola@versiondefinitiva.com";
+  const portfolioItems = site?.portfolioItems ?? [];
+
   return (
     <>
-      <section className="relative h-screen w-full">
+      <section className="relative h-screen w-full overflow-hidden">
         <PlaceholderFrame className="absolute inset-0">
-          <div className="relative mx-auto flex h-full max-w-6xl flex-col justify-end px-6 pb-20 pt-32">
-            <HeroReveal>
-              <div className="mb-6 flex items-center gap-2 font-mono text-xs tracking-[0.25em] text-accent uppercase">
-                <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-                Productora audiovisual
-              </div>
-              <h1 className="max-w-3xl font-display text-6xl leading-[0.95] font-black tracking-tight text-fg uppercase sm:text-7xl lg:text-8xl">
-                Historias que
-                <br />
-                se quedan.
-              </h1>
-              <p className="mt-6 max-w-md font-mono text-sm text-muted">
-                Versión definitiva — de la idea al montaje final.
-              </p>
-            </HeroReveal>
-          </div>
-          <div className="absolute bottom-8 right-6 flex items-center gap-3 font-mono text-[11px] tracking-widest text-muted uppercase">
-            <span className="h-8 w-px bg-line" />
-            Scroll
+          <div className="relative flex h-full flex-col">
+            <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 pt-28 font-mono text-[11px] tracking-[0.25em] text-muted uppercase">
+              <HeroReveal>
+                <div className="flex items-center gap-2 text-accent">
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
+                  Productora audiovisual
+                </div>
+              </HeroReveal>
+              <span className="hidden sm:inline">
+                © {new Date().getFullYear()}
+              </span>
+            </div>
+
+            <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col justify-center px-6">
+              <HeroReveal>
+                <h1 className="max-w-4xl font-display text-5xl leading-[0.95] font-black tracking-tight text-fg uppercase sm:text-7xl lg:text-[7rem]">
+                  {heroTitleLines.map((line, i) => (
+                    <span key={i}>
+                      {line}
+                      {i < heroTitleLines.length - 1 && <br />}
+                    </span>
+                  ))}
+                </h1>
+                <div className="mt-6 flex flex-wrap items-center gap-x-8 gap-y-4">
+                  <p className="max-w-md font-mono text-sm text-muted">
+                    {heroSubtitle}
+                  </p>
+                  <a
+                    href="#portfolio"
+                    className="group inline-flex items-center gap-2 border-b border-accent pb-0.5 font-mono text-xs tracking-widest text-fg uppercase transition-colors hover:text-accent"
+                  >
+                    Ver portfolio
+                    <span className="transition-transform duration-300 group-hover:translate-x-1">
+                      →
+                    </span>
+                  </a>
+                </div>
+              </HeroReveal>
+            </div>
+
+            <div className="flex flex-col items-center gap-2 pb-8">
+              <span className="font-mono text-[10px] tracking-[0.3em] text-muted uppercase">
+                Scroll
+              </span>
+              <svg
+                className="h-4 w-4 animate-bounce text-muted"
+                viewBox="0 0 24 24"
+                fill="none"
+              >
+                <path
+                  d="M6 9l6 6 6-6"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
           </div>
         </PlaceholderFrame>
       </section>
 
       <div className="border-y border-line bg-bg-raised py-4">
-        <Marquee items={TAGS} />
+        <Marquee items={tags} />
       </div>
 
       <section id="servicios" className="px-6 py-28">
@@ -85,19 +153,41 @@ export default function PublicHomePage() {
             </span>
           </Reveal>
           <div className="mt-8 border-t border-line">
-            {SERVICIOS.map((servicio, i) => (
+            {servicios.map((servicio, i) => (
               <Reveal key={servicio.num} delay={i * 0.06}>
-                <div className="grid grid-cols-[3rem_1fr_2fr] items-baseline gap-6 border-b border-line py-6 sm:grid-cols-[4rem_1fr_2fr]">
-                  <span className="font-mono text-sm text-muted">
-                    {servicio.num}
-                  </span>
-                  <h3 className="font-display text-2xl font-bold uppercase sm:text-3xl">
-                    {servicio.title}
-                  </h3>
-                  <p className="font-mono text-sm text-muted">
-                    {servicio.description}
-                  </p>
-                </div>
+                {servicio.details ? (
+                  <details className="group/service border-b border-line">
+                    <summary className="grid cursor-pointer list-none grid-cols-[3rem_1fr_2fr_auto] items-baseline gap-6 py-6 pl-0 transition-all duration-300 [&::-webkit-details-marker]:hidden hover:pl-4 sm:grid-cols-[4rem_1fr_2fr_auto]">
+                      <span className="font-mono text-sm text-muted transition-colors group-hover/service:text-accent">
+                        {servicio.num}
+                      </span>
+                      <h3 className="font-display text-2xl font-bold uppercase transition-colors sm:text-3xl group-hover/service:text-accent">
+                        {servicio.title}
+                      </h3>
+                      <p className="font-mono text-sm text-muted">
+                        {servicio.description}
+                      </p>
+                      <span className="font-mono text-muted transition-transform duration-300 group-open/service:rotate-45">
+                        +
+                      </span>
+                    </summary>
+                    <p className="-mt-2 max-w-2xl pb-6 font-mono text-sm text-muted sm:pl-[calc(4rem+1.5rem)]">
+                      {servicio.details}
+                    </p>
+                  </details>
+                ) : (
+                  <div className="group grid grid-cols-[3rem_1fr_2fr] items-baseline gap-6 border-b border-line py-6 pl-0 transition-all duration-300 hover:pl-4 sm:grid-cols-[4rem_1fr_2fr]">
+                    <span className="font-mono text-sm text-muted transition-colors group-hover:text-accent">
+                      {servicio.num}
+                    </span>
+                    <h3 className="font-display text-2xl font-bold uppercase transition-colors sm:text-3xl group-hover:text-accent">
+                      {servicio.title}
+                    </h3>
+                    <p className="font-mono text-sm text-muted">
+                      {servicio.description}
+                    </p>
+                  </div>
+                )}
               </Reveal>
             ))}
           </div>
@@ -109,15 +199,11 @@ export default function PublicHomePage() {
           <Reveal>
             <p className="font-display text-3xl leading-tight font-bold uppercase sm:text-4xl">
               Cada proyecto empieza con una pregunta:{" "}
-              <span className="text-accent">¿qué historia merece contarse?</span>
+              <span className="text-accent">{aboutQuestion}</span>
             </p>
           </Reveal>
           <Reveal delay={0.1}>
-            <p className="font-mono text-sm text-muted">
-              Somos un equipo pequeño que trabaja como uno grande: desde el
-              guion hasta la entrega final, cuidando cada decisión de imagen,
-              ritmo y sonido.
-            </p>
+            <p className="font-mono text-sm text-muted">{aboutText}</p>
           </Reveal>
         </div>
       </section>
@@ -130,44 +216,7 @@ export default function PublicHomePage() {
             </span>
           </Reveal>
 
-          <Reveal delay={0.1}>
-            <PlaceholderFrame className="mt-8 aspect-[16/8] transition-transform duration-500 hover:scale-[1.01]">
-              <div className="absolute left-6 top-6 font-mono text-[11px] tracking-widest text-accent uppercase">
-                En producción
-              </div>
-              <div className="absolute bottom-6 left-6">
-                <div className="font-mono text-xs tracking-widest text-muted uppercase">
-                  Ficción
-                </div>
-                <div className="mt-1 font-display text-3xl font-bold uppercase sm:text-4xl">
-                  Proyecto destacado
-                </div>
-              </div>
-              <div className="absolute bottom-6 right-6 flex items-center gap-2 font-mono text-xs tracking-widest text-fg uppercase">
-                Explorar
-                <span className="inline-block transition-transform duration-300 group-hover:translate-x-1">
-                  →
-                </span>
-              </div>
-            </PlaceholderFrame>
-          </Reveal>
-
-          <div className="mt-6 grid gap-6 sm:grid-cols-3">
-            {PROYECTOS.map((proyecto, i) => (
-              <Reveal key={proyecto.title} delay={i * 0.06}>
-                <PlaceholderFrame className="aspect-video transition-transform duration-500 hover:scale-[1.03]">
-                  <div className="absolute inset-0 flex flex-col items-start justify-end p-5 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                    <div className="font-mono text-[11px] tracking-widest text-accent uppercase">
-                      {proyecto.category}
-                    </div>
-                    <div className="mt-1 font-display text-lg font-bold uppercase">
-                      {proyecto.title}
-                    </div>
-                  </div>
-                </PlaceholderFrame>
-              </Reveal>
-            ))}
-          </div>
+          <PortfolioSection items={portfolioItems} />
         </div>
       </section>
 
@@ -181,10 +230,10 @@ export default function PublicHomePage() {
               Hablemos.
             </h2>
             <a
-              href="mailto:hola@versiondefinitiva.com"
+              href={`mailto:${contactEmail}`}
               className="mt-8 inline-block border-b border-accent font-mono text-sm tracking-widest text-fg uppercase transition-colors hover:text-accent"
             >
-              hola@versiondefinitiva.com
+              {contactEmail}
             </a>
           </Reveal>
         </div>

@@ -7,9 +7,16 @@ export function PlaceholderFrame({
   children?: ReactNode;
   className?: string;
 }) {
+  // "relative" solo se aplica si el que llama no ha pedido ya su propia
+  // posición (p. ej. "absolute inset-0" para ocupar toda la pantalla) —
+  // Tailwind no sabe resolver ese choque de clases por sí solo.
+  const hasOwnPosition = /\b(absolute|fixed|static|sticky)\b/.test(
+    className ?? "",
+  );
+
   return (
     <div
-      className={`group relative overflow-hidden bg-bg-raised ${className ?? ""}`}
+      className={`group ${hasOwnPosition ? "" : "relative"} overflow-hidden bg-bg-raised ${className ?? ""}`}
       style={{
         backgroundImage:
           "radial-gradient(120% 140% at 15% -10%, #232320 0%, #101010 55%, #0a0a0a 100%)",

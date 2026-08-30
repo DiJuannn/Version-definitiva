@@ -21,7 +21,7 @@ export async function logIn(
     return { error: "Email o contraseña incorrectos." };
   }
 
-  redirect("/taller");
+  redirect("/app");
 }
 
 export async function signUp(
@@ -77,16 +77,82 @@ export async function signUp(
   }
 
   if (!data.session) {
-    redirect("/login?confirm=1");
+    redirect("/app/login?confirm=1");
   }
 
-  redirect("/taller");
+  redirect("/app");
+}
+
+export async function acceptInvite(
+  token: string,
+  _prevState: AuthActionState,
+  formData: FormData,
+): Promise<AuthActionState> {
+  const fullName = String(formData.get("fullName") ?? "").trim();
+  const password = String(formData.get("password") ?? "");
+
+  if (password.length < 8) {
+    return { error: "La contraseña debe tener al menos 8 caracteres." };
+  }
+
+  const invite = await prisma.invite.findUnique({ where: { token } });
+  if (!invite || invite.status !== "PENDING") {
+    return { error: "Esta invitación ya no es válida. Pide una nueva." };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.signUp({
+    email: invite.email,
+    password,
+  });
+
+  if (error) {
+    return {
+      error:
+        error.code === "user_already_exists"
+          ? "Ya existe una cuenta con ese email."
+          : "No se pudo crear la cuenta. Inténtalo de nuevo.",
+    };
+  }
+
+  if (!data.user) {
+    return { error: "No se pudo crear la cuenta. Inténtalo de nuevo." };
+  }
+
+  try {
+    await prisma.$transaction([
+      prisma.user.create({
+        data: {
+          id: data.user.id,
+          email: invite.email,
+          fullName: fullName || null,
+          organizationId: invite.organizationId,
+          role: invite.role,
+        },
+      }),
+      prisma.invite.update({
+        where: { id: invite.id },
+        data: { status: "ACCEPTED", acceptedAt: new Date() },
+      }),
+    ]);
+  } catch {
+    return {
+      error:
+        "La cuenta se creó pero hubo un problema al unirla al equipo. Contacta con soporte.",
+    };
+  }
+
+  if (!data.session) {
+    redirect("/app/login?confirm=1");
+  }
+
+  redirect("/app");
 }
 
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
-  redirect("/login");
+  redirect("/app/login");
 }
 
 export async function requestPasswordReset(
@@ -104,10 +170,10 @@ export async function requestPasswordReset(
   // No comprobamos el resultado a propósito: si el email no existe, damos
   // la misma respuesta que si existiera, para no revelar qué cuentas hay.
   await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${origin}/reset-password`,
+    redirectTo: `${origin}/app/reset-password`,
   });
 
-  redirect("/forgot-password?sent=1");
+  redirect("/app/forgot-password?sent=1");
 }
 
 export async function updatePassword(
@@ -133,5 +199,5 @@ export async function updatePassword(
     };
   }
 
-  redirect("/taller");
+  redirect("/app");
 }

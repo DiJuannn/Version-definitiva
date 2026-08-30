@@ -18,8 +18,87 @@ model Organization {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users    User[]
-  projects Project[]
+  users              User[]
+  projects           Project[]
+  tasks              Task[]
+  checklistTemplates ChecklistTemplate[]
+  calendarEvents     CalendarEvent[]
+  locations          Location[]
+  people             Person[]
+  siteContent        SiteContent?
+  invites            Invite[]
+  inventoryItems     InventoryItem[]
+  vehicles           Vehicle[]
+}
+
+enum UserRole {
+  ADMIN
+  MEMBER
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  REVOKED
+}
+
+model Invite {
+  id             String       @id @default(cuid())
+  organizationId String
+  email          String
+  role           UserRole     @default(MEMBER)
+  token          String       @unique @default(cuid())
+  status         InviteStatus @default(PENDING)
+  createdAt      DateTime     @default(now())
+  acceptedAt     DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model SiteContent {
+  id             String   @id @default(cuid())
+  organizationId String   @unique
+  heroTitle      String   @default("Historias que\nse quedan.")
+  heroSubtitle   String   @default("Versión definitiva — de la idea al montaje final.")
+  aboutQuestion  String   @default("¿Qué historia merece contarse?")
+  aboutText      String   @default("Somos un equipo pequeño que trabaja como uno grande: desde el guion hasta la entrega final, cuidando cada decisión de imagen, ritmo y sonido.")
+  contactEmail   String   @default("hola@versiondefinitiva.com")
+  marqueeTags    String[] @default(["FICCIÓN", "PUBLICIDAD", "DOCUMENTAL", "CORPORATIVO", "COLOR", "SONIDO", "MONTAJE"])
+  legalName      String?
+  legalTaxId     String?
+  legalAddress   String?
+  updatedAt      DateTime @updatedAt
+
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  services       ServiceItem[]
+  portfolioItems PortfolioItem[]
+}
+
+model ServiceItem {
+  id            String  @id @default(cuid())
+  siteContentId String
+  title         String
+  description   String
+  details       String?
+  order         Int     @default(0)
+
+  siteContent SiteContent @relation(fields: [siteContentId], references: [id], onDelete: Cascade)
+}
+
+model PortfolioItem {
+  id            String   @id @default(cuid())
+  siteContentId String
+  title         String
+  category      String?
+  description   String?
+  videoUrl      String?
+  featured      Boolean  @default(false)
+  published     Boolean  @default(true)
+  order         Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  siteContent SiteContent @relation(fields: [siteContentId], references: [id], onDelete: Cascade)
 }
 
 // El id coincide con el id de Supabase Auth (auth.users.id), no se autogenera aquí.
@@ -28,22 +107,615 @@ model User {
   organizationId String
   email          String   @unique
   fullName       String?
+  role           UserRole @default(ADMIN)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id])
 }
 
+enum ProjectStatus {
+  DEVELOPMENT
+  PRE_PRODUCTION
+  PRODUCTION
+  POST_PRODUCTION
+  FINISHED
+}
+
 model Project {
+  id             String        @id @default(cuid())
+  organizationId String
+  name           String
+  type           String?
+  director       String?
+  producer       String?
+  durationLabel  String?
+  status         ProjectStatus @default(DEVELOPMENT)
+  startDate      DateTime?
+  endDate        DateTime?
+  budgetTarget   Decimal?
+  notes          String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  organization      Organization       @relation(fields: [organizationId], references: [id])
+  characters        Character[]
+  actors            Actor[]
+  scriptFiles       ScriptFile[]
+  scenes            Scene[]
+  breakdownElements BreakdownElement[]
+  crewMembers       CrewMember[]
+  shootingDays      ShootingDay[]
+  budgetCategories  BudgetCategory[]
+  documents         Document[]
+  tasks             Task[]
+  calendarEvents    CalendarEvent[]
+  scriptAnalyses    ScriptAnalysis[]
+  continuityChecks  ContinuityCheck[]
+}
+
+model Actor {
+  id           String   @id @default(cuid())
+  projectId    String
+  personId     String?
+  name         String
+  email        String?
+  phone        String?
+  rate         Decimal?
+  availability String?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  project     Project      @relation(fields: [projectId], references: [id])
+  person      Person?      @relation(fields: [personId], references: [id])
+  characters  Character[]
+  budgetItems BudgetItem[]
+  documents   Document[]
+}
+
+model Character {
+  id        String   @id @default(cuid())
+  projectId String
+  actorId   String?
+  name      String
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project Project          @relation(fields: [projectId], references: [id])
+  actor   Actor?           @relation(fields: [actorId], references: [id])
+  scenes  SceneCharacter[]
+}
+
+enum LocationCharacteristic {
+  ELECTRICITY
+  PARKING
+  VEHICLE_ACCESS
+  BATHROOM
+  DRESSING_ROOM
+  CREW_SPACE
+  NOISE_CONTROL
+  EXTERIOR
+  INTERIOR
+}
+
+model Location {
+  id              String                   @id @default(cuid())
+  organizationId  String
+  name            String
+  address         String?
+  latitude        Float?
+  longitude       Float?
+  contactName     String?
+  contactPhone    String?
+  availability    String?
+  cost            Decimal?
+  photoUrls       String[]                 @default([])
+  videoUrls       String[]                 @default([])
+  characteristics LocationCharacteristic[] @default([])
+  permitsNotes    String?
+  restrictions    String?
+  productionNotes String?
+  notes           String?
+  createdAt       DateTime                 @default(now())
+  updatedAt       DateTime                 @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  scenes       Scene[]
+  budgetItems  BudgetItem[]
+  documents    Document[]
+}
+
+model ScriptFile {
+  id         String   @id @default(cuid())
+  projectId  String
+  fileUrl    String
+  fileName   String
+  uploadedAt DateTime @default(now())
+
+  project  Project          @relation(fields: [projectId], references: [id])
+  analyses ScriptAnalysis[]
+}
+
+enum ScriptAnalysisStatus {
+  PENDING
+  REVIEWED
+}
+
+model ScriptAnalysis {
+  id           String               @id @default(cuid())
+  projectId    String
+  scriptFileId String?
+  status       ScriptAnalysisStatus @default(PENDING)
+  proposedData Json
+  createdAt    DateTime             @default(now())
+  reviewedAt   DateTime?
+
+  project    Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  scriptFile ScriptFile? @relation(fields: [scriptFileId], references: [id], onDelete: SetNull)
+}
+
+enum ContinuityCheckStatus {
+  PENDING
+  REVIEWED
+}
+
+model ContinuityCheck {
+  id         String                @id @default(cuid())
+  projectId  String
+  status     ContinuityCheckStatus @default(PENDING)
+  createdAt  DateTime              @default(now())
+  reviewedAt DateTime?
+
+  project Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  issues  ContinuityIssue[]
+}
+
+enum ContinuityIssueStatus {
+  OPEN
+  CONFIRMED
+  DISMISSED
+}
+
+model ContinuityIssue {
+  id           String                @id @default(cuid())
+  checkId      String
+  type         String
+  title        String
+  description  String
+  sceneNumbers String[]              @default([])
+  status       ContinuityIssueStatus @default(OPEN)
+  createdAt    DateTime              @default(now())
+
+  check ContinuityCheck @relation(fields: [checkId], references: [id], onDelete: Cascade)
+}
+
+enum IntExt {
+  INT
+  EXT
+  INT_EXT
+}
+
+enum DayPart {
+  DAY
+  NIGHT
+  DUSK
+  DAWN
+}
+
+model Scene {
+  id              String   @id @default(cuid())
+  projectId       String
+  number          String
+  intExt          IntExt   @default(INT)
+  dayPart         DayPart  @default(DAY)
+  locationId      String?
+  description     String?
+  action          String?
+  dialogueNotes   String?
+  extrasNotes     String?
+  productionNotes String?
+  order           Int      @default(0)
+  storyOrder      Int?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  project           Project                 @relation(fields: [projectId], references: [id])
+  location          Location?               @relation(fields: [locationId], references: [id])
+  characters        SceneCharacter[]
+  breakdownElements SceneBreakdownElement[]
+  crewMembers       SceneCrewMember[]
+  shootingDayScenes ShootingDayScene[]
+  shots             Shot[]
+}
+
+model SceneCharacter {
+  sceneId     String
+  characterId String
+
+  scene     Scene     @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+  character Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  @@id([sceneId, characterId])
+}
+
+enum BreakdownCategory {
+  PROP
+  WARDROBE
+  MAKEUP_HAIR
+  VEHICLE
+  SOUND
+  VFX
+  LIGHTING
+  EQUIPMENT
+}
+
+model BreakdownElement {
+  id        String            @id @default(cuid())
+  projectId String
+  category  BreakdownCategory
+  name      String
+  notes     String?
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
+
+  project     Project                 @relation(fields: [projectId], references: [id])
+  scenes      SceneBreakdownElement[]
+  budgetItems BudgetItem[]
+}
+
+model SceneBreakdownElement {
+  sceneId            String
+  breakdownElementId String
+  condition          String?
+
+  scene            Scene            @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+  breakdownElement BreakdownElement @relation(fields: [breakdownElementId], references: [id], onDelete: Cascade)
+
+  @@id([sceneId, breakdownElementId])
+}
+
+model CrewMember {
+  id        String   @id @default(cuid())
+  projectId String
+  personId  String?
+  name      String
+  role      String?
+  email     String?
+  phone     String?
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project     Project           @relation(fields: [projectId], references: [id])
+  person      Person?           @relation(fields: [personId], references: [id])
+  scenes      SceneCrewMember[]
+  budgetItems BudgetItem[]
+}
+
+model SceneCrewMember {
+  sceneId      String
+  crewMemberId String
+
+  scene      Scene      @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+  crewMember CrewMember @relation(fields: [crewMemberId], references: [id], onDelete: Cascade)
+
+  @@id([sceneId, crewMemberId])
+}
+
+model ShootingDay {
+  id        String   @id @default(cuid())
+  projectId String
+  date      DateTime
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project             Project              @relation(fields: [projectId], references: [id])
+  scenes              ShootingDayScene[]
+  callSheet           CallSheet?
+  tasks               Task[]
+  itemReservations    ItemReservation[]
+  vehicleReservations VehicleReservation[]
+}
+
+enum InventoryItemCategory {
+  CAMERA
+  LIGHTING
+  SOUND
+  GRIP
+  COSTUME
+  PROPS
+  OFFICE
+  OTHER
+}
+
+model InventoryItem {
+  id             String                @id @default(cuid())
+  organizationId String
+  name           String
+  category       InventoryItemCategory @default(OTHER)
+  quantity       Int                   @default(1)
+  notes          String?
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+
+  organization Organization      @relation(fields: [organizationId], references: [id])
+  reservations ItemReservation[]
+}
+
+model ItemReservation {
+  id              String @id @default(cuid())
+  inventoryItemId String
+  shootingDayId   String
+  quantity        Int    @default(1)
+
+  inventoryItem InventoryItem @relation(fields: [inventoryItemId], references: [id], onDelete: Cascade)
+  shootingDay   ShootingDay   @relation(fields: [shootingDayId], references: [id], onDelete: Cascade)
+
+  @@unique([inventoryItemId, shootingDayId])
+}
+
+model Vehicle {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  plate          String?
+  type           String?
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization         @relation(fields: [organizationId], references: [id])
+  reservations VehicleReservation[]
+}
+
+model VehicleReservation {
+  id            String @id @default(cuid())
+  vehicleId     String
+  shootingDayId String
+
+  vehicle     Vehicle     @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  shootingDay ShootingDay @relation(fields: [shootingDayId], references: [id], onDelete: Cascade)
+
+  @@unique([vehicleId, shootingDayId])
+}
+
+model ShootingDayScene {
+  id            String  @id @default(cuid())
+  shootingDayId String
+  sceneId       String
+  callTime      String?
+  order         Int     @default(0)
+
+  shootingDay ShootingDay @relation(fields: [shootingDayId], references: [id], onDelete: Cascade)
+  scene       Scene       @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+
+  @@unique([shootingDayId, sceneId])
+}
+
+model CallSheet {
+  id              String   @id @default(cuid())
+  shootingDayId   String   @unique
+  generalCallTime String?
+  transportNotes  String?
+  cateringNotes   String?
+  additionalNotes String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  shootingDay ShootingDay @relation(fields: [shootingDayId], references: [id], onDelete: Cascade)
+}
+
+model Shot {
+  id          String   @id @default(cuid())
+  sceneId     String
+  number      String
+  shotType    String?
+  shotSize    String?
+  angle       String?
+  movement    String?
+  camera      String?
+  lens        String?
+  fps         Int?
+  durationSec Int?
+  description String?
+  audio       String?
+  notes       String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  scene      Scene             @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+  storyboard StoryboardFrame[]
+}
+
+model StoryboardFrame {
+  id          String   @id @default(cuid())
+  shotId      String
+  imageUrl    String?
+  description String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  shot Shot @relation(fields: [shotId], references: [id], onDelete: Cascade)
+}
+
+model BudgetCategory {
+  id        String   @id @default(cuid())
+  projectId String
+  name      String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project Project      @relation(fields: [projectId], references: [id])
+  items   BudgetItem[]
+}
+
+model BudgetItem {
+  id                 String   @id @default(cuid())
+  categoryId         String
+  description        String
+  quantity           Decimal  @default(1)
+  unitPrice          Decimal  @default(0)
+  taxRate            Decimal  @default(0)
+  notes              String?
+  actorId            String?
+  locationId         String?
+  crewMemberId       String?
+  breakdownElementId String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  category         BudgetCategory    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  actor            Actor?            @relation(fields: [actorId], references: [id])
+  location         Location?         @relation(fields: [locationId], references: [id])
+  crewMember       CrewMember?       @relation(fields: [crewMemberId], references: [id])
+  breakdownElement BreakdownElement? @relation(fields: [breakdownElementId], references: [id])
+}
+
+model Document {
+  id         String   @id @default(cuid())
+  projectId  String
+  fileUrl    String
+  fileName   String
+  actorId    String?
+  locationId String?
+  personId   String?
+  notes      String?
+  uploadedAt DateTime @default(now())
+
+  project  Project   @relation(fields: [projectId], references: [id])
+  actor    Actor?    @relation(fields: [actorId], references: [id])
+  location Location? @relation(fields: [locationId], references: [id])
+  person   Person?   @relation(fields: [personId], references: [id])
+}
+
+enum PersonAvailabilityStatus {
+  AVAILABLE
+  UNAVAILABLE
+}
+
+model Person {
+  id             String   @id @default(cuid())
+  organizationId String
+  firstName      String
+  lastName       String?
+  photoUrl       String?
+  primaryRole    String?
+  otherRoles     String[] @default([])
+  email          String?
+  phone          String?
+  address        String?
+  notes          String?
+  rate           Decimal?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization         @relation(fields: [organizationId], references: [id])
+  availability PersonAvailability[]
+  actors       Actor[]
+  crewMembers  CrewMember[]
+  documents    Document[]
+}
+
+model PersonAvailability {
+  id       String                   @id @default(cuid())
+  personId String
+  date     DateTime
+  status   PersonAvailabilityStatus
+  note     String?
+
+  person Person @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@unique([personId, date])
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  DONE
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model Task {
+  id             String       @id @default(cuid())
+  organizationId String
+  projectId      String?
+  shootingDayId  String?
+  title          String
+  description    String?
+  assignedTo     String?
+  dueDate        DateTime?
+  priority       TaskPriority @default(MEDIUM)
+  status         TaskStatus   @default(PENDING)
+  category       String?
+  order          Int          @default(0)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization Organization  @relation(fields: [organizationId], references: [id])
+  project      Project?      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  shootingDay  ShootingDay?  @relation(fields: [shootingDayId], references: [id], onDelete: Cascade)
+  comments     TaskComment[]
+}
+
+model TaskComment {
+  id        String   @id @default(cuid())
+  taskId    String
+  body      String
+  createdAt DateTime @default(now())
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+}
+
+model ChecklistTemplate {
   id             String   @id @default(cuid())
   organizationId String
   name           String
   createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+
+  organization Organization            @relation(fields: [organizationId], references: [id])
+  items        ChecklistTemplateItem[]
+}
+
+model ChecklistTemplateItem {
+  id         String @id @default(cuid())
+  templateId String
+  label      String
+  order      Int    @default(0)
+
+  template ChecklistTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+}
+
+enum CalendarEventType {
+  REHEARSAL
+  MEETING
+  DEADLINE
+  DELIVERY
+  OTHER
+}
+
+model CalendarEvent {
+  id             String            @id @default(cuid())
+  organizationId String
+  projectId      String?
+  title          String
+  type           CalendarEventType @default(OTHER)
+  date           DateTime
+  notes          String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id])
-
-  // Fases futuras añadirán aquí: scenes, characters, cast, locations, props,
-  // wardrobe, crew, budget, shootingDays, callSheets, shotLists, storyboards,
-  // documents — cada una con su propio modelo y projectId como clave foránea.
+  project      Project?     @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }

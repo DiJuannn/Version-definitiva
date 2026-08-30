@@ -99,3 +99,27 @@ export function DocumentIcon({ className }: IconProps) {
     </svg>
   );
 }
+
+export function SummaryIcon({ className }: IconProps) {
+  return (
+    <svg {...shared} className={className}>
+      <path
+        d="M6 3h9l3 3v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"
+        stroke="currentColor"
+        strokeLinejoin="round"
+      />
+      <path d="M8 10h8M8 13.5h8M8 17h5" stroke="currentColor" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function TaskIcon({ className }: IconProps) {
+  return (
+    <svg {...shared} className={className}>
+      <rect x="3.5" y="4" width="6" height="6" rx="1" stroke="currentColor" />
+      <path d="M5 7l1 1 2-2" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="3.5" y="14" width="6" height="6" rx="1" stroke="currentColor" />
+      <path d="M12 7h8.5M12 17h8.5" stroke="currentColor" strokeLinecap="round" />
+    </svg>
+  );
+}

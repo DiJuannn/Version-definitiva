@@ -18,7 +18,9 @@ export function Marquee({ items, className }: MarqueeProps) {
   );
 
   return (
-    <div className={`flex w-full overflow-hidden ${className ?? ""}`}>
+    <div
+      className={`flex w-full overflow-hidden [contain:layout_paint] ${className ?? ""}`}
+    >
       <div className="flex w-max animate-[marquee_28s_linear_infinite]">
         {track}
         {track}

@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import { Archivo, JetBrains_Mono } from "next/font/google";
-import { CustomCursor } from "@/components/CustomCursor";
-import { IntroOverlay } from "@/components/IntroOverlay";
 import "./globals.css";
 
 const archivo = Archivo({
@@ -14,10 +12,39 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+const title = "Versión definitiva — Productora audiovisual";
+const description =
+  "Productora audiovisual. Contamos historias en imagen, de la idea al montaje final: ficción, publicidad, documental y corporativo.";
+
 export const metadata: Metadata = {
-  title: "Versión definitiva — Productora audiovisual",
-  description:
-    "Productora audiovisual. Contamos historias en imagen, de la idea al montaje final.",
+  metadataBase: new URL(siteUrl),
+  title: {
+    default: title,
+    template: "%s — Versión definitiva",
+  },
+  description,
+  keywords: [
+    "productora audiovisual",
+    "producción de vídeo",
+    "cortometrajes",
+    "publicidad audiovisual",
+    "documental",
+  ],
+  robots: { index: true, follow: true },
+  openGraph: {
+    type: "website",
+    locale: "es_ES",
+    url: siteUrl,
+    siteName: "Versión definitiva",
+    title,
+    description,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title,
+    description,
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -36,8 +63,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           }}
         />
         {children}
-        <CustomCursor />
-        <IntroOverlay />
       </body>
     </html>
   );
