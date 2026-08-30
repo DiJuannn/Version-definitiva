@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { AjoloteLogo } from "@/components/AjoloteLogo";
+import { DashboardNav } from "@/components/DashboardNav";
 import { signOut } from "@/lib/actions/auth";
 import { getCurrentProfile } from "@/lib/current-user";
 
@@ -20,31 +21,35 @@ const NAV = [
   { href: "/app/vehiculos", label: "Vehículos" },
 ];
 
-const ADMIN_NAV = [
-  { href: "/app/organizacion", label: "Organización" },
-  { href: "/admin", label: "Editor web" },
-];
-
 export default async function DashboardLayout({
   children,
 }: {
   children: ReactNode;
 }) {
   const profile = await getCurrentProfile();
-  const nav = profile?.role === "ADMIN" ? [...NAV, ...ADMIN_NAV] : NAV;
+  const nav = [...NAV];
+  if (profile?.role === "ADMIN") {
+    nav.push({ href: "/app/organizacion", label: "Organización" });
+    // "Editor web" solo es relevante para la organización dueña de la
+    // plataforma (Versión definitiva) — el resto de organizaciones usan
+    // Taller pero no tienen web pública propia que editar.
+    if (profile.organization.isPlatformOwner) {
+      nav.push({ href: "/admin", label: "Editor web" });
+    }
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-bg text-fg">
-      <header className="border-b border-line px-6 py-4">
-        <div className="flex items-center justify-between">
-          <Link href="/app" className="flex items-center gap-2.5">
-            <AjoloteLogo className="h-6 w-auto text-fg" />
-            <span className="font-mono text-xs tracking-[0.2em] uppercase">
+      <header className="border-b border-line px-4 py-4 sm:px-6">
+        <div className="flex items-center justify-between gap-3">
+          <Link href="/app" className="flex min-w-0 items-center gap-2.5">
+            <AjoloteLogo className="h-6 w-auto shrink-0 text-fg" />
+            <span className="truncate font-mono text-xs tracking-[0.2em] uppercase">
               {profile?.organization.name ?? "Versión definitiva"}
             </span>
           </Link>
-          <div className="flex items-center gap-6 font-mono text-xs text-muted">
-            <span>{profile?.email}</span>
+          <div className="flex shrink-0 items-center gap-4 font-mono text-xs text-muted sm:gap-6">
+            <span className="hidden sm:inline">{profile?.email}</span>
             <form action={signOut}>
               <button
                 type="submit"
@@ -55,19 +60,9 @@ export default async function DashboardLayout({
             </form>
           </div>
         </div>
-        <nav className="mt-4 flex flex-wrap gap-6 font-mono text-xs tracking-widest uppercase">
-          {nav.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="text-muted transition-colors hover:text-accent"
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
+        <DashboardNav items={nav} />
       </header>
-      <main className="flex-1 px-6 py-10">
+      <main className="flex-1 px-4 py-8 sm:px-6 sm:py-10">
         <div className="mx-auto max-w-5xl">{children}</div>
       </main>
     </div>

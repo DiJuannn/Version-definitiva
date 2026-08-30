@@ -17,46 +17,48 @@ export default async function AdminLayout({
 }) {
   const profile = await getCurrentProfile();
   if (!profile) redirect("/app/login");
-  if (profile.role !== "ADMIN") redirect("/app");
+  if (profile.role !== "ADMIN" || !profile.organization.isPlatformOwner) {
+    redirect("/app");
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-bg text-fg">
-      <header className="border-b border-line px-6 py-4">
-        <div className="flex items-center justify-between">
-          <Link href="/admin" className="flex items-center gap-2.5">
-            <AjoloteLogo className="h-6 w-auto text-fg" />
-            <span className="font-mono text-xs tracking-[0.2em] uppercase">
+      <header className="border-b border-line px-4 py-4 sm:px-6">
+        <div className="flex items-center justify-between gap-3">
+          <Link href="/admin" className="flex min-w-0 items-center gap-2.5">
+            <AjoloteLogo className="h-6 w-auto shrink-0 text-fg" />
+            <span className="truncate font-mono text-xs tracking-[0.2em] uppercase">
               Editor de la web pública
             </span>
           </Link>
-          <div className="flex items-center gap-6 font-mono text-xs text-muted">
-            <a
-              href="/"
-              target="_blank"
-              rel="noreferrer"
-              className="tracking-widest uppercase transition-colors hover:text-accent"
+          <form action={signOut} className="shrink-0">
+            <button
+              type="submit"
+              className="font-mono text-xs tracking-widest text-muted uppercase transition-colors hover:text-accent"
             >
-              Ver web →
-            </a>
-            <Link
-              href="/app"
-              className="tracking-widest uppercase transition-colors hover:text-accent"
-            >
-              Ir al Taller
-            </Link>
-            <span>{profile?.email}</span>
-            <form action={signOut}>
-              <button
-                type="submit"
-                className="tracking-widest uppercase transition-colors hover:text-accent"
-              >
-                Salir
-              </button>
-            </form>
-          </div>
+              Salir
+            </button>
+          </form>
+        </div>
+        <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-xs text-muted">
+          <a
+            href="/"
+            target="_blank"
+            rel="noreferrer"
+            className="tracking-widest uppercase transition-colors hover:text-accent"
+          >
+            Ver web →
+          </a>
+          <Link
+            href="/app"
+            className="tracking-widest uppercase transition-colors hover:text-accent"
+          >
+            Ir al Taller
+          </Link>
+          <span className="truncate">{profile?.email}</span>
         </div>
       </header>
-      <main className="flex-1 px-6 py-10">
+      <main className="flex-1 px-4 py-8 sm:px-6 sm:py-10">
         <div className="mx-auto max-w-4xl">{children}</div>
       </main>
     </div>

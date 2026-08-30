@@ -44,6 +44,7 @@ const DEFAULT_SERVICIOS = [
 
 export default async function PublicHomePage() {
   const site = await prisma.siteContent.findFirst({
+    where: { organization: { isPlatformOwner: true } },
     include: {
       services: { orderBy: { order: "asc" } },
       portfolioItems: {

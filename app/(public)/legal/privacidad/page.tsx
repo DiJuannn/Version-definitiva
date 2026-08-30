@@ -5,7 +5,9 @@ import { LegalHeading, LegalPage, PendingNotice } from "@/components/LegalPage";
 export const metadata: Metadata = { title: "Política de privacidad" };
 
 export default async function PrivacidadPage() {
-  const site = await prisma.siteContent.findFirst();
+  const site = await prisma.siteContent.findFirst({
+    where: { organization: { isPlatformOwner: true } },
+  });
   const legalName = site?.legalName;
   const legalTaxId = site?.legalTaxId;
   const legalAddress = site?.legalAddress;

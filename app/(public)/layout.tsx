@@ -44,7 +44,7 @@ export default async function PublicLayout({ children }: LayoutProps<"/">) {
             ))}
           </nav>
           <div className="flex items-center gap-3">
-            {profile?.role === "ADMIN" && (
+            {profile?.role === "ADMIN" && profile.organization.isPlatformOwner && (
               <Link
                 href="/admin"
                 className="hidden font-mono text-xs tracking-widest text-muted uppercase transition-colors hover:text-accent sm:inline"

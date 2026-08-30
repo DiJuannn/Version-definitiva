@@ -13,10 +13,14 @@ datasource db {
 }
 
 model Organization {
-  id        String   @id @default(cuid())
-  name      String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String   @id @default(cuid())
+  name            String
+  // true solo para la organización de "Versión definitiva" (la productora
+  // dueña de la plataforma) — controla quién puede editar la web pública
+  // compartida, nunca el resto de organizaciones que usan Taller.
+  isPlatformOwner Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   users              User[]
   projects           Project[]

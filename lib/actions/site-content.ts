@@ -5,9 +5,15 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentProfile } from "@/lib/current-user";
 import { optionalString } from "@/lib/form-utils";
 
+// Editar la web pública es una capacidad exclusiva de la organización dueña
+// de la plataforma (Versión definitiva), no de cualquier organización que
+// use Taller — de lo contrario, cualquiera que se registrase (admin por
+// defecto de su propia organización nueva) podría entrar a este editor.
 async function requireAdminProfile() {
   const profile = await getCurrentProfile();
-  if (!profile || profile.role !== "ADMIN") return null;
+  if (!profile || profile.role !== "ADMIN" || !profile.organization.isPlatformOwner) {
+    return null;
+  }
   return profile;
 }
 

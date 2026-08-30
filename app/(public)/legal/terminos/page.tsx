@@ -5,7 +5,9 @@ import { LegalHeading, LegalPage } from "@/components/LegalPage";
 export const metadata: Metadata = { title: "Términos de uso" };
 
 export default async function TerminosPage() {
-  const site = await prisma.siteContent.findFirst();
+  const site = await prisma.siteContent.findFirst({
+    where: { organization: { isPlatformOwner: true } },
+  });
   const contactEmail = site?.contactEmail ?? "hola@versiondefinitiva.com";
 
   return (
