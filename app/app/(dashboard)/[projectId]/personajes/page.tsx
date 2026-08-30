@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
@@ -10,6 +9,7 @@ import {
   updateCharacterActor,
 } from "@/lib/actions/characters";
 import { EmptyState } from "@/components/EmptyState";
+import { BackLink } from "@/components/BackLink";
 
 export default async function PersonajesPage({
   params,
@@ -45,12 +45,7 @@ export default async function PersonajesPage({
 
   return (
     <div>
-      <Link
-        href={`/app/${projectId}`}
-        className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
-      >
-        ← {project.name}
-      </Link>
+      <BackLink href={`/app/${projectId}`}>← {project.name}</BackLink>
       <h1 className="mt-3 font-display text-2xl font-bold uppercase">
         Personajes
       </h1>

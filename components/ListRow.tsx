@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { LinkPendingHint } from "@/components/LinkPendingHint";
 
 // Fila de lista reutilizable: título + meta opcional + acción opcional a la
 // derecha. `min-w-0` + `truncate` evitan que texto largo (descripciones,
@@ -37,6 +38,7 @@ export function ListRow({
         className={`group ${rowClass} transition hover:border-accent active:bg-bg-raised`}
       >
         {content}
+        <LinkPendingHint className="shrink-0" />
       </Link>
     );
   }

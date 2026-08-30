@@ -7,6 +7,7 @@ import { ProjectHealthMini } from "@/components/ProjectHealthMini";
 import { DashboardStagger } from "@/components/DashboardMotion";
 import { ToolGroupCarousel } from "@/components/ToolGroupCarousel";
 import { PdfLink } from "@/components/PdfLink";
+import { BackLink } from "@/components/BackLink";
 import { getProjectOverview } from "@/lib/project-roadmap";
 import {
   BudgetIcon,
@@ -149,12 +150,7 @@ export default async function ProjectTallerPage({
 
   return (
     <div>
-      <Link
-        href="/app"
-        className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
-      >
-        ← Proyectos
-      </Link>
+      <BackLink href="/app">← Proyectos</BackLink>
       <h1 className="mt-3 font-display text-2xl font-bold uppercase">
         {project.name}
       </h1>

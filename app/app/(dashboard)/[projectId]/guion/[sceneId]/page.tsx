@@ -12,6 +12,7 @@ import { BreakdownCategory, DayPart, IntExt } from "@/lib/generated/prisma";
 import { HelpTip } from "@/components/HelpTip";
 import { DeleteButton } from "@/components/DeleteButton";
 import { ChipOption } from "@/components/ChipOption";
+import { BackLink } from "@/components/BackLink";
 
 export default async function SceneDetailPage({
   params,
@@ -69,12 +70,7 @@ export default async function SceneDetailPage({
 
   return (
     <div>
-      <Link
-        href={`/app/${projectId}/guion`}
-        className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
-      >
-        ← Guion
-      </Link>
+      <BackLink href={`/app/${projectId}/guion`}>← Guion</BackLink>
       <h1 className="mt-3 font-display text-2xl font-bold uppercase">
         Escena {scene.number}
       </h1>

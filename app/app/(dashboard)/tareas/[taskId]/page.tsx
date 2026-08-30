@@ -1,10 +1,10 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentProfile } from "@/lib/current-user";
 import { addTaskComment, deleteTask, updateTask, updateTaskStatus } from "@/lib/actions/tasks";
 import { DeleteButton } from "@/components/DeleteButton";
 import { TaskPriority, TaskStatus } from "@/lib/generated/prisma";
+import { BackLink } from "@/components/BackLink";
 
 const PRIORITY_LABELS: Record<TaskPriority, string> = {
   LOW: "Baja",
@@ -46,12 +46,7 @@ export default async function TaskDetailPage({
 
   return (
     <div>
-      <Link
-        href={backHref}
-        className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
-      >
-        ← Tareas
-      </Link>
+      <BackLink href={backHref}>← Tareas</BackLink>
       <h1 className="mt-3 font-display text-2xl font-bold uppercase">{task.title}</h1>
       {(task.project || task.shootingDay) && (
         <p className="mt-1 font-mono text-xs text-muted">

@@ -12,6 +12,8 @@ import { EmptyState } from "@/components/EmptyState";
 import { ScriptUploadForm } from "@/components/ScriptUploadForm";
 import { ActionButtonForm } from "@/components/ActionButtonForm";
 import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
+import { BackLink } from "@/components/BackLink";
+import { FileOpenLink } from "@/components/FileOpenLink";
 
 // El análisis de guion y la revisión de continuidad llaman a Mistral y
 // pueden tardar más de los 10s que Vercel da por defecto a una función —
@@ -58,12 +60,7 @@ export default async function GuionPage({
 
   return (
     <div>
-      <Link
-        href={`/app/${projectId}`}
-        className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
-      >
-        ← {project.name}
-      </Link>
+      <BackLink href={`/app/${projectId}`}>← {project.name}</BackLink>
       <h1 className="mt-3 font-display text-2xl font-bold uppercase">
         Guion
       </h1>
@@ -86,14 +83,12 @@ export default async function GuionPage({
                 key={file.id}
                 className="flex items-center justify-between gap-4 border-b border-line py-3"
               >
-                <a
+                <FileOpenLink
                   href={file.fileUrl}
-                  target="_blank"
-                  rel="noreferrer"
                   className="font-mono text-sm text-fg hover:text-accent"
                 >
                   {file.fileName}
-                </a>
+                </FileOpenLink>
                 <div className="flex items-center gap-4">
                   <ActionButtonForm
                     action={analyzeScript.bind(null, projectId, file.id)}

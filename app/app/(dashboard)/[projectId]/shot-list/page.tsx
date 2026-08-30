@@ -5,6 +5,7 @@ import { getProjectForCurrentUser } from "@/lib/project-access";
 import { createShot } from "@/lib/actions/shots";
 import { EmptyState } from "@/components/EmptyState";
 import { PdfLink } from "@/components/PdfLink";
+import { BackLink } from "@/components/BackLink";
 
 export default async function ShotListPage({
   params,
@@ -25,12 +26,7 @@ export default async function ShotListPage({
   return (
     <div>
       <div className="flex items-center justify-between print:hidden">
-        <Link
-          href={`/app/${projectId}`}
-          className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
-        >
-          ← {project.name}
-        </Link>
+        <BackLink href={`/app/${projectId}`}>← {project.name}</BackLink>
         <PdfLink href={`/api/pdf/shot-list/${projectId}`} />
       </div>
       <h1 className="mt-3 font-display text-2xl font-bold uppercase">

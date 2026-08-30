@@ -5,6 +5,8 @@ import { createCalendarEvent, deleteCalendarEvent } from "@/lib/actions/calendar
 import { DeleteButton } from "@/components/DeleteButton";
 import { ChipOption } from "@/components/ChipOption";
 import { SubmitButton } from "@/components/SubmitButton";
+import { BackLink } from "@/components/BackLink";
+import { LinkPendingHint } from "@/components/LinkPendingHint";
 import { CalendarEventType } from "@/lib/generated/prisma";
 
 const EVENT_TYPE_LABELS: Record<CalendarEventType, string> = {
@@ -172,12 +174,7 @@ export default async function CalendarioPage({
 
   return (
     <div>
-      <Link
-        href="/app"
-        className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
-      >
-        ← Taller
-      </Link>
+      <BackLink href="/app">← Taller</BackLink>
       <div className="mt-3 flex items-center justify-between">
         <h1 className="font-display text-2xl font-bold uppercase">
           {monthStart.toLocaleDateString("es-ES", { month: "long", year: "numeric" })}
@@ -188,12 +185,14 @@ export default async function CalendarioPage({
             className="text-muted hover:text-accent"
           >
             ← Anterior
+            <LinkPendingHint />
           </Link>
           <Link
             href={`/app/calendario?month=${toMonthParam(nextMonth)}`}
             className="text-muted hover:text-accent"
           >
             Siguiente →
+            <LinkPendingHint />
           </Link>
         </div>
       </div>

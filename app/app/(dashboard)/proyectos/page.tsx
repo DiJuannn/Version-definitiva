@@ -6,6 +6,7 @@ import { StatusPill } from "@/components/StatusPill";
 import { EmptyState } from "@/components/EmptyState";
 import { DeleteProjectButton } from "@/components/DeleteProjectButton";
 import { SubmitButton } from "@/components/SubmitButton";
+import { BackLink } from "@/components/BackLink";
 
 export default async function ProyectosPage() {
   const profile = await getCurrentProfile();
@@ -19,12 +20,7 @@ export default async function ProyectosPage() {
 
   return (
     <div>
-      <Link
-        href="/app"
-        className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
-      >
-        ← Taller
-      </Link>
+      <BackLink href="/app">← Taller</BackLink>
       <h1 className="mt-3 font-display text-2xl font-bold uppercase">
         Proyectos
       </h1>

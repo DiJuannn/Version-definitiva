@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { deleteShot, updateShot } from "@/lib/actions/shots";
 import { DeleteButton } from "@/components/DeleteButton";
+import { BackLink } from "@/components/BackLink";
 
 export default async function ShotDetailPage({
   params,
@@ -34,12 +35,7 @@ export default async function ShotDetailPage({
 
   return (
     <div>
-      <Link
-        href={`/app/${projectId}/shot-list`}
-        className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
-      >
-        ← Shot list
-      </Link>
+      <BackLink href={`/app/${projectId}/shot-list`}>← Shot list</BackLink>
       <h1 className="mt-3 font-display text-2xl font-bold uppercase">
         Plano {shot.scene.number}.{shot.number}
       </h1>

@@ -13,6 +13,7 @@ import { getShootingDaySummary } from "@/lib/shooting-day-summary";
 import { getAvailabilityWarnings } from "@/lib/availability-warnings";
 import { getReservationConflicts } from "@/lib/reservation-conflicts";
 import { DAY_PART_LABELS, INT_EXT_LABELS, INVENTORY_CATEGORY_LABELS } from "@/lib/labels";
+import { BackLink } from "@/components/BackLink";
 import { DeleteButton } from "@/components/DeleteButton";
 import { EmptyState } from "@/components/EmptyState";
 
@@ -84,12 +85,7 @@ export default async function ShootingDayDetailPage({
 
   return (
     <div>
-      <Link
-        href={`/app/${projectId}/plan-de-rodaje`}
-        className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
-      >
-        ← Plan de rodaje
-      </Link>
+      <BackLink href={`/app/${projectId}/plan-de-rodaje`}>← Plan de rodaje</BackLink>
       <h1 className="mt-3 font-display text-2xl font-bold uppercase">
         {summary.shootingDay.date.toLocaleDateString("es-ES", {
           weekday: "long",

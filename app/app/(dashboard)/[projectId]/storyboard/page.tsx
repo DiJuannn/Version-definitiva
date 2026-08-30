@@ -1,4 +1,3 @@
-import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -7,6 +6,7 @@ import { addStoryboardFrame, deleteStoryboardFrame } from "@/lib/actions/storybo
 import { DeleteButton } from "@/components/DeleteButton";
 import { EmptyState } from "@/components/EmptyState";
 import { PrintButton } from "@/components/PrintButton";
+import { BackLink } from "@/components/BackLink";
 
 export default async function StoryboardPage({
   params,
@@ -34,12 +34,7 @@ export default async function StoryboardPage({
   return (
     <div>
       <div className="flex items-center justify-between print:hidden">
-        <Link
-          href={`/app/${projectId}`}
-          className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
-        >
-          ← {project.name}
-        </Link>
+        <BackLink href={`/app/${projectId}`}>← {project.name}</BackLink>
         <PrintButton />
       </div>
       <h1 className="mt-3 font-display text-2xl font-bold uppercase">

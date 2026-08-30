@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getCurrentProfile } from "@/lib/current-user";
 import { createLocation } from "@/lib/actions/locations";
@@ -11,6 +10,7 @@ import { ChipOption } from "@/components/ChipOption";
 import { EmptyState } from "@/components/EmptyState";
 import { ListRow } from "@/components/ListRow";
 import { SubmitButton } from "@/components/SubmitButton";
+import { BackLink } from "@/components/BackLink";
 
 export default async function LocalizacionesPage() {
   const profile = await getCurrentProfile();
@@ -35,12 +35,7 @@ export default async function LocalizacionesPage() {
 
   return (
     <div>
-      <Link
-        href="/app"
-        className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
-      >
-        ← Taller
-      </Link>
+      <BackLink href="/app">← Taller</BackLink>
       <h1 className="mt-3 font-display text-2xl font-bold uppercase">
         Localizaciones
       </h1>

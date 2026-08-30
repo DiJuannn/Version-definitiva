@@ -67,6 +67,41 @@ body {
   border-color: var(--line) !important;
 }
 
+/* Puntito de "cargando" dentro de un <Link> (useLinkStatus) — mismo
+   lenguaje visual que el punto pulsante de Eliminar/Guardar. Empieza
+   invisible y con un pequeño retraso, para no parpadear en navegaciones
+   instantáneas (ruta ya precargada). */
+.link-hint {
+  display: inline-block;
+  width: 0.4em;
+  height: 0.4em;
+  margin-left: 0.5em;
+  border-radius: 9999px;
+  background: currentColor;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.link-hint.is-pending {
+  visibility: visible;
+  animation:
+    link-hint-fade-in 200ms ease forwards,
+    link-hint-pulse 1s ease-in-out infinite;
+  animation-delay: 150ms, 150ms;
+}
+
+@keyframes link-hint-fade-in {
+  to {
+    opacity: 0.8;
+  }
+}
+
+@keyframes link-hint-pulse {
+  50% {
+    opacity: 0.25;
+  }
+}
+
 .vd-dark-map .leaflet-control-attribution {
   background: rgba(10, 10, 10, 0.7);
   color: var(--muted);

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
@@ -6,6 +5,7 @@ import { updateContinuityIssueStatus } from "@/lib/actions/continuity";
 import { FeatureIntro } from "@/components/FeatureIntro";
 import { HelpTip } from "@/components/HelpTip";
 import { ContinuityIssueStatus } from "@/lib/generated/prisma";
+import { BackLink } from "@/components/BackLink";
 
 const TYPE_LABELS: Record<string, string> = {
   wardrobe: "Vestuario",
@@ -31,12 +31,7 @@ export default async function ContinuityCheckPage({
 
   return (
     <div>
-      <Link
-        href={`/app/${projectId}/guion`}
-        className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
-      >
-        ← Guion
-      </Link>
+      <BackLink href={`/app/${projectId}/guion`}>← Guion</BackLink>
       <div className="mt-3 flex items-center gap-1.5">
         <h1 className="font-display text-2xl font-bold uppercase">
           Revisión de continuidad

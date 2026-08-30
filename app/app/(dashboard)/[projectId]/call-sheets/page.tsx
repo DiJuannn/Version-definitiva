@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { EmptyState } from "@/components/EmptyState";
+import { BackLink } from "@/components/BackLink";
 
 export default async function CallSheetsPage({
   params,
@@ -22,12 +23,7 @@ export default async function CallSheetsPage({
 
   return (
     <div>
-      <Link
-        href={`/app/${projectId}`}
-        className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
-      >
-        ← {project.name}
-      </Link>
+      <BackLink href={`/app/${projectId}`}>← {project.name}</BackLink>
       <h1 className="mt-3 font-display text-2xl font-bold uppercase">
         Call sheets
       </h1>

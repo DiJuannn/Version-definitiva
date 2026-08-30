@@ -1,10 +1,10 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PdfLink } from "@/components/PdfLink";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { getShootingDaySummary } from "@/lib/shooting-day-summary";
 import { upsertCallSheet } from "@/lib/actions/call-sheets";
 import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
+import { BackLink } from "@/components/BackLink";
 
 export default async function CallSheetDetailPage({
   params,
@@ -25,12 +25,7 @@ export default async function CallSheetDetailPage({
   return (
     <div>
       <div className="flex items-center justify-between print:hidden">
-        <Link
-          href={`/app/${projectId}/call-sheets`}
-          className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
-        >
-          ← Call sheets
-        </Link>
+        <BackLink href={`/app/${projectId}/call-sheets`}>← Call sheets</BackLink>
         <PdfLink href={`/api/pdf/call-sheet/${dayId}`} />
       </div>
 

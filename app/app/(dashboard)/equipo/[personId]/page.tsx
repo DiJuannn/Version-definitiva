@@ -1,4 +1,3 @@
-import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -10,6 +9,7 @@ import {
   setPersonAvailability,
 } from "@/lib/actions/person-availability";
 import { PersonAvailabilityStatus } from "@/lib/generated/prisma";
+import { BackLink } from "@/components/BackLink";
 
 const STATUS_LABELS: Record<PersonAvailabilityStatus, string> = {
   AVAILABLE: "Disponible",
@@ -52,12 +52,7 @@ export default async function PersonDetailPage({
 
   return (
     <div>
-      <Link
-        href="/app/equipo"
-        className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
-      >
-        ← Equipo
-      </Link>
+      <BackLink href="/app/equipo">← Equipo</BackLink>
       <div className="mt-3 flex items-center gap-4">
         {person.photoUrl && (
           <Image

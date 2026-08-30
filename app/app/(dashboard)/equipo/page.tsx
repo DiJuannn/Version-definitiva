@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentProfile } from "@/lib/current-user";
 import { createPerson } from "@/lib/actions/people";
 import { EmptyState } from "@/components/EmptyState";
+import { BackLink } from "@/components/BackLink";
 
 export default async function EquipoPage() {
   const profile = await getCurrentProfile();
@@ -18,12 +19,7 @@ export default async function EquipoPage() {
 
   return (
     <div>
-      <Link
-        href="/app"
-        className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
-      >
-        ← Taller
-      </Link>
+      <BackLink href="/app">← Taller</BackLink>
       <h1 className="mt-3 font-display text-2xl font-bold uppercase">Equipo</h1>
       <p className="mt-2 font-mono text-xs text-muted">
         Directorio de personas de la organización — se enlazan a Personajes

@@ -5,6 +5,8 @@ import { getProjectForCurrentUser } from "@/lib/project-access";
 import { deleteDocument, uploadDocument } from "@/lib/actions/documents";
 import { DeleteButton } from "@/components/DeleteButton";
 import { EmptyState } from "@/components/EmptyState";
+import { BackLink } from "@/components/BackLink";
+import { FileOpenLink } from "@/components/FileOpenLink";
 
 export default async function DocumentosPage({
   params,
@@ -49,12 +51,7 @@ export default async function DocumentosPage({
 
   return (
     <div>
-      <Link
-        href={`/app/${projectId}`}
-        className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
-      >
-        ← {project.name}
-      </Link>
+      <BackLink href={`/app/${projectId}`}>← {project.name}</BackLink>
       <h1 className="mt-3 font-display text-2xl font-bold uppercase">
         Documentos
       </h1>
@@ -74,18 +71,16 @@ export default async function DocumentosPage({
         ) : (
           <div className="mt-3 border-t border-line">
             {scriptFiles.map((file) => (
-              <a
+              <FileOpenLink
                 key={file.id}
                 href={file.fileUrl}
-                target="_blank"
-                rel="noreferrer"
                 className="flex items-center justify-between border-b border-line py-3 font-mono text-sm hover:text-accent"
               >
                 {file.fileName}
                 <span className="font-mono text-xs text-muted">
                   {file.uploadedAt.toLocaleDateString("es-ES")}
                 </span>
-              </a>
+              </FileOpenLink>
             ))}
           </div>
         )}
@@ -202,14 +197,12 @@ export default async function DocumentosPage({
                 key={doc.id}
                 className="flex items-center justify-between gap-4 border-b border-line py-3"
               >
-                <a
+                <FileOpenLink
                   href={doc.fileUrl}
-                  target="_blank"
-                  rel="noreferrer"
                   className="font-mono text-sm hover:text-accent"
                 >
                   {doc.fileName}
-                </a>
+                </FileOpenLink>
                 <div className="flex items-center gap-3">
                   <span className="font-mono text-xs text-muted">
                     {[doc.actor?.name, doc.location?.name].filter(Boolean).join(" · ")}

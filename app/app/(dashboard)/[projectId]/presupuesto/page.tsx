@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
@@ -11,6 +10,7 @@ import {
 import { DeleteButton } from "@/components/DeleteButton";
 import { EmptyState } from "@/components/EmptyState";
 import { PdfLink } from "@/components/PdfLink";
+import { BackLink } from "@/components/BackLink";
 
 function currency(value: number) {
   return value.toLocaleString("es-ES", { style: "currency", currency: "EUR" });
@@ -79,12 +79,7 @@ export default async function PresupuestoPage({
   return (
     <div>
       <div className="flex items-center justify-between print:hidden">
-        <Link
-          href={`/app/${projectId}`}
-          className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
-        >
-          ← {project.name}
-        </Link>
+        <BackLink href={`/app/${projectId}`}>← {project.name}</BackLink>
         <PdfLink href={`/api/pdf/presupuesto/${projectId}`} />
       </div>
       <h1 className="mt-3 font-display text-2xl font-bold uppercase">

@@ -8,6 +8,7 @@ import { DashboardReveal, DashboardStagger } from "@/components/DashboardMotion"
 import { createProject, deleteProject } from "@/lib/actions/projects";
 import { DeleteProjectButton } from "@/components/DeleteProjectButton";
 import { SubmitButton } from "@/components/SubmitButton";
+import { LinkPendingHint } from "@/components/LinkPendingHint";
 import { getProjectOverview } from "@/lib/project-roadmap";
 
 function currency(value: number) {
@@ -193,6 +194,7 @@ export default async function DashboardPage() {
               className="shrink-0 rounded-full bg-accent px-6 py-2.5 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
             >
               Continuar →
+              <LinkPendingHint />
             </Link>
           </div>
           <div className="mt-5 h-1.5 w-full overflow-hidden rounded-full bg-line">

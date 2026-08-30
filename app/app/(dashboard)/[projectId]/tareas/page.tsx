@@ -5,6 +5,7 @@ import { getProjectForCurrentUser } from "@/lib/project-access";
 import { createTask } from "@/lib/actions/tasks";
 import { EmptyState } from "@/components/EmptyState";
 import { TaskPriority } from "@/lib/generated/prisma";
+import { BackLink } from "@/components/BackLink";
 
 const PRIORITY_LABELS: Record<TaskPriority, string> = {
   LOW: "Baja",
@@ -30,12 +31,7 @@ export default async function ProjectTareasPage({
 
   return (
     <div>
-      <Link
-        href={`/app/${projectId}`}
-        className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
-      >
-        ← {project.name}
-      </Link>
+      <BackLink href={`/app/${projectId}`}>← {project.name}</BackLink>
       <h1 className="mt-3 font-display text-2xl font-bold uppercase">Tareas</h1>
 
       <form

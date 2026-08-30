@@ -1,4 +1,3 @@
-import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -17,6 +16,8 @@ import { LocationCharacteristic } from "@/lib/generated/prisma";
 import { GeocodeButton } from "@/components/GeocodeButton";
 import { LocationsMapClient } from "@/components/LocationsMapClient";
 import { ChipOption } from "@/components/ChipOption";
+import { BackLink } from "@/components/BackLink";
+import { FileOpenLink } from "@/components/FileOpenLink";
 
 export default async function LocationDetailPage({
   params,
@@ -54,12 +55,7 @@ export default async function LocationDetailPage({
 
   return (
     <div>
-      <Link
-        href="/app/localizaciones"
-        className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
-      >
-        ← Localizaciones
-      </Link>
+      <BackLink href="/app/localizaciones">← Localizaciones</BackLink>
       <h1 className="mt-3 font-display text-2xl font-bold uppercase">
         {location.name}
       </h1>
@@ -320,14 +316,12 @@ export default async function LocationDetailPage({
                 key={url}
                 className="flex items-center justify-between gap-4 border-b border-line py-3"
               >
-                <a
+                <FileOpenLink
                   href={url}
-                  target="_blank"
-                  rel="noreferrer"
                   className="truncate font-mono text-sm hover:text-accent"
                 >
                   {url}
-                </a>
+                </FileOpenLink>
                 <form action={removeLocationVideo.bind(null, locationId, url)}>
                   <DeleteButton
                     confirmMessage="¿Eliminar este vídeo?"

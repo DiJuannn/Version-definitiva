@@ -47,7 +47,7 @@ export function DeleteProjectButton({
         type="button"
         onClick={() => setOpen(true)}
         aria-label={`Eliminar proyecto ${projectName}`}
-        className="rounded p-1.5 text-muted opacity-0 transition hover:text-accent focus-visible:opacity-100 group-hover:opacity-100"
+        className="rounded p-1.5 text-muted opacity-100 transition hover:text-accent sm:opacity-0 sm:focus-visible:opacity-100 sm:group-hover:opacity-100"
       >
         <TrashIcon className="h-4 w-4" />
       </button>

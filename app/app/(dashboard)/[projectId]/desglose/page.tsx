@@ -12,6 +12,7 @@ import {
 import { BREAKDOWN_CATEGORY_LABELS } from "@/lib/labels";
 import { EmptyState } from "@/components/EmptyState";
 import { BreakdownCategory } from "@/lib/generated/prisma";
+import { BackLink } from "@/components/BackLink";
 
 export default async function DesglosePage({
   params,
@@ -52,12 +53,7 @@ export default async function DesglosePage({
 
   return (
     <div>
-      <Link
-        href={`/app/${projectId}`}
-        className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
-      >
-        ← {project.name}
-      </Link>
+      <BackLink href={`/app/${projectId}`}>← {project.name}</BackLink>
       <h1 className="mt-3 font-display text-2xl font-bold uppercase">
         Desglose
       </h1>

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getCurrentProfile } from "@/lib/current-user";
 import { createVehicle, deleteVehicle } from "@/lib/actions/vehicles";
@@ -7,6 +6,7 @@ import { FormField } from "@/components/FormField";
 import { EmptyState } from "@/components/EmptyState";
 import { ListRow } from "@/components/ListRow";
 import { SubmitButton } from "@/components/SubmitButton";
+import { BackLink } from "@/components/BackLink";
 
 export default async function VehiculosPage() {
   const profile = await getCurrentProfile();
@@ -20,12 +20,7 @@ export default async function VehiculosPage() {
 
   return (
     <div>
-      <Link
-        href="/app"
-        className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
-      >
-        ← Taller
-      </Link>
+      <BackLink href="/app">← Taller</BackLink>
       <h1 className="mt-3 font-display text-2xl font-bold uppercase">
         Vehículos
       </h1>
