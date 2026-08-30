@@ -34,7 +34,8 @@ export async function analyzeScript(
   let proposal;
   try {
     proposal = await analyzeScriptPdf(scriptFile.fileUrl);
-  } catch {
+  } catch (error) {
+    console.error("analyzeScript: fallo llamando a Mistral", error);
     return {
       error:
         "La IA no está disponible en este momento. Tus datos están seguros — inténtalo de nuevo en un rato.",

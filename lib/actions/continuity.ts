@@ -56,7 +56,8 @@ export async function runContinuityCheck(
   let issues;
   try {
     issues = await analyzeContinuity(payload);
-  } catch {
+  } catch (error) {
+    console.error("runContinuityCheck: fallo llamando a Mistral", error);
     return {
       error:
         "La IA no está disponible en este momento. Tus datos están seguros — inténtalo de nuevo en un rato.",

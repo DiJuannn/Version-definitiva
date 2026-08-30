@@ -4,8 +4,9 @@ import Link from "next/link";
 import type { MouseEvent } from "react";
 
 // Solo herramientas que existen de verdad por proyecto — nada inventado.
-// "Localizaciones" queda fuera a propósito: es un recurso de toda la
-// organización, no de este proyecto (se gestiona en /app/localizaciones).
+// Guion/Desglose/etc. cuelgan de este proyecto; Calendario es un recurso de
+// toda la organización (se gestiona en /app/calendario), por eso lleva
+// `absolute: true` — su href no se prefija con el id del proyecto.
 const CATEGORIES = [
   {
     label: "Preproducción",
@@ -15,6 +16,7 @@ const CATEGORIES = [
       { label: "Personajes", href: "personajes" },
       { label: "Shot list", href: "shot-list" },
       { label: "Storyboard", href: "storyboard" },
+      { label: "Calendario", href: "/app/calendario", absolute: true },
     ],
   },
   {
@@ -59,7 +61,11 @@ export function ProjectSubNav({ projectId }: { projectId: string }) {
             {category.tools.map((tool) => (
               <Link
                 key={tool.href}
-                href={`/app/${projectId}/${tool.href}`}
+                href={
+                  "absolute" in tool && tool.absolute
+                    ? tool.href
+                    : `/app/${projectId}/${tool.href}`
+                }
                 onClick={closeOnClick}
                 className="block px-3 py-2 font-mono text-xs text-muted transition hover:bg-bg-raised hover:text-accent active:bg-bg-raised"
               >

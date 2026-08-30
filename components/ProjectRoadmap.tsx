@@ -115,9 +115,9 @@ export function ProjectRoadmap({ steps }: { steps: RoadmapStep[] }) {
       </div>
 
       <FeatureIntro featureId="project-roadmap">
-        Esto te va marcando un único paso siguiente en vez de una lista de
-        herramientas sueltas. Pulsa el botón grande para ir directo, o cualquier
-        punto de abajo para saltar a otra parte.
+        Te guiamos paso a paso: siempre verás qué toca hacer ahora. Pulsa el
+        botón grande para continuar, o cualquier punto de abajo para saltar
+        directo a esa parte.
       </FeatureIntro>
 
       <div className="mt-6 flex items-start gap-4">

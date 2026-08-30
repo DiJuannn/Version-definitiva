@@ -7,6 +7,7 @@ import { StatusPill } from "@/components/StatusPill";
 import { DashboardReveal, DashboardStagger } from "@/components/DashboardMotion";
 import { createProject, deleteProject } from "@/lib/actions/projects";
 import { DeleteProjectButton } from "@/components/DeleteProjectButton";
+import { SubmitButton } from "@/components/SubmitButton";
 import { getProjectOverview } from "@/lib/project-roadmap";
 
 function currency(value: number) {
@@ -161,12 +162,12 @@ export default async function DashboardPage() {
               autoFocus
               className="w-full border border-line bg-transparent px-3 py-2.5 text-sm outline-none transition-colors focus:border-accent"
             />
-            <button
-              type="submit"
-              className="shrink-0 rounded-full bg-accent px-6 py-2.5 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+            <SubmitButton
+              pendingLabel="Creando…"
+              className="shrink-0 rounded-full bg-accent px-6 py-2.5 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90 disabled:opacity-70"
             >
               Crear
-            </button>
+            </SubmitButton>
           </form>
         </DashboardReveal>
       ) : (
@@ -260,12 +261,12 @@ export default async function DashboardPage() {
                     autoFocus
                     className="w-full border border-line bg-transparent px-2 py-1.5 text-xs outline-none transition-colors focus:border-accent"
                   />
-                  <button
-                    type="submit"
-                    className="shrink-0 rounded-full bg-fg px-4 py-1.5 font-mono text-[10px] tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+                  <SubmitButton
+                    pendingLabel="Creando…"
+                    className="shrink-0 rounded-full bg-fg px-4 py-1.5 font-mono text-[10px] tracking-widest text-bg uppercase transition-opacity hover:opacity-90 disabled:opacity-70"
                   >
                     Crear
-                  </button>
+                  </SubmitButton>
                 </form>
               </details>
             )}

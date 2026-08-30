@@ -5,6 +5,7 @@ import { getCurrentProfile } from "@/lib/current-user";
 import { StatusPill } from "@/components/StatusPill";
 import { EmptyState } from "@/components/EmptyState";
 import { DeleteProjectButton } from "@/components/DeleteProjectButton";
+import { SubmitButton } from "@/components/SubmitButton";
 
 export default async function ProyectosPage() {
   const profile = await getCurrentProfile();
@@ -38,12 +39,12 @@ export default async function ProyectosPage() {
           required
           className="w-full border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
         />
-        <button
-          type="submit"
-          className="shrink-0 rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+        <SubmitButton
+          pendingLabel="Creando…"
+          className="shrink-0 rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90 disabled:opacity-70"
         >
           Crear
-        </button>
+        </SubmitButton>
       </form>
 
       {projects.length === 0 ? (

@@ -86,6 +86,20 @@ export function CalendarIcon({ className }: IconProps) {
   );
 }
 
+export function EventIcon({ className }: IconProps) {
+  return (
+    <svg {...shared} className={className}>
+      <rect x="3" y="5" width="18" height="16" rx="1.5" stroke="currentColor" />
+      <path
+        d="M3 10h18M8 3v4M16 3v4"
+        stroke="currentColor"
+        strokeLinecap="round"
+      />
+      <rect x="13" y="13" width="4" height="4" rx="0.5" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
 export function ShotListIcon({ className }: IconProps) {
   return (
     <svg {...shared} className={className}>

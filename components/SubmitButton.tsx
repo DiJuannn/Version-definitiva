@@ -37,11 +37,14 @@ export function SubmitButton({
     <button
       type="submit"
       disabled={pending}
-      className={
+      className={`${
         className ??
         "rounded-full bg-fg px-4 py-1.5 font-mono text-xs tracking-widest text-bg uppercase transition hover:opacity-90 disabled:opacity-50 active:scale-[0.97]"
-      }
+      } ${pending ? "inline-flex items-center gap-1.5" : ""}`}
     >
+      {pending && (
+        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current" />
+      )}
       {pending ? pendingLabel : justSaved && savedLabel ? savedLabel : children}
     </button>
   );

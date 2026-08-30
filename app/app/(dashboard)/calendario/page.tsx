@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentProfile } from "@/lib/current-user";
 import { createCalendarEvent, deleteCalendarEvent } from "@/lib/actions/calendar-events";
 import { DeleteButton } from "@/components/DeleteButton";
+import { ChipOption } from "@/components/ChipOption";
+import { SubmitButton } from "@/components/SubmitButton";
 import { CalendarEventType } from "@/lib/generated/prisma";
 
 const EVENT_TYPE_LABELS: Record<CalendarEventType, string> = {
@@ -13,12 +15,64 @@ const EVENT_TYPE_LABELS: Record<CalendarEventType, string> = {
   OTHER: "Otro",
 };
 
-const EVENT_TYPE_ICON: Record<CalendarEventType, string> = {
-  REHEARSAL: "🎭",
-  MEETING: "👥",
-  DEADLINE: "⏰",
-  DELIVERY: "📦",
-  OTHER: "📅",
+type IconProps = { className?: string };
+const iconShared = { viewBox: "0 0 24 24", fill: "none", strokeWidth: 1.8 } as const;
+
+function RehearsalIcon({ className }: IconProps) {
+  return (
+    <svg {...iconShared} className={className}>
+      <path d="M7 5v14l12-7L7 5Z" stroke="currentColor" strokeLinejoin="round" />
+    </svg>
+  );
+}
+function MeetingIcon({ className }: IconProps) {
+  return (
+    <svg {...iconShared} className={className}>
+      <circle cx="9" cy="10" r="3.2" stroke="currentColor" />
+      <circle cx="16" cy="10" r="3.2" stroke="currentColor" />
+      <path d="M3.5 19c.6-2.8 2.7-4.5 5.5-4.5s4.9 1.7 5.5 4.5M12.5 19c.6-2.8 2.7-4.5 5.5-4.5" stroke="currentColor" strokeLinecap="round" />
+    </svg>
+  );
+}
+function DeadlineIcon({ className }: IconProps) {
+  return (
+    <svg {...iconShared} className={className}>
+      <circle cx="12" cy="13" r="8" stroke="currentColor" />
+      <path d="M12 9v4l3 2" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M9 3h6" stroke="currentColor" strokeLinecap="round" />
+    </svg>
+  );
+}
+function DeliveryIcon({ className }: IconProps) {
+  return (
+    <svg {...iconShared} className={className}>
+      <path d="M3 8.5 12 4l9 4.5-9 4.5-9-4.5Z" stroke="currentColor" strokeLinejoin="round" />
+      <path d="M3 8.5V16l9 4.5 9-4.5V8.5M12 13v7.5" stroke="currentColor" strokeLinejoin="round" />
+    </svg>
+  );
+}
+function OtherEventIcon({ className }: IconProps) {
+  return (
+    <svg {...iconShared} className={className}>
+      <circle cx="12" cy="12" r="3" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+function ShootingDayIcon({ className }: IconProps) {
+  return (
+    <svg {...iconShared} className={className}>
+      <path d="M3 10 20 6l1 4-17 4-1-4Z" stroke="currentColor" strokeLinejoin="round" />
+      <path d="M4 14h16v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-5Z" stroke="currentColor" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+const EVENT_TYPE_ICON: Record<CalendarEventType, (props: IconProps) => React.JSX.Element> = {
+  REHEARSAL: RehearsalIcon,
+  MEETING: MeetingIcon,
+  DEADLINE: DeadlineIcon,
+  DELIVERY: DeliveryIcon,
+  OTHER: OtherEventIcon,
 };
 
 const WEEKDAYS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
@@ -78,14 +132,16 @@ export default async function CalendarioPage({
     ...events.map((event) => ({
       id: `event-${event.id}`,
       date: event.date,
-      label: `${EVENT_TYPE_ICON[event.type]} ${event.title}`,
+      Icon: EVENT_TYPE_ICON[event.type],
+      label: event.title,
       href: null as string | null,
       deletableId: event.id,
     })),
     ...shootingDays.map((day) => ({
       id: `day-${day.id}`,
       date: day.date,
-      label: `🎬 Rodaje — ${day.project.name}`,
+      Icon: ShootingDayIcon,
+      label: `Rodaje — ${day.project.name}`,
       href: `/app/${day.projectId}/plan-de-rodaje/${day.id}`,
       deletableId: null as string | null,
     })),
@@ -168,13 +224,15 @@ export default async function CalendarioPage({
                     <Link
                       key={entry.id}
                       href={entry.href}
-                      className="block truncate font-mono text-[10px] hover:text-accent"
+                      className="flex items-center gap-1 truncate font-mono text-[10px] hover:text-accent"
                     >
-                      {entry.label}
+                      <entry.Icon className="h-2.5 w-2.5 shrink-0" />
+                      <span className="truncate">{entry.label}</span>
                     </Link>
                   ) : (
-                    <p key={entry.id} className="truncate font-mono text-[10px]">
-                      {entry.label}
+                    <p key={entry.id} className="flex items-center gap-1 truncate font-mono text-[10px]">
+                      <entry.Icon className="h-2.5 w-2.5 shrink-0" />
+                      <span className="truncate">{entry.label}</span>
                     </p>
                   ),
                 )}
@@ -198,17 +256,6 @@ export default async function CalendarioPage({
             required
             className="border border-line bg-transparent px-2 py-1.5 text-xs outline-none transition-colors focus:border-accent sm:col-span-2"
           />
-          <select
-            name="type"
-            defaultValue="OTHER"
-            className="border border-line bg-transparent px-2 py-1.5 text-xs outline-none transition-colors focus:border-accent"
-          >
-            {Object.values(CalendarEventType).map((value) => (
-              <option key={value} value={value} className="bg-bg">
-                {EVENT_TYPE_LABELS[value]}
-              </option>
-            ))}
-          </select>
           <input
             type="date"
             name="date"
@@ -229,28 +276,49 @@ export default async function CalendarioPage({
               </option>
             ))}
           </select>
+
           <div className="sm:col-span-2 lg:col-span-5">
-            <button
-              type="submit"
-              className="rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+              Tipo
+            </span>
+            <div className="mt-1.5 flex flex-wrap gap-2">
+              {Object.values(CalendarEventType).map((value) => (
+                <ChipOption
+                  key={value}
+                  type="radio"
+                  name="type"
+                  value={value}
+                  label={EVENT_TYPE_LABELS[value]}
+                  defaultChecked={value === "OTHER"}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="sm:col-span-2 lg:col-span-5">
+            <SubmitButton
+              pendingLabel="Añadiendo…"
+              className="rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90 disabled:opacity-70"
             >
               Añadir
-            </button>
+            </SubmitButton>
           </div>
         </form>
 
         {events.length > 0 && (
           <div className="mt-6 border-t border-line">
-            {events.map((event) => (
+            {events.map((event) => {
+              const Icon = EVENT_TYPE_ICON[event.type];
+              return (
               <div
                 key={event.id}
                 className="flex items-center justify-between gap-4 border-b border-line py-3"
               >
-                <span className="font-mono text-sm">
-                  {EVENT_TYPE_ICON[event.type]}{" "}
+                <span className="flex items-center gap-2 font-mono text-sm">
+                  <Icon className="h-4 w-4 shrink-0 text-muted" />
                   {event.date.toLocaleDateString("es-ES")} — {event.title}
                   {event.project && (
-                    <span className="ml-1 text-muted">({event.project.name})</span>
+                    <span className="text-muted">({event.project.name})</span>
                   )}
                 </span>
                 <form action={deleteCalendarEvent.bind(null, event.id)}>
@@ -260,7 +328,8 @@ export default async function CalendarioPage({
                   />
                 </form>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>
