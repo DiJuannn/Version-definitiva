@@ -46,13 +46,13 @@ export function ProjectSubNav({ projectId }: { projectId: string }) {
     <nav className="flex flex-wrap items-center gap-2 border-b border-line pb-4 print:hidden">
       <Link
         href={`/app/${projectId}`}
-        className="border border-line px-3 py-1.5 font-mono text-[10px] tracking-widest text-muted uppercase transition-colors hover:border-accent hover:text-accent"
+        className="border border-line px-3 py-1.5 font-mono text-[10px] tracking-widest text-muted uppercase transition hover:border-accent hover:text-accent active:scale-[0.97]"
       >
         Resumen
       </Link>
       {CATEGORIES.map((category) => (
         <details key={category.label} className="group relative">
-          <summary className="cursor-pointer list-none border border-line px-3 py-1.5 font-mono text-[10px] tracking-widest text-muted uppercase transition-colors [&::-webkit-details-marker]:hidden hover:border-accent hover:text-accent group-open:border-accent group-open:text-accent">
+          <summary className="cursor-pointer list-none border border-line px-3 py-1.5 font-mono text-[10px] tracking-widest text-muted uppercase transition [&::-webkit-details-marker]:hidden hover:border-accent hover:text-accent group-open:border-accent group-open:text-accent active:scale-[0.97]">
             {category.label} ▾
           </summary>
           <div className="absolute left-0 z-20 mt-2 w-48 border border-line bg-bg py-1 shadow-lg">
@@ -61,7 +61,7 @@ export function ProjectSubNav({ projectId }: { projectId: string }) {
                 key={tool.href}
                 href={`/app/${projectId}/${tool.href}`}
                 onClick={closeOnClick}
-                className="block px-3 py-2 font-mono text-xs text-muted transition-colors hover:bg-bg-raised hover:text-accent"
+                className="block px-3 py-2 font-mono text-xs text-muted transition hover:bg-bg-raised hover:text-accent active:bg-bg-raised"
               >
                 {tool.label}
               </Link>

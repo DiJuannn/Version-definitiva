@@ -20,7 +20,7 @@ export function DeleteButton({
       }}
       className={
         className ??
-        "font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent"
+        "font-mono text-[11px] tracking-widest text-muted uppercase transition hover:text-accent active:scale-[0.97]"
       }
       {...rest}
     >

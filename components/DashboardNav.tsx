@@ -49,7 +49,7 @@ export function DashboardNav({
           <Link
             key={item.href}
             href={item.href}
-            className="font-mono text-xs tracking-widest text-muted uppercase transition-colors hover:text-accent"
+            className="font-mono text-xs tracking-widest text-muted uppercase transition hover:text-accent active:opacity-60"
           >
             {item.label}
           </Link>

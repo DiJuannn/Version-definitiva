@@ -34,7 +34,7 @@ export function ListRow({
     return (
       <Link
         href={href}
-        className={`group ${rowClass} transition-colors hover:border-accent`}
+        className={`group ${rowClass} transition hover:border-accent active:bg-bg-raised`}
       >
         {content}
       </Link>
