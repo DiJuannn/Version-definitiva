@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
+import { AjoloteLogo } from "@/components/AjoloteLogo";
 
-const DISPLAY_MS = 4300;
+const DISPLAY_MS = 1900;
 const SESSION_KEY = "vd-intro-seen";
 
 export function IntroOverlay() {
@@ -54,14 +55,7 @@ export function IntroOverlay() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
           >
-            <video
-              src="/ajolote-animado.mp4"
-              className="h-48 w-auto"
-              autoPlay
-              muted
-              playsInline
-              preload="auto"
-            />
+            <AjoloteLogo className="h-16 w-auto text-fg" priority />
             <motion.span
               className="font-mono text-xs tracking-[0.3em] text-muted uppercase"
               initial={{ opacity: 0 }}
