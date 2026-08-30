@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getCurrentProfile } from "@/lib/current-user";
 import { createCalendarEvent, deleteCalendarEvent } from "@/lib/actions/calendar-events";
+import { DeleteButton } from "@/components/DeleteButton";
 import { CalendarEventType } from "@/lib/generated/prisma";
 
 const EVENT_TYPE_LABELS: Record<CalendarEventType, string> = {
@@ -253,12 +254,10 @@ export default async function CalendarioPage({
                   )}
                 </span>
                 <form action={deleteCalendarEvent.bind(null, event.id)}>
-                  <button
-                    type="submit"
+                  <DeleteButton
+                    confirmMessage="¿Eliminar este evento del calendario?"
                     className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
-                  >
-                    Eliminar
-                  </button>
+                  />
                 </form>
               </div>
             ))}

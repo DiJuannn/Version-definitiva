@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentProfile } from "@/lib/current-user";
 import { createInvite, revokeInvite, updateMemberRole } from "@/lib/actions/team";
 import { CopyLinkButton } from "@/components/CopyLinkButton";
+import { DeleteButton } from "@/components/DeleteButton";
 import { HelpTip } from "@/components/HelpTip";
 import { FeatureIntro } from "@/components/FeatureIntro";
 
@@ -139,12 +140,12 @@ export default async function OrganizacionPage() {
                     link={`${origin}/app/signup?invite=${invite.token}`}
                   />
                   <form action={revokeInvite.bind(null, invite.id)}>
-                    <button
-                      type="submit"
+                    <DeleteButton
+                      confirmMessage="¿Revocar esta invitación? El enlace dejará de funcionar."
                       className="font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent"
                     >
                       Revocar
-                    </button>
+                    </DeleteButton>
                   </form>
                 </div>
               </div>

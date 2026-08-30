@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentProfile } from "@/lib/current-user";
 import { deletePerson, updatePerson, uploadPersonPhoto } from "@/lib/actions/people";
+import { DeleteButton } from "@/components/DeleteButton";
 import {
   deletePersonAvailability,
   setPersonAvailability,
@@ -287,12 +288,10 @@ export default async function PersonDetailPage({
                 <form
                   action={deletePersonAvailability.bind(null, personId, entry.id)}
                 >
-                  <button
-                    type="submit"
+                  <DeleteButton
+                    confirmMessage="¿Eliminar esta entrada de disponibilidad?"
                     className="font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent"
-                  >
-                    Eliminar
-                  </button>
+                  />
                 </form>
               </div>
             ))}
@@ -301,12 +300,12 @@ export default async function PersonDetailPage({
       </section>
 
       <form action={deletePerson.bind(null, personId)} className="mt-10">
-        <button
-          type="submit"
+        <DeleteButton
+          confirmMessage="¿Eliminar a esta persona del directorio? No se puede deshacer."
           className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
         >
           Eliminar persona
-        </button>
+        </DeleteButton>
       </form>
     </div>
   );

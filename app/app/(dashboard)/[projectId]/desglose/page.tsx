@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
+import { DeleteButton } from "@/components/DeleteButton";
 import {
   createBreakdownElement,
   createCrewMember,
@@ -135,12 +136,10 @@ export default async function DesglosePage({
                             item.id,
                           )}
                         >
-                          <button
-                            type="submit"
+                          <DeleteButton
+                            confirmMessage="¿Eliminar este elemento del desglose?"
                             className="font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent"
-                          >
-                            Eliminar
-                          </button>
+                          />
                         </form>
                       </div>
                     </div>
@@ -233,12 +232,10 @@ export default async function DesglosePage({
                     {member._count.scenes === 1 ? "" : "s"}
                   </span>
                   <form action={deleteCrewMember.bind(null, projectId, member.id)}>
-                    <button
-                      type="submit"
+                    <DeleteButton
+                      confirmMessage="¿Eliminar a este miembro del equipo?"
                       className="font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent"
-                    >
-                      Eliminar
-                    </button>
+                    />
                   </form>
                 </div>
               </div>

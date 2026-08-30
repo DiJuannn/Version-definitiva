@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { addStoryboardFrame, deleteStoryboardFrame } from "@/lib/actions/storyboard";
+import { DeleteButton } from "@/components/DeleteButton";
 import { PrintButton } from "@/components/PrintButton";
 
 export default async function StoryboardPage({
@@ -102,14 +103,12 @@ export default async function StoryboardPage({
                                 projectId,
                                 frame.id,
                               )}
-                              className="absolute right-1 top-1 opacity-0 transition-opacity group-hover:opacity-100 print:hidden"
+                              className="absolute right-1 top-1 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100 print:hidden"
                             >
-                              <button
-                                type="submit"
+                              <DeleteButton
+                                confirmMessage="¿Eliminar esta viñeta del storyboard?"
                                 className="bg-bg/80 px-2 py-1 font-mono text-[10px] tracking-widest text-muted uppercase hover:text-accent"
-                              >
-                                Eliminar
-                              </button>
+                              />
                             </form>
                           </div>
                         ))}

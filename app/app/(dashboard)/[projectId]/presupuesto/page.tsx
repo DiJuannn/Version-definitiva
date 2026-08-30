@@ -8,6 +8,7 @@ import {
   deleteBudgetCategory,
   deleteBudgetItem,
 } from "@/lib/actions/budget";
+import { DeleteButton } from "@/components/DeleteButton";
 import { PdfLink } from "@/components/PdfLink";
 
 function currency(value: number) {
@@ -133,12 +134,12 @@ export default async function PresupuestoPage({
                       action={deleteBudgetCategory.bind(null, projectId, category.id)}
                       className="print:hidden"
                     >
-                      <button
-                        type="submit"
+                      <DeleteButton
+                        confirmMessage="¿Eliminar esta categoría y todas sus partidas?"
                         className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
                       >
                         Eliminar
-                      </button>
+                      </DeleteButton>
                     </form>
                   </div>
                 </div>
@@ -172,12 +173,10 @@ export default async function PresupuestoPage({
                             action={deleteBudgetItem.bind(null, projectId, item.id)}
                             className="print:hidden"
                           >
-                            <button
-                              type="submit"
+                            <DeleteButton
+                              confirmMessage="¿Eliminar esta partida de presupuesto?"
                               className="font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent"
-                            >
-                              Eliminar
-                            </button>
+                            />
                           </form>
                         </div>
                       </div>

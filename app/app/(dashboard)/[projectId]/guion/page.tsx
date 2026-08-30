@@ -7,6 +7,7 @@ import { deleteScriptFile, uploadScript } from "@/lib/actions/script";
 import { analyzeScript } from "@/lib/actions/script-analysis";
 import { runContinuityCheck } from "@/lib/actions/continuity";
 import { SubmitButton } from "@/components/SubmitButton";
+import { DeleteButton } from "@/components/DeleteButton";
 import { HelpTip } from "@/components/HelpTip";
 import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
 
@@ -106,12 +107,10 @@ export default async function GuionPage({
                     </SubmitButton>
                   </form>
                   <form action={deleteScriptFile.bind(null, projectId, file.id)}>
-                    <button
-                      type="submit"
+                    <DeleteButton
+                      confirmMessage="¿Eliminar este guion subido?"
                       className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
-                    >
-                      Eliminar
-                    </button>
+                    />
                   </form>
                 </div>
               </div>

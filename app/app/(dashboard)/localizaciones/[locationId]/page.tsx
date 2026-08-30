@@ -3,6 +3,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentProfile } from "@/lib/current-user";
+import { DeleteButton } from "@/components/DeleteButton";
 import {
   addLocationPhoto,
   addLocationVideo,
@@ -283,12 +284,10 @@ export default async function LocationDetailPage({
                   action={removeLocationPhoto.bind(null, locationId, url)}
                   className="absolute inset-x-0 bottom-0 bg-bg/80 p-1 opacity-0 transition-opacity group-hover:opacity-100"
                 >
-                  <button
-                    type="submit"
+                  <DeleteButton
+                    confirmMessage="¿Eliminar esta foto?"
                     className="w-full font-mono text-[10px] tracking-widest text-muted uppercase hover:text-accent"
-                  >
-                    Eliminar
-                  </button>
+                  />
                 </form>
               </div>
             ))}
@@ -330,12 +329,10 @@ export default async function LocationDetailPage({
                   {url}
                 </a>
                 <form action={removeLocationVideo.bind(null, locationId, url)}>
-                  <button
-                    type="submit"
+                  <DeleteButton
+                    confirmMessage="¿Eliminar este vídeo?"
                     className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
-                  >
-                    Eliminar
-                  </button>
+                  />
                 </form>
               </div>
             ))}
@@ -344,12 +341,12 @@ export default async function LocationDetailPage({
       </section>
 
       <form action={deleteLocation.bind(null, locationId)} className="mt-10">
-        <button
-          type="submit"
+        <DeleteButton
+          confirmMessage="¿Eliminar esta localización? Se desvinculará de las escenas que la usen."
           className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
         >
           Eliminar localización
-        </button>
+        </DeleteButton>
       </form>
     </div>
   );

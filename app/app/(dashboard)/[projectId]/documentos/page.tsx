@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { deleteDocument, uploadDocument } from "@/lib/actions/documents";
+import { DeleteButton } from "@/components/DeleteButton";
 
 export default async function DocumentosPage({
   params,
@@ -212,12 +213,10 @@ export default async function DocumentosPage({
                     {[doc.actor?.name, doc.location?.name].filter(Boolean).join(" · ")}
                   </span>
                   <form action={deleteDocument.bind(null, projectId, doc.id)}>
-                    <button
-                      type="submit"
+                    <DeleteButton
+                      confirmMessage="¿Eliminar este documento?"
                       className="font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent"
-                    >
-                      Eliminar
-                    </button>
+                    />
                   </form>
                 </div>
               </div>

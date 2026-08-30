@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { deleteShot, updateShot } from "@/lib/actions/shots";
+import { DeleteButton } from "@/components/DeleteButton";
 
 export default async function ShotDetailPage({
   params,
@@ -142,12 +143,12 @@ export default async function ShotDetailPage({
           Ver en Storyboard →
         </Link>
         <form action={deleteShot.bind(null, projectId, shotId)}>
-          <button
-            type="submit"
+          <DeleteButton
+            confirmMessage="¿Eliminar este plano? No se puede deshacer."
             className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
           >
             Eliminar plano
-          </button>
+          </DeleteButton>
         </form>
       </div>
     </div>

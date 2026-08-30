@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { createActor, deleteActor } from "@/lib/actions/actors";
+import { DeleteButton } from "@/components/DeleteButton";
 import {
   createCharacter,
   deleteCharacter,
@@ -140,12 +141,10 @@ export default async function PersonajesPage({
                   </p>
                 </div>
                 <form action={deleteActor.bind(null, projectId, actor.id)}>
-                  <button
-                    type="submit"
+                  <DeleteButton
+                    confirmMessage="¿Eliminar este actor? Se desvinculará de sus personajes."
                     className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
-                  >
-                    Eliminar
-                  </button>
+                  />
                 </form>
               </div>
             ))}
@@ -253,12 +252,10 @@ export default async function PersonajesPage({
                   <form
                     action={deleteCharacter.bind(null, projectId, character.id)}
                   >
-                    <button
-                      type="submit"
+                    <DeleteButton
+                      confirmMessage="¿Eliminar este personaje?"
                       className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
-                    >
-                      Eliminar
-                    </button>
+                    />
                   </form>
                 </div>
               </div>

@@ -13,6 +13,7 @@ import { getShootingDaySummary } from "@/lib/shooting-day-summary";
 import { getAvailabilityWarnings } from "@/lib/availability-warnings";
 import { getReservationConflicts } from "@/lib/reservation-conflicts";
 import { DAY_PART_LABELS, INT_EXT_LABELS, INVENTORY_CATEGORY_LABELS } from "@/lib/labels";
+import { DeleteButton } from "@/components/DeleteButton";
 
 function toDateInputValue(date: Date): string {
   return date.toISOString().slice(0, 10);
@@ -377,12 +378,12 @@ export default async function ShootingDayDetailPage({
           {summary.shootingDay.callSheet ? "Ver call sheet" : "Generar call sheet"}
         </Link>
         <form action={deleteShootingDay.bind(null, projectId, dayId)}>
-          <button
-            type="submit"
+          <DeleteButton
+            confirmMessage="¿Eliminar este día de rodaje?"
             className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
           >
             Eliminar día
-          </button>
+          </DeleteButton>
         </form>
       </div>
     </div>

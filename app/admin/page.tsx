@@ -10,6 +10,7 @@ import {
   updateServiceItem,
   updateSiteContent,
 } from "@/lib/actions/site-content";
+import { DeleteButton } from "@/components/DeleteButton";
 import { FeatureIntro } from "@/components/FeatureIntro";
 import { HelpTip } from "@/components/HelpTip";
 
@@ -197,12 +198,11 @@ export default async function AdminPage() {
                 >
                   Guardar
                 </button>
-                <button
+                <DeleteButton
                   formAction={deleteServiceItem.bind(null, service.id)}
+                  confirmMessage="¿Eliminar este servicio de la web? No se puede deshacer."
                   className="font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent"
-                >
-                  Eliminar
-                </button>
+                />
               </div>
               <textarea
                 name="details"
@@ -283,12 +283,11 @@ export default async function AdminPage() {
                 >
                   Guardar
                 </button>
-                <button
+                <DeleteButton
                   formAction={deletePortfolioItem.bind(null, item.id)}
+                  confirmMessage="¿Eliminar esta pieza del portfolio? No se puede deshacer."
                   className="font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent"
-                >
-                  Eliminar
-                </button>
+                />
               </div>
             </form>
           ))}

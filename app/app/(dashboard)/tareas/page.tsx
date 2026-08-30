@@ -8,6 +8,7 @@ import {
   createChecklistTemplate,
   deleteChecklistTemplate,
 } from "@/lib/actions/checklist-templates";
+import { DeleteButton } from "@/components/DeleteButton";
 import { TaskPriority } from "@/lib/generated/prisma";
 
 const PRIORITY_LABELS: Record<TaskPriority, string> = {
@@ -159,12 +160,12 @@ export default async function TareasPage() {
                       {template.name}
                     </p>
                     <form action={deleteChecklistTemplate.bind(null, template.id)}>
-                      <button
-                        type="submit"
+                      <DeleteButton
+                        confirmMessage="¿Eliminar esta plantilla de checklist?"
                         className="font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent"
                       >
                         Eliminar plantilla
-                      </button>
+                      </DeleteButton>
                     </form>
                   </div>
 

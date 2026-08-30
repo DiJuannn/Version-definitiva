@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentProfile } from "@/lib/current-user";
 import { addTaskComment, deleteTask, updateTask, updateTaskStatus } from "@/lib/actions/tasks";
+import { DeleteButton } from "@/components/DeleteButton";
 import { TaskPriority, TaskStatus } from "@/lib/generated/prisma";
 
 const PRIORITY_LABELS: Record<TaskPriority, string> = {
@@ -195,12 +196,12 @@ export default async function TaskDetailPage({
       </section>
 
       <form action={deleteTask.bind(null, taskId)} className="mt-8">
-        <button
-          type="submit"
+        <DeleteButton
+          confirmMessage="¿Eliminar esta tarea? No se puede deshacer."
           className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
         >
           Eliminar tarea
-        </button>
+        </DeleteButton>
       </form>
     </div>
   );

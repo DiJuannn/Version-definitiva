@@ -2,6 +2,11 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getCurrentProfile } from "@/lib/current-user";
 import { createVehicle, deleteVehicle } from "@/lib/actions/vehicles";
+import { DeleteButton } from "@/components/DeleteButton";
+import { FormField } from "@/components/FormField";
+import { EmptyState } from "@/components/EmptyState";
+import { ListRow } from "@/components/ListRow";
+import { SubmitButton } from "@/components/SubmitButton";
 
 export default async function VehiculosPage() {
   const profile = await getCurrentProfile();
@@ -33,73 +38,70 @@ export default async function VehiculosPage() {
         action={createVehicle}
         className="mt-8 grid gap-3 border border-line p-5 sm:grid-cols-2 lg:grid-cols-4"
       >
-        <input
-          name="name"
-          placeholder="Nombre"
-          required
-          className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
-        />
-        <input
-          name="type"
-          placeholder="Tipo (furgoneta, coche...)"
-          className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
-        />
-        <input
-          name="plate"
-          placeholder="Matrícula"
-          className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
-        />
-        <input
-          name="notes"
-          placeholder="Notas"
-          className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
-        />
+        <FormField label="Nombre">
+          <input
+            name="name"
+            required
+            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+          />
+        </FormField>
+        <FormField label="Tipo">
+          <input
+            name="type"
+            placeholder="Furgoneta, coche..."
+            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+          />
+        </FormField>
+        <FormField label="Matrícula">
+          <input
+            name="plate"
+            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+          />
+        </FormField>
+        <FormField label="Notas">
+          <input
+            name="notes"
+            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+          />
+        </FormField>
         <div>
-          <button
-            type="submit"
-            className="rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
-          >
+          <SubmitButton pendingLabel="Añadiendo…" savedLabel="✓ Añadido">
             Añadir vehículo
-          </button>
+          </SubmitButton>
         </div>
       </form>
 
       {vehicles.length === 0 ? (
-        <p className="mt-10 font-mono text-sm text-muted">
-          Todavía no hay vehículos en la flota.
-        </p>
+        <EmptyState
+          title="Todavía no hay vehículos en la flota"
+          description="Añádelo con el formulario de arriba — luego se reserva por día de rodaje desde cualquier proyecto."
+        />
       ) : (
         <div className="mt-10 border-t border-line">
           {vehicles.map((vehicle) => (
-            <div
+            <ListRow
               key={vehicle.id}
-              className="flex items-center justify-between gap-4 border-b border-line py-4"
-            >
-              <div>
+              title={
                 <span className="font-display text-lg font-bold uppercase">
                   {vehicle.name}
                 </span>
-                <p className="font-mono text-xs text-muted">
-                  {[vehicle.type, vehicle.plate, vehicle.notes]
-                    .filter(Boolean)
-                    .join(" · ") || "Sin datos"}
-                </p>
-              </div>
-              <div className="flex items-center gap-4">
-                <span className="font-mono text-xs text-muted">
-                  {vehicle._count.reservations} reserva
-                  {vehicle._count.reservations === 1 ? "" : "s"}
-                </span>
-                <form action={deleteVehicle.bind(null, vehicle.id)}>
-                  <button
-                    type="submit"
-                    className="font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent"
-                  >
-                    Eliminar
-                  </button>
-                </form>
-              </div>
-            </div>
+              }
+              meta={
+                [vehicle.type, vehicle.plate, vehicle.notes].filter(Boolean).join(" · ") ||
+                "Sin datos"
+              }
+              trailing={
+                <>
+                  <span className="font-mono text-xs text-muted">
+                    {vehicle._count.reservations} reserva
+                    {vehicle._count.reservations === 1 ? "" : "s"}
+                  </span>
+                  <form action={deleteVehicle.bind(null, vehicle.id)}>
+                    <DeleteButton confirmMessage="¿Eliminar este vehículo de la flota?" />
+                  </form>
+                </>
+              }
+            />
           ))}
         </div>
       )}

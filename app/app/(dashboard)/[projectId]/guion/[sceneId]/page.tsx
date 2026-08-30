@@ -10,6 +10,7 @@ import {
 } from "@/lib/labels";
 import { BreakdownCategory, DayPart, IntExt } from "@/lib/generated/prisma";
 import { HelpTip } from "@/components/HelpTip";
+import { DeleteButton } from "@/components/DeleteButton";
 
 export default async function SceneDetailPage({
   params,
@@ -346,12 +347,12 @@ export default async function SceneDetailPage({
       </form>
 
       <form action={deleteScene.bind(null, projectId, sceneId)} className="mt-6">
-        <button
-          type="submit"
+        <DeleteButton
+          confirmMessage="¿Eliminar esta escena? No se puede deshacer."
           className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
         >
           Eliminar escena
-        </button>
+        </DeleteButton>
       </form>
     </div>
   );
