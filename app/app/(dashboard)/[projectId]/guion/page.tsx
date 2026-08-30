@@ -73,7 +73,10 @@ export default async function GuionPage({
           Archivo del guion
         </h2>
         <div className="mt-4">
-          <ScriptUploadForm action={uploadAction} />
+          <ScriptUploadForm
+            action={uploadAction}
+            existingFileName={scriptFiles[0]?.fileName ?? null}
+          />
         </div>
 
         {scriptFiles.length > 0 && (

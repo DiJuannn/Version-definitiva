@@ -11,6 +11,7 @@ import {
 import { BreakdownCategory, DayPart, IntExt } from "@/lib/generated/prisma";
 import { HelpTip } from "@/components/HelpTip";
 import { DeleteButton } from "@/components/DeleteButton";
+import { ChipOption } from "@/components/ChipOption";
 
 export default async function SceneDetailPage({
   params,
@@ -91,38 +92,40 @@ export default async function SceneDetailPage({
               className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
             />
           </label>
-          <label className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1">
             <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
               INT/EXT
             </span>
-            <select
-              name="intExt"
-              defaultValue={scene.intExt}
-              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
-            >
+            <div className="flex flex-wrap gap-2">
               {Object.values(IntExt).map((value) => (
-                <option key={value} value={value} className="bg-bg">
-                  {INT_EXT_LABELS[value]}
-                </option>
+                <ChipOption
+                  key={value}
+                  type="radio"
+                  name="intExt"
+                  value={value}
+                  label={INT_EXT_LABELS[value]}
+                  defaultChecked={scene.intExt === value}
+                />
               ))}
-            </select>
-          </label>
-          <label className="flex flex-col gap-1">
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
             <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
               Día/Noche
             </span>
-            <select
-              name="dayPart"
-              defaultValue={scene.dayPart}
-              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
-            >
+            <div className="flex flex-wrap gap-2">
               {Object.values(DayPart).map((value) => (
-                <option key={value} value={value} className="bg-bg">
-                  {DAY_PART_LABELS[value]}
-                </option>
+                <ChipOption
+                  key={value}
+                  type="radio"
+                  name="dayPart"
+                  value={value}
+                  label={DAY_PART_LABELS[value]}
+                  defaultChecked={scene.dayPart === value}
+                />
               ))}
-            </select>
-          </label>
+            </div>
+          </div>
           <label className="flex flex-col gap-1">
             <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
               Localización

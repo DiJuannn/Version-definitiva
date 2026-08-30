@@ -5,7 +5,8 @@ import { CalendarEventType, ProjectStatus, TaskStatus } from "@/lib/generated/pr
 import { AjoloteLogo } from "@/components/AjoloteLogo";
 import { StatusPill } from "@/components/StatusPill";
 import { DashboardReveal, DashboardStagger } from "@/components/DashboardMotion";
-import { createProject } from "@/lib/actions/projects";
+import { createProject, deleteProject } from "@/lib/actions/projects";
+import { DeleteProjectButton } from "@/components/DeleteProjectButton";
 import { getProjectOverview } from "@/lib/project-roadmap";
 
 function currency(value: number) {
@@ -279,18 +280,25 @@ export default async function DashboardPage() {
         {recentProjects.length > 0 && (
           <DashboardStagger className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {recentProjects.map((project) => (
-              <Link
+              <div
                 key={project.id}
-                href={`/app/${project.id}`}
-                className="group border border-line p-4 transition-colors hover:border-accent"
+                className="group relative border border-line p-4 transition-colors hover:border-accent"
               >
-                <p className="font-display text-sm font-bold uppercase transition-colors group-hover:text-accent">
-                  {project.name}
-                </p>
-                <div className="mt-2">
-                  <StatusPill status={project.status} />
+                <Link href={`/app/${project.id}`} className="block pr-6">
+                  <p className="font-display text-sm font-bold uppercase transition-colors group-hover:text-accent">
+                    {project.name}
+                  </p>
+                  <div className="mt-2">
+                    <StatusPill status={project.status} />
+                  </div>
+                </Link>
+                <div className="absolute right-2 top-2">
+                  <DeleteProjectButton
+                    projectName={project.name}
+                    action={deleteProject.bind(null, project.id)}
+                  />
                 </div>
-              </Link>
+              </div>
             ))}
           </DashboardStagger>
         )}

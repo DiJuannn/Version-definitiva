@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { createProject } from "@/lib/actions/projects";
+import { createProject, deleteProject } from "@/lib/actions/projects";
 import { prisma } from "@/lib/prisma";
 import { getCurrentProfile } from "@/lib/current-user";
 import { StatusPill } from "@/components/StatusPill";
 import { EmptyState } from "@/components/EmptyState";
+import { DeleteProjectButton } from "@/components/DeleteProjectButton";
 
 export default async function ProyectosPage() {
   const profile = await getCurrentProfile();
@@ -53,21 +54,29 @@ export default async function ProyectosPage() {
       ) : (
         <div className="mt-10 border-t border-line">
           {projects.map((project) => (
-            <Link
+            <div
               key={project.id}
-              href={`/app/${project.id}`}
-              className="group flex items-center justify-between border-b border-line py-4 transition-colors hover:border-accent"
+              className="group flex items-center justify-between gap-4 border-b border-line py-4 transition-colors hover:border-accent"
             >
-              <span className="font-display text-lg font-bold uppercase transition-colors group-hover:text-accent">
-                {project.name}
-              </span>
-              <span className="flex items-center gap-4">
-                <StatusPill status={project.status} />
-                <span className="font-mono text-xs text-muted">
-                  {project.createdAt.toLocaleDateString("es-ES")}
+              <Link
+                href={`/app/${project.id}`}
+                className="flex min-w-0 flex-1 items-center justify-between gap-4"
+              >
+                <span className="font-display text-lg font-bold uppercase transition-colors group-hover:text-accent">
+                  {project.name}
                 </span>
-              </span>
-            </Link>
+                <span className="flex items-center gap-4">
+                  <StatusPill status={project.status} />
+                  <span className="font-mono text-xs text-muted">
+                    {project.createdAt.toLocaleDateString("es-ES")}
+                  </span>
+                </span>
+              </Link>
+              <DeleteProjectButton
+                projectName={project.name}
+                action={deleteProject.bind(null, project.id)}
+              />
+            </div>
           ))}
         </div>
       )}
