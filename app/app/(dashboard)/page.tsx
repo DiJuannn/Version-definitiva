@@ -19,6 +19,13 @@ const CALENDAR_EVENT_LABELS: Record<CalendarEventType, string> = {
   OTHER: "Evento",
 };
 
+function greeting(hour: number): string {
+  if (hour < 6) return "Buenas noches";
+  if (hour < 12) return "Buenos días";
+  if (hour < 20) return "Buenas tardes";
+  return "Buenas noches";
+}
+
 function relativeDay(date: Date, now: Date): string {
   const days = Math.round(
     (new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime() -
@@ -110,7 +117,7 @@ export default async function DashboardPage() {
         <AjoloteLogo className="h-11 w-auto shrink-0" />
         <div>
           <p className="font-mono text-xs tracking-widest text-accent uppercase">
-            Taller
+            {greeting(now.getHours())}
           </p>
           <h1 className="mt-0.5 font-display text-2xl font-bold uppercase sm:text-3xl">
             {profile.organization.name}
@@ -118,8 +125,8 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <DashboardStagger className="mt-10 grid gap-4 sm:grid-cols-3">
-        <div className="border border-line p-5 transition-colors hover:border-accent/50">
+      <DashboardStagger className="mt-6 grid gap-3 sm:mt-10 sm:grid-cols-3 sm:gap-4">
+        <div className="border border-line p-4 transition-colors hover:border-accent/50 sm:p-5">
           <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
             Proyectos activos
           </p>
@@ -128,7 +135,7 @@ export default async function DashboardPage() {
           </p>
         </div>
 
-        <div className="border border-line p-5 transition-colors hover:border-accent/50">
+        <div className="border border-line p-4 transition-colors hover:border-accent/50 sm:p-5">
           <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
             Próximo rodaje
           </p>
@@ -149,7 +156,7 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        <div className="border border-line p-5 transition-colors hover:border-accent/50">
+        <div className="border border-line p-4 transition-colors hover:border-accent/50 sm:p-5">
           <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
             Presupuesto general
           </p>
@@ -162,7 +169,7 @@ export default async function DashboardPage() {
         </div>
       </DashboardStagger>
 
-      <DashboardReveal className="mt-10" delay={0.1}>
+      <DashboardReveal className="mt-8 sm:mt-10" delay={0.1}>
         <div className="flex items-center justify-between">
           <p className="font-mono text-[10px] tracking-widest text-accent uppercase">
             Proyectos recientes
@@ -224,11 +231,11 @@ export default async function DashboardPage() {
         )}
       </DashboardReveal>
 
-      <DashboardReveal className="mt-10 border border-line p-5" delay={0.18}>
+      <DashboardReveal className="mt-8 border border-line p-4 sm:mt-10 sm:p-5" delay={0.18}>
         <p className="font-mono text-[10px] tracking-widest text-accent uppercase">
           Agenda
         </p>
-        <div className="mt-5 grid gap-8 sm:grid-cols-2">
+        <div className="mt-4 grid gap-6 sm:mt-5 sm:grid-cols-2 sm:gap-8">
           <div>
             <div className="flex items-center justify-between">
               <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
