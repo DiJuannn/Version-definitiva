@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ProjectStatus } from "@/lib/generated/prisma";
 import { PROJECT_STATUS_LABELS as STATUS_LABELS } from "@/lib/labels";
+import { ChipOption } from "@/components/ChipOption";
 
 function toDateInputValue(date: Date | null): string {
   if (!date) return "";
@@ -148,22 +149,23 @@ export function ProjectSummaryCard({
         />
       </label>
 
-      <label className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1 sm:col-span-2 lg:col-span-3">
         <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
           Estado
         </span>
-        <select
-          name="status"
-          defaultValue={project.status}
-          className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
-        >
+        <div className="flex flex-wrap gap-2">
           {Object.entries(STATUS_LABELS).map(([value, label]) => (
-            <option key={value} value={value} className="bg-bg">
-              {label}
-            </option>
+            <ChipOption
+              key={value}
+              type="radio"
+              name="status"
+              value={value}
+              label={label}
+              defaultChecked={project.status === value}
+            />
           ))}
-        </select>
-      </label>
+        </div>
+      </div>
 
       <label className="flex flex-col gap-1">
         <span className="font-mono text-[10px] tracking-widest text-muted uppercase">

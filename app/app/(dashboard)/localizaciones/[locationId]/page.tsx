@@ -16,6 +16,7 @@ import { LOCATION_CHARACTERISTIC_LABELS } from "@/lib/labels";
 import { LocationCharacteristic } from "@/lib/generated/prisma";
 import { GeocodeButton } from "@/components/GeocodeButton";
 import { LocationsMapClient } from "@/components/LocationsMapClient";
+import { ChipOption } from "@/components/ChipOption";
 
 export default async function LocationDetailPage({
   params,
@@ -186,17 +187,16 @@ export default async function LocationDetailPage({
           <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
             Características
           </p>
-          <div className="mt-2 flex flex-wrap gap-x-6 gap-y-2">
+          <div className="mt-2 flex flex-wrap gap-2">
             {Object.values(LocationCharacteristic).map((value) => (
-              <label key={value} className="flex items-center gap-2 font-mono text-xs">
-                <input
-                  type="checkbox"
-                  name="characteristics"
-                  value={value}
-                  defaultChecked={selectedCharacteristics.has(value)}
-                />
-                {LOCATION_CHARACTERISTIC_LABELS[value]}
-              </label>
+              <ChipOption
+                key={value}
+                type="checkbox"
+                name="characteristics"
+                value={value}
+                label={LOCATION_CHARACTERISTIC_LABELS[value]}
+                defaultChecked={selectedCharacteristics.has(value)}
+              />
             ))}
           </div>
         </div>
