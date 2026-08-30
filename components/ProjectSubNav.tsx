@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import type { MouseEvent } from "react";
 
 // Solo herramientas que existen de verdad por proyecto — nada inventado.
 // "Localizaciones" queda fuera a propósito: es un recurso de toda la
@@ -31,6 +34,13 @@ const CATEGORIES = [
   },
 ];
 
+// Cierra el <details> que contiene el enlace en el que se acaba de hacer
+// clic — sin esto, el desplegable se queda abierto tapando la página tras
+// navegar, porque el layout del proyecto no se desmonta entre páginas.
+function closeOnClick(e: MouseEvent<HTMLAnchorElement>) {
+  e.currentTarget.closest("details")?.removeAttribute("open");
+}
+
 export function ProjectSubNav({ projectId }: { projectId: string }) {
   return (
     <nav className="flex flex-wrap items-center gap-2 border-b border-line pb-4 print:hidden">
@@ -50,6 +60,7 @@ export function ProjectSubNav({ projectId }: { projectId: string }) {
               <Link
                 key={tool.href}
                 href={`/app/${projectId}/${tool.href}`}
+                onClick={closeOnClick}
                 className="block px-3 py-2 font-mono text-xs text-muted transition-colors hover:bg-bg-raised hover:text-accent"
               >
                 {tool.label}
