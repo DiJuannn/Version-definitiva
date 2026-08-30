@@ -41,7 +41,12 @@ export async function signUp(
   }
 
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.signUp({ email, password });
+  const origin = (await headers()).get("origin");
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { emailRedirectTo: `${origin}/app/login?confirmed=1` },
+  });
 
   if (error) {
     return {
@@ -101,9 +106,11 @@ export async function acceptInvite(
   }
 
   const supabase = await createClient();
+  const origin = (await headers()).get("origin");
   const { data, error } = await supabase.auth.signUp({
     email: invite.email,
     password,
+    options: { emailRedirectTo: `${origin}/app/login?confirmed=1` },
   });
 
   if (error) {
