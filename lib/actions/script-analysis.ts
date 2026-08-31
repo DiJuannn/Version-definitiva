@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
+import { getCurrentProfile } from "@/lib/current-user";
 import { analyzeScriptPdf, type ScriptAnalysisProposal } from "@/lib/mistral";
 import { DayPart, IntExt } from "@/lib/generated/prisma";
 import { SCRIPT_ANALYSIS_FREE_LIMIT } from "@/lib/limits";
@@ -27,18 +28,24 @@ export async function analyzeScript(
   const project = await getProjectForCurrentUser(projectId);
   if (!project) return { error: "No tienes acceso a este proyecto." };
 
+  const profile = await getCurrentProfile();
+  if (!profile) return { error: "No tienes acceso a este proyecto." };
+
   const scriptFile = await prisma.scriptFile.findFirst({
     where: { id: scriptFileId, projectId },
   });
   if (!scriptFile) return { error: "No se encontró el guion. Recarga la página." };
 
-  // Límite mientras no existe un plan de pago — se cuentan todos los
-  // análisis del proyecto, se hayan importado o no, porque cada uno supone
-  // una llamada real a la IA.
-  const analysisCount = await prisma.scriptAnalysis.count({ where: { projectId } });
+  // Límite mientras no existe un plan de pago — es por cuenta (por correo),
+  // no por proyecto: se cuentan todos los análisis que ha lanzado este
+  // usuario en cualquier proyecto, se hayan importado o no, porque cada uno
+  // supone una llamada real a la IA.
+  const analysisCount = await prisma.scriptAnalysis.count({
+    where: { createdById: profile.id },
+  });
   if (analysisCount >= SCRIPT_ANALYSIS_FREE_LIMIT) {
     return {
-      error: `Has usado los ${SCRIPT_ANALYSIS_FREE_LIMIT} análisis con IA disponibles para este proyecto. Próximamente habrá un plan de pago con uso ilimitado.`,
+      error: `Has usado los ${SCRIPT_ANALYSIS_FREE_LIMIT} análisis con IA disponibles en tu cuenta. Próximamente habrá un plan de pago con uso ilimitado.`,
     };
   }
 
@@ -57,6 +64,7 @@ export async function analyzeScript(
     data: {
       projectId,
       scriptFileId,
+      createdById: profile.id,
       proposedData: proposal,
     },
   });

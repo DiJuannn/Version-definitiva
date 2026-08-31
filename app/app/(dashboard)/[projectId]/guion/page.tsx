@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
+import { getCurrentProfile } from "@/lib/current-user";
 import { createScene } from "@/lib/actions/scenes";
 import { deleteScriptFile, uploadScript } from "@/lib/actions/script";
 import { analyzeScript } from "@/lib/actions/script-analysis";
@@ -35,6 +36,9 @@ export default async function GuionPage({
   const project = await getProjectForCurrentUser(projectId);
   if (!project) notFound();
 
+  const profile = await getCurrentProfile();
+  if (!profile) notFound();
+
   const [scriptFiles, scenes, pendingAnalyses, pendingContinuityChecks, analysisCount] =
     await Promise.all([
       prisma.scriptFile.findMany({
@@ -62,7 +66,7 @@ export default async function GuionPage({
         orderBy: { createdAt: "desc" },
         include: { _count: { select: { issues: true } } },
       }),
-      prisma.scriptAnalysis.count({ where: { projectId } }),
+      prisma.scriptAnalysis.count({ where: { createdById: profile.id } }),
     ]);
 
   const uploadAction = uploadScript.bind(null, projectId);
@@ -124,7 +128,9 @@ export default async function GuionPage({
                   </div>
                   <p className="mt-1 font-mono text-xs text-muted">
                     Lee el guion y propone escenas, personajes, localizaciones
-                    y atrezzo a partir de él.
+                    y atrezzo a partir de él. Límite de{" "}
+                    {SCRIPT_ANALYSIS_FREE_LIMIT} usos por cuenta, en total
+                    entre todos tus proyectos.
                   </p>
                 </div>
               </div>
@@ -132,7 +138,7 @@ export default async function GuionPage({
               <div className="mt-4 flex items-center justify-between gap-4 border-t border-line pt-4">
                 {analysisLimitReached ? (
                   <p className="font-mono text-xs text-muted">
-                    Límite de análisis usado ({SCRIPT_ANALYSIS_FREE_LIMIT}/
+                    Límite de tu cuenta usado ({SCRIPT_ANALYSIS_FREE_LIMIT}/
                     {SCRIPT_ANALYSIS_FREE_LIMIT}) — próximamente, plan de pago
                     con uso ilimitado.
                   </p>
@@ -146,7 +152,7 @@ export default async function GuionPage({
                       Analizar
                     </ActionButtonForm>
                     <span className="font-mono text-[10px] text-muted">
-                      {analysisCount}/{SCRIPT_ANALYSIS_FREE_LIMIT} usos
+                      {analysisCount}/{SCRIPT_ANALYSIS_FREE_LIMIT} usos de tu cuenta
                     </span>
                   </>
                 )}
