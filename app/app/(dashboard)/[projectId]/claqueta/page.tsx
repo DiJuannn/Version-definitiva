@@ -78,6 +78,7 @@ export default async function ClaquetaPage({
       <div className="mt-8">
         <ClaquetaBoard
           projectId={projectId}
+          projectName={project.name}
           scenes={sceneOptions}
           lastTakeBySceneNumber={lastTakeBySceneNumber}
           initialLog={initialLog}

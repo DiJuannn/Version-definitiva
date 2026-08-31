@@ -67,11 +67,13 @@ function playClapSound() {
 
 export function ClaquetaBoard({
   projectId,
+  projectName,
   scenes,
   lastTakeBySceneNumber,
   initialLog,
 }: {
   projectId: string;
+  projectName: string;
   scenes: SceneOption[];
   lastTakeBySceneNumber: Record<string, number>;
   initialLog: ClapLogEntry[];
@@ -89,6 +91,11 @@ export function ClaquetaBoard({
   const [clapping, setClapping] = useState(false);
   const [saving, setSaving] = useState(false);
   const [log, setLog] = useState(initialLog);
+  const today = new Date().toLocaleDateString("es-ES", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
 
   function pickScene(id: string) {
     setSceneId(id);
@@ -144,11 +151,121 @@ export function ClaquetaBoard({
     await deleteClapLog(projectId, id);
   }
 
+  const intExtLabel = selectedScene
+    ? INT_EXT_LABELS[selectedScene.intExt as keyof typeof INT_EXT_LABELS]
+    : "—";
+  const dayPartLabel = selectedScene
+    ? DAY_PART_LABELS[selectedScene.dayPart as keyof typeof DAY_PART_LABELS]
+    : "—";
+
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
-      <div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className="flex flex-col gap-1">
+      {/* min-w-0: sin esto, un elemento de grid no se encoge por debajo del
+          ancho mínimo de su contenido y el tablero se sale de la pantalla
+          en móvil. */}
+      <div className="min-w-0">
+        {/* El tablero va primero: es lo que se usa en rodaje, la ficha de
+            ajustes es secundaria y viene después. */}
+        <div className="relative select-none">
+          {/* Chapeta a rayas — la parte que "golpea" el tablero al claquetar. */}
+          <motion.div
+            animate={{ rotateX: clapping ? -38 : 0 }}
+            transition={{ duration: clapping ? 0.07 : 0.28, ease: clapping ? "easeIn" : "easeOut" }}
+            style={{
+              transformOrigin: "top center",
+              transformPerspective: 500,
+              backgroundImage:
+                "repeating-linear-gradient(135deg, #f2f0ea 0 18px, #0a0a0a 18px 36px)",
+            }}
+            className="h-11 rounded-t-sm border-2 border-b-0 border-fg sm:h-14"
+          />
+          <button
+            type="button"
+            onClick={handleClap}
+            disabled={!sceneNumber}
+            className="relative block w-full rounded-b-sm border-2 border-fg bg-black px-4 py-5 text-left transition-colors hover:border-accent disabled:cursor-not-allowed disabled:opacity-60 sm:px-7 sm:py-7"
+          >
+            <div className="flex items-baseline justify-between gap-3 border-b border-fg/25 pb-3">
+              <div className="min-w-0">
+                <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
+                  Producción
+                </p>
+                <p className="mt-0.5 truncate font-display text-sm font-bold uppercase text-fg sm:text-base">
+                  {projectName}
+                </p>
+              </div>
+              <p className="shrink-0 font-mono text-[10px] tracking-widest text-fg/50">
+                {today}
+              </p>
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 divide-x divide-fg/25 border-b border-fg/25 pb-4">
+              <div className="pr-4">
+                <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
+                  Escena
+                </p>
+                <p className="mt-1 font-display text-5xl font-bold text-fg sm:text-6xl">
+                  {sceneNumber || "—"}
+                </p>
+              </div>
+              <div className="pl-4">
+                <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
+                  Toma
+                </p>
+                <p className="mt-1 font-display text-5xl font-bold text-accent sm:text-6xl">
+                  {take}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-y-4 sm:grid-cols-4 sm:divide-x sm:divide-fg/25">
+              <div className="sm:pr-4">
+                <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
+                  Int/Ext
+                </p>
+                <p className="mt-0.5 font-mono text-sm text-fg">{intExtLabel}</p>
+              </div>
+              <div className="sm:px-4">
+                <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
+                  Día/Noche
+                </p>
+                <p className="mt-0.5 font-mono text-sm text-fg">{dayPartLabel}</p>
+              </div>
+              <div className="sm:px-4">
+                <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
+                  Rollo
+                </p>
+                <p className="mt-0.5 font-mono text-sm text-fg">{roll || "—"}</p>
+              </div>
+              <div className="sm:pl-4">
+                <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
+                  Cámara
+                </p>
+                <p className="mt-0.5 font-mono text-sm text-fg">{camera || "—"}</p>
+              </div>
+            </div>
+
+            <p className="mt-5 text-center font-mono text-[10px] tracking-[0.35em] text-fg/40 uppercase">
+              {!sceneNumber ? "Elige una escena" : saving ? "Guardando…" : "Toca para claquetar"}
+            </p>
+
+            <AnimatePresence>
+              {clapping && (
+                <motion.div
+                  initial={{ opacity: 0.9 }}
+                  animate={{ opacity: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.35, ease: "easeOut" }}
+                  className="pointer-events-none absolute inset-0 bg-accent"
+                />
+              )}
+            </AnimatePresence>
+          </button>
+        </div>
+
+        {/* Ficha de ajustes — secundaria, va debajo del tablero. */}
+        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          <label className="flex min-w-0 flex-col gap-1">
             <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
               Escena
             </span>
@@ -156,7 +273,7 @@ export function ClaquetaBoard({
               <select
                 value={sceneId}
                 onChange={(e) => pickScene(e.target.value)}
-                className="border border-line bg-transparent px-3 py-2.5 text-sm outline-none transition-colors focus:border-accent"
+                className="w-full min-w-0 border border-line bg-transparent px-3 py-2.5 text-sm outline-none transition-colors focus:border-accent"
               >
                 {scenes.map((scene) => (
                   <option key={scene.id} value={scene.id} className="bg-bg">
@@ -172,12 +289,12 @@ export function ClaquetaBoard({
                 value={manualSceneNumber}
                 onChange={(e) => updateManualSceneNumber(e.target.value)}
                 placeholder="Número de escena (ej. 04)"
-                className="border border-line bg-transparent px-3 py-2.5 text-sm outline-none transition-colors focus:border-accent"
+                className="w-full min-w-0 border border-line bg-transparent px-3 py-2.5 text-sm outline-none transition-colors focus:border-accent"
               />
             )}
           </label>
 
-          <div className="flex flex-col gap-1">
+          <div className="flex min-w-0 flex-col gap-1">
             <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
               Toma
             </span>
@@ -210,7 +327,7 @@ export function ClaquetaBoard({
 
           <label className="flex flex-col gap-1">
             <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-              Rollo / cámara (opcional)
+              Rollo (opcional)
             </span>
             <input
               value={roll}
@@ -219,7 +336,10 @@ export function ClaquetaBoard({
               className="border border-line bg-transparent px-3 py-2.5 text-sm outline-none transition-colors focus:border-accent"
             />
           </label>
-          <label className="flex flex-col gap-1 sm:mt-[22px]">
+          <label className="flex flex-col gap-1">
+            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+              Cámara (opcional)
+            </span>
             <input
               value={camera}
               onChange={(e) => setCamera(e.target.value)}
@@ -227,40 +347,6 @@ export function ClaquetaBoard({
               className="border border-line bg-transparent px-3 py-2.5 text-sm outline-none transition-colors focus:border-accent"
             />
           </label>
-        </div>
-
-        <div className="relative mt-8 select-none">
-          {/* Barra superior: la "chapeta" que golpea el tablero al hacer clap. */}
-          <motion.div
-            animate={{ rotateX: clapping ? -38 : 0 }}
-            transition={{ duration: clapping ? 0.07 : 0.28, ease: clapping ? "easeIn" : "easeOut" }}
-            style={{ transformOrigin: "top center", transformPerspective: 400 }}
-            className="h-10 border border-b-0 border-line bg-bg-raised"
-          />
-          <button
-            type="button"
-            onClick={handleClap}
-            disabled={!sceneNumber}
-            className="relative flex w-full flex-col items-center justify-center gap-2 border border-line bg-bg-raised px-6 py-14 text-center transition-colors hover:border-accent disabled:cursor-not-allowed disabled:opacity-50 sm:py-20"
-          >
-            <span className="font-display text-4xl font-bold uppercase tracking-wide sm:text-5xl">
-              {sceneNumber ? `Esc. ${sceneNumber} · Toma ${take}` : "Elige una escena"}
-            </span>
-            <span className="font-mono text-xs tracking-[0.3em] text-muted uppercase">
-              {saving ? "Guardando…" : "Toca para claquetar"}
-            </span>
-            <AnimatePresence>
-              {clapping && (
-                <motion.div
-                  initial={{ opacity: 0.9 }}
-                  animate={{ opacity: 0 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.35, ease: "easeOut" }}
-                  className="pointer-events-none absolute inset-0 bg-accent"
-                />
-              )}
-            </AnimatePresence>
-          </button>
         </div>
       </div>
 
