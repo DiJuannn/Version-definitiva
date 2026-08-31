@@ -7,6 +7,7 @@ import { CopyLinkButton } from "@/components/CopyLinkButton";
 import { DeleteButton } from "@/components/DeleteButton";
 import { HelpTip } from "@/components/HelpTip";
 import { FeatureIntro } from "@/components/FeatureIntro";
+import { SubmitButton } from "@/components/SubmitButton";
 
 const ROLE_LABELS = { ADMIN: "Admin", MEMBER: "Miembro" } as const;
 
@@ -76,12 +77,13 @@ export default async function OrganizacionPage() {
                   <option value="ADMIN" className="bg-bg">Admin</option>
                   <option value="MEMBER" className="bg-bg">Miembro</option>
                 </select>
-                <button
-                  type="submit"
+                <SubmitButton
+                  pendingLabel="Guardando…"
+                  savedLabel="✓ Guardado"
                   className="font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent"
                 >
                   Guardar
-                </button>
+                </SubmitButton>
               </form>
             </div>
           ))}
@@ -114,12 +116,13 @@ export default async function OrganizacionPage() {
             <option value="MEMBER" className="bg-bg">Miembro</option>
             <option value="ADMIN" className="bg-bg">Admin</option>
           </select>
-          <button
-            type="submit"
+          <SubmitButton
+            pendingLabel="Invitando…"
+            savedLabel="✓ Invitación enviada"
             className="rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
           >
             Invitar
-          </button>
+          </SubmitButton>
         </form>
 
         {invites.length > 0 && (

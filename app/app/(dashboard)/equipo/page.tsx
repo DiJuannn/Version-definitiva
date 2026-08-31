@@ -4,6 +4,7 @@ import { getCurrentProfile } from "@/lib/current-user";
 import { createPerson } from "@/lib/actions/people";
 import { EmptyState } from "@/components/EmptyState";
 import { BackLink } from "@/components/BackLink";
+import { SubmitButton } from "@/components/SubmitButton";
 
 export default async function EquipoPage() {
   const profile = await getCurrentProfile();
@@ -64,12 +65,13 @@ export default async function EquipoPage() {
           className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
         />
         <div>
-          <button
-            type="submit"
+          <SubmitButton
+            pendingLabel="Añadiendo…"
+            savedLabel="✓ Añadida"
             className="rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
           >
             Añadir persona
-          </button>
+          </SubmitButton>
         </div>
       </form>
 

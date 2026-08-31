@@ -13,6 +13,7 @@ import { BREAKDOWN_CATEGORY_LABELS } from "@/lib/labels";
 import { EmptyState } from "@/components/EmptyState";
 import { BreakdownCategory } from "@/lib/generated/prisma";
 import { BackLink } from "@/components/BackLink";
+import { SubmitButton } from "@/components/SubmitButton";
 
 export default async function DesglosePage({
   params,
@@ -108,12 +109,13 @@ export default async function DesglosePage({
             className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
           />
           <div>
-            <button
-              type="submit"
+            <SubmitButton
+              pendingLabel="Añadiendo…"
+              savedLabel="✓ Añadido"
               className="rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
             >
               Añadir
-            </button>
+            </SubmitButton>
           </div>
         </form>
 
@@ -207,12 +209,13 @@ export default async function DesglosePage({
             className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
           />
           <div>
-            <button
-              type="submit"
+            <SubmitButton
+              pendingLabel="Añadiendo…"
+              savedLabel="✓ Añadido"
               className="rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
             >
               Añadir
-            </button>
+            </SubmitButton>
           </div>
         </form>
 

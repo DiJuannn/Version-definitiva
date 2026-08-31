@@ -11,6 +11,7 @@ import {
 import { DeleteButton } from "@/components/DeleteButton";
 import { TaskPriority } from "@/lib/generated/prisma";
 import { BackLink } from "@/components/BackLink";
+import { SubmitButton } from "@/components/SubmitButton";
 
 const PRIORITY_LABELS: Record<TaskPriority, string> = {
   LOW: "Baja",
@@ -85,12 +86,13 @@ export default async function TareasPage() {
           className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
         />
         <div className="sm:col-span-2 lg:col-span-5">
-          <button
-            type="submit"
+          <SubmitButton
+            pendingLabel="Creando…"
+            savedLabel="✓ Creada"
             className="rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
           >
             Crear tarea
-          </button>
+          </SubmitButton>
         </div>
       </form>
 
@@ -137,12 +139,13 @@ export default async function TareasPage() {
             required
             className="w-full border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
           />
-          <button
-            type="submit"
+          <SubmitButton
+            pendingLabel="Creando…"
+            savedLabel="✓ Creada"
             className="shrink-0 rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
           >
             Crear
-          </button>
+          </SubmitButton>
         </form>
 
         {templates.length > 0 && (
@@ -182,12 +185,12 @@ export default async function TareasPage() {
                       required
                       className="w-full border border-line bg-transparent px-2 py-1.5 text-xs outline-none transition-colors focus:border-accent"
                     />
-                    <button
-                      type="submit"
+                    <SubmitButton
+                      pendingLabel="…"
                       className="shrink-0 rounded-full border border-line px-3 py-1.5 font-mono text-[11px] tracking-widest uppercase hover:border-accent hover:text-accent"
                     >
                       +
-                    </button>
+                    </SubmitButton>
                   </form>
 
                   {template.items.length > 0 && projects.length > 0 && (
@@ -207,12 +210,13 @@ export default async function TareasPage() {
                           </option>
                         ))}
                       </select>
-                      <button
-                        type="submit"
+                      <SubmitButton
+                        pendingLabel="Aplicando…"
+                        savedLabel="✓ Aplicado"
                         className="rounded-full bg-fg px-4 py-1.5 font-mono text-[11px] tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
                       >
                         Aplicar a proyecto
-                      </button>
+                      </SubmitButton>
                     </form>
                   )}
                 </div>

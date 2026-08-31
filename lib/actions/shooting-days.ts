@@ -14,6 +14,18 @@ export async function createShootingDay(projectId: string, formData: FormData) {
   const date = new Date(dateInput);
   if (Number.isNaN(date.getTime())) return;
 
+  // Un día doble clic (o un segundo intento porque el primero no dio
+  // ninguna señal) no debe crear dos días de rodaje para la misma fecha:
+  // si ya existe uno, se reutiliza en vez de duplicar.
+  const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+  const existing = await prisma.shootingDay.findFirst({
+    where: { projectId, date: { gte: dayStart, lt: dayEnd } },
+  });
+  if (existing) {
+    redirect(`/app/${projectId}/plan-de-rodaje/${existing.id}`);
+  }
+
   const day = await prisma.shootingDay.create({
     data: { projectId, date },
   });

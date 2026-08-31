@@ -8,6 +8,7 @@ import { ShootingTimeline } from "@/components/ShootingTimeline";
 import { EmptyState } from "@/components/EmptyState";
 import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
 import { BackLink } from "@/components/BackLink";
+import { SubmitButton } from "@/components/SubmitButton";
 
 export default async function PlanDeRodajePage({
   params,
@@ -87,12 +88,12 @@ export default async function PlanDeRodajePage({
           required
           className="w-full border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
         />
-        <button
-          type="submit"
+        <SubmitButton
+          pendingLabel="Creando…"
           className="shrink-0 rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
         >
           Crear día
-        </button>
+        </SubmitButton>
       </form>
     </div>
   );

@@ -5,6 +5,7 @@ import { addTaskComment, deleteTask, updateTask, updateTaskStatus } from "@/lib/
 import { DeleteButton } from "@/components/DeleteButton";
 import { TaskPriority, TaskStatus } from "@/lib/generated/prisma";
 import { BackLink } from "@/components/BackLink";
+import { SubmitButton } from "@/components/SubmitButton";
 
 const PRIORITY_LABELS: Record<TaskPriority, string> = {
   LOW: "Baja",
@@ -149,12 +150,13 @@ export default async function TaskDetailPage({
           />
         </label>
         <div>
-          <button
-            type="submit"
+          <SubmitButton
+            pendingLabel="Guardando…"
+            savedLabel="✓ Guardado"
             className="rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
           >
             Guardar
-          </button>
+          </SubmitButton>
         </div>
       </form>
 
@@ -181,12 +183,13 @@ export default async function TaskDetailPage({
             required
             className="w-full border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
           />
-          <button
-            type="submit"
+          <SubmitButton
+            pendingLabel="Enviando…"
+            savedLabel="✓ Enviado"
             className="shrink-0 rounded-full bg-fg px-4 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
           >
             Enviar
-          </button>
+          </SubmitButton>
         </form>
       </section>
 

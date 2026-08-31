@@ -10,6 +10,8 @@ import {
 } from "@/lib/actions/characters";
 import { EmptyState } from "@/components/EmptyState";
 import { BackLink } from "@/components/BackLink";
+import { SubmitButton } from "@/components/SubmitButton";
+import { ActorAssignmentField } from "@/components/ActorAssignmentField";
 
 export default async function PersonajesPage({
   params,
@@ -107,12 +109,13 @@ export default async function PersonajesPage({
             className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
           />
           <div>
-            <button
-              type="submit"
+            <SubmitButton
+              pendingLabel="Añadiendo…"
+              savedLabel="✓ Añadido"
               className="rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
             >
               Añadir actor
-            </button>
+            </SubmitButton>
           </div>
         </form>
 
@@ -185,12 +188,13 @@ export default async function PersonajesPage({
             className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
           />
           <div>
-            <button
-              type="submit"
+            <SubmitButton
+              pendingLabel="Añadiendo…"
+              savedLabel="✓ Añadido"
               className="rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
             >
               Añadir personaje
-            </button>
+            </SubmitButton>
           </div>
         </form>
 
@@ -224,28 +228,16 @@ export default async function PersonajesPage({
                       projectId,
                       character.id,
                     )}
-                    className="flex items-center gap-2"
                   >
-                    <select
-                      name="actorId"
-                      defaultValue={character.actorId ?? ""}
-                      className="border border-line bg-transparent px-2 py-1.5 text-xs outline-none transition-colors focus:border-accent"
-                    >
-                      <option value="" className="bg-bg">
-                        Sin actor
-                      </option>
-                      {actors.map((actor) => (
-                        <option key={actor.id} value={actor.id} className="bg-bg">
-                          {actor.name}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      type="submit"
-                      className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
-                    >
-                      Guardar
-                    </button>
+                    <ActorAssignmentField
+                      actors={actors}
+                      defaultActorId={character.actorId ?? ""}
+                      conflicts={Object.fromEntries(
+                        characters
+                          .filter((c) => c.id !== character.id && c.actorId)
+                          .map((c) => [c.actorId as string, c.name]),
+                      )}
+                    />
                   </form>
 
                   <form

@@ -7,6 +7,7 @@ import { DeleteButton } from "@/components/DeleteButton";
 import { EmptyState } from "@/components/EmptyState";
 import { BackLink } from "@/components/BackLink";
 import { FileOpenLink } from "@/components/FileOpenLink";
+import { SubmitButton } from "@/components/SubmitButton";
 
 export default async function DocumentosPage({
   params,
@@ -185,12 +186,13 @@ export default async function DocumentosPage({
               </option>
             ))}
           </select>
-          <button
-            type="submit"
+          <SubmitButton
+            pendingLabel="Subiendo…"
+            savedLabel="✓ Subido"
             className="rounded-full bg-fg px-4 py-1.5 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
           >
             Subir
-          </button>
+          </SubmitButton>
         </form>
 
         {documents.length === 0 ? (

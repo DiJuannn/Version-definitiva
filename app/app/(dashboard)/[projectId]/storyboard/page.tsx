@@ -7,6 +7,7 @@ import { DeleteButton } from "@/components/DeleteButton";
 import { EmptyState } from "@/components/EmptyState";
 import { PrintButton } from "@/components/PrintButton";
 import { BackLink } from "@/components/BackLink";
+import { SubmitButton } from "@/components/SubmitButton";
 
 export default async function StoryboardPage({
   params,
@@ -123,12 +124,13 @@ export default async function StoryboardPage({
                             placeholder="Descripción"
                             className="border border-line bg-transparent px-2 py-1 text-xs outline-none transition-colors focus:border-accent"
                           />
-                          <button
-                            type="submit"
+                          <SubmitButton
+                            pendingLabel="Añadiendo…"
+                            savedLabel="✓ Añadida"
                             className="rounded-full bg-fg px-3 py-1.5 font-mono text-[11px] tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
                           >
                             Añadir viñeta
-                          </button>
+                          </SubmitButton>
                         </form>
                       </div>
                     </div>

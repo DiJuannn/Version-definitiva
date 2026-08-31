@@ -13,6 +13,7 @@ import { getShootingDaySummary } from "@/lib/shooting-day-summary";
 import { getAvailabilityWarnings } from "@/lib/availability-warnings";
 import { getReservationConflicts } from "@/lib/reservation-conflicts";
 import { DAY_PART_LABELS, INT_EXT_LABELS, INVENTORY_CATEGORY_LABELS } from "@/lib/labels";
+import { SubmitButton } from "@/components/SubmitButton";
 import { BackLink } from "@/components/BackLink";
 import { DeleteButton } from "@/components/DeleteButton";
 import { EmptyState } from "@/components/EmptyState";
@@ -166,12 +167,13 @@ export default async function ShootingDayDetailPage({
           />
         </label>
         <div>
-          <button
-            type="submit"
+          <SubmitButton
+            pendingLabel="Guardando…"
+            savedLabel="✓ Guardado"
             className="rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
           >
             Guardar
-          </button>
+          </SubmitButton>
         </div>
       </form>
 
@@ -228,12 +230,13 @@ export default async function ShootingDayDetailPage({
                 );
               })}
             </div>
-            <button
-              type="submit"
+            <SubmitButton
+              pendingLabel="Guardando…"
+              savedLabel="✓ Guardado"
               className="mt-4 rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
             >
               Guardar asignación
-            </button>
+            </SubmitButton>
           </form>
         )}
       </section>
@@ -282,12 +285,13 @@ export default async function ShootingDayDetailPage({
                   </div>
                 ))}
               </div>
-              <button
-                type="submit"
+              <SubmitButton
+                pendingLabel="Guardando…"
+                savedLabel="✓ Guardado"
                 className="mt-4 rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
               >
                 Guardar material
-              </button>
+              </SubmitButton>
             </form>
           )}
         </div>
@@ -326,12 +330,13 @@ export default async function ShootingDayDetailPage({
                   </label>
                 ))}
               </div>
-              <button
-                type="submit"
+              <SubmitButton
+                pendingLabel="Guardando…"
+                savedLabel="✓ Guardado"
                 className="mt-4 rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
               >
                 Guardar vehículos
-              </button>
+              </SubmitButton>
             </form>
           )}
         </div>

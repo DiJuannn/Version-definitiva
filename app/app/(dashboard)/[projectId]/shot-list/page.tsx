@@ -6,6 +6,7 @@ import { createShot } from "@/lib/actions/shots";
 import { EmptyState } from "@/components/EmptyState";
 import { PdfLink } from "@/components/PdfLink";
 import { BackLink } from "@/components/BackLink";
+import { SubmitButton } from "@/components/SubmitButton";
 
 export default async function ShotListPage({
   params,
@@ -90,12 +91,13 @@ export default async function ShotListPage({
                     placeholder="Descripción"
                     className="min-w-56 flex-1 border border-line bg-transparent px-3 py-1.5 text-xs outline-none transition-colors focus:border-accent"
                   />
-                  <button
-                    type="submit"
+                  <SubmitButton
+                    pendingLabel="Añadiendo…"
+                    savedLabel="✓ Añadido"
                     className="rounded-full bg-fg px-4 py-1.5 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
                   >
                     Añadir plano
-                  </button>
+                  </SubmitButton>
                 </form>
               </section>
             );

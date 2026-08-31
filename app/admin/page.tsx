@@ -13,6 +13,7 @@ import {
 import { DeleteButton } from "@/components/DeleteButton";
 import { FeatureIntro } from "@/components/FeatureIntro";
 import { HelpTip } from "@/components/HelpTip";
+import { SubmitButton } from "@/components/SubmitButton";
 
 const fieldClass =
   "border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent";
@@ -162,9 +163,13 @@ export default async function AdminPage() {
           </div>
 
           <div>
-            <button type="submit" className={submitClass}>
+            <SubmitButton
+              pendingLabel="Guardando…"
+              savedLabel="✓ Guardado"
+              className={submitClass}
+            >
               Guardar portada
-            </button>
+            </SubmitButton>
           </div>
         </form>
       </section>
@@ -192,12 +197,13 @@ export default async function AdminPage() {
                 className={smallFieldClass}
               />
               <div className="flex gap-3">
-                <button
-                  type="submit"
+                <SubmitButton
+                  pendingLabel="Guardando…"
+                  savedLabel="✓ Guardado"
                   className="font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent"
                 >
                   Guardar
-                </button>
+                </SubmitButton>
                 <DeleteButton
                   formAction={deleteServiceItem.bind(null, service.id)}
                   confirmMessage="¿Eliminar este servicio de la web? No se puede deshacer."
@@ -220,12 +226,13 @@ export default async function AdminPage() {
         >
           <input name="title" placeholder="Título (ej. Ficción)" required className={smallFieldClass} />
           <input name="description" placeholder="Descripción breve" className={smallFieldClass} />
-          <button
-            type="submit"
+          <SubmitButton
+            pendingLabel="Añadiendo…"
+            savedLabel="✓ Añadido"
             className="font-mono text-[11px] tracking-widest text-accent uppercase hover:opacity-80"
           >
             Añadir
-          </button>
+          </SubmitButton>
         </form>
       </section>
 
@@ -277,12 +284,13 @@ export default async function AdminPage() {
                   <input type="checkbox" name="published" defaultChecked={item.published} />
                   Publicado
                 </label>
-                <button
-                  type="submit"
+                <SubmitButton
+                  pendingLabel="Guardando…"
+                  savedLabel="✓ Guardado"
                   className="font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent"
                 >
                   Guardar
-                </button>
+                </SubmitButton>
                 <DeleteButton
                   formAction={deletePortfolioItem.bind(null, item.id)}
                   confirmMessage="¿Eliminar esta pieza del portfolio? No se puede deshacer."
@@ -304,12 +312,13 @@ export default async function AdminPage() {
             className={smallFieldClass + " sm:col-span-2"}
           />
           <div>
-            <button
-              type="submit"
+            <SubmitButton
+              pendingLabel="Añadiendo…"
+              savedLabel="✓ Añadida"
               className="font-mono text-[11px] tracking-widest text-accent uppercase hover:opacity-80"
             >
               Añadir pieza
-            </button>
+            </SubmitButton>
           </div>
         </form>
       </section>

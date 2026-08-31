@@ -10,6 +10,12 @@ import { useFormStatus } from "react-dom";
 export function DeleteButton({
   children = "Eliminar",
   className,
+  // Aceptado pero sin usar: quedó de antes de pasar a confirmación en dos
+  // clics, y sigue en la firma para no tener que tocar los ~22 sitios que
+  // todavía lo pasan. Se saca aquí explícitamente para que no caiga en
+  // `...rest` y acabe como atributo desconocido en el <button> del DOM.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  confirmMessage: _confirmMessage,
   ...rest
 }: {
   children?: React.ReactNode;

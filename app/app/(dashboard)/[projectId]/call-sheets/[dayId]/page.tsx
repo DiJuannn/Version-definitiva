@@ -5,6 +5,7 @@ import { getShootingDaySummary } from "@/lib/shooting-day-summary";
 import { upsertCallSheet } from "@/lib/actions/call-sheets";
 import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
 import { BackLink } from "@/components/BackLink";
+import { SubmitButton } from "@/components/SubmitButton";
 
 export default async function CallSheetDetailPage({
   params,
@@ -209,12 +210,13 @@ export default async function CallSheetDetailPage({
           />
         </label>
         <div>
-          <button
-            type="submit"
+          <SubmitButton
+            pendingLabel="Guardando…"
+            savedLabel="✓ Guardado"
             className="rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
           >
             Guardar
-          </button>
+          </SubmitButton>
         </div>
       </form>
     </div>

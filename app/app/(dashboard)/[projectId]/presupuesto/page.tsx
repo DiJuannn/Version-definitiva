@@ -11,6 +11,7 @@ import { DeleteButton } from "@/components/DeleteButton";
 import { EmptyState } from "@/components/EmptyState";
 import { PdfLink } from "@/components/PdfLink";
 import { BackLink } from "@/components/BackLink";
+import { SubmitButton } from "@/components/SubmitButton";
 
 function currency(value: number) {
   return value.toLocaleString("es-ES", { style: "currency", currency: "EUR" });
@@ -111,12 +112,13 @@ export default async function PresupuestoPage({
           required
           className="w-full border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
         />
-        <button
-          type="submit"
+        <SubmitButton
+          pendingLabel="Creando…"
+          savedLabel="✓ Creada"
           className="shrink-0 rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
         >
           Crear
-        </button>
+        </SubmitButton>
       </form>
 
       {categoriesWithTotals.length === 0 ? (
@@ -285,12 +287,13 @@ export default async function PresupuestoPage({
                     ))}
                   </select>
                   <div>
-                    <button
-                      type="submit"
+                    <SubmitButton
+                      pendingLabel="Añadiendo…"
+                      savedLabel="✓ Añadido"
                       className="rounded-full bg-fg px-4 py-1.5 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
                     >
                       Añadir
-                    </button>
+                    </SubmitButton>
                   </div>
                 </form>
               </section>

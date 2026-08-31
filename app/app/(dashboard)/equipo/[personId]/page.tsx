@@ -10,6 +10,7 @@ import {
 } from "@/lib/actions/person-availability";
 import { PersonAvailabilityStatus } from "@/lib/generated/prisma";
 import { BackLink } from "@/components/BackLink";
+import { SubmitButton } from "@/components/SubmitButton";
 
 const STATUS_LABELS: Record<PersonAvailabilityStatus, string> = {
   AVAILABLE: "Disponible",
@@ -80,12 +81,13 @@ export default async function PersonDetailPage({
           required
           className="font-mono text-xs text-muted"
         />
-        <button
-          type="submit"
+        <SubmitButton
+          pendingLabel="Subiendo…"
+          savedLabel="✓ Subida"
           className="rounded-full bg-fg px-4 py-1.5 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
         >
           Subir foto
-        </button>
+        </SubmitButton>
       </form>
 
       <form
@@ -187,12 +189,13 @@ export default async function PersonDetailPage({
           />
         </label>
         <div>
-          <button
-            type="submit"
+          <SubmitButton
+            pendingLabel="Guardando…"
+            savedLabel="✓ Guardado"
             className="rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
           >
             Guardar
-          </button>
+          </SubmitButton>
         </div>
       </form>
 
@@ -254,12 +257,13 @@ export default async function PersonDetailPage({
             placeholder="Nota"
             className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
           />
-          <button
-            type="submit"
+          <SubmitButton
+            pendingLabel="Guardando…"
+            savedLabel="✓ Guardado"
             className="rounded-full bg-fg px-4 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
           >
             Guardar día
-          </button>
+          </SubmitButton>
         </form>
 
         {availability.length > 0 && (

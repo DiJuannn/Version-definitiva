@@ -5,6 +5,7 @@ import { getProjectForCurrentUser } from "@/lib/project-access";
 import { deleteShot, updateShot } from "@/lib/actions/shots";
 import { DeleteButton } from "@/components/DeleteButton";
 import { BackLink } from "@/components/BackLink";
+import { SubmitButton } from "@/components/SubmitButton";
 
 export default async function ShotDetailPage({
   params,
@@ -122,12 +123,13 @@ export default async function ShotDetailPage({
           />
         </label>
         <div>
-          <button
-            type="submit"
+          <SubmitButton
+            pendingLabel="Guardando…"
+            savedLabel="✓ Guardado"
             className="rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
           >
             Guardar
-          </button>
+          </SubmitButton>
         </div>
       </form>
 
