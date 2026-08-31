@@ -143,8 +143,9 @@ export function ClaquetaBoard({
     window.setTimeout(() => setClapping(false), 380);
 
     const thisTake = take;
+    const optimisticId = `pending-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const optimisticEntry: ClapLogEntry = {
-      id: `pending-${Date.now()}`,
+      id: optimisticId,
       sceneNumber,
       shotNumber: shotNumber || null,
       take: thisTake,
@@ -169,8 +170,18 @@ export function ClaquetaBoard({
       fd.set("intExt", selectedScene.intExt);
       fd.set("dayPart", selectedScene.dayPart);
     }
-    await logClap(projectId, fd);
+    const result = await logClap(projectId, fd);
     setSaving(false);
+
+    // Sin esto, la toma recién marcada se queda para siempre con el id
+    // provisional y el botón "Eliminar" nunca llega a aparecer para ella.
+    if (result && "success" in result) {
+      setLog((prev) =>
+        prev.map((entry) => (entry.id === optimisticId ? { ...entry, id: result.id } : entry)),
+      );
+    } else {
+      setLog((prev) => prev.filter((entry) => entry.id !== optimisticId));
+    }
   }
 
   async function handleDeleteLog(id: string) {

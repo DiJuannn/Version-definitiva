@@ -6,7 +6,7 @@ import { getProjectForCurrentUser } from "@/lib/project-access";
 import { optionalString } from "@/lib/form-utils";
 import { DayPart, IntExt } from "@/lib/generated/prisma";
 
-export type LogClapState = { error: string } | { success: true } | undefined;
+export type LogClapState = { error: string } | { success: true; id: string } | undefined;
 
 // El aviso visual/sonoro del clap se dispara en el cliente, sin esperar a
 // esto — este guardado es solo para dejar constancia en el historial.
@@ -39,7 +39,7 @@ export async function logClap(
     ? (dayPartInput as DayPart)
     : null;
 
-  await prisma.clapLog.create({
+  const created = await prisma.clapLog.create({
     data: {
       projectId,
       sceneId: sceneId ?? undefined,
@@ -54,7 +54,7 @@ export async function logClap(
   });
 
   revalidatePath(`/app/${projectId}/claqueta`);
-  return { success: true };
+  return { success: true, id: created.id };
 }
 
 export async function deleteClapLog(projectId: string, clapLogId: string) {
