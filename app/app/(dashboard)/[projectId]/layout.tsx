@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { ProjectSubNav } from "@/components/ProjectSubNav";
+import { ClaquetaFab } from "@/components/ClaquetaFab";
 
 // La autorización real (¿este proyecto es de tu organización?) la hace cada
 // página con getProjectForCurrentUser — este layout solo pinta enlaces, no
@@ -17,6 +18,7 @@ export default async function ProjectLayout({
     <div>
       <ProjectSubNav projectId={projectId} />
       <div className="mt-6">{children}</div>
+      <ClaquetaFab projectId={projectId} />
     </div>
   );
 }

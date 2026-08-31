@@ -196,6 +196,21 @@ export function ClaquetaBoard({
     ? DAY_PART_LABELS[selectedScene.dayPart as keyof typeof DAY_PART_LABELS]
     : "—";
 
+  // Agrupa el historial por escena para que, en pleno rodaje, se distingan
+  // de un vistazo las tomas de la escena de ahora mismo de las de antes. El
+  // orden de los grupos sigue el orden en que aparecen en "log" (más
+  // reciente primero), así que la escena que se acaba de claquetar queda
+  // arriba de forma natural.
+  const groupedLog: { sceneNumber: string; entries: ClapLogEntry[] }[] = [];
+  for (const entry of log) {
+    const group = groupedLog.find((g) => g.sceneNumber === entry.sceneNumber);
+    if (group) {
+      group.entries.push(entry);
+    } else {
+      groupedLog.push({ sceneNumber: entry.sceneNumber, entries: [entry] });
+    }
+  }
+
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
       {/* min-w-0: sin esto, un elemento de grid no se encoge por debajo del
@@ -204,25 +219,29 @@ export function ClaquetaBoard({
       <div className="min-w-0">
         {/* El tablero va primero: es lo que se usa en rodaje, la ficha de
             ajustes es secundaria y viene después. */}
-        <div className="relative select-none">
-          {/* Chapeta a rayas — la parte que "golpea" el tablero al claquetar. */}
-          <motion.div
-            animate={{ rotateX: clapping ? -38 : 0 }}
-            transition={{ duration: clapping ? 0.07 : 0.28, ease: clapping ? "easeIn" : "easeOut" }}
-            style={{
-              transformOrigin: "top center",
-              transformPerspective: 500,
-              backgroundImage:
-                "repeating-linear-gradient(135deg, #f2f0ea 0 18px, #0a0a0a 18px 36px)",
-            }}
-            className="h-11 rounded-t-sm border-2 border-b-0 border-fg sm:h-14"
-          />
-          <button
-            type="button"
-            onClick={handleClap}
-            disabled={!sceneNumber}
-            className="relative block w-full rounded-b-sm border-2 border-fg bg-black px-4 py-5 text-left transition-colors hover:border-accent disabled:cursor-not-allowed disabled:opacity-60 sm:px-7 sm:py-7"
-          >
+        <div>
+          {/* El tablero se queda pegado arriba al hacer scroll: en un rodaje
+              hay que poder claquetar sin volver a subir hasta el principio
+              de la pantalla. Los ajustes de debajo sí se desplazan normal. */}
+          <div className="sticky top-3 z-20 select-none sm:top-4">
+            {/* Chapeta a rayas — la parte que "golpea" el tablero al claquetar. */}
+            <motion.div
+              animate={{ rotateX: clapping ? -38 : 0 }}
+              transition={{ duration: clapping ? 0.07 : 0.28, ease: clapping ? "easeIn" : "easeOut" }}
+              style={{
+                transformOrigin: "top center",
+                transformPerspective: 500,
+                backgroundImage:
+                  "repeating-linear-gradient(135deg, #f2f0ea 0 18px, #0a0a0a 18px 36px)",
+              }}
+              className="h-11 rounded-t-sm border-2 border-b-0 border-fg sm:h-14"
+            />
+            <button
+              type="button"
+              onClick={handleClap}
+              disabled={!sceneNumber}
+              className="relative block w-full border-2 border-fg bg-black px-4 py-5 text-left transition-colors hover:border-accent disabled:cursor-not-allowed disabled:opacity-60 sm:px-7 sm:py-7"
+            >
             <div className="flex items-baseline justify-between gap-3 border-b border-fg/25 pb-3">
               <div className="min-w-0">
                 <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
@@ -310,10 +329,13 @@ export function ClaquetaBoard({
               )}
             </AnimatePresence>
           </button>
-        </div>
+          </div>
 
-        {/* Ficha de ajustes — secundaria, va debajo del tablero. */}
-        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          {/* Ficha de ajustes — mismo panel que el tablero (mismo borde,
+              mismo fondo), para que se sienta como una sola pieza y no como
+              dos bloques sueltos. El tablero ya se actualiza en vivo con
+              estos campos según se escriben — esto solo une cómo se ven. */}
+          <div className="grid gap-3 rounded-b-sm border-2 border-t-0 border-fg bg-black px-4 pt-4 pb-5 sm:grid-cols-2 sm:px-7 sm:pb-7">
           <label className="flex min-w-0 flex-col gap-1">
             <div className="flex items-center justify-between gap-2">
               <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
@@ -363,7 +385,7 @@ export function ClaquetaBoard({
               <button
                 type="button"
                 onClick={() => setTake((t) => Math.max(1, t - 1))}
-                className="h-[42px] w-11 shrink-0 border border-line font-mono text-lg text-muted transition hover:border-accent hover:text-accent active:scale-95"
+                className="h-14 w-14 shrink-0 border border-line font-mono text-xl text-muted transition hover:border-accent hover:text-accent active:scale-95"
                 aria-label="Restar toma"
               >
                 −
@@ -373,12 +395,12 @@ export function ClaquetaBoard({
                 min={1}
                 value={take}
                 onChange={(e) => setTake(Math.max(1, Number(e.target.value) || 1))}
-                className="w-full border border-line bg-transparent px-3 py-2.5 text-center font-mono text-lg outline-none transition-colors focus:border-accent"
+                className="h-14 w-full border border-line bg-transparent px-3 text-center font-mono text-lg outline-none transition-colors focus:border-accent"
               />
               <button
                 type="button"
                 onClick={() => setTake((t) => t + 1)}
-                className="h-[42px] w-11 shrink-0 border border-line font-mono text-lg text-muted transition hover:border-accent hover:text-accent active:scale-95"
+                className="h-14 w-14 shrink-0 border border-line font-mono text-xl text-muted transition hover:border-accent hover:text-accent active:scale-95"
                 aria-label="Sumar toma"
               >
                 +
@@ -398,27 +420,43 @@ export function ClaquetaBoard({
             />
           </label>
           <label className="flex flex-col gap-1">
-            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+            <span className="flex items-center gap-1.5 font-mono text-[10px] tracking-widest text-muted uppercase">
               Director (opcional)
+              {/* Aviso puramente visual: el campo ya se mantiene solo entre
+                  tomas mientras no salgas de esta pantalla — este punto solo
+                  lo comunica, no cambia cuándo ni cómo se recuerda. */}
+              {director && (
+                <span className="flex items-center gap-1 normal-case tracking-normal text-accent">
+                  <span className="h-1 w-1 rounded-full bg-accent" />
+                  se mantiene
+                </span>
+              )}
             </span>
             <input
               value={director}
               onChange={(e) => setDirector(e.target.value)}
               placeholder="Nombre del director"
-              className="border border-line bg-transparent px-3 py-2.5 text-sm outline-none transition-colors focus:border-accent"
+              className={`border bg-transparent px-3 py-2.5 text-sm outline-none transition-colors focus:border-accent ${director ? "border-accent/40" : "border-line"}`}
             />
           </label>
           <label className="flex flex-col gap-1">
-            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+            <span className="flex items-center gap-1.5 font-mono text-[10px] tracking-widest text-muted uppercase">
               Cámara (opcional)
+              {camera && (
+                <span className="flex items-center gap-1 normal-case tracking-normal text-accent">
+                  <span className="h-1 w-1 rounded-full bg-accent" />
+                  se mantiene
+                </span>
+              )}
             </span>
             <input
               value={camera}
               onChange={(e) => setCamera(e.target.value)}
               placeholder="Cámara (ej. A)"
-              className="border border-line bg-transparent px-3 py-2.5 text-sm outline-none transition-colors focus:border-accent"
+              className={`border bg-transparent px-3 py-2.5 text-sm outline-none transition-colors focus:border-accent ${camera ? "border-accent/40" : "border-line"}`}
             />
           </label>
+        </div>
         </div>
       </div>
 
@@ -431,34 +469,55 @@ export function ClaquetaBoard({
             Todavía no se ha marcado ninguna toma.
           </p>
         ) : (
-          <div className="mt-3 border-t border-line">
-            {log.map((entry) => (
-              <div
-                key={entry.id}
-                className="flex items-center justify-between gap-3 border-b border-line py-2.5"
-              >
-                <div>
-                  <p className="font-mono text-sm">
-                    Esc. {entry.sceneNumber}
-                    {entry.shotNumber ? ` · Plano ${entry.shotNumber}` : ""} · Toma {entry.take}
-                  </p>
-                  <p className="font-mono text-[10px] text-muted">
-                    {[entry.director, entry.camera].filter(Boolean).join(" · ") || "—"}
-                    {" · "}
-                    {new Date(entry.createdAt).toLocaleTimeString("es-ES", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      second: "2-digit",
-                    })}
-                  </p>
+          <div className="mt-3 space-y-3">
+            {groupedLog.map((group) => {
+              const isCurrentScene =
+                sceneNumber !== "" && group.sceneNumber === sceneNumber;
+              return (
+                <div
+                  key={group.sceneNumber}
+                  className={`border ${isCurrentScene ? "border-accent" : "border-line"}`}
+                >
+                  <div
+                    className={`flex items-center justify-between px-3 py-1.5 font-mono text-[10px] tracking-widest uppercase ${
+                      isCurrentScene ? "bg-accent text-bg" : "bg-bg-raised text-muted"
+                    }`}
+                  >
+                    <span>Escena {group.sceneNumber}</span>
+                    {isCurrentScene && <span>Ahora</span>}
+                  </div>
+                  <div className="divide-y divide-line">
+                    {group.entries.map((entry) => (
+                      <div
+                        key={entry.id}
+                        className="flex items-center justify-between gap-3 px-3 py-2.5"
+                      >
+                        <div>
+                          <p className="font-mono text-sm">
+                            {entry.shotNumber ? `Plano ${entry.shotNumber} · ` : ""}
+                            Toma {entry.take}
+                          </p>
+                          <p className="font-mono text-[10px] text-muted">
+                            {[entry.director, entry.camera].filter(Boolean).join(" · ") || "—"}
+                            {" · "}
+                            {new Date(entry.createdAt).toLocaleTimeString("es-ES", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              second: "2-digit",
+                            })}
+                          </p>
+                        </div>
+                        {!entry.id.startsWith("pending-") && (
+                          <form action={() => handleDeleteLog(entry.id)}>
+                            <DeleteButton className="font-mono text-[10px] tracking-widest text-muted uppercase hover:text-accent" />
+                          </form>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                {!entry.id.startsWith("pending-") && (
-                  <form action={() => handleDeleteLog(entry.id)}>
-                    <DeleteButton className="font-mono text-[10px] tracking-widest text-muted uppercase hover:text-accent" />
-                  </form>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
