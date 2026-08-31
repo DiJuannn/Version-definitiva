@@ -16,6 +16,7 @@ import { BackLink } from "@/components/BackLink";
 import { FileOpenLink } from "@/components/FileOpenLink";
 import { SubmitButton } from "@/components/SubmitButton";
 import { SCRIPT_ANALYSIS_FREE_LIMIT } from "@/lib/limits";
+import { SparkleIcon } from "@/components/ToolIcons";
 
 // El análisis de guion y la revisión de continuidad llaman a Mistral y
 // pueden tardar más de los 10s que Vercel da por defecto a una función —
@@ -89,13 +90,6 @@ export default async function GuionPage({
 
         {scriptFiles.length > 0 && (
           <>
-            <div className="mt-6 flex items-center gap-1.5">
-              <p className="font-mono text-xs text-muted">
-                Analizar lee el guion con IA y propone escenas, personajes,
-                localizaciones y atrezzo a partir de él.
-              </p>
-              <HelpTip text="La IA lee el PDF de tu guion y te lleva a una pantalla de revisión con lo que propone. Tú decides qué importar de verdad — no se crea ni se cambia nada hasta que lo confirmes." />
-            </div>
             <div className="mt-4 border-t border-line">
               {scriptFiles.map((file) => (
                 <div
@@ -108,33 +102,55 @@ export default async function GuionPage({
                   >
                     {file.fileName}
                   </FileOpenLink>
-                  <div className="flex items-center gap-4">
-                    {analysisLimitReached ? (
-                      <p className="text-right font-mono text-[10px] text-muted">
-                        Límite de análisis usado
-                        <br />
-                        ({SCRIPT_ANALYSIS_FREE_LIMIT}/{SCRIPT_ANALYSIS_FREE_LIMIT})
-                      </p>
-                    ) : (
-                      <div className="flex flex-col items-end gap-1">
-                        <ActionButtonForm
-                          action={analyzeScript.bind(null, projectId, file.id)}
-                          pendingLabel="Analizando…"
-                          className="rounded-full border border-accent px-4 py-1.5 font-mono text-xs tracking-widest text-accent uppercase transition-colors hover:bg-accent hover:text-bg disabled:opacity-50"
-                        >
-                          Analizar
-                        </ActionButtonForm>
-                        <span className="font-mono text-[10px] text-muted">
-                          {analysisCount}/{SCRIPT_ANALYSIS_FREE_LIMIT} usos
-                        </span>
-                      </div>
-                    )}
-                    <form action={deleteScriptFile.bind(null, projectId, file.id)}>
-                      <DeleteButton className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent" />
-                    </form>
-                  </div>
+                  <form action={deleteScriptFile.bind(null, projectId, file.id)}>
+                    <DeleteButton className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent" />
+                  </form>
                 </div>
               ))}
+            </div>
+
+            {/* Tarjeta propia para Analizar — mismo peso visual que la
+                Claqueta digital del inicio, en vez de ir apretado junto al
+                nombre del archivo compitiendo con "Eliminar". */}
+            <div className="mt-6 border border-line p-5">
+              <div className="flex items-start gap-3">
+                <SparkleIcon className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <p className="font-mono text-xs tracking-widest uppercase">
+                      Analizar guion con IA
+                    </p>
+                    <HelpTip text="La IA lee el PDF de tu guion y te lleva a una pantalla de revisión con lo que propone. Tú decides qué importar de verdad — no se crea ni se cambia nada hasta que lo confirmes." />
+                  </div>
+                  <p className="mt-1 font-mono text-xs text-muted">
+                    Lee el guion y propone escenas, personajes, localizaciones
+                    y atrezzo a partir de él.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 flex items-center justify-between gap-4 border-t border-line pt-4">
+                {analysisLimitReached ? (
+                  <p className="font-mono text-xs text-muted">
+                    Límite de análisis usado ({SCRIPT_ANALYSIS_FREE_LIMIT}/
+                    {SCRIPT_ANALYSIS_FREE_LIMIT}) — próximamente, plan de pago
+                    con uso ilimitado.
+                  </p>
+                ) : (
+                  <>
+                    <ActionButtonForm
+                      action={analyzeScript.bind(null, projectId, scriptFiles[0].id)}
+                      pendingLabel="Analizando…"
+                      className="rounded-full border border-accent px-5 py-2 font-mono text-xs tracking-widest text-accent uppercase transition-colors hover:bg-accent hover:text-bg disabled:opacity-50"
+                    >
+                      Analizar
+                    </ActionButtonForm>
+                    <span className="font-mono text-[10px] text-muted">
+                      {analysisCount}/{SCRIPT_ANALYSIS_FREE_LIMIT} usos
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
           </>
         )}
