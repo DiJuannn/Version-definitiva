@@ -51,6 +51,16 @@ export function TrashIcon({ className }: IconProps) {
   );
 }
 
+export function ClaquetaIcon({ className }: IconProps) {
+  return (
+    <svg {...shared} className={className}>
+      <path d="M4 10 20 6l1 4-17 4-1-4Z" stroke="currentColor" strokeLinejoin="round" />
+      <path d="M4 14h16v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-5Z" stroke="currentColor" strokeLinejoin="round" />
+      <path d="m8.5 8.7 2 3.3M13.5 7.5l2 3.3" stroke="currentColor" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function LocationIcon({ className }: IconProps) {
   return (
     <svg {...shared} className={className}>

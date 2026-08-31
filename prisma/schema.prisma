@@ -164,6 +164,7 @@ model Project {
   calendarEvents    CalendarEvent[]
   scriptAnalyses    ScriptAnalysis[]
   continuityChecks  ContinuityCheck[]
+  clapLogs          ClapLog[]
 
   @@index([organizationId])
 }
@@ -359,6 +360,7 @@ model Scene {
   crewMembers       SceneCrewMember[]
   shootingDayScenes ShootingDayScene[]
   shots             Shot[]
+  clapLogs          ClapLog[]
 
   @@index([projectId])
   @@index([locationId])
@@ -801,4 +803,27 @@ model CalendarEvent {
 
   @@index([organizationId])
   @@index([projectId])
+}
+
+// Registro de cada toma "clapeada" con la claqueta digital. sceneNumber va
+// duplicado (además de la relación opcional a Scene) a propósito: es una
+// foto del momento — si la escena se renombra o se borra más tarde, el
+// historial de tomas no debe cambiar ni desaparecer.
+model ClapLog {
+  id          String   @id @default(cuid())
+  projectId   String
+  sceneId     String?
+  sceneNumber String
+  take        Int
+  roll        String?
+  camera      String?
+  intExt      IntExt?
+  dayPart     DayPart?
+  createdAt   DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  scene   Scene?  @relation(fields: [sceneId], references: [id], onDelete: SetNull)
+
+  @@index([projectId])
+  @@index([sceneId])
 }

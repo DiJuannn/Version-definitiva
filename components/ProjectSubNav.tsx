@@ -25,6 +25,7 @@ const CATEGORIES = [
       { label: "Plan de rodaje", href: "plan-de-rodaje" },
       { label: "Call sheets", href: "call-sheets" },
       { label: "Presupuesto", href: "presupuesto" },
+      { label: "Claqueta", href: "claqueta" },
     ],
   },
   {

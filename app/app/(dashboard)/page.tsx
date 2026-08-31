@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentProfile } from "@/lib/current-user";
 import { CalendarEventType, ProjectStatus, TaskStatus } from "@/lib/generated/prisma";
 import { AjoloteLogo } from "@/components/AjoloteLogo";
+import { ClaquetaIcon } from "@/components/ToolIcons";
 import { StatusPill } from "@/components/StatusPill";
 import { DashboardReveal, DashboardStagger } from "@/components/DashboardMotion";
 import { createProject, deleteProject } from "@/lib/actions/projects";
@@ -225,6 +226,24 @@ export default async function DashboardPage() {
               style={{ width: `${heroProgressPct}%` }}
             />
           </div>
+        </DashboardReveal>
+      )}
+
+      {heroProject && (
+        <DashboardReveal delay={0.05}>
+          <Link
+            href={`/app/${heroProject.id}/claqueta`}
+            className="group mt-3 flex items-center gap-3 border border-line px-5 py-3.5 transition-colors hover:border-accent"
+          >
+            <ClaquetaIcon className="h-5 w-5 shrink-0 text-accent" />
+            <span className="font-mono text-xs tracking-widest uppercase transition-colors group-hover:text-accent">
+              Claqueta digital
+            </span>
+            <span className="ml-auto font-mono text-[10px] tracking-widest text-muted uppercase transition-colors group-hover:text-accent">
+              Abrir →
+              <LinkPendingHint />
+            </span>
+          </Link>
         </DashboardReveal>
       )}
 
