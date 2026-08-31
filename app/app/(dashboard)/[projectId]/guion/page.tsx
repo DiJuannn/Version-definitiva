@@ -15,6 +15,7 @@ import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
 import { BackLink } from "@/components/BackLink";
 import { FileOpenLink } from "@/components/FileOpenLink";
 import { SubmitButton } from "@/components/SubmitButton";
+import { SCRIPT_ANALYSIS_FREE_LIMIT } from "@/lib/limits";
 
 // El análisis de guion y la revisión de continuidad llaman a Mistral y
 // pueden tardar más de los 10s que Vercel da por defecto a una función —
@@ -33,7 +34,7 @@ export default async function GuionPage({
   const project = await getProjectForCurrentUser(projectId);
   if (!project) notFound();
 
-  const [scriptFiles, scenes, pendingAnalyses, pendingContinuityChecks] =
+  const [scriptFiles, scenes, pendingAnalyses, pendingContinuityChecks, analysisCount] =
     await Promise.all([
       prisma.scriptFile.findMany({
         where: { projectId },
@@ -60,11 +61,13 @@ export default async function GuionPage({
         orderBy: { createdAt: "desc" },
         include: { _count: { select: { issues: true } } },
       }),
+      prisma.scriptAnalysis.count({ where: { projectId } }),
     ]);
 
   const uploadAction = uploadScript.bind(null, projectId);
   const createSceneAction = createScene.bind(null, projectId);
   const runContinuityAction = runContinuityCheck.bind(null, projectId);
+  const analysisLimitReached = analysisCount >= SCRIPT_ANALYSIS_FREE_LIMIT;
 
   return (
     <div>
@@ -85,33 +88,55 @@ export default async function GuionPage({
         </div>
 
         {scriptFiles.length > 0 && (
-          <div className="mt-4 border-t border-line">
-            {scriptFiles.map((file) => (
-              <div
-                key={file.id}
-                className="flex items-center justify-between gap-4 border-b border-line py-3"
-              >
-                <FileOpenLink
-                  href={file.fileUrl}
-                  className="font-mono text-sm text-fg hover:text-accent"
+          <>
+            <div className="mt-6 flex items-center gap-1.5">
+              <p className="font-mono text-xs text-muted">
+                Analizar lee el guion con IA y propone escenas, personajes,
+                localizaciones y atrezzo a partir de él.
+              </p>
+              <HelpTip text="La IA lee el PDF de tu guion y te lleva a una pantalla de revisión con lo que propone. Tú decides qué importar de verdad — no se crea ni se cambia nada hasta que lo confirmes." />
+            </div>
+            <div className="mt-4 border-t border-line">
+              {scriptFiles.map((file) => (
+                <div
+                  key={file.id}
+                  className="flex items-center justify-between gap-4 border-b border-line py-3"
                 >
-                  {file.fileName}
-                </FileOpenLink>
-                <div className="flex items-center gap-4">
-                  <ActionButtonForm
-                    action={analyzeScript.bind(null, projectId, file.id)}
-                    pendingLabel="Analizando…"
-                    className="rounded-full border border-accent px-4 py-1.5 font-mono text-xs tracking-widest text-accent uppercase transition-colors hover:bg-accent hover:text-bg disabled:opacity-50"
+                  <FileOpenLink
+                    href={file.fileUrl}
+                    className="font-mono text-sm text-fg hover:text-accent"
                   >
-                    Analizar con IA
-                  </ActionButtonForm>
-                  <form action={deleteScriptFile.bind(null, projectId, file.id)}>
-                    <DeleteButton className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent" />
-                  </form>
+                    {file.fileName}
+                  </FileOpenLink>
+                  <div className="flex items-center gap-4">
+                    {analysisLimitReached ? (
+                      <p className="text-right font-mono text-[10px] text-muted">
+                        Límite de análisis usado
+                        <br />
+                        ({SCRIPT_ANALYSIS_FREE_LIMIT}/{SCRIPT_ANALYSIS_FREE_LIMIT})
+                      </p>
+                    ) : (
+                      <div className="flex flex-col items-end gap-1">
+                        <ActionButtonForm
+                          action={analyzeScript.bind(null, projectId, file.id)}
+                          pendingLabel="Analizando…"
+                          className="rounded-full border border-accent px-4 py-1.5 font-mono text-xs tracking-widest text-accent uppercase transition-colors hover:bg-accent hover:text-bg disabled:opacity-50"
+                        >
+                          Analizar
+                        </ActionButtonForm>
+                        <span className="font-mono text-[10px] text-muted">
+                          {analysisCount}/{SCRIPT_ANALYSIS_FREE_LIMIT} usos
+                        </span>
+                      </div>
+                    )}
+                    <form action={deleteScriptFile.bind(null, projectId, file.id)}>
+                      <DeleteButton className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent" />
+                    </form>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </>
         )}
 
         {pendingAnalyses.length > 0 && (

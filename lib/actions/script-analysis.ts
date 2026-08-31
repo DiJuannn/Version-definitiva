@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { analyzeScriptPdf, type ScriptAnalysisProposal } from "@/lib/mistral";
 import { DayPart, IntExt } from "@/lib/generated/prisma";
+import { SCRIPT_ANALYSIS_FREE_LIMIT } from "@/lib/limits";
 
 function cleanText(value: string | undefined | null): string | null {
   const trimmed = (value ?? "").trim();
@@ -30,6 +31,16 @@ export async function analyzeScript(
     where: { id: scriptFileId, projectId },
   });
   if (!scriptFile) return { error: "No se encontró el guion. Recarga la página." };
+
+  // Límite mientras no existe un plan de pago — se cuentan todos los
+  // análisis del proyecto, se hayan importado o no, porque cada uno supone
+  // una llamada real a la IA.
+  const analysisCount = await prisma.scriptAnalysis.count({ where: { projectId } });
+  if (analysisCount >= SCRIPT_ANALYSIS_FREE_LIMIT) {
+    return {
+      error: `Has usado los ${SCRIPT_ANALYSIS_FREE_LIMIT} análisis con IA disponibles para este proyecto. Próximamente habrá un plan de pago con uso ilimitado.`,
+    };
+  }
 
   let proposal;
   try {
