@@ -9,6 +9,7 @@ import { DashboardReveal, DashboardStagger } from "@/components/DashboardMotion"
 import { createProject, deleteProject } from "@/lib/actions/projects";
 import { DeleteProjectButton } from "@/components/DeleteProjectButton";
 import { SubmitButton } from "@/components/SubmitButton";
+import { NewProjectPanel } from "@/components/NewProjectPanel";
 import { LinkPendingHint } from "@/components/LinkPendingHint";
 import { getProjectOverview } from "@/lib/project-roadmap";
 
@@ -283,44 +284,7 @@ export default async function DashboardPage() {
       </div>
 
       <DashboardReveal className="mt-8" delay={0.1}>
-        <div className="flex items-center justify-between">
-          <p className="font-mono text-[10px] tracking-widest text-accent uppercase">
-            Proyectos recientes
-          </p>
-          <div className="flex items-center gap-4">
-            {recentProjects.length > 0 && (
-              <details className="group relative">
-                <summary className="cursor-pointer list-none font-mono text-[10px] tracking-widest text-muted uppercase hover:text-accent [&::-webkit-details-marker]:hidden">
-                  + Nuevo proyecto
-                </summary>
-                <form
-                  action={createProject}
-                  className="absolute right-0 z-10 mt-2 flex w-64 gap-2 border border-line bg-bg p-3"
-                >
-                  <input
-                    name="name"
-                    placeholder="Nombre del proyecto"
-                    required
-                    autoFocus
-                    className="w-full border border-line bg-transparent px-2 py-1.5 text-xs outline-none transition-colors focus:border-accent"
-                  />
-                  <SubmitButton
-                    pendingLabel="Creando…"
-                    className="shrink-0 rounded-full bg-fg px-4 py-1.5 font-mono text-[10px] tracking-widest text-bg uppercase transition-opacity hover:opacity-90 disabled:opacity-70"
-                  >
-                    Crear
-                  </SubmitButton>
-                </form>
-              </details>
-            )}
-            <Link
-              href="/app/proyectos"
-              className="font-mono text-[10px] tracking-widest text-muted uppercase hover:text-accent"
-            >
-              Ver todos →
-            </Link>
-          </div>
-        </div>
+        <NewProjectPanel hasProjects={recentProjects.length > 0} />
         {recentProjects.length > 0 && (
           <DashboardStagger className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {recentProjects.map((project) => (
