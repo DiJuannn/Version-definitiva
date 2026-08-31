@@ -814,8 +814,9 @@ model ClapLog {
   projectId   String
   sceneId     String?
   sceneNumber String
+  shotNumber  String?
   take        Int
-  roll        String?
+  director    String?
   camera      String?
   intExt      IntExt?
   dayPart     DayPart?

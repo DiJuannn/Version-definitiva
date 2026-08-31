@@ -33,8 +33,9 @@ export default async function ClaquetaPage({
       select: {
         id: true,
         sceneNumber: true,
+        shotNumber: true,
         take: true,
-        roll: true,
+        director: true,
         camera: true,
         createdAt: true,
       },
@@ -71,8 +72,8 @@ export default async function ClaquetaPage({
       </h1>
       <p className="mt-2 font-mono text-xs text-muted">
         {scenes.length > 0
-          ? "Elige la escena, ajusta la toma y toca el tablero para marcar."
-          : "Este proyecto todavía no tiene escenas — puedes escribir el número a mano."}
+          ? "Elige la escena de la lista o escríbela a mano, ajusta la toma y toca el tablero para marcar."
+          : "Este proyecto todavía no tiene escenas — escribe el número a mano."}
       </p>
 
       <div className="mt-8">

@@ -21,8 +21,9 @@ export async function logClap(
 
   const sceneId = optionalString(formData.get("sceneId"));
   const sceneNumber = String(formData.get("sceneNumber") ?? "").trim();
+  const shotNumber = optionalString(formData.get("shotNumber"));
   const take = Number(formData.get("take"));
-  const roll = optionalString(formData.get("roll"));
+  const director = optionalString(formData.get("director"));
   const camera = optionalString(formData.get("camera"));
   const intExtInput = optionalString(formData.get("intExt"));
   const dayPartInput = optionalString(formData.get("dayPart"));
@@ -43,8 +44,9 @@ export async function logClap(
       projectId,
       sceneId: sceneId ?? undefined,
       sceneNumber,
+      shotNumber,
       take,
-      roll,
+      director,
       camera,
       intExt,
       dayPart,

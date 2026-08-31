@@ -17,8 +17,9 @@ type SceneOption = {
 type ClapLogEntry = {
   id: string;
   sceneNumber: string;
+  shotNumber: string | null;
   take: number;
-  roll: string | null;
+  director: string | null;
   camera: string | null;
   createdAt: string;
 };
@@ -78,15 +79,22 @@ export function ClaquetaBoard({
   lastTakeBySceneNumber: Record<string, number>;
   initialLog: ClapLogEntry[];
 }) {
+  // Aunque el proyecto ya tenga escenas cargadas, tiene que poder
+  // escribirse el número a mano — no todo el mundo rellena antes el guion.
+  const [sceneEntryMode, setSceneEntryMode] = useState<"list" | "manual">(
+    scenes.length > 0 ? "list" : "manual",
+  );
   const [sceneId, setSceneId] = useState(scenes[0]?.id ?? "");
   const [manualSceneNumber, setManualSceneNumber] = useState("");
-  const selectedScene = scenes.find((s) => s.id === sceneId) ?? null;
+  const selectedScene =
+    sceneEntryMode === "list" ? scenes.find((s) => s.id === sceneId) ?? null : null;
   const sceneNumber = selectedScene ? selectedScene.number : manualSceneNumber.trim();
 
   const [take, setTake] = useState(() =>
     sceneNumber ? (lastTakeBySceneNumber[sceneNumber] ?? 0) + 1 : 1,
   );
-  const [roll, setRoll] = useState("");
+  const [shotNumber, setShotNumber] = useState("");
+  const [director, setDirector] = useState("");
   const [camera, setCamera] = useState("");
   const [clapping, setClapping] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -100,13 +108,28 @@ export function ClaquetaBoard({
   function pickScene(id: string) {
     setSceneId(id);
     const scene = scenes.find((s) => s.id === id);
-    const num = scene ? scene.number : manualSceneNumber.trim();
+    const num = scene ? scene.number : "";
     setTake((lastTakeBySceneNumber[num] ?? 0) + 1);
   }
 
   function updateManualSceneNumber(value: string) {
     setManualSceneNumber(value);
     setTake((lastTakeBySceneNumber[value.trim()] ?? 0) + 1);
+  }
+
+  function switchToManualScene() {
+    const prefill = selectedScene?.number ?? manualSceneNumber;
+    setManualSceneNumber(prefill);
+    setSceneEntryMode("manual");
+    setTake((lastTakeBySceneNumber[prefill.trim()] ?? 0) + 1);
+  }
+
+  function switchToSceneList() {
+    setSceneEntryMode("list");
+    const id = sceneId || scenes[0]?.id || "";
+    setSceneId(id);
+    const scene = scenes.find((s) => s.id === id);
+    setTake((lastTakeBySceneNumber[scene?.number ?? ""] ?? 0) + 1);
   }
 
   async function handleClap() {
@@ -123,8 +146,9 @@ export function ClaquetaBoard({
     const optimisticEntry: ClapLogEntry = {
       id: `pending-${Date.now()}`,
       sceneNumber,
+      shotNumber: shotNumber || null,
       take: thisTake,
-      roll: roll || null,
+      director: director || null,
       camera: camera || null,
       createdAt: new Date().toISOString(),
     };
@@ -133,10 +157,13 @@ export function ClaquetaBoard({
 
     setSaving(true);
     const fd = new FormData();
-    fd.set("sceneId", sceneId);
+    // sceneId solo tiene sentido si la escena viene de la lista real — si se
+    // escribió a mano, sceneId puede quedar apuntando a una escena distinta.
+    fd.set("sceneId", selectedScene ? sceneId : "");
     fd.set("sceneNumber", sceneNumber);
+    if (shotNumber) fd.set("shotNumber", shotNumber);
     fd.set("take", String(thisTake));
-    if (roll) fd.set("roll", roll);
+    if (director) fd.set("director", director);
     if (camera) fd.set("camera", camera);
     if (selectedScene) {
       fd.set("intExt", selectedScene.intExt);
@@ -199,49 +226,60 @@ export function ClaquetaBoard({
               </p>
             </div>
 
-            <div className="mt-4 grid grid-cols-2 divide-x divide-fg/25 border-b border-fg/25 pb-4">
-              <div className="pr-4">
+            <div className="mt-3 grid grid-cols-2 gap-3 border-b border-fg/25 pb-3">
+              <div className="min-w-0">
+                <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
+                  Director
+                </p>
+                <p className="mt-0.5 truncate font-mono text-sm text-fg">{director || "—"}</p>
+              </div>
+              <div className="min-w-0">
+                <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
+                  Cámara
+                </p>
+                <p className="mt-0.5 truncate font-mono text-sm text-fg">{camera || "—"}</p>
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-3 divide-x divide-fg/25 border-b border-fg/25 pb-4">
+              <div className="min-w-0 pr-2 sm:pr-4">
                 <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
                   Escena
                 </p>
-                <p className="mt-1 font-display text-5xl font-bold text-fg sm:text-6xl">
+                <p className="mt-1 truncate font-display text-3xl font-bold text-fg sm:text-5xl">
                   {sceneNumber || "—"}
                 </p>
               </div>
-              <div className="pl-4">
+              <div className="min-w-0 px-2 sm:px-4">
+                <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
+                  Plano
+                </p>
+                <p className="mt-1 truncate font-display text-3xl font-bold text-fg sm:text-5xl">
+                  {shotNumber || "—"}
+                </p>
+              </div>
+              <div className="min-w-0 pl-2 sm:pl-4">
                 <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
                   Toma
                 </p>
-                <p className="mt-1 font-display text-5xl font-bold text-accent sm:text-6xl">
+                <p className="mt-1 truncate font-display text-3xl font-bold text-accent sm:text-5xl">
                   {take}
                 </p>
               </div>
             </div>
 
-            <div className="mt-4 grid grid-cols-2 gap-y-4 sm:grid-cols-4 sm:divide-x sm:divide-fg/25">
+            <div className="mt-4 grid grid-cols-2 sm:divide-x sm:divide-fg/25">
               <div className="sm:pr-4">
                 <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
                   Int/Ext
                 </p>
                 <p className="mt-0.5 font-mono text-sm text-fg">{intExtLabel}</p>
               </div>
-              <div className="sm:px-4">
+              <div className="sm:pl-4">
                 <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
                   Día/Noche
                 </p>
                 <p className="mt-0.5 font-mono text-sm text-fg">{dayPartLabel}</p>
-              </div>
-              <div className="sm:px-4">
-                <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
-                  Rollo
-                </p>
-                <p className="mt-0.5 font-mono text-sm text-fg">{roll || "—"}</p>
-              </div>
-              <div className="sm:pl-4">
-                <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
-                  Cámara
-                </p>
-                <p className="mt-0.5 font-mono text-sm text-fg">{camera || "—"}</p>
               </div>
             </div>
 
@@ -266,10 +304,21 @@ export function ClaquetaBoard({
         {/* Ficha de ajustes — secundaria, va debajo del tablero. */}
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
           <label className="flex min-w-0 flex-col gap-1">
-            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-              Escena
-            </span>
-            {scenes.length > 0 ? (
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                Escena
+              </span>
+              {scenes.length > 0 && (
+                <button
+                  type="button"
+                  onClick={sceneEntryMode === "list" ? switchToManualScene : switchToSceneList}
+                  className="font-mono text-[10px] tracking-widest text-muted uppercase underline-offset-2 hover:text-accent hover:underline"
+                >
+                  {sceneEntryMode === "list" ? "Escribir a mano" : "Elegir de la lista"}
+                </button>
+              )}
+            </div>
+            {sceneEntryMode === "list" ? (
               <select
                 value={sceneId}
                 onChange={(e) => pickScene(e.target.value)}
@@ -289,6 +338,7 @@ export function ClaquetaBoard({
                 value={manualSceneNumber}
                 onChange={(e) => updateManualSceneNumber(e.target.value)}
                 placeholder="Número de escena (ej. 04)"
+                autoFocus={scenes.length > 0}
                 className="w-full min-w-0 border border-line bg-transparent px-3 py-2.5 text-sm outline-none transition-colors focus:border-accent"
               />
             )}
@@ -327,12 +377,23 @@ export function ClaquetaBoard({
 
           <label className="flex flex-col gap-1">
             <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-              Rollo (opcional)
+              Plano (opcional)
             </span>
             <input
-              value={roll}
-              onChange={(e) => setRoll(e.target.value)}
-              placeholder="Rollo"
+              value={shotNumber}
+              onChange={(e) => setShotNumber(e.target.value)}
+              placeholder="Plano (ej. 3A)"
+              className="border border-line bg-transparent px-3 py-2.5 text-sm outline-none transition-colors focus:border-accent"
+            />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+              Director (opcional)
+            </span>
+            <input
+              value={director}
+              onChange={(e) => setDirector(e.target.value)}
+              placeholder="Nombre del director"
               className="border border-line bg-transparent px-3 py-2.5 text-sm outline-none transition-colors focus:border-accent"
             />
           </label>
@@ -367,10 +428,11 @@ export function ClaquetaBoard({
               >
                 <div>
                   <p className="font-mono text-sm">
-                    Esc. {entry.sceneNumber} · Toma {entry.take}
+                    Esc. {entry.sceneNumber}
+                    {entry.shotNumber ? ` · Plano ${entry.shotNumber}` : ""} · Toma {entry.take}
                   </p>
                   <p className="font-mono text-[10px] text-muted">
-                    {[entry.roll, entry.camera].filter(Boolean).join(" · ") || "—"}
+                    {[entry.director, entry.camera].filter(Boolean).join(" · ") || "—"}
                     {" · "}
                     {new Date(entry.createdAt).toLocaleTimeString("es-ES", {
                       hour: "2-digit",
