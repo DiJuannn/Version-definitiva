@@ -30,13 +30,13 @@ export function DashboardNav({
 
   return (
     <>
-      {/* Móvil (<sm): igual que antes — botón de menú + lista vertical. */}
+      {/* Móvil y tablet (<lg): igual que antes — botón de menú + lista vertical. */}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-label="Abrir menú"
-        className="mt-4 flex items-center gap-2 font-mono text-xs tracking-widest text-muted uppercase sm:hidden"
+        className="mt-4 flex items-center gap-2 font-mono text-xs tracking-widest text-muted uppercase lg:hidden"
       >
         <span className="flex h-4 w-5 flex-col justify-between">
           <span
@@ -49,20 +49,7 @@ export function DashboardNav({
         </span>
         Menú
       </button>
-      <nav className={`${open ? "flex" : "hidden"} mt-4 flex-col gap-4 sm:hidden`}>
-        {items.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className="font-mono text-xs tracking-widest text-muted uppercase transition hover:text-accent active:opacity-60"
-          >
-            {item.label}
-          </Link>
-        ))}
-      </nav>
-
-      {/* Tablet (sm a lg): igual que antes — fila plana sin resaltar activo. */}
-      <nav className="mt-4 hidden flex-row flex-wrap gap-6 sm:flex lg:hidden">
+      <nav className={`${open ? "flex" : "hidden"} mt-4 flex-col gap-4 lg:hidden`}>
         {items.map((item) => (
           <Link
             key={item.href}
