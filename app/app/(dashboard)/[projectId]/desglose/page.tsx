@@ -28,12 +28,22 @@ export default async function DesglosePage({
     prisma.breakdownElement.findMany({
       where: { projectId },
       orderBy: { name: "asc" },
-      include: { _count: { select: { scenes: true } } },
+      select: {
+        id: true,
+        name: true,
+        category: true,
+        _count: { select: { scenes: true } },
+      },
     }),
     prisma.crewMember.findMany({
       where: { projectId },
       orderBy: { name: "asc" },
-      include: { _count: { select: { scenes: true } } },
+      select: {
+        id: true,
+        name: true,
+        role: true,
+        _count: { select: { scenes: true } },
+      },
     }),
     prisma.person.findMany({
       where: { organizationId: project.organizationId },

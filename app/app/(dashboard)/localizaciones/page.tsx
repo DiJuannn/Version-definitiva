@@ -19,7 +19,15 @@ export default async function LocalizacionesPage() {
   const locations = await prisma.location.findMany({
     where: { organizationId: profile.organizationId },
     orderBy: { name: "asc" },
-    include: { _count: { select: { scenes: true } } },
+    select: {
+      id: true,
+      name: true,
+      address: true,
+      contactName: true,
+      latitude: true,
+      longitude: true,
+      _count: { select: { scenes: true } },
+    },
   });
 
   const mappedLocations = locations
