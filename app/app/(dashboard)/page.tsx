@@ -248,6 +248,28 @@ export default async function DashboardPage() {
         </DashboardReveal>
       )}
 
+      {profile.organization.plan !== "PRO" && (
+        <DashboardReveal delay={0.08}>
+          <Link
+            href="/app/organizacion"
+            className="group mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border border-accent px-5 py-3.5 transition-colors hover:bg-accent"
+          >
+            <span className="flex flex-wrap items-baseline gap-x-2">
+              <span className="font-mono text-xs font-bold tracking-widest uppercase text-accent transition-colors group-hover:text-bg">
+                Hazte PRO
+              </span>
+              <span className="font-mono text-[10px] text-muted transition-colors group-hover:text-bg/70">
+                Análisis de guion con IA sin límite, desde 4,99€/mes
+              </span>
+            </span>
+            <span className="shrink-0 font-mono text-[10px] tracking-widest uppercase text-accent transition-colors group-hover:text-bg">
+              Ver planes →
+              <LinkPendingHint />
+            </span>
+          </Link>
+        </DashboardReveal>
+      )}
+
       <div className="mt-6 flex flex-wrap items-center gap-x-8 gap-y-3 border-y border-line py-3 sm:mt-8">
         <div className="flex items-baseline gap-2">
           <span className="font-display text-xl font-bold">{activeProjectsCount}</span>
