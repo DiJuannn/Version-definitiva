@@ -72,7 +72,8 @@ export default async function GuionPage({
   const uploadAction = uploadScript.bind(null, projectId);
   const createSceneAction = createScene.bind(null, projectId);
   const runContinuityAction = runContinuityCheck.bind(null, projectId);
-  const analysisLimitReached = analysisCount >= SCRIPT_ANALYSIS_FREE_LIMIT;
+  const isPro = profile.organization.plan === "PRO";
+  const analysisLimitReached = !isPro && analysisCount >= SCRIPT_ANALYSIS_FREE_LIMIT;
 
   return (
     <div>
@@ -122,15 +123,16 @@ export default async function GuionPage({
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
                     <p className="font-mono text-xs tracking-widest uppercase">
-                      Analizar guion con IA
+                      Analizar guion
                     </p>
-                    <HelpTip text="La IA lee el PDF de tu guion y te lleva a una pantalla de revisión con lo que propone. Tú decides qué importar de verdad — no se crea ni se cambia nada hasta que lo confirmes." />
+                    <HelpTip text="Se lee el PDF de tu guion y te lleva a una pantalla de revisión con lo que se propone. Tú decides qué importar de verdad — no se crea ni se cambia nada hasta que lo confirmes." />
                   </div>
                   <p className="mt-1 font-mono text-xs text-muted">
                     Lee el guion y propone escenas, personajes, localizaciones
-                    y atrezzo a partir de él. Límite de{" "}
-                    {SCRIPT_ANALYSIS_FREE_LIMIT} usos por cuenta, en total
-                    entre todos tus proyectos.
+                    y atrezzo a partir de él.{" "}
+                    {isPro
+                      ? "Sin límite con tu plan PRO."
+                      : `Límite de ${SCRIPT_ANALYSIS_FREE_LIMIT} usos por cuenta, en total entre todos tus proyectos.`}
                   </p>
                 </div>
               </div>
@@ -139,8 +141,11 @@ export default async function GuionPage({
                 {analysisLimitReached ? (
                   <p className="font-mono text-xs text-muted">
                     Límite de tu cuenta usado ({SCRIPT_ANALYSIS_FREE_LIMIT}/
-                    {SCRIPT_ANALYSIS_FREE_LIMIT}) — próximamente, plan de pago
-                    con uso ilimitado.
+                    {SCRIPT_ANALYSIS_FREE_LIMIT}) —{" "}
+                    <Link href="/app/organizacion" className="text-accent hover:underline">
+                      pásate a PRO
+                    </Link>{" "}
+                    para uso ilimitado.
                   </p>
                 ) : (
                   <>
@@ -152,7 +157,9 @@ export default async function GuionPage({
                       Analizar
                     </ActionButtonForm>
                     <span className="font-mono text-[10px] text-muted">
-                      {analysisCount}/{SCRIPT_ANALYSIS_FREE_LIMIT} usos de tu cuenta
+                      {isPro
+                        ? "PRO · sin límite"
+                        : `${analysisCount}/${SCRIPT_ANALYSIS_FREE_LIMIT} usos de tu cuenta`}
                     </span>
                   </>
                 )}

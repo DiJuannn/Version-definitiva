@@ -36,17 +36,19 @@ export async function analyzeScript(
   });
   if (!scriptFile) return { error: "No se encontró el guion. Recarga la página." };
 
-  // Límite mientras no existe un plan de pago — es por cuenta (por correo),
-  // no por proyecto: se cuentan todos los análisis que ha lanzado este
-  // usuario en cualquier proyecto, se hayan importado o no, porque cada uno
-  // supone una llamada real a la IA.
-  const analysisCount = await prisma.scriptAnalysis.count({
-    where: { createdById: profile.id },
-  });
-  if (analysisCount >= SCRIPT_ANALYSIS_FREE_LIMIT) {
-    return {
-      error: `Has usado los ${SCRIPT_ANALYSIS_FREE_LIMIT} análisis con IA disponibles en tu cuenta. Próximamente habrá un plan de pago con uso ilimitado.`,
-    };
+  // Límite del plan gratuito — por cuenta (por correo), no por proyecto: se
+  // cuentan todos los análisis que ha lanzado este usuario en cualquier
+  // proyecto, se hayan importado o no, porque cada uno supone una llamada
+  // real a la IA. Las organizaciones PRO no tienen límite.
+  if (profile.organization.plan !== "PRO") {
+    const analysisCount = await prisma.scriptAnalysis.count({
+      where: { createdById: profile.id },
+    });
+    if (analysisCount >= SCRIPT_ANALYSIS_FREE_LIMIT) {
+      return {
+        error: `Has usado los ${SCRIPT_ANALYSIS_FREE_LIMIT} análisis disponibles en tu cuenta. Pásate a PRO en Organización para tener uso ilimitado.`,
+      };
+    }
   }
 
   let proposal;

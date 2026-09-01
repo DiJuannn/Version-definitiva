@@ -12,6 +12,11 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+enum OrganizationPlan {
+  FREE
+  PRO
+}
+
 model Organization {
   id              String   @id @default(cuid())
   name            String
@@ -21,6 +26,13 @@ model Organization {
   isPlatformOwner Boolean  @default(false)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
+  // Suscripción PRO (Lemon Squeezy) — plan controla los límites de uso;
+  // los otros dos campos solo sirven para casar los webhooks con esta
+  // organización y no se muestran nunca al usuario.
+  plan                       OrganizationPlan @default(FREE)
+  lemonSqueezyCustomerId     String?
+  lemonSqueezySubscriptionId String?
 
   users              User[]
   projects           Project[]

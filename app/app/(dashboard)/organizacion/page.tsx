@@ -8,6 +8,8 @@ import { DeleteButton } from "@/components/DeleteButton";
 import { HelpTip } from "@/components/HelpTip";
 import { FeatureIntro } from "@/components/FeatureIntro";
 import { SubmitButton } from "@/components/SubmitButton";
+import { getCheckoutUrls, buildCheckoutUrl } from "@/lib/lemonsqueezy";
+import { SCRIPT_ANALYSIS_FREE_LIMIT } from "@/lib/limits";
 
 const ROLE_LABELS = { ADMIN: "Admin", MEMBER: "Miembro" } as const;
 
@@ -29,6 +31,7 @@ export default async function OrganizacionPage() {
   ]);
 
   const adminCount = members.filter((m) => m.role === "ADMIN").length;
+  const checkoutUrls = getCheckoutUrls();
 
   return (
     <div>
@@ -45,6 +48,85 @@ export default async function OrganizacionPage() {
         pública. <strong>Miembro</strong> solo entra al Taller, sin poder
         tocar la web.
       </FeatureIntro>
+
+      <section className="mt-10 border border-line p-6">
+        <div className="flex items-center justify-between gap-3">
+          <p className="font-mono text-xs tracking-widest text-accent uppercase">
+            Plan
+          </p>
+          <span
+            className={`rounded-full px-3 py-1 font-mono text-[10px] tracking-widest uppercase ${
+              profile.organization.plan === "PRO"
+                ? "bg-accent text-bg"
+                : "border border-line text-muted"
+            }`}
+          >
+            {profile.organization.plan === "PRO" ? "PRO" : "Gratis"}
+          </span>
+        </div>
+
+        {profile.organization.plan === "PRO" ? (
+          <p className="mt-3 font-mono text-xs text-muted">
+            Análisis de guion sin límite en todos los proyectos de la
+            organización.
+          </p>
+        ) : (
+          <>
+            <p className="mt-3 font-mono text-xs text-muted">
+              El plan gratuito incluye {SCRIPT_ANALYSIS_FREE_LIMIT} análisis
+              de guion por cuenta, en total entre todos los proyectos. Con
+              PRO, sin límite.
+            </p>
+            {checkoutUrls ? (
+              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                <div className="border border-line p-4">
+                  <p className="font-display text-2xl font-bold">
+                    4,99€
+                    <span className="font-mono text-xs font-normal text-muted">
+                      /mes
+                    </span>
+                  </p>
+                  <a
+                    href={buildCheckoutUrl(
+                      checkoutUrls.monthly,
+                      profile.organizationId,
+                      profile.email,
+                    )}
+                    className="mt-4 inline-block rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+                  >
+                    Pasarme a PRO
+                  </a>
+                </div>
+                <div className="border border-accent p-4">
+                  <p className="font-display text-2xl font-bold">
+                    49,99€
+                    <span className="font-mono text-xs font-normal text-muted">
+                      /año
+                    </span>
+                  </p>
+                  <p className="mt-1 font-mono text-[10px] tracking-widest text-accent uppercase">
+                    2 meses gratis
+                  </p>
+                  <a
+                    href={buildCheckoutUrl(
+                      checkoutUrls.yearly,
+                      profile.organizationId,
+                      profile.email,
+                    )}
+                    className="mt-3 inline-block rounded-full bg-accent px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+                  >
+                    Pasarme a PRO
+                  </a>
+                </div>
+              </div>
+            ) : (
+              <p className="mt-4 font-mono text-xs text-muted">
+                El cobro todavía se está configurando — vuelve pronto.
+              </p>
+            )}
+          </>
+        )}
+      </section>
 
       <section className="mt-10 border border-line p-6">
         <p className="font-mono text-xs tracking-widest text-accent uppercase">
