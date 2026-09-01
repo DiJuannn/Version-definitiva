@@ -96,12 +96,15 @@ export async function updateContinuityIssueStatus(
     data: { status },
   });
 
+  // Vuelve a filtrar por projectId aquí — checkId por sí solo podría
+  // apuntar a una revisión de continuidad de otro proyecto (y otra
+  // organización), y esta escritura no debe tocar nada que no sea tuyo.
   const remainingOpen = await prisma.continuityIssue.count({
-    where: { checkId, status: ContinuityIssueStatus.OPEN },
+    where: { checkId, status: ContinuityIssueStatus.OPEN, check: { projectId } },
   });
   if (remainingOpen === 0) {
-    await prisma.continuityCheck.update({
-      where: { id: checkId },
+    await prisma.continuityCheck.updateMany({
+      where: { id: checkId, projectId },
       data: { status: "REVIEWED", reviewedAt: new Date() },
     });
   }
