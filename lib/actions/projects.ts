@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getCurrentProfile } from "@/lib/current-user";
 import { getProjectForCurrentUser } from "@/lib/project-access";
-import { deleteProjectFile } from "@/lib/storage";
+import { deleteProjectCore } from "@/lib/project-delete-core";
 
 export async function createProject(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
@@ -32,39 +32,18 @@ export async function createProject(formData: FormData) {
 export async function deleteProject(projectId: string, formData: FormData) {
   void formData;
 
+  const profile = await getCurrentProfile();
+  if (!profile) return;
+
   const project = await getProjectForCurrentUser(projectId);
   if (!project) return;
 
-  const [scriptFiles, documents, storyboardFrames] = await Promise.all([
-    prisma.scriptFile.findMany({ where: { projectId }, select: { fileUrl: true } }),
-    prisma.document.findMany({ where: { projectId }, select: { fileUrl: true } }),
-    prisma.storyboardFrame.findMany({
-      where: { shot: { scene: { projectId } } },
-      select: { imageUrl: true },
-    }),
-  ]);
+  // Solo la organización propietaria puede borrar — getProjectForCurrentUser
+  // también deja pasar proyectos compartidos contigo (para verlos/editarlos),
+  // pero borrar el proyecto entero es cosa solo de quien es dueño.
+  if (project.organizationId !== profile.organizationId) return;
 
-  await prisma.$transaction([
-    prisma.scriptFile.deleteMany({ where: { projectId } }),
-    prisma.document.deleteMany({ where: { projectId } }),
-    prisma.character.deleteMany({ where: { projectId } }),
-    prisma.actor.deleteMany({ where: { projectId } }),
-    prisma.breakdownElement.deleteMany({ where: { projectId } }),
-    prisma.crewMember.deleteMany({ where: { projectId } }),
-    prisma.budgetCategory.deleteMany({ where: { projectId } }),
-    prisma.shootingDay.deleteMany({ where: { projectId } }),
-    prisma.scene.deleteMany({ where: { projectId } }),
-    prisma.project.delete({ where: { id: projectId } }),
-  ]);
-
-  const fileUrls = [
-    ...scriptFiles.map((f) => f.fileUrl),
-    ...documents.map((d) => d.fileUrl),
-    ...storyboardFrames.flatMap((s) => (s.imageUrl ? [s.imageUrl] : [])),
-  ];
-  // allSettled a propósito: el proyecto ya quedó borrado de la base de
-  // datos (lo importante), un fallo limpiando el storage no debe romper esto.
-  await Promise.allSettled(fileUrls.map((url) => deleteProjectFile(url)));
+  await deleteProjectCore(projectId);
 
   revalidatePath("/app");
   revalidatePath("/app/proyectos");
