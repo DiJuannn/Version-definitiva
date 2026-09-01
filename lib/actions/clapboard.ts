@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { optionalString } from "@/lib/form-utils";
-import { DayPart, IntExt } from "@/lib/generated/prisma";
+import { logClapCore } from "@/lib/clapboard-core";
 
 export type LogClapState = { error: string } | { success: true; id: string } | undefined;
 
@@ -19,42 +19,21 @@ export async function logClap(
   const project = await getProjectForCurrentUser(projectId);
   if (!project) return { error: "No tienes acceso a este proyecto." };
 
-  const sceneId = optionalString(formData.get("sceneId"));
-  const sceneNumber = String(formData.get("sceneNumber") ?? "").trim();
-  const shotNumber = optionalString(formData.get("shotNumber"));
-  const take = Number(formData.get("take"));
-  const director = optionalString(formData.get("director"));
-  const camera = optionalString(formData.get("camera"));
-  const intExtInput = optionalString(formData.get("intExt"));
-  const dayPartInput = optionalString(formData.get("dayPart"));
-
-  if (!sceneNumber || !Number.isFinite(take) || take < 1) {
-    return { error: "Falta el número de escena o la toma no es válida." };
-  }
-
-  const intExt = (Object.values(IntExt) as string[]).includes(intExtInput ?? "")
-    ? (intExtInput as IntExt)
-    : null;
-  const dayPart = (Object.values(DayPart) as string[]).includes(dayPartInput ?? "")
-    ? (dayPartInput as DayPart)
-    : null;
-
-  const created = await prisma.clapLog.create({
-    data: {
-      projectId,
-      sceneId: sceneId ?? undefined,
-      sceneNumber,
-      shotNumber,
-      take,
-      director,
-      camera,
-      intExt,
-      dayPart,
-    },
+  const result = await logClapCore(projectId, {
+    sceneId: optionalString(formData.get("sceneId")),
+    sceneNumber: String(formData.get("sceneNumber") ?? ""),
+    shotNumber: optionalString(formData.get("shotNumber")),
+    take: Number(formData.get("take")),
+    director: optionalString(formData.get("director")),
+    camera: optionalString(formData.get("camera")),
+    intExt: optionalString(formData.get("intExt")),
+    dayPart: optionalString(formData.get("dayPart")),
   });
 
+  if (!result.ok) return { error: result.error };
+
   revalidatePath(`/app/${projectId}/claqueta`);
-  return { success: true, id: created.id };
+  return { success: true, id: result.id };
 }
 
 export async function deleteClapLog(projectId: string, clapLogId: string) {
