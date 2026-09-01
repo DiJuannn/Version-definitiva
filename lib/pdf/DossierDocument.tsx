@@ -1,7 +1,13 @@
 import { Document, Page, Text, View } from "@react-pdf/renderer";
 import { colors, pdfStyles } from "@/lib/pdf/styles";
-import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
-import type { Prisma } from "@/lib/generated/prisma";
+import {
+  BREAKDOWN_CATEGORY_LABELS,
+  DAY_PART_LABELS,
+  INT_EXT_LABELS,
+  INVENTORY_CATEGORY_LABELS,
+} from "@/lib/labels";
+import { BreakdownCategory } from "@/lib/generated/prisma";
+import type { ProjectSummaryData } from "@/lib/project-summary";
 
 const STATUS_LABELS: Record<string, string> = {
   DEVELOPMENT: "Desarrollo",
@@ -19,41 +25,39 @@ function formatDate(date: Date | null) {
   return date ? date.toLocaleDateString("es-ES") : "—";
 }
 
-type ProjectWithRelations = Prisma.ProjectGetPayload<{
-  include: {
-    scenes: {
-      include: {
-        location: true;
-        characters: { include: { character: true } };
-      };
-    };
-    actors: { include: { characters: true } };
-    characters: true;
-    shootingDays: {
-      include: { scenes: { include: { scene: true } } };
-    };
-    budgetCategories: { include: { items: true } };
-  };
-}>;
+function Footer() {
+  return (
+    <View style={pdfStyles.footer} fixed>
+      <Text>Versión definitiva — Taller</Text>
+      <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
+    </View>
+  );
+}
 
-export function DossierDocument({ project }: { project: ProjectWithRelations }) {
-  const locationsUsed = [
-    ...new Map(
-      project.scenes
-        .filter((scene) => scene.location)
-        .map((scene) => [scene.location!.id, scene.location!]),
-    ).values(),
-  ];
+function PageTitle({ children }: { children: string }) {
+  return <Text style={[pdfStyles.title, { fontSize: 14, marginBottom: 12 }]}>{children}</Text>;
+}
 
-  const grandTotal = project.budgetCategories.reduce((sum, category) => {
-    const categoryTotal = category.items.reduce((itemSum, item) => {
-      const quantity = Number(item.quantity);
-      const unitPrice = Number(item.unitPrice);
-      const taxRate = Number(item.taxRate);
-      return itemSum + quantity * unitPrice * (1 + taxRate / 100);
-    }, 0);
-    return sum + categoryTotal;
-  }, 0);
+// Mismos datos que la pantalla de Resumen (getProjectSummary) — nada se
+// vuelve a calcular aquí, para que el dossier nunca se quede corto de lo
+// que ya se ve en pantalla.
+export function DossierDocument({ summary }: { summary: ProjectSummaryData }) {
+  const {
+    project,
+    locations,
+    shotsTotal,
+    storyboardFramesCount,
+    budgetCategoriesWithTotals,
+    budgetGrandTotal,
+    inventoryItems,
+    vehicles,
+    shootingDaysWithNeeds,
+  } = summary;
+
+  const breakdownByCategory = Object.values(BreakdownCategory).map((category) => ({
+    category,
+    items: project.breakdownElements.filter((el) => el.category === category),
+  }));
 
   return (
     <Document>
@@ -119,20 +123,31 @@ export function DossierDocument({ project }: { project: ProjectWithRelations }) 
           <View style={pdfStyles.col}>
             <Text style={pdfStyles.sectionLabel}>Presupuesto total</Text>
             <Text style={{ fontSize: 16, fontFamily: "Helvetica-Bold", color: colors.accent }}>
-              {currency(grandTotal)}
+              {currency(budgetGrandTotal)}
             </Text>
           </View>
         </View>
-
-        <View style={pdfStyles.footer} fixed>
-          <Text>Versión definitiva — Taller</Text>
-          <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
+        <View style={[pdfStyles.section, pdfStyles.grid3]}>
+          <View style={pdfStyles.col}>
+            <Text style={pdfStyles.sectionLabel}>Planos definidos</Text>
+            <Text style={pdfStyles.value}>{shotsTotal}</Text>
+          </View>
+          <View style={pdfStyles.col}>
+            <Text style={pdfStyles.sectionLabel}>Viñetas de storyboard</Text>
+            <Text style={pdfStyles.value}>{storyboardFramesCount}</Text>
+          </View>
+          <View style={pdfStyles.col}>
+            <Text style={pdfStyles.sectionLabel}>Equipo técnico</Text>
+            <Text style={pdfStyles.value}>{project.crewMembers.length} personas</Text>
+          </View>
         </View>
+
+        <Footer />
       </Page>
 
       {/* Escenas */}
       <Page size="A4" style={pdfStyles.page}>
-        <Text style={[pdfStyles.title, { fontSize: 14, marginBottom: 12 }]}>Escenas</Text>
+        <PageTitle>Escenas</PageTitle>
         <View style={pdfStyles.rowHeader}>
           <Text style={[pdfStyles.th, { width: 40 }]}>Nº</Text>
           <Text style={[pdfStyles.th, { width: 90 }]}>INT/EXT · Día</Text>
@@ -157,17 +172,12 @@ export function DossierDocument({ project }: { project: ProjectWithRelations }) 
             </View>
           ))
         )}
-        <View style={pdfStyles.footer} fixed>
-          <Text>Versión definitiva — Taller</Text>
-          <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
-        </View>
+        <Footer />
       </Page>
 
-      {/* Personajes y actores */}
+      {/* Personajes, actores y localizaciones */}
       <Page size="A4" style={pdfStyles.page}>
-        <Text style={[pdfStyles.title, { fontSize: 14, marginBottom: 12 }]}>
-          Personajes y actores
-        </Text>
+        <PageTitle>Personajes y actores</PageTitle>
         <View style={pdfStyles.rowHeader}>
           <Text style={[pdfStyles.th, { flex: 1 }]}>Personaje</Text>
           <Text style={[pdfStyles.th, { flex: 1 }]}>Actor/Actriz</Text>
@@ -175,51 +185,128 @@ export function DossierDocument({ project }: { project: ProjectWithRelations }) 
         {project.characters.length === 0 ? (
           <Text style={[pdfStyles.td, { paddingVertical: 6 }]}>Sin personajes.</Text>
         ) : (
-          project.characters.map((character) => {
-            const actor = project.actors.find((a) =>
-              a.characters.some((c) => c.id === character.id),
-            );
-            return (
-              <View key={character.id} style={pdfStyles.row}>
-                <Text style={[pdfStyles.td, { flex: 1 }]}>{character.name}</Text>
-                <Text style={[pdfStyles.td, { flex: 1 }]}>{actor?.name ?? "—"}</Text>
-              </View>
-            );
-          })
+          project.characters.map((character) => (
+            <View key={character.id} style={pdfStyles.row}>
+              <Text style={[pdfStyles.td, { flex: 1 }]}>{character.name}</Text>
+              <Text style={[pdfStyles.td, { flex: 1 }]}>{character.actor?.name ?? "—"}</Text>
+            </View>
+          ))
         )}
 
         <Text style={[pdfStyles.sectionLabel, { marginTop: 20 }]}>Localizaciones</Text>
         <View style={pdfStyles.rowHeader}>
           <Text style={[pdfStyles.th, { flex: 1 }]}>Nombre</Text>
-          <Text style={[pdfStyles.th, { flex: 1 }]}>Dirección</Text>
-          <Text style={[pdfStyles.th, { flex: 1 }]}>Contacto</Text>
+          <Text style={[pdfStyles.th, { flex: 1 }]}>Escenas</Text>
         </View>
-        {locationsUsed.length === 0 ? (
+        {locations.length === 0 ? (
           <Text style={[pdfStyles.td, { paddingVertical: 6 }]}>Sin localizaciones.</Text>
         ) : (
-          locationsUsed.map((location) => (
+          locations.map((location) => (
             <View key={location.id} style={pdfStyles.row}>
               <Text style={[pdfStyles.td, { flex: 1 }]}>{location.name}</Text>
-              <Text style={[pdfStyles.td, { flex: 1 }]}>{location.address ?? "—"}</Text>
-              <Text style={[pdfStyles.td, { flex: 1 }]}>{location.contactName ?? "—"}</Text>
+              <Text style={[pdfStyles.td, { flex: 1 }]}>{location.sceneCount}</Text>
             </View>
           ))
         )}
-        <View style={pdfStyles.footer} fixed>
-          <Text>Versión definitiva — Taller</Text>
-          <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
-        </View>
+        <Footer />
       </Page>
 
-      {/* Plan de rodaje */}
+      {/* Equipo técnico */}
       <Page size="A4" style={pdfStyles.page}>
-        <Text style={[pdfStyles.title, { fontSize: 14, marginBottom: 12 }]}>
-          Plan de rodaje
-        </Text>
-        {project.shootingDays.length === 0 ? (
+        <PageTitle>Equipo técnico</PageTitle>
+        <View style={pdfStyles.rowHeader}>
+          <Text style={[pdfStyles.th, { flex: 1 }]}>Nombre</Text>
+          <Text style={[pdfStyles.th, { flex: 1 }]}>Rol</Text>
+          <Text style={[pdfStyles.th, { flex: 1 }]}>Contacto</Text>
+        </View>
+        {project.crewMembers.length === 0 ? (
+          <Text style={[pdfStyles.td, { paddingVertical: 6 }]}>Sin equipo técnico.</Text>
+        ) : (
+          project.crewMembers.map((member) => (
+            <View key={member.id} style={pdfStyles.row}>
+              <Text style={[pdfStyles.td, { flex: 1 }]}>{member.name}</Text>
+              <Text style={[pdfStyles.td, { flex: 1 }]}>{member.role ?? "—"}</Text>
+              <Text style={[pdfStyles.td, { flex: 1 }]}>
+                {[member.email, member.phone].filter(Boolean).join(" · ") || "—"}
+              </Text>
+            </View>
+          ))
+        )}
+        <Footer />
+      </Page>
+
+      {/* Desglose */}
+      <Page size="A4" style={pdfStyles.page}>
+        <PageTitle>Desglose</PageTitle>
+        {project.breakdownElements.length === 0 ? (
+          <Text style={pdfStyles.td}>Sin elementos de desglose.</Text>
+        ) : (
+          breakdownByCategory
+            .filter((group) => group.items.length > 0)
+            .map((group) => (
+              <View key={group.category} style={pdfStyles.section} wrap={false}>
+                <Text style={pdfStyles.sectionLabel}>
+                  {BREAKDOWN_CATEGORY_LABELS[group.category]} ({group.items.length})
+                </Text>
+                <Text style={pdfStyles.td}>
+                  {group.items.map((item) => item.name).join(", ")}
+                </Text>
+              </View>
+            ))
+        )}
+        <Footer />
+      </Page>
+
+      {/* Inventario y vehículos */}
+      <Page size="A4" style={pdfStyles.page}>
+        <PageTitle>Inventario</PageTitle>
+        <View style={pdfStyles.rowHeader}>
+          <Text style={[pdfStyles.th, { flex: 1 }]}>Elemento</Text>
+          <Text style={[pdfStyles.th, { width: 90 }]}>Categoría</Text>
+          <Text style={[pdfStyles.th, { width: 90 }]}>Días reservado</Text>
+        </View>
+        {inventoryItems.length === 0 ? (
+          <Text style={[pdfStyles.td, { paddingVertical: 6 }]}>Sin equipo reservado.</Text>
+        ) : (
+          inventoryItems.map((item) => (
+            <View key={item.id} style={pdfStyles.row}>
+              <Text style={[pdfStyles.td, { flex: 1 }]}>{item.name}</Text>
+              <Text style={[pdfStyles.td, { width: 90 }]}>
+                {INVENTORY_CATEGORY_LABELS[item.category as keyof typeof INVENTORY_CATEGORY_LABELS] ??
+                  item.category}
+              </Text>
+              <Text style={[pdfStyles.td, { width: 90 }]}>{item.daysCount}</Text>
+            </View>
+          ))
+        )}
+
+        <Text style={[pdfStyles.sectionLabel, { marginTop: 20 }]}>Vehículos</Text>
+        <View style={pdfStyles.rowHeader}>
+          <Text style={[pdfStyles.th, { flex: 1 }]}>Nombre</Text>
+          <Text style={[pdfStyles.th, { width: 90 }]}>Matrícula</Text>
+          <Text style={[pdfStyles.th, { width: 90 }]}>Días reservado</Text>
+        </View>
+        {vehicles.length === 0 ? (
+          <Text style={[pdfStyles.td, { paddingVertical: 6 }]}>Sin vehículos reservados.</Text>
+        ) : (
+          vehicles.map((vehicle) => (
+            <View key={vehicle.id} style={pdfStyles.row}>
+              <Text style={[pdfStyles.td, { flex: 1 }]}>{vehicle.name}</Text>
+              <Text style={[pdfStyles.td, { width: 90 }]}>{vehicle.plate ?? "—"}</Text>
+              <Text style={[pdfStyles.td, { width: 90 }]}>{vehicle.daysCount}</Text>
+            </View>
+          ))
+        )}
+        <Footer />
+      </Page>
+
+      {/* Plan de rodaje — qué llevar cada día */}
+      <Page size="A4" style={pdfStyles.page}>
+        <PageTitle>Plan de rodaje</PageTitle>
+        {shootingDaysWithNeeds.length === 0 ? (
           <Text style={pdfStyles.td}>Sin días de rodaje planificados.</Text>
         ) : (
-          project.shootingDays.map((day) => (
+          shootingDaysWithNeeds.map((day) => (
             <View key={day.id} style={pdfStyles.section} wrap={false}>
               <Text style={pdfStyles.sectionLabel}>
                 {day.date.toLocaleDateString("es-ES", {
@@ -234,47 +321,43 @@ export function DossierDocument({ project }: { project: ProjectWithRelations }) 
                   {assignment.callTime ?? "—"} · Escena {assignment.scene.number}
                 </Text>
               ))}
+              <Text style={[pdfStyles.td, { marginTop: 4, color: colors.muted }]}>
+                Equipo: {day.crewNames.join(", ") || "—"}
+              </Text>
+              <Text style={[pdfStyles.td, { color: colors.muted }]}>
+                Material: {day.itemNames.join(", ") || "—"}
+              </Text>
+              <Text style={[pdfStyles.td, { color: colors.muted }]}>
+                Vehículos: {day.vehicleNames.join(", ") || "—"}
+              </Text>
             </View>
           ))
         )}
-        <View style={pdfStyles.footer} fixed>
-          <Text>Versión definitiva — Taller</Text>
-          <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
-        </View>
+        <Footer />
       </Page>
 
       {/* Presupuesto */}
       <Page size="A4" style={pdfStyles.page}>
-        <Text style={[pdfStyles.title, { fontSize: 14, marginBottom: 12 }]}>
-          Presupuesto
-        </Text>
-        {project.budgetCategories.length === 0 ? (
+        <PageTitle>Presupuesto</PageTitle>
+        {budgetCategoriesWithTotals.length === 0 ? (
           <Text style={pdfStyles.td}>Sin presupuesto definido.</Text>
         ) : (
           <>
-            {project.budgetCategories.map((category) => {
-              const categoryTotal = category.items.reduce((sum, item) => {
-                const quantity = Number(item.quantity);
-                const unitPrice = Number(item.unitPrice);
-                const taxRate = Number(item.taxRate);
-                return sum + quantity * unitPrice * (1 + taxRate / 100);
-              }, 0);
-              return (
-                <View
-                  key={category.id}
-                  style={{
-                    flexDirection: "row",
-                    justifyContent: "space-between",
-                    borderBottomWidth: 0.5,
-                    borderBottomColor: colors.line,
-                    paddingVertical: 6,
-                  }}
-                >
-                  <Text style={pdfStyles.td}>{category.name}</Text>
-                  <Text style={pdfStyles.td}>{currency(categoryTotal)}</Text>
-                </View>
-              );
-            })}
+            {budgetCategoriesWithTotals.map((category) => (
+              <View
+                key={category.id}
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  borderBottomWidth: 0.5,
+                  borderBottomColor: colors.line,
+                  paddingVertical: 6,
+                }}
+              >
+                <Text style={pdfStyles.td}>{category.name}</Text>
+                <Text style={pdfStyles.td}>{currency(category.total)}</Text>
+              </View>
+            ))}
             <View
               style={{
                 flexDirection: "row",
@@ -287,15 +370,12 @@ export function DossierDocument({ project }: { project: ProjectWithRelations }) 
             >
               <Text style={{ fontSize: 12, fontFamily: "Helvetica-Bold" }}>TOTAL</Text>
               <Text style={{ fontSize: 12, fontFamily: "Helvetica-Bold", color: colors.accent }}>
-                {currency(grandTotal)}
+                {currency(budgetGrandTotal)}
               </Text>
             </View>
           </>
         )}
-        <View style={pdfStyles.footer} fixed>
-          <Text>Versión definitiva — Taller</Text>
-          <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
-        </View>
+        <Footer />
       </Page>
     </Document>
   );

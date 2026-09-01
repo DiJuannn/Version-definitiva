@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { renderToBuffer } from "@react-pdf/renderer";
-import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
+import { getProjectSummary } from "@/lib/project-summary";
 import { DossierDocument } from "@/lib/pdf/DossierDocument";
 
 export async function GET(
@@ -15,37 +15,17 @@ export async function GET(
     return NextResponse.json({ error: "No encontrado" }, { status: 404 });
   }
 
-  const fullProject = await prisma.project.findUniqueOrThrow({
-    where: { id: projectId },
-    include: {
-      scenes: {
-        orderBy: [{ order: "asc" }, { number: "asc" }],
-        include: {
-          location: true,
-          characters: { include: { character: true } },
-        },
-      },
-      actors: { include: { characters: true } },
-      characters: true,
-      shootingDays: {
-        orderBy: { date: "asc" },
-        include: {
-          scenes: { orderBy: { order: "asc" }, include: { scene: true } },
-        },
-      },
-      budgetCategories: {
-        orderBy: { order: "asc" },
-        include: { items: true },
-      },
-    },
-  });
+  // Misma función que usa la pantalla de Resumen — el dossier no debe
+  // faltarle nada de lo que ya se ve ahí (equipo técnico, desglose,
+  // inventario, vehículos, qué llevar cada día de rodaje).
+  const summary = await getProjectSummary(projectId);
 
-  const buffer = await renderToBuffer(<DossierDocument project={fullProject} />);
+  const buffer = await renderToBuffer(<DossierDocument summary={summary} />);
 
   return new NextResponse(new Uint8Array(buffer), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `inline; filename="dossier-${fullProject.name}.pdf"`,
+      "Content-Disposition": `inline; filename="dossier-${summary.project.name}.pdf"`,
     },
   });
 }
