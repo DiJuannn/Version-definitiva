@@ -31,6 +31,14 @@ export async function POST(request: Request) {
   const status: string | undefined = attributes.status;
   const plan = status && isActiveSubscriptionStatus(status) ? "PRO" : "FREE";
 
+  console.log("Webhook Lemon Squeezy procesado", {
+    eventName,
+    organizationId,
+    subscriptionId: payload?.data?.id,
+    status,
+    plan,
+  });
+
   try {
     await prisma.organization.update({
       where: { id: organizationId },
