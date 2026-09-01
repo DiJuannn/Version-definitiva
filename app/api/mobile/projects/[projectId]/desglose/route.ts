@@ -34,6 +34,8 @@ export async function GET(
     );
   }
 
+  const sceneOrder = { scene: { order: "asc" as const } };
+
   const [elements, crewMembers] = await Promise.all([
     prisma.breakdownElement.findMany({
       where: { projectId },
@@ -43,7 +45,10 @@ export async function GET(
         name: true,
         category: true,
         notes: true,
-        _count: { select: { scenes: true } },
+        scenes: {
+          orderBy: sceneOrder,
+          select: { scene: { select: { number: true } } },
+        },
       },
     }),
     prisma.crewMember.findMany({
@@ -55,7 +60,10 @@ export async function GET(
         role: true,
         email: true,
         phone: true,
-        _count: { select: { scenes: true } },
+        scenes: {
+          orderBy: sceneOrder,
+          select: { scene: { select: { number: true } } },
+        },
       },
     }),
   ]);
@@ -67,7 +75,8 @@ export async function GET(
         name: e.name,
         category: e.category,
         notes: e.notes,
-        scenesCount: e._count.scenes,
+        scenesCount: e.scenes.length,
+        sceneNumbers: e.scenes.map((s) => s.scene.number),
       })),
       crewMembers: crewMembers.map((c) => ({
         id: c.id,
@@ -75,7 +84,8 @@ export async function GET(
         role: c.role,
         email: c.email,
         phone: c.phone,
-        scenesCount: c._count.scenes,
+        scenesCount: c.scenes.length,
+        sceneNumbers: c.scenes.map((s) => s.scene.number),
       })),
     },
     { headers: CORS_HEADERS },
