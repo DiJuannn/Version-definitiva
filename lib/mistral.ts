@@ -1,4 +1,6 @@
 import { Mistral } from "@mistralai/mistralai";
+import { BreakdownCategory } from "@/lib/generated/prisma";
+import { BREAKDOWN_CATEGORY_LABELS } from "@/lib/labels";
 
 let client: Mistral | null = null;
 
@@ -12,7 +14,7 @@ function getClient() {
 export type ScriptAnalysisProposal = {
   characters: { name: string; notes?: string }[];
   locations: { name: string; notes?: string }[];
-  props: { name: string }[];
+  props: { name: string; category?: string }[];
   scenes: {
     number: string;
     intExt?: "INT" | "EXT" | "INT_EXT";
@@ -55,8 +57,11 @@ const schema = {
       type: "array",
       items: {
         type: "object",
-        properties: { name: { type: "string" } },
-        required: ["name"],
+        properties: {
+          name: { type: "string" },
+          category: { type: "string", enum: Object.values(BreakdownCategory) },
+        },
+        required: ["name", "category"],
       },
     },
     scenes: {
@@ -83,9 +88,16 @@ const schema = {
 
 const PROMPT = `Analiza este guion audiovisual y extrae su estructura de producción.
 
-Para cada escena identifica: número, si es interior/exterior (INT, EXT o INT_EXT), si es de día o de noche (DAY, NIGHT, DUSK o DAWN), la localización, una breve descripción, la acción principal, notas de diálogo, los personajes que aparecen y los objetos de atrezzo relevantes mencionados explícitamente.
+Para cada escena identifica: número, si es interior/exterior (INT, EXT o INT_EXT), si es de día o de noche (DAY, NIGHT, DUSK o DAWN), la localización, una breve descripción, la acción principal, notas de diálogo, los personajes que aparecen y los elementos de desglose relevantes mencionados explícitamente (props, vestuario, vehículos, etc. — ver categorías abajo).
 
-Lista también, de forma consolidada, todos los personajes, localizaciones y elementos de atrezzo distintos que aparecen en todo el guion (sin duplicados).
+Lista también, de forma consolidada, todos los personajes, localizaciones y elementos de desglose distintos que aparecen en todo el guion (sin duplicados) — usa exactamente el mismo nombre, tal cual, tanto en esta lista consolidada como dentro de cada escena en la que aparezca, para que se puedan enlazar correctamente.
+
+Para cada elemento de desglose, clasifícalo en UNA de estas categorías según lo que sea de verdad, no lo metas todo en "atrezzo" por defecto:
+${Object.entries(BREAKDOWN_CATEGORY_LABELS)
+  .map(([value, label]) => `- ${value}: ${label}`)
+  .join("\n")}
+
+Por ejemplo: una prenda de ropa, un uniforme o un disfraz es WARDROBE, no PROP. Un coche o una moto es VEHICLE. Un micrófono o un altavoz es SOUND. Un foco o un flash es LIGHTING. PROP es solo para objetos que los personajes manejan o que decoran la escena sin encajar en ninguna otra categoría (un arma de atrezzo, un libro, una maleta).
 
 Usa los nombres tal como aparecen en el guion (en mayúsculas si así están escritos). No inventes información que no esté en el texto. Si un dato no aparece, omite ese campo.
 

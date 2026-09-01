@@ -4,8 +4,8 @@ import { getProjectForCurrentUser } from "@/lib/project-access";
 import { importScriptAnalysis } from "@/lib/actions/script-analysis";
 import { SubmitButton } from "@/components/SubmitButton";
 import type { ScriptAnalysisProposal } from "@/lib/mistral";
-import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
-import { DayPart, IntExt } from "@/lib/generated/prisma";
+import { BREAKDOWN_CATEGORY_LABELS, DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
+import { BreakdownCategory, DayPart, IntExt } from "@/lib/generated/prisma";
 import { BackLink } from "@/components/BackLink";
 
 export default async function ScriptAnalysisReviewPage({
@@ -28,7 +28,7 @@ export default async function ScriptAnalysisReviewPage({
   const [existingCharacters, existingLocations, existingProps] = await Promise.all([
     prisma.character.findMany({ where: { projectId } }),
     prisma.location.findMany({ where: { organizationId: project.organizationId } }),
-    prisma.breakdownElement.findMany({ where: { projectId, category: "PROP" } }),
+    prisma.breakdownElement.findMany({ where: { projectId } }),
   ]);
 
   const existingCharacterNames = new Set(
@@ -105,20 +105,42 @@ export default async function ScriptAnalysisReviewPage({
 
         <section className="mt-10">
           <h2 className="font-mono text-xs tracking-widest text-accent uppercase">
-            Atrezzo ({proposal.props.length})
+            Elementos de desglose ({proposal.props.length})
           </h2>
-          <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2">
+          <p className="mt-2 font-mono text-xs text-muted">
+            La IA propone una categoría para cada uno — revísala y cámbiala si
+            hace falta antes de importar.
+          </p>
+          <div className="mt-3 space-y-2">
             {proposal.props.map((prop, i) => {
               const exists = existingPropNames.has(prop.name.toLowerCase());
+              const suggestedCategory = (
+                Object.values(BreakdownCategory) as string[]
+              ).includes(prop.category ?? "")
+                ? (prop.category as BreakdownCategory)
+                : BreakdownCategory.PROP;
               return (
-                <label
+                <div
                   key={`${prop.name}-${i}`}
-                  className="flex items-center gap-2 font-mono text-xs"
+                  className="flex flex-wrap items-center gap-3 font-mono text-xs"
                 >
-                  <input type="checkbox" name={`prop_${i}`} defaultChecked={!exists} />
-                  {prop.name}
-                  {exists && <span className="text-muted">(ya existe)</span>}
-                </label>
+                  <label className="flex items-center gap-2">
+                    <input type="checkbox" name={`prop_${i}`} defaultChecked={!exists} />
+                    {prop.name}
+                    {exists && <span className="text-muted">(ya existe)</span>}
+                  </label>
+                  <select
+                    name={`category_${i}`}
+                    defaultValue={suggestedCategory}
+                    className="border border-line bg-transparent px-2 py-1 text-xs outline-none transition-colors focus:border-accent"
+                  >
+                    {Object.entries(BREAKDOWN_CATEGORY_LABELS).map(([value, label]) => (
+                      <option key={value} value={value} className="bg-bg">
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               );
             })}
           </div>
@@ -168,7 +190,7 @@ export default async function ScriptAnalysisReviewPage({
                           ? `Personajes: ${scene.characterNames.join(", ")}`
                           : null,
                         scene.propNames?.length
-                          ? `Atrezzo: ${scene.propNames.join(", ")}`
+                          ? `Elementos: ${scene.propNames.join(", ")}`
                           : null,
                       ]
                         .filter(Boolean)

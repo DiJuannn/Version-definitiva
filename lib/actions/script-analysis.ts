@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { getCurrentProfile } from "@/lib/current-user";
 import { analyzeScriptPdf, type ScriptAnalysisProposal } from "@/lib/mistral";
-import { DayPart, IntExt } from "@/lib/generated/prisma";
+import { BreakdownCategory, DayPart, IntExt } from "@/lib/generated/prisma";
 import { SCRIPT_ANALYSIS_FREE_LIMIT } from "@/lib/limits";
 
 function cleanText(value: string | undefined | null): string | null {
@@ -93,7 +93,7 @@ export async function importScriptAnalysis(
   const [existingCharacters, existingLocations, existingProps] = await Promise.all([
     prisma.character.findMany({ where: { projectId } }),
     prisma.location.findMany({ where: { organizationId: project.organizationId } }),
-    prisma.breakdownElement.findMany({ where: { projectId, category: "PROP" } }),
+    prisma.breakdownElement.findMany({ where: { projectId } }),
   ]);
 
   const characterIdByName = new Map(
@@ -130,13 +130,26 @@ export async function importScriptAnalysis(
     locationIdByName.set(key, created.id);
   }
 
+  const validCategories = new Set<string>(Object.values(BreakdownCategory));
+
   for (let i = 0; i < proposal.props.length; i++) {
     if (!formData.get(`prop_${i}`)) continue;
     const prop = proposal.props[i];
     const key = prop.name.toLowerCase();
     if (propIdByName.has(key)) continue;
+
+    // La categoría puede venir editada desde el desplegable de la página de
+    // revisión (category_i) — si no, se cae a la que propuso la IA, y si
+    // esa tampoco es válida, a PROP por defecto.
+    const submittedCategory = String(formData.get(`category_${i}`) ?? "");
+    const category = validCategories.has(submittedCategory)
+      ? (submittedCategory as BreakdownCategory)
+      : validCategories.has(prop.category ?? "")
+        ? (prop.category as BreakdownCategory)
+        : BreakdownCategory.PROP;
+
     const created = await prisma.breakdownElement.create({
-      data: { projectId, category: "PROP", name: prop.name },
+      data: { projectId, category, name: prop.name },
     });
     propIdByName.set(key, created.id);
   }
