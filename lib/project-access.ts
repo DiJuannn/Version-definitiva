@@ -1,13 +1,15 @@
 import { prisma } from "@/lib/prisma";
-import { getCurrentProfile } from "@/lib/current-user";
+import { getCurrentProfile, type Profile } from "@/lib/current-user";
 
 // Un proyecto es tuyo si es de tu organización, o si alguien te lo ha
 // compartido directamente (ProjectShare aceptado) — en ese segundo caso
 // tienes acceso solo a ESE proyecto, no al resto de la organización dueña.
-export async function getProjectForCurrentUser(projectId: string) {
-  const profile = await getCurrentProfile();
-  if (!profile) return null;
-
+//
+// Recibe el `profile` ya resuelto (en vez de leerlo él mismo) para que
+// tanto la web (cookie, getCurrentProfile) como la API de la app móvil
+// (token, getMobileProfile) compartan exactamente la misma comprobación
+// de acceso sin duplicarla.
+export async function getProjectForProfile(profile: Profile, projectId: string) {
   return prisma.project.findFirst({
     where: {
       id: projectId,
@@ -15,6 +17,31 @@ export async function getProjectForCurrentUser(projectId: string) {
         { organizationId: profile.organizationId },
         { shares: { some: { userId: profile.id } } },
       ],
+    },
+  });
+}
+
+export async function getProjectForCurrentUser(projectId: string) {
+  const profile = await getCurrentProfile();
+  if (!profile) return null;
+
+  return getProjectForProfile(profile, projectId);
+}
+
+// Misma idea que getProjectForProfile pero para el listado — usada por
+// /app/proyectos y por la API de la app móvil.
+export function listProjectsForProfile(profile: Profile) {
+  return prisma.project.findMany({
+    where: {
+      OR: [
+        { organizationId: profile.organizationId },
+        { shares: { some: { userId: profile.id } } },
+      ],
+    },
+    orderBy: { createdAt: "desc" },
+    include: {
+      organization: { select: { name: true } },
+      createdBy: { select: { fullName: true, email: true } },
     },
   });
 }

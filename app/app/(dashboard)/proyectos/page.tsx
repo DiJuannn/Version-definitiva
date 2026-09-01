@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createProject, deleteProject } from "@/lib/actions/projects";
-import { prisma } from "@/lib/prisma";
 import { getCurrentProfile } from "@/lib/current-user";
+import { listProjectsForProfile } from "@/lib/project-access";
 import { StatusPill } from "@/components/StatusPill";
 import { EmptyState } from "@/components/EmptyState";
 import { DeleteProjectButton } from "@/components/DeleteProjectButton";
@@ -11,21 +11,7 @@ import { BackLink } from "@/components/BackLink";
 export default async function ProyectosPage() {
   const profile = await getCurrentProfile();
 
-  const projects = profile
-    ? await prisma.project.findMany({
-        where: {
-          OR: [
-            { organizationId: profile.organizationId },
-            { shares: { some: { userId: profile.id } } },
-          ],
-        },
-        orderBy: { createdAt: "desc" },
-        include: {
-          organization: { select: { name: true } },
-          createdBy: { select: { fullName: true, email: true } },
-        },
-      })
-    : [];
+  const projects = profile ? await listProjectsForProfile(profile) : [];
 
   return (
     <div>

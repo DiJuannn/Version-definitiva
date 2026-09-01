@@ -15,8 +15,17 @@ export const getCurrentProfile = cache(async () => {
   } = await supabase.auth.getUser();
   if (!user) return null;
 
+  return getProfileByUserId(user.id);
+});
+
+export type Profile = NonNullable<Awaited<ReturnType<typeof getCurrentProfile>>>;
+
+// Compartido con la autenticación de la app móvil (lib/mobile-auth.ts):
+// una vez se sabe qué usuario de Supabase Auth hizo la petición (por
+// cookie en la web, por token en la app), el resto es la misma consulta.
+export function getProfileByUserId(userId: string) {
   return prisma.user.findUnique({
-    where: { id: user.id },
+    where: { id: userId },
     include: { organization: true },
   });
-});
+}
