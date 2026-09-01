@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 import { getMobileProfile } from "@/lib/mobile-auth";
 import { listProjectsForProfile } from "@/lib/project-access";
 import { CORS_HEADERS } from "@/lib/mobile-cors";
@@ -35,5 +36,36 @@ export async function GET(request: Request) {
       })),
     },
     { headers: CORS_HEADERS },
+  );
+}
+
+// POST /api/mobile/projects — crear un proyecto desde la app. Misma
+// creación mínima que createProject en lib/actions/projects.ts (solo
+// nombre; el resto de campos se rellenan después desde "Resumen").
+export async function POST(request: Request) {
+  const profile = await getMobileProfile(request);
+  if (!profile) {
+    return NextResponse.json(
+      { error: "No autenticado." },
+      { status: 401, headers: CORS_HEADERS },
+    );
+  }
+
+  const body = await request.json().catch(() => null);
+  const name = String(body?.name ?? "").trim();
+  if (!name) {
+    return NextResponse.json(
+      { error: "Ponle un nombre al proyecto." },
+      { status: 400, headers: CORS_HEADERS },
+    );
+  }
+
+  const project = await prisma.project.create({
+    data: { name, organizationId: profile.organizationId, createdById: profile.id },
+  });
+
+  return NextResponse.json(
+    { project: { id: project.id, name: project.name } },
+    { status: 201, headers: CORS_HEADERS },
   );
 }
