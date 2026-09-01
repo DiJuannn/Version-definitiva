@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentProfile } from "@/lib/current-user";
 import { getProjectForCurrentUser } from "@/lib/project-access";
@@ -19,6 +20,26 @@ export async function createProject(formData: FormData) {
 
   revalidatePath("/app");
   revalidatePath("/app/proyectos");
+}
+
+// Igual que createProject, pero para cuando se entra a la Claqueta sin
+// tener ningún proyecto todavía — crea el proyecto y entra directo a su
+// claqueta, en vez de dejar al usuario en el dashboard para que la
+// vuelva a buscar.
+export async function createProjectAndOpenClaqueta(formData: FormData) {
+  const name = String(formData.get("name") ?? "").trim();
+  if (!name) return;
+
+  const profile = await getCurrentProfile();
+  if (!profile) return;
+
+  const project = await prisma.project.create({
+    data: { name, organizationId: profile.organizationId, createdById: profile.id },
+  });
+
+  revalidatePath("/app");
+  revalidatePath("/app/proyectos");
+  redirect(`/app/${project.id}/claqueta`);
 }
 
 // Borrar un Project no cascada solo con la FK en la base de datos: Actor,

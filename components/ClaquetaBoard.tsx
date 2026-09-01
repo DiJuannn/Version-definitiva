@@ -220,10 +220,11 @@ export function ClaquetaBoard({
         {/* El tablero va primero: es lo que se usa en rodaje, la ficha de
             ajustes es secundaria y viene después. */}
         <div>
-          {/* El tablero se queda pegado arriba al hacer scroll: en un rodaje
-              hay que poder claquetar sin volver a subir hasta el principio
-              de la pantalla. Los ajustes de debajo sí se desplazan normal. */}
-          <div className="sticky top-3 z-20 select-none sm:top-4">
+          {/* No es "sticky": con el historial de tomas lleno (justo cuando
+              más se usa en rodaje) un tablero pegado arriba terminaba
+              deslizándose por encima de la ficha de ajustes de debajo,
+              solapando los campos y volviéndolos ilegibles. */}
+          <div className="select-none">
             {/* Chapeta a rayas — la parte que "golpea" el tablero al claquetar. */}
             <motion.div
               animate={{ rotateX: clapping ? -38 : 0 }}

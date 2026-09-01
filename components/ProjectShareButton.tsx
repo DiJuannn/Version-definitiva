@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { createProjectShare, revokeProjectShare } from "@/lib/actions/project-shares";
 import { CopyLinkButton } from "@/components/CopyLinkButton";
 import { DeleteButton } from "@/components/DeleteButton";
 import { ShareIcon } from "@/components/ToolIcons";
 import { SubmitButton } from "@/components/SubmitButton";
+import { useClickOutside } from "@/lib/use-click-outside";
 
 type ShareEntry = {
   id: string;
@@ -27,9 +28,11 @@ export function ProjectShareButton({
   shares: ShareEntry[];
 }) {
   const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  useClickOutside(containerRef, open, () => setOpen(false));
 
   return (
-    <div className="relative">
+    <div ref={containerRef} className="relative">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}

@@ -266,11 +266,13 @@ export default async function DashboardPage() {
         </DashboardReveal>
       )}
 
-      {heroProject && (
-        <DashboardReveal delay={0.05}>
-          <div className="group relative mt-3 flex items-center gap-3 border border-line px-5 py-3.5 transition-colors hover:border-accent">
+      {/* Siempre visible, incluso sin proyectos todavía — quien es nuevo
+          también tiene que poder entrar a la Claqueta, y de ahí se le
+          ofrece crear su primer proyecto (ver /app/claqueta). */}
+      <DashboardReveal delay={0.05}>
+        <div className="group relative mt-3 flex items-center gap-3 border border-line px-5 py-3.5 transition-colors hover:border-accent">
             <Link
-              href={`/app/${heroProject.id}/claqueta`}
+              href={heroProject ? `/app/${heroProject.id}/claqueta` : "/app/claqueta"}
               className="flex min-w-0 flex-1 items-center gap-3"
             >
               <ClaquetaIcon className="h-5 w-5 shrink-0 text-accent" />
@@ -279,12 +281,12 @@ export default async function DashboardPage() {
                   Claqueta digital
                 </span>
                 <span className="block truncate font-mono text-[10px] text-muted">
-                  {heroProject.name}
+                  {heroProject ? heroProject.name : "Elige o crea un proyecto"}
                 </span>
               </span>
             </Link>
             <Link
-              href={`/app/${heroProject.id}/claqueta`}
+              href={heroProject ? `/app/${heroProject.id}/claqueta` : "/app/claqueta"}
               className="shrink-0 font-mono text-[10px] tracking-widest text-muted uppercase transition-colors group-hover:text-accent"
             >
               Abrir →
@@ -313,7 +315,6 @@ export default async function DashboardPage() {
             )}
           </div>
         </DashboardReveal>
-      )}
 
       <div className="mt-6 flex flex-wrap items-center gap-x-8 gap-y-3 border-y border-line py-3 sm:mt-8">
         <div className="flex items-baseline gap-2">

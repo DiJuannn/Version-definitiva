@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { MouseEvent } from "react";
+import { useEffect, useRef, type MouseEvent } from "react";
 
 // Solo herramientas que existen de verdad por proyecto — nada inventado.
 // Guion/Desglose/etc. cuelgan de este proyecto; Calendario es un recurso de
@@ -45,8 +45,24 @@ function closeOnClick(e: MouseEvent<HTMLAnchorElement>) {
 }
 
 export function ProjectSubNav({ projectId }: { projectId: string }) {
+  const navRef = useRef<HTMLElement>(null);
+
+  // Sin esto, un desplegable abierto se queda tapando la página al hacer
+  // clic fuera — el atributo `name` en cada <details> ya hace que abrir
+  // uno cierre los otros dos, pero eso no cubre un clic fuera del todo.
+  useEffect(() => {
+    function closeIfOutside(e: globalThis.MouseEvent) {
+      if (!navRef.current || navRef.current.contains(e.target as Node)) return;
+      navRef.current
+        .querySelectorAll("details[open]")
+        .forEach((details) => details.removeAttribute("open"));
+    }
+    document.addEventListener("mousedown", closeIfOutside);
+    return () => document.removeEventListener("mousedown", closeIfOutside);
+  }, []);
+
   return (
-    <nav className="flex flex-wrap items-center gap-2 border-b border-line pb-4 print:hidden">
+    <nav ref={navRef} className="flex flex-wrap items-center gap-2 border-b border-line pb-4 print:hidden">
       <Link
         href={`/app/${projectId}`}
         className="border border-line px-3 py-1.5 font-mono text-[10px] tracking-widest text-muted uppercase transition hover:border-accent hover:text-accent active:scale-[0.97]"
@@ -54,7 +70,7 @@ export function ProjectSubNav({ projectId }: { projectId: string }) {
         Resumen
       </Link>
       {CATEGORIES.map((category) => (
-        <details key={category.label} className="group relative">
+        <details key={category.label} name="project-subnav" className="group relative">
           <summary className="cursor-pointer list-none border border-line px-3 py-1.5 font-mono text-[10px] tracking-widest text-muted uppercase transition [&::-webkit-details-marker]:hidden hover:border-accent hover:text-accent group-open:border-accent group-open:text-accent active:scale-[0.97]">
             {category.label} ▾
           </summary>
