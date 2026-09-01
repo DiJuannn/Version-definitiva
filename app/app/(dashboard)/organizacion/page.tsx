@@ -2,12 +2,13 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { getCurrentProfile } from "@/lib/current-user";
-import { createInvite, revokeInvite, updateMemberRole } from "@/lib/actions/team";
+import { revokeInvite, updateMemberRole } from "@/lib/actions/team";
 import { CopyLinkButton } from "@/components/CopyLinkButton";
 import { DeleteButton } from "@/components/DeleteButton";
 import { HelpTip } from "@/components/HelpTip";
 import { FeatureIntro } from "@/components/FeatureIntro";
 import { SubmitButton } from "@/components/SubmitButton";
+import { InviteForm } from "@/components/InviteForm";
 import { getCheckoutUrls, buildCheckoutUrl } from "@/lib/lemonsqueezy";
 import { SCRIPT_ANALYSIS_FREE_LIMIT } from "@/lib/limits";
 
@@ -179,33 +180,7 @@ export default async function OrganizacionPage() {
           </p>
           <HelpTip text="Se genera un enlace único de un solo uso. Cópialo y mándaselo tú mismo (WhatsApp, email...) — no se envía nada automáticamente." />
         </div>
-        <form
-          action={createInvite}
-          className="mt-4 flex flex-wrap gap-3"
-        >
-          <input
-            name="email"
-            type="email"
-            placeholder="email@ejemplo.com"
-            required
-            className="min-w-[220px] flex-1 border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
-          />
-          <select
-            name="role"
-            defaultValue="MEMBER"
-            className="border border-line bg-transparent px-3 py-2 font-mono text-xs uppercase outline-none focus:border-accent"
-          >
-            <option value="MEMBER" className="bg-bg">Miembro</option>
-            <option value="ADMIN" className="bg-bg">Admin</option>
-          </select>
-          <SubmitButton
-            pendingLabel="Invitando…"
-            savedLabel="✓ Invitación enviada"
-            className="rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
-          >
-            Invitar
-          </SubmitButton>
-        </form>
+        <InviteForm />
 
         {invites.length > 0 && (
           <div className="mt-6 divide-y divide-line border-t border-line">

@@ -13,6 +13,9 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
     "lib/generated/**",
+    // Scripts de herramientas sueltas (Node CommonJS), no son parte de la
+    // app ni se compilan con Next.js.
+    "scripts/**",
   ]),
 ]);
 
