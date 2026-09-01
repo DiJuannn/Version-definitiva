@@ -8,6 +8,7 @@ import {
   createCrewMemberCore,
   deleteBreakdownElementCore,
   deleteCrewMemberCore,
+  updateBreakdownElementCategoryCore,
 } from "@/lib/breakdown-core";
 
 export async function createBreakdownElement(
@@ -34,6 +35,23 @@ export async function deleteBreakdownElement(
   if (!project) return;
 
   await deleteBreakdownElementCore(projectId, elementId);
+
+  revalidatePath(`/app/${projectId}/desglose`);
+}
+
+export async function updateBreakdownElementCategory(
+  projectId: string,
+  elementId: string,
+  formData: FormData,
+) {
+  const project = await getProjectForCurrentUser(projectId);
+  if (!project) return;
+
+  await updateBreakdownElementCategoryCore(
+    projectId,
+    elementId,
+    String(formData.get("category") ?? ""),
+  );
 
   revalidatePath(`/app/${projectId}/desglose`);
 }

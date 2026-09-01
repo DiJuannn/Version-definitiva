@@ -8,12 +8,14 @@ import {
   createCrewMember,
   deleteBreakdownElement,
   deleteCrewMember,
+  updateBreakdownElementCategory,
 } from "@/lib/actions/breakdown";
 import { BREAKDOWN_CATEGORY_LABELS } from "@/lib/labels";
 import { EmptyState } from "@/components/EmptyState";
 import { BreakdownCategory } from "@/lib/generated/prisma";
 import { BackLink } from "@/components/BackLink";
 import { SubmitButton } from "@/components/SubmitButton";
+import { BreakdownCategorySelect } from "@/components/BreakdownCategorySelect";
 
 export default async function DesglosePage({
   params,
@@ -139,6 +141,14 @@ export default async function DesglosePage({
                           {item._count.scenes} escena
                           {item._count.scenes === 1 ? "" : "s"}
                         </span>
+                        <BreakdownCategorySelect
+                          category={item.category}
+                          action={updateBreakdownElementCategory.bind(
+                            null,
+                            projectId,
+                            item.id,
+                          )}
+                        />
                         <form
                           action={deleteBreakdownElement.bind(
                             null,

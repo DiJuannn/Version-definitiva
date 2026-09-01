@@ -29,6 +29,23 @@ export async function deleteBreakdownElementCore(projectId: string, elementId: s
   });
 }
 
+// Solo la categoría, no el nombre ni las notas — pensado para corregir
+// elementos que el análisis de IA clasificó mal (por ejemplo vestuario
+// metido en Atrezzo) sin tener que borrarlos y perder sus escenas
+// vinculadas.
+export async function updateBreakdownElementCategoryCore(
+  projectId: string,
+  elementId: string,
+  category: string,
+) {
+  if (!VALID_CATEGORIES.has(category)) return;
+
+  await prisma.breakdownElement.updateMany({
+    where: { id: elementId, projectId },
+    data: { category: category as BreakdownCategory },
+  });
+}
+
 export async function createCrewMemberCore(
   projectId: string,
   organizationId: string,
