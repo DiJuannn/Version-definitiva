@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "env:dev": "node scripts/switch-env.js dev",
+    "env:prod": "node scripts/switch-env.js prod"
   },
   "dependencies": {
     "@mistralai/mistralai": "^2.6.4",
