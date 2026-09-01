@@ -18,6 +18,12 @@ export async function POST(request: Request) {
   const organizationId: string | undefined = payload?.meta?.custom_data?.organization_id;
 
   if (!eventName?.startsWith("subscription_") || !organizationId) {
+    // Pasa si el checkout se abrió sin el enlace que genera la app (sin
+    // el organization_id en la URL) — no hay a quién activarle el plan.
+    console.log("Webhook Lemon Squeezy ignorado: falta organization_id o evento no es de suscripción", {
+      eventName,
+      organizationId,
+    });
     return NextResponse.json({ received: true });
   }
 
