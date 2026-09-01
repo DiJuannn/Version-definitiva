@@ -40,7 +40,11 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex min-h-screen flex-col bg-bg text-fg">
-      <header className="border-b border-line px-4 py-4 sm:px-6">
+      {/* Fija: Equipo/Localizaciones/Inventario/Vehículos son secciones de
+          toda la organización, no de un proyecto — sin esto quedan fuera de
+          la vista en cuanto haces scroll dentro de un proyecto, y el único
+          camino de vuelta es recargar o usar "atrás" del navegador. */}
+      <header className="sticky top-0 z-30 border-b border-line bg-bg px-4 py-4 sm:px-6">
         <div className="flex items-center justify-between gap-3">
           <Link href="/app" className="flex min-w-0 items-center gap-2.5">
             <AjoloteLogo className="h-6 w-auto shrink-0 text-fg" />
