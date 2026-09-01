@@ -44,12 +44,32 @@ export async function signUpCore(
   });
 
   if (error) {
+    // Se registra el error real de Supabase (código + mensaje) porque el
+    // texto que ve el usuario es deliberadamente corto — sin esto, un
+    // fallo nuevo que no esté en la lista de abajo es indistinguible de
+    // cualquier otro con el genérico "No se pudo crear la cuenta".
+    console.error("signUpCore: fallo en supabase.auth.signUp", {
+      code: error.code,
+      message: error.message,
+      status: error.status,
+    });
+
+    const KNOWN_ERRORS: Record<string, string> = {
+      user_already_exists: "Ya existe una cuenta con ese email.",
+      weak_password: "La contraseña es demasiado débil. Prueba con una más larga o con más variedad de caracteres.",
+      email_address_invalid: "Ese email no es válido o no se admite. Prueba con otro.",
+      // Límite de envío de emails de confirmación de Supabase — no es un
+      // fallo de la cuenta en sí, sino una cuota temporal del propio
+      // servicio de correo. Se soluciona configurando un proveedor de
+      // email propio en Supabase, o esperando a que se reinicie la cuota.
+      over_email_send_rate_limit:
+        "Se han pedido demasiadas confirmaciones de email en poco tiempo. Espera unos minutos y vuelve a intentarlo.",
+      signup_disabled: "El registro de cuentas nuevas está desactivado ahora mismo. Contacta con soporte.",
+    };
+
     return {
       ok: false,
-      error:
-        error.code === "user_already_exists"
-          ? "Ya existe una cuenta con ese email."
-          : "No se pudo crear la cuenta. Inténtalo de nuevo.",
+      error: KNOWN_ERRORS[error.code ?? ""] ?? "No se pudo crear la cuenta. Inténtalo de nuevo.",
     };
   }
 

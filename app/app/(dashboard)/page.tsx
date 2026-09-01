@@ -53,7 +53,7 @@ export default async function DashboardPage() {
   const now = new Date();
   const twoWeeksOut = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
 
-  const [recentProjects, activeProjectsCount, upcomingShootingDays, pendingTasks, calendarEvents, budgetCategories, origin] =
+  const [recentProjects, lastVisitedProject, activeProjectsCount, upcomingShootingDays, pendingTasks, calendarEvents, budgetCategories, origin] =
     await Promise.all([
       prisma.project.findMany({
         where: {
@@ -80,6 +80,20 @@ export default async function DashboardPage() {
           },
         },
       }),
+      // La tarjeta "Continuar" debe reflejar el último proyecto en el
+      // que el usuario estuvo de verdad (getProjectForCurrentUser lo
+      // apunta al entrar en cualquier página del proyecto), no el más
+      // reciente por fecha — si no ha visitado ninguno todavía, o el
+      // que visitó ya no es accesible, se cae al de más abajo.
+      profile.lastVisitedProjectId
+        ? prisma.project.findFirst({
+            where: {
+              id: profile.lastVisitedProjectId,
+              OR: [{ organizationId }, { shares: { some: { userId: profile.id } } }],
+            },
+            select: { id: true, name: true, budgetTarget: true },
+          })
+        : Promise.resolve(null),
       prisma.project.count({
         where: { organizationId, status: { not: ProjectStatus.FINISHED } },
       }),
@@ -160,7 +174,7 @@ export default async function DashboardPage() {
     .slice(0, 6);
 
   const nextShoot = upcomingShootingDays[0];
-  const heroProject = recentProjects[0] ?? null;
+  const heroProject = lastVisitedProject ?? recentProjects[0] ?? null;
   const heroOverview = heroProject
     ? await getProjectOverview(
         heroProject.id,
@@ -254,19 +268,50 @@ export default async function DashboardPage() {
 
       {heroProject && (
         <DashboardReveal delay={0.05}>
-          <Link
-            href={`/app/${heroProject.id}/claqueta`}
-            className="group mt-3 flex items-center gap-3 border border-line px-5 py-3.5 transition-colors hover:border-accent"
-          >
-            <ClaquetaIcon className="h-5 w-5 shrink-0 text-accent" />
-            <span className="font-mono text-xs tracking-widest uppercase transition-colors group-hover:text-accent">
-              Claqueta digital
-            </span>
-            <span className="ml-auto font-mono text-[10px] tracking-widest text-muted uppercase transition-colors group-hover:text-accent">
+          <div className="group relative mt-3 flex items-center gap-3 border border-line px-5 py-3.5 transition-colors hover:border-accent">
+            <Link
+              href={`/app/${heroProject.id}/claqueta`}
+              className="flex min-w-0 flex-1 items-center gap-3"
+            >
+              <ClaquetaIcon className="h-5 w-5 shrink-0 text-accent" />
+              <span className="min-w-0">
+                <span className="block font-mono text-xs tracking-widest uppercase transition-colors group-hover:text-accent">
+                  Claqueta digital
+                </span>
+                <span className="block truncate font-mono text-[10px] text-muted">
+                  {heroProject.name}
+                </span>
+              </span>
+            </Link>
+            <Link
+              href={`/app/${heroProject.id}/claqueta`}
+              className="shrink-0 font-mono text-[10px] tracking-widest text-muted uppercase transition-colors group-hover:text-accent"
+            >
               Abrir →
               <LinkPendingHint />
-            </span>
-          </Link>
+            </Link>
+            {recentProjects.length > 1 && (
+              <details className="shrink-0">
+                <summary className="cursor-pointer list-none px-1 py-1 text-muted hover:text-accent [&::-webkit-details-marker]:hidden">
+                  ▾
+                </summary>
+                <div className="absolute right-0 top-full z-20 mt-1 w-56 border border-line bg-bg py-1 shadow-lg">
+                  <p className="px-3 py-1.5 font-mono text-[9px] tracking-widest text-muted uppercase">
+                    Abrir la claqueta de otro proyecto
+                  </p>
+                  {recentProjects.map((project) => (
+                    <Link
+                      key={project.id}
+                      href={`/app/${project.id}/claqueta`}
+                      className="block px-3 py-2 font-mono text-xs text-muted hover:bg-bg-raised hover:text-accent"
+                    >
+                      {project.name}
+                    </Link>
+                  ))}
+                </div>
+              </details>
+            )}
+          </div>
         </DashboardReveal>
       )}
 

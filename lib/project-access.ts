@@ -25,7 +25,19 @@ export async function getProjectForCurrentUser(projectId: string) {
   const profile = await getCurrentProfile();
   if (!profile) return null;
 
-  return getProjectForProfile(profile, projectId);
+  const project = await getProjectForProfile(profile, projectId);
+
+  // No se espera esta escritura (no debe ralentizar la página) ni
+  // importa si falla — es solo para que el dashboard sepa cuál fue el
+  // último proyecto que este usuario abrió de verdad, en vez de
+  // enseñar siempre el más reciente por fecha de creación/edición.
+  if (project && profile.lastVisitedProjectId !== projectId) {
+    prisma.user
+      .update({ where: { id: profile.id }, data: { lastVisitedProjectId: projectId } })
+      .catch(() => {});
+  }
+
+  return project;
 }
 
 // Misma idea que getProjectForProfile pero para el listado — usada por

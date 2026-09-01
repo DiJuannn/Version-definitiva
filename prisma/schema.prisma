@@ -133,6 +133,12 @@ model User {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
+  // Último proyecto que este usuario abrió de verdad (cualquier página
+  // bajo /app/[projectId]/**) — no es una relación con onDelete porque
+  // no debe romper nada si ese proyecto se borra; simplemente deja de
+  // resolverse y el dashboard cae de vuelta al más reciente por fecha.
+  lastVisitedProjectId String?
+
   organization     Organization     @relation(fields: [organizationId], references: [id])
   scriptAnalyses   ScriptAnalysis[]
   createdProjects  Project[]
