@@ -27,7 +27,7 @@ import {
   SummaryIcon,
   TaskIcon,
 } from "@/components/ToolIcons";
-import { getProjectForCurrentUser } from "@/lib/project-access";
+import { getProjectForCurrentUser, getProjectOwnerLabel } from "@/lib/project-access";
 import { updateProjectDetails } from "@/lib/actions/project-details";
 
 // Mismas categorías que ProjectSubNav — misma taxonomía en toda la app.
@@ -146,13 +146,8 @@ export default async function ProjectTallerPage({
   if (!profile) notFound();
   const isOwnerOrg = project.organizationId === profile.organizationId;
 
-  const [ownerOrg, shares, origin] = await Promise.all([
-    isOwnerOrg
-      ? null
-      : prisma.organization.findUnique({
-          where: { id: project.organizationId },
-          select: { name: true },
-        }),
+  const [ownerLabel, shares, origin] = await Promise.all([
+    isOwnerOrg ? null : getProjectOwnerLabel(project),
     isOwnerOrg
       ? prisma.projectShare.findMany({
           where: { projectId: project.id },
@@ -193,9 +188,9 @@ export default async function ProjectTallerPage({
           <h1 className="font-display text-2xl font-bold uppercase">
             {project.name}
           </h1>
-          {!isOwnerOrg && ownerOrg && (
+          {!isOwnerOrg && ownerLabel && (
             <p className="mt-1 font-mono text-xs text-muted">
-              Propietario: {ownerOrg.name}
+              Propietario: {ownerLabel}
             </p>
           )}
         </div>

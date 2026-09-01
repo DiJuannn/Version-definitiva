@@ -18,3 +18,26 @@ export async function getProjectForCurrentUser(projectId: string) {
     },
   });
 }
+
+// El propietario que se muestra a un colaborador es la persona que creó
+// el proyecto, no la productora entera — createdById es opcional porque
+// los proyectos creados antes de esta función no lo tienen, así que en
+// ese caso caemos al nombre de la organización.
+export async function getProjectOwnerLabel(project: {
+  createdById: string | null;
+  organizationId: string;
+}): Promise<string | null> {
+  if (project.createdById) {
+    const creator = await prisma.user.findUnique({
+      where: { id: project.createdById },
+      select: { fullName: true, email: true },
+    });
+    if (creator) return creator.fullName ?? creator.email;
+  }
+
+  const org = await prisma.organization.findUnique({
+    where: { id: project.organizationId },
+    select: { name: true },
+  });
+  return org?.name ?? null;
+}

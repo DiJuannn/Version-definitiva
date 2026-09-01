@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { getCurrentProfile } from "@/lib/current-user";
 import { CalendarEventType, ProjectStatus, TaskStatus } from "@/lib/generated/prisma";
@@ -8,6 +9,7 @@ import { StatusPill } from "@/components/StatusPill";
 import { DashboardReveal, DashboardStagger } from "@/components/DashboardMotion";
 import { createProject, deleteProject } from "@/lib/actions/projects";
 import { DeleteProjectButton } from "@/components/DeleteProjectButton";
+import { ProjectShareButton } from "@/components/ProjectShareButton";
 import { SubmitButton } from "@/components/SubmitButton";
 import { NewProjectPanel } from "@/components/NewProjectPanel";
 import { LinkPendingHint } from "@/components/LinkPendingHint";
@@ -51,7 +53,7 @@ export default async function DashboardPage() {
   const now = new Date();
   const twoWeeksOut = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
 
-  const [recentProjects, activeProjectsCount, upcomingShootingDays, pendingTasks, calendarEvents, budgetCategories] =
+  const [recentProjects, activeProjectsCount, upcomingShootingDays, pendingTasks, calendarEvents, budgetCategories, origin] =
     await Promise.all([
       prisma.project.findMany({
         where: {
@@ -66,6 +68,16 @@ export default async function DashboardPage() {
           budgetTarget: true,
           organizationId: true,
           organization: { select: { name: true } },
+          createdBy: { select: { fullName: true, email: true } },
+          shares: {
+            orderBy: { createdAt: "desc" },
+            select: {
+              id: true,
+              token: true,
+              acceptedAt: true,
+              user: { select: { email: true } },
+            },
+          },
         },
       }),
       prisma.project.count({
@@ -113,6 +125,7 @@ export default async function DashboardPage() {
           items: { select: { quantity: true, unitPrice: true, taxRate: true } },
         },
       }),
+      headers().then((h) => h.get("origin") ?? ""),
     ]);
 
   const budgetTotal = budgetCategories.reduce((sum, category) => {
@@ -298,12 +311,16 @@ export default async function DashboardPage() {
           <DashboardStagger className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {recentProjects.map((project) => {
               const isOwnProject = project.organizationId === organizationId;
+              const ownerLabel =
+                project.createdBy?.fullName ??
+                project.createdBy?.email ??
+                project.organization.name;
               return (
                 <div
                   key={project.id}
                   className="group relative border border-line p-4 transition-colors hover:border-accent"
                 >
-                  <Link href={`/app/${project.id}`} className="block pr-6">
+                  <Link href={`/app/${project.id}`} className="block pr-12">
                     <p className="font-display text-sm font-bold uppercase transition-colors group-hover:text-accent">
                       {project.name}
                     </p>
@@ -311,13 +328,23 @@ export default async function DashboardPage() {
                       <StatusPill status={project.status} />
                       {!isOwnProject && (
                         <span className="font-mono text-[10px] text-muted">
-                          Propietario: {project.organization.name}
+                          Propietario: {ownerLabel}
                         </span>
                       )}
                     </div>
                   </Link>
                   {isOwnProject && (
-                    <div className="absolute right-2 top-2">
+                    <div className="absolute right-2 top-2 flex items-center gap-1">
+                      <ProjectShareButton
+                        projectId={project.id}
+                        origin={origin}
+                        shares={project.shares.map((s) => ({
+                          id: s.id,
+                          token: s.token,
+                          acceptedAt: s.acceptedAt ? s.acceptedAt.toISOString() : null,
+                          userEmail: s.user?.email ?? null,
+                        }))}
+                      />
                       <DeleteProjectButton
                         projectName={project.name}
                         action={deleteProject.bind(null, project.id)}

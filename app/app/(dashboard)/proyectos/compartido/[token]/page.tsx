@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentProfile } from "@/lib/current-user";
+import { getProjectOwnerLabel } from "@/lib/project-access";
 import { acceptProjectShare } from "@/lib/actions/project-shares";
 import { SubmitButton } from "@/components/SubmitButton";
 
@@ -24,7 +25,7 @@ export default async function AcceptProjectSharePage({
           id: true,
           name: true,
           organizationId: true,
-          organization: { select: { name: true } },
+          createdById: true,
         },
       },
     },
@@ -62,6 +63,8 @@ export default async function AcceptProjectSharePage({
     );
   }
 
+  const ownerLabel = await getProjectOwnerLabel(share.project);
+
   return (
     <div>
       <p className="font-mono text-xs tracking-widest text-accent uppercase">
@@ -71,9 +74,9 @@ export default async function AcceptProjectSharePage({
         {share.project.name}
       </h1>
       <p className="mt-3 max-w-md font-mono text-sm text-muted">
-        <strong className="text-fg">{share.project.organization.name}</strong>{" "}
-        te ha compartido este proyecto. Podrás verlo y editarlo, pero no
-        verás el resto de sus proyectos ni de su organización.
+        <strong className="text-fg">{ownerLabel}</strong> te ha compartido
+        este proyecto. Podrás verlo y editarlo, pero no verás el resto de
+        sus proyectos ni de su organización.
       </p>
       <form action={acceptProjectShare.bind(null, token)} className="mt-6">
         <SubmitButton

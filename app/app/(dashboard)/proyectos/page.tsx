@@ -20,7 +20,10 @@ export default async function ProyectosPage() {
           ],
         },
         orderBy: { createdAt: "desc" },
-        include: { organization: { select: { name: true } } },
+        include: {
+          organization: { select: { name: true } },
+          createdBy: { select: { fullName: true, email: true } },
+        },
       })
     : [];
 
@@ -58,6 +61,10 @@ export default async function ProyectosPage() {
         <div className="mt-10 border-t border-line">
           {projects.map((project) => {
             const isOwnProject = project.organizationId === profile?.organizationId;
+            const ownerLabel =
+              project.createdBy?.fullName ??
+              project.createdBy?.email ??
+              project.organization.name;
             return (
               <div
                 key={project.id}
@@ -73,7 +80,7 @@ export default async function ProyectosPage() {
                     </span>
                     {!isOwnProject && (
                       <span className="block font-mono text-[10px] text-muted">
-                        Propietario: {project.organization.name}
+                        Propietario: {ownerLabel}
                       </span>
                     )}
                   </span>
