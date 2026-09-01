@@ -33,7 +33,13 @@ export async function GET(
   }
 
   const budgetTarget = project.budgetTarget !== null ? Number(project.budgetTarget) : null;
-  const { healthMetrics } = await getProjectOverview(projectId, budgetTarget);
+  const { healthMetrics, steps } = await getProjectOverview(projectId, budgetTarget);
 
-  return NextResponse.json({ metrics: healthMetrics }, { headers: CORS_HEADERS });
+  // `steps` es la misma Hoja de ruta que ProjectRoadmap.tsx en la web — se
+  // añade aquí en vez de crear una ruta nueva porque ya se calcula junto
+  // con `healthMetrics` en la misma consulta a getProjectOverview.
+  return NextResponse.json(
+    { metrics: healthMetrics, roadmap: steps },
+    { headers: CORS_HEADERS },
+  );
 }
