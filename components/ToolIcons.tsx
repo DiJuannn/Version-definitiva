@@ -51,6 +51,15 @@ export function TrashIcon({ className }: IconProps) {
   );
 }
 
+export function ShareIcon({ className }: IconProps) {
+  return (
+    <svg {...shared} className={className}>
+      <path d="M14 4v6l4-3-4-3Z" stroke="currentColor" strokeLinejoin="round" />
+      <path d="M18 7c1.7 1.6 2.7 3.8 2.7 6.3C20.7 18 16.9 21.5 12 21.5S3.3 18 3.3 13.3 6.9 5.5 12 5.5" stroke="currentColor" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function SparkleIcon({ className }: IconProps) {
   return (
     <svg {...shared} className={className}>

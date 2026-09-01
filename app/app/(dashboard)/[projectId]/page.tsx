@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
+import { prisma } from "@/lib/prisma";
 import { ToolCard } from "@/components/ToolCard";
 import { ProjectSummaryCard } from "@/components/ProjectSummaryCard";
+import { ProjectShareButton } from "@/components/ProjectShareButton";
 import { ProjectRoadmap } from "@/components/ProjectRoadmap";
 import { ProjectHealthMini } from "@/components/ProjectHealthMini";
 import { DashboardStagger } from "@/components/DashboardMotion";
@@ -9,6 +12,7 @@ import { ToolGroupCarousel } from "@/components/ToolGroupCarousel";
 import { PdfLink } from "@/components/PdfLink";
 import { BackLink } from "@/components/BackLink";
 import { getProjectOverview } from "@/lib/project-roadmap";
+import { getCurrentProfile } from "@/lib/current-user";
 import {
   BudgetIcon,
   CalendarIcon,
@@ -138,6 +142,32 @@ export default async function ProjectTallerPage({
     notFound();
   }
 
+  const profile = await getCurrentProfile();
+  if (!profile) notFound();
+  const isOwnerOrg = project.organizationId === profile.organizationId;
+
+  const [ownerOrg, shares, origin] = await Promise.all([
+    isOwnerOrg
+      ? null
+      : prisma.organization.findUnique({
+          where: { id: project.organizationId },
+          select: { name: true },
+        }),
+    isOwnerOrg
+      ? prisma.projectShare.findMany({
+          where: { projectId: project.id },
+          orderBy: { createdAt: "desc" },
+          select: {
+            id: true,
+            token: true,
+            acceptedAt: true,
+            user: { select: { email: true } },
+          },
+        })
+      : Promise.resolve([]),
+    headers().then((h) => h.get("origin") ?? ""),
+  ]);
+
   const updateAction = updateProjectDetails.bind(null, project.id);
   const budgetTarget =
     project.budgetTarget !== null ? Number(project.budgetTarget) : null;
@@ -158,9 +188,30 @@ export default async function ProjectTallerPage({
   return (
     <div>
       <BackLink href="/app">← Proyectos</BackLink>
-      <h1 className="mt-3 font-display text-2xl font-bold uppercase">
-        {project.name}
-      </h1>
+      <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="font-display text-2xl font-bold uppercase">
+            {project.name}
+          </h1>
+          {!isOwnerOrg && ownerOrg && (
+            <p className="mt-1 font-mono text-xs text-muted">
+              Propietario: {ownerOrg.name}
+            </p>
+          )}
+        </div>
+        {isOwnerOrg && (
+          <ProjectShareButton
+            projectId={project.id}
+            origin={origin}
+            shares={shares.map((s) => ({
+              id: s.id,
+              token: s.token,
+              acceptedAt: s.acceptedAt ? s.acceptedAt.toISOString() : null,
+              userEmail: s.user?.email ?? null,
+            }))}
+          />
+        )}
+      </div>
 
       <ProjectSummaryCard
         project={{ ...project, budgetTarget }}

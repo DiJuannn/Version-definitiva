@@ -13,8 +13,14 @@ export default async function ProyectosPage() {
 
   const projects = profile
     ? await prisma.project.findMany({
-        where: { organizationId: profile.organizationId },
+        where: {
+          OR: [
+            { organizationId: profile.organizationId },
+            { shares: { some: { userId: profile.id } } },
+          ],
+        },
         orderBy: { createdAt: "desc" },
+        include: { organization: { select: { name: true } } },
       })
     : [];
 
@@ -50,31 +56,43 @@ export default async function ProyectosPage() {
         />
       ) : (
         <div className="mt-10 border-t border-line">
-          {projects.map((project) => (
-            <div
-              key={project.id}
-              className="group flex items-center justify-between gap-4 border-b border-line py-4 transition-colors hover:border-accent"
-            >
-              <Link
-                href={`/app/${project.id}`}
-                className="flex min-w-0 flex-1 items-center justify-between gap-4"
+          {projects.map((project) => {
+            const isOwnProject = project.organizationId === profile?.organizationId;
+            return (
+              <div
+                key={project.id}
+                className="group flex items-center justify-between gap-4 border-b border-line py-4 transition-colors hover:border-accent"
               >
-                <span className="font-display text-lg font-bold uppercase transition-colors group-hover:text-accent">
-                  {project.name}
-                </span>
-                <span className="flex items-center gap-4">
-                  <StatusPill status={project.status} />
-                  <span className="font-mono text-xs text-muted">
-                    {project.createdAt.toLocaleDateString("es-ES")}
+                <Link
+                  href={`/app/${project.id}`}
+                  className="flex min-w-0 flex-1 items-center justify-between gap-4"
+                >
+                  <span className="min-w-0">
+                    <span className="block font-display text-lg font-bold uppercase transition-colors group-hover:text-accent">
+                      {project.name}
+                    </span>
+                    {!isOwnProject && (
+                      <span className="block font-mono text-[10px] text-muted">
+                        Propietario: {project.organization.name}
+                      </span>
+                    )}
                   </span>
-                </span>
-              </Link>
-              <DeleteProjectButton
-                projectName={project.name}
-                action={deleteProject.bind(null, project.id)}
-              />
-            </div>
-          ))}
+                  <span className="flex shrink-0 items-center gap-4">
+                    <StatusPill status={project.status} />
+                    <span className="font-mono text-xs text-muted">
+                      {project.createdAt.toLocaleDateString("es-ES")}
+                    </span>
+                  </span>
+                </Link>
+                {isOwnProject && (
+                  <DeleteProjectButton
+                    projectName={project.name}
+                    action={deleteProject.bind(null, project.id)}
+                  />
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

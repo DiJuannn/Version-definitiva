@@ -54,10 +54,19 @@ export default async function DashboardPage() {
   const [recentProjects, activeProjectsCount, upcomingShootingDays, pendingTasks, calendarEvents, budgetCategories] =
     await Promise.all([
       prisma.project.findMany({
-        where: { organizationId },
+        where: {
+          OR: [{ organizationId }, { shares: { some: { userId: profile.id } } }],
+        },
         orderBy: { updatedAt: "desc" },
         take: 6,
-        select: { id: true, name: true, status: true, budgetTarget: true },
+        select: {
+          id: true,
+          name: true,
+          status: true,
+          budgetTarget: true,
+          organizationId: true,
+          organization: { select: { name: true } },
+        },
       }),
       prisma.project.count({
         where: { organizationId, status: { not: ProjectStatus.FINISHED } },
@@ -287,27 +296,37 @@ export default async function DashboardPage() {
         <NewProjectPanel hasProjects={recentProjects.length > 0} />
         {recentProjects.length > 0 && (
           <DashboardStagger className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {recentProjects.map((project) => (
-              <div
-                key={project.id}
-                className="group relative border border-line p-4 transition-colors hover:border-accent"
-              >
-                <Link href={`/app/${project.id}`} className="block pr-6">
-                  <p className="font-display text-sm font-bold uppercase transition-colors group-hover:text-accent">
-                    {project.name}
-                  </p>
-                  <div className="mt-2">
-                    <StatusPill status={project.status} />
-                  </div>
-                </Link>
-                <div className="absolute right-2 top-2">
-                  <DeleteProjectButton
-                    projectName={project.name}
-                    action={deleteProject.bind(null, project.id)}
-                  />
+            {recentProjects.map((project) => {
+              const isOwnProject = project.organizationId === organizationId;
+              return (
+                <div
+                  key={project.id}
+                  className="group relative border border-line p-4 transition-colors hover:border-accent"
+                >
+                  <Link href={`/app/${project.id}`} className="block pr-6">
+                    <p className="font-display text-sm font-bold uppercase transition-colors group-hover:text-accent">
+                      {project.name}
+                    </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <StatusPill status={project.status} />
+                      {!isOwnProject && (
+                        <span className="font-mono text-[10px] text-muted">
+                          Propietario: {project.organization.name}
+                        </span>
+                      )}
+                    </div>
+                  </Link>
+                  {isOwnProject && (
+                    <div className="absolute right-2 top-2">
+                      <DeleteProjectButton
+                        projectName={project.name}
+                        action={deleteProject.bind(null, project.id)}
+                      />
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </DashboardStagger>
         )}
       </DashboardReveal>

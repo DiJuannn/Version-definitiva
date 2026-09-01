@@ -19,6 +19,7 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const justSignedUp = searchParams.get("confirm") === "1";
   const justConfirmed = searchParams.get("confirmed") === "1";
+  const next = searchParams.get("next");
 
   return (
     <div>
@@ -36,6 +37,7 @@ function LoginForm() {
       )}
 
       <form action={formAction} className="mt-8 space-y-4">
+        {next && <input type="hidden" name="next" value={next} />}
         <AuthField label="Email" name="email" type="email" required autoComplete="email" />
         <AuthField
           label="Contraseña"

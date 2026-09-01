@@ -14,7 +14,7 @@ export async function createProject(formData: FormData) {
   if (!profile) return;
 
   await prisma.project.create({
-    data: { name, organizationId: profile.organizationId },
+    data: { name, organizationId: profile.organizationId, createdById: profile.id },
   });
 
   revalidatePath("/app");

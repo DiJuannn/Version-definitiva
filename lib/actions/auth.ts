@@ -7,6 +7,14 @@ import { prisma } from "@/lib/prisma";
 
 export type AuthActionState = { error: string } | undefined;
 
+// Solo se sigue un "next" que sea una ruta relativa de la propia app — si
+// viniera algo como "https://otra-web.com", sería una redirección abierta
+// (alguien podría mandar un enlace de login nuestro que acabe en su web).
+function safeNextPath(value: FormDataEntryValue | null): string | null {
+  const path = String(value ?? "");
+  return path.startsWith("/") && !path.startsWith("//") ? path : null;
+}
+
 export async function logIn(
   _prevState: AuthActionState,
   formData: FormData,
@@ -21,7 +29,7 @@ export async function logIn(
     return { error: "Email o contraseña incorrectos." };
   }
 
-  redirect("/app");
+  redirect(safeNextPath(formData.get("next")) ?? "/app");
 }
 
 export async function signUp(
