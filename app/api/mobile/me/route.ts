@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 import { getMobileProfile } from "@/lib/mobile-auth";
+import { CORS_HEADERS } from "@/lib/mobile-cors";
+
+export function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
+}
 
 // GET /api/mobile/me — quién ha iniciado sesión en la app y de qué
 // productora es. El login en sí no pasa por aquí: la app inicia sesión
@@ -12,20 +17,26 @@ import { getMobileProfile } from "@/lib/mobile-auth";
 export async function GET(request: Request) {
   const profile = await getMobileProfile(request);
   if (!profile) {
-    return NextResponse.json({ error: "No autenticado." }, { status: 401 });
+    return NextResponse.json(
+      { error: "No autenticado." },
+      { status: 401, headers: CORS_HEADERS },
+    );
   }
 
-  return NextResponse.json({
-    user: {
-      id: profile.id,
-      email: profile.email,
-      fullName: profile.fullName,
-      role: profile.role,
+  return NextResponse.json(
+    {
+      user: {
+        id: profile.id,
+        email: profile.email,
+        fullName: profile.fullName,
+        role: profile.role,
+      },
+      organization: {
+        id: profile.organization.id,
+        name: profile.organization.name,
+        plan: profile.organization.plan,
+      },
     },
-    organization: {
-      id: profile.organization.id,
-      name: profile.organization.name,
-      plan: profile.organization.plan,
-    },
-  });
+    { headers: CORS_HEADERS },
+  );
 }

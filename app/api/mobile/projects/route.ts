@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { getMobileProfile } from "@/lib/mobile-auth";
 import { listProjectsForProfile } from "@/lib/project-access";
+import { CORS_HEADERS } from "@/lib/mobile-cors";
+
+export function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
+}
 
 // GET /api/mobile/projects — lista de proyectos para la app móvil.
 // Misma consulta y misma regla de acceso que /app/proyectos en la web
@@ -10,19 +15,25 @@ import { listProjectsForProfile } from "@/lib/project-access";
 export async function GET(request: Request) {
   const profile = await getMobileProfile(request);
   if (!profile) {
-    return NextResponse.json({ error: "No autenticado." }, { status: 401 });
+    return NextResponse.json(
+      { error: "No autenticado." },
+      { status: 401, headers: CORS_HEADERS },
+    );
   }
 
   const projects = await listProjectsForProfile(profile);
 
-  return NextResponse.json({
-    projects: projects.map((project) => ({
-      id: project.id,
-      name: project.name,
-      status: project.status,
-      isOwnProject: project.organizationId === profile.organizationId,
-      ownerLabel: project.createdBy?.fullName ?? project.createdBy?.email ?? project.organization.name,
-      createdAt: project.createdAt,
-    })),
-  });
+  return NextResponse.json(
+    {
+      projects: projects.map((project) => ({
+        id: project.id,
+        name: project.name,
+        status: project.status,
+        isOwnProject: project.organizationId === profile.organizationId,
+        ownerLabel: project.createdBy?.fullName ?? project.createdBy?.email ?? project.organization.name,
+        createdAt: project.createdAt,
+      })),
+    },
+    { headers: CORS_HEADERS },
+  );
 }
