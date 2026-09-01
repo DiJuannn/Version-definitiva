@@ -29,17 +29,43 @@ export async function POST(request: Request) {
 
   const attributes = payload?.data?.attributes ?? {};
   const status: string | undefined = attributes.status;
+  const incomingSubscriptionId: string | undefined = payload?.data?.id
+    ? String(payload.data.id)
+    : undefined;
   const plan = status && isActiveSubscriptionStatus(status) ? "PRO" : "FREE";
 
   console.log("Webhook Lemon Squeezy procesado", {
     eventName,
     organizationId,
-    subscriptionId: payload?.data?.id,
+    subscriptionId: incomingSubscriptionId,
     status,
     plan,
   });
 
   try {
+    const org = await prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { lemonSqueezySubscriptionId: true },
+    });
+    if (!org) throw new Error("organización no encontrada");
+
+    // Si el evento es de una suscripción distinta a la que tenemos
+    // guardada (por ejemplo, una de prueba antigua ya cancelada que manda
+    // un aviso tardío), solo se acepta si es una NUEVA suscripción activa
+    // — nunca se deja que baje el plan de una suscripción que ya no es la
+    // vigente. Esto es justo lo que causó que el plan PRO se desactivara
+    // solo sin que nadie tocara nada.
+    const isCurrentSubscription = org.lemonSqueezySubscriptionId === incomingSubscriptionId;
+    const isNewActiveSubscription = !isCurrentSubscription && plan === "PRO";
+    if (!isCurrentSubscription && !isNewActiveSubscription) {
+      console.log("Webhook Lemon Squeezy ignorado: evento de una suscripción que ya no es la vigente", {
+        organizationId,
+        storedSubscriptionId: org.lemonSqueezySubscriptionId,
+        incomingSubscriptionId,
+      });
+      return NextResponse.json({ received: true });
+    }
+
     await prisma.organization.update({
       where: { id: organizationId },
       data: {
@@ -47,7 +73,7 @@ export async function POST(request: Request) {
         lemonSqueezyCustomerId: attributes.customer_id
           ? String(attributes.customer_id)
           : undefined,
-        lemonSqueezySubscriptionId: payload?.data?.id ? String(payload.data.id) : undefined,
+        lemonSqueezySubscriptionId: incomingSubscriptionId,
       },
     });
   } catch (error) {
