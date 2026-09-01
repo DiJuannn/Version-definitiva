@@ -67,7 +67,7 @@ export function ProjectSubNav({ projectId }: { projectId: string }) {
         href={`/app/${projectId}`}
         className="border border-line px-3 py-1.5 font-mono text-[10px] tracking-widest text-muted uppercase transition hover:border-accent hover:text-accent active:scale-[0.97]"
       >
-        Resumen
+        Panel
       </Link>
       {CATEGORIES.map((category) => (
         <details key={category.label} name="project-subnav" className="group relative">
