@@ -129,3 +129,18 @@ export async function deleteScene(projectId: string, sceneId: string) {
   revalidatePath(`/app/${projectId}/guion`);
   redirect(`/app/${projectId}/guion`);
 }
+
+// Todas las relaciones que cuelgan de Scene (SceneCharacter,
+// SceneBreakdownElement, SceneCrewMember, ShootingDayScene, Shot) tienen
+// onDelete: Cascade hacia Scene en el esquema — un deleteMany aquí ya
+// arrastra todo eso solo, sin tener que borrarlo a mano uno por uno.
+export async function deleteAllScenes(projectId: string) {
+  const project = await getProjectForCurrentUser(projectId);
+  if (!project) return;
+
+  await prisma.scene.deleteMany({ where: { projectId } });
+
+  revalidatePath(`/app/${projectId}/guion`);
+  revalidatePath(`/app/${projectId}/desglose`);
+  revalidatePath(`/app/${projectId}/plan-de-rodaje`);
+}

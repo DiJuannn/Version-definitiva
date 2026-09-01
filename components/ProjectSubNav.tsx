@@ -33,6 +33,8 @@ const CATEGORIES = [
     tools: [
       { label: "Tareas", href: "tareas" },
       { label: "Documentos", href: "documentos" },
+      { label: "Localizaciones", href: "localizaciones" },
+      { label: "Vehículos", href: "vehiculos" },
     ],
   },
 ];

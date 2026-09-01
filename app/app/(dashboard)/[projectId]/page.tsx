@@ -26,6 +26,7 @@ import {
   ShotListIcon,
   SummaryIcon,
   TaskIcon,
+  VehicleIcon,
 } from "@/components/ToolIcons";
 import { getProjectForCurrentUser, getProjectOwnerLabel } from "@/lib/project-access";
 import { updateProjectDetails } from "@/lib/actions/project-details";
@@ -121,9 +122,14 @@ const TOOL_GROUPS = [
       {
         icon: <LocationIcon />,
         label: "Localizaciones",
-        href: "/app/localizaciones",
-        absolute: true,
-        description: "Todas las localizaciones de la productora.",
+        href: "localizaciones",
+        description: "Las que ya usan las escenas de este proyecto.",
+      },
+      {
+        icon: <VehicleIcon />,
+        label: "Vehículos",
+        href: "vehiculos",
+        description: "Los que ya están reservados en este proyecto.",
       },
     ],
   },

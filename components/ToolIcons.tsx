@@ -179,3 +179,18 @@ export function TaskIcon({ className }: IconProps) {
     </svg>
   );
 }
+
+export function VehicleIcon({ className }: IconProps) {
+  return (
+    <svg {...shared} className={className}>
+      <path
+        d="M4 16v-3.5L6 8h12l2 4.5V16"
+        stroke="currentColor"
+        strokeLinejoin="round"
+      />
+      <path d="M4 16h16v2a1 1 0 0 1-1 1h-1.5a1 1 0 0 1-1-1v-1h-9v1a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-2Z" stroke="currentColor" strokeLinejoin="round" />
+      <circle cx="7.5" cy="16" r="1.4" fill="currentColor" stroke="none" />
+      <circle cx="16.5" cy="16" r="1.4" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}

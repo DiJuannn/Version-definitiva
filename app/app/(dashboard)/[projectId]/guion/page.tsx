@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { getCurrentProfile } from "@/lib/current-user";
-import { createScene } from "@/lib/actions/scenes";
+import { createScene, deleteAllScenes, deleteScene } from "@/lib/actions/scenes";
+import { DangerConfirmButton } from "@/components/DangerConfirmButton";
 import { deleteScriptFile, uploadScript } from "@/lib/actions/script";
 import { analyzeScript } from "@/lib/actions/script-analysis";
 import { runContinuityCheck } from "@/lib/actions/continuity";
@@ -186,9 +187,20 @@ export default async function GuionPage({
       </section>
 
       <section className="mt-14">
-        <h2 className="font-mono text-xs tracking-widest text-muted uppercase">
-          Escenas
-        </h2>
+        <div className="flex items-center justify-between gap-4">
+          <h2 className="font-mono text-xs tracking-widest text-muted uppercase">
+            Escenas
+          </h2>
+          {scenes.length > 0 && (
+            <DangerConfirmButton
+              trigger="Eliminar todas"
+              triggerClassName="font-mono text-[10px] tracking-widest text-muted uppercase hover:text-accent"
+              title="¿Eliminar todas las escenas?"
+              description={`Se borrarán las ${scenes.length} escenas de este proyecto, junto con su reparto, desglose y equipo asignados a cada una. El guion subido, los personajes, las localizaciones y el desglose en sí no se tocan. Esta acción no se puede deshacer.`}
+              action={deleteAllScenes.bind(null, projectId)}
+            />
+          )}
+        </div>
 
         <form
           action={createSceneAction}
@@ -217,12 +229,14 @@ export default async function GuionPage({
         ) : (
           <div className="mt-10 border-t border-line">
             {scenes.map((scene) => (
-              <Link
+              <div
                 key={scene.id}
-                href={`/app/${projectId}/guion/${scene.id}`}
                 className="group flex items-center justify-between gap-4 border-b border-line py-4 transition-colors hover:border-accent"
               >
-                <div>
+                <Link
+                  href={`/app/${projectId}/guion/${scene.id}`}
+                  className="min-w-0 flex-1"
+                >
                   <span className="font-display text-lg font-bold uppercase transition-colors group-hover:text-accent">
                     Escena {scene.number}
                   </span>
@@ -230,12 +244,21 @@ export default async function GuionPage({
                     {INT_EXT_LABELS[scene.intExt]} · {DAY_PART_LABELS[scene.dayPart]}
                     {scene.location ? ` · ${scene.location.name}` : ""}
                   </p>
-                </div>
-                <span className="font-mono text-xs text-muted">
+                </Link>
+                <span className="shrink-0 font-mono text-xs text-muted">
                   {scene._count.characters} personaje
                   {scene._count.characters === 1 ? "" : "s"}
                 </span>
-              </Link>
+                <form
+                  action={deleteScene.bind(null, projectId, scene.id)}
+                  className="shrink-0"
+                >
+                  <DeleteButton
+                    confirmMessage="¿Eliminar esta escena?"
+                    className="font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent"
+                  />
+                </form>
+              </div>
             ))}
           </div>
         )}
