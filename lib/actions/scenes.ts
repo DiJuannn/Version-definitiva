@@ -2,22 +2,21 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { optionalString } from "@/lib/form-utils";
-import { DayPart, IntExt } from "@/lib/generated/prisma";
+import {
+  createSceneCore,
+  deleteAllScenesCore,
+  deleteSceneCore,
+  updateSceneCore,
+} from "@/lib/scenes-core";
 
 export async function createScene(projectId: string, formData: FormData) {
   const project = await getProjectForCurrentUser(projectId);
   if (!project) return;
 
-  const number = String(formData.get("number") ?? "").trim();
-  if (!number) return;
-
-  const count = await prisma.scene.count({ where: { projectId } });
-  const scene = await prisma.scene.create({
-    data: { projectId, number, order: count },
-  });
+  const scene = await createSceneCore(projectId, String(formData.get("number") ?? ""));
+  if (!scene) return;
 
   revalidatePath(`/app/${projectId}/guion`);
   redirect(`/app/${projectId}/guion/${scene.id}`);
@@ -31,89 +30,32 @@ export async function updateScene(
   const project = await getProjectForCurrentUser(projectId);
   if (!project) return;
 
-  const scene = await prisma.scene.findFirst({
-    where: { id: sceneId, projectId },
+  const breakdownElementIds = formData.getAll("breakdownElementIds").map(String);
+  const breakdownConditions: Record<string, string | null> = {};
+  for (const id of breakdownElementIds) {
+    breakdownConditions[id] = optionalString(formData.get(`condition_${id}`));
+  }
+
+  await updateSceneCore(projectId, sceneId, project.organizationId, {
+    number: String(formData.get("number") ?? ""),
+    intExt: String(formData.get("intExt") ?? ""),
+    dayPart: String(formData.get("dayPart") ?? ""),
+    locationId: optionalString(formData.get("locationId")),
+    storyOrder: (() => {
+      const raw = formData.get("storyOrder");
+      const num = raw ? Number(raw) : NaN;
+      return Number.isFinite(num) ? num : null;
+    })(),
+    description: optionalString(formData.get("description")),
+    action: optionalString(formData.get("action")),
+    dialogueNotes: optionalString(formData.get("dialogueNotes")),
+    extrasNotes: optionalString(formData.get("extrasNotes")),
+    productionNotes: optionalString(formData.get("productionNotes")),
+    characterIds: formData.getAll("characterIds").map(String),
+    breakdownElementIds,
+    breakdownConditions,
+    crewMemberIds: formData.getAll("crewMemberIds").map(String),
   });
-  if (!scene) return;
-
-  const number = String(formData.get("number") ?? "").trim();
-  if (!number) return;
-
-  const intExtInput = String(formData.get("intExt") ?? "");
-  const intExt = (Object.values(IntExt) as string[]).includes(intExtInput)
-    ? (intExtInput as IntExt)
-    : scene.intExt;
-
-  const dayPartInput = String(formData.get("dayPart") ?? "");
-  const dayPart = (Object.values(DayPart) as string[]).includes(dayPartInput)
-    ? (dayPartInput as DayPart)
-    : scene.dayPart;
-
-  const requestedLocationId = optionalString(formData.get("locationId"));
-  const requestedCharacterIds = formData.getAll("characterIds").map(String);
-  const requestedBreakdownIds = formData
-    .getAll("breakdownElementIds")
-    .map(String);
-  const requestedCrewIds = formData.getAll("crewMemberIds").map(String);
-
-  const [location, validCharacters, validBreakdown, validCrew] =
-    await Promise.all([
-      requestedLocationId
-        ? prisma.location.findFirst({
-            where: { id: requestedLocationId, organizationId: project.organizationId },
-          })
-        : null,
-      prisma.character.findMany({
-        where: { projectId, id: { in: requestedCharacterIds } },
-        select: { id: true },
-      }),
-      prisma.breakdownElement.findMany({
-        where: { projectId, id: { in: requestedBreakdownIds } },
-        select: { id: true },
-      }),
-      prisma.crewMember.findMany({
-        where: { projectId, id: { in: requestedCrewIds } },
-        select: { id: true },
-      }),
-    ]);
-
-  await prisma.$transaction([
-    prisma.scene.update({
-      where: { id: sceneId },
-      data: {
-        number,
-        intExt,
-        dayPart,
-        locationId: location?.id ?? null,
-        storyOrder: (() => {
-          const raw = formData.get("storyOrder");
-          const num = raw ? Number(raw) : NaN;
-          return Number.isFinite(num) ? num : null;
-        })(),
-        description: optionalString(formData.get("description")),
-        action: optionalString(formData.get("action")),
-        dialogueNotes: optionalString(formData.get("dialogueNotes")),
-        extrasNotes: optionalString(formData.get("extrasNotes")),
-        productionNotes: optionalString(formData.get("productionNotes")),
-      },
-    }),
-    prisma.sceneCharacter.deleteMany({ where: { sceneId } }),
-    prisma.sceneCharacter.createMany({
-      data: validCharacters.map((c) => ({ sceneId, characterId: c.id })),
-    }),
-    prisma.sceneBreakdownElement.deleteMany({ where: { sceneId } }),
-    prisma.sceneBreakdownElement.createMany({
-      data: validBreakdown.map((b) => ({
-        sceneId,
-        breakdownElementId: b.id,
-        condition: optionalString(formData.get(`condition_${b.id}`)),
-      })),
-    }),
-    prisma.sceneCrewMember.deleteMany({ where: { sceneId } }),
-    prisma.sceneCrewMember.createMany({
-      data: validCrew.map((c) => ({ sceneId, crewMemberId: c.id })),
-    }),
-  ]);
 
   revalidatePath(`/app/${projectId}/guion`);
   revalidatePath(`/app/${projectId}/guion/${sceneId}`);
@@ -125,20 +67,16 @@ export async function deleteScene(projectId: string, sceneId: string) {
   const project = await getProjectForCurrentUser(projectId);
   if (!project) return;
 
-  await prisma.scene.deleteMany({ where: { id: sceneId, projectId } });
+  await deleteSceneCore(projectId, sceneId);
   revalidatePath(`/app/${projectId}/guion`);
   redirect(`/app/${projectId}/guion`);
 }
 
-// Todas las relaciones que cuelgan de Scene (SceneCharacter,
-// SceneBreakdownElement, SceneCrewMember, ShootingDayScene, Shot) tienen
-// onDelete: Cascade hacia Scene en el esquema — un deleteMany aquí ya
-// arrastra todo eso solo, sin tener que borrarlo a mano uno por uno.
 export async function deleteAllScenes(projectId: string) {
   const project = await getProjectForCurrentUser(projectId);
   if (!project) return;
 
-  await prisma.scene.deleteMany({ where: { projectId } });
+  await deleteAllScenesCore(projectId);
 
   revalidatePath(`/app/${projectId}/guion`);
   revalidatePath(`/app/${projectId}/desglose`);
