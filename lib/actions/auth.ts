@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
+import { signUpCore } from "@/lib/auth-core";
 
 export type AuthActionState = { error: string } | undefined;
 
@@ -36,60 +37,25 @@ export async function signUp(
   _prevState: AuthActionState,
   formData: FormData,
 ): Promise<AuthActionState> {
-  const organizationName = String(formData.get("organizationName") ?? "").trim();
-  const fullName = String(formData.get("fullName") ?? "").trim();
-  const email = String(formData.get("email") ?? "").trim();
-  const password = String(formData.get("password") ?? "");
-
-  if (!organizationName || !email || password.length < 8) {
-    return {
-      error:
-        "Revisa los campos: falta el nombre de la productora o la contraseña tiene menos de 8 caracteres.",
-    };
-  }
-
   const supabase = await createClient();
   const origin = (await headers()).get("origin");
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: { emailRedirectTo: `${origin}/app/login?confirmed=1` },
-  });
 
-  if (error) {
-    return {
-      error:
-        error.code === "user_already_exists"
-          ? "Ya existe una cuenta con ese email."
-          : "No se pudo crear la cuenta. Inténtalo de nuevo.",
-    };
+  const result = await signUpCore(
+    supabase,
+    {
+      organizationName: String(formData.get("organizationName") ?? ""),
+      fullName: String(formData.get("fullName") ?? ""),
+      email: String(formData.get("email") ?? ""),
+      password: String(formData.get("password") ?? ""),
+    },
+    `${origin}/app/login?confirmed=1`,
+  );
+
+  if (!result.ok) {
+    return { error: result.error };
   }
 
-  if (!data.user) {
-    return { error: "No se pudo crear la cuenta. Inténtalo de nuevo." };
-  }
-
-  try {
-    await prisma.organization.create({
-      data: {
-        name: organizationName,
-        users: {
-          create: {
-            id: data.user.id,
-            email,
-            fullName: fullName || null,
-          },
-        },
-      },
-    });
-  } catch {
-    return {
-      error:
-        "La cuenta se creó pero hubo un problema guardando la productora. Contacta con soporte.",
-    };
-  }
-
-  if (!data.session) {
+  if (!result.session) {
     redirect("/app/login?confirm=1");
   }
 
