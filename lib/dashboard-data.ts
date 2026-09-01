@@ -13,7 +13,7 @@ export async function getDashboardHero(profile: Profile) {
   const organizationId = profile.organizationId;
   const now = new Date();
 
-  const [recentProjects, activeProjectsCount, nextShootingDay, budgetCategories] =
+  const [recentProjects, lastVisitedProject, activeProjectsCount, nextShootingDay, budgetCategories] =
     await Promise.all([
       prisma.project.findMany({
         where: {
@@ -31,6 +31,28 @@ export async function getDashboardHero(profile: Profile) {
           createdBy: { select: { fullName: true, email: true } },
         },
       }),
+      // Igual que en la web: "Continuar" sigue al último proyecto que
+      // esta persona visitó de verdad (se actualiza en
+      // getProjectForProfile), no al que más recientemente se editó —
+      // si no ha visitado ninguno, o el que visitó ya no es accesible,
+      // se cae al de más abajo.
+      profile.lastVisitedProjectId
+        ? prisma.project.findFirst({
+            where: {
+              id: profile.lastVisitedProjectId,
+              OR: [{ organizationId }, { shares: { some: { userId: profile.id } } }],
+            },
+            select: {
+              id: true,
+              name: true,
+              status: true,
+              budgetTarget: true,
+              organizationId: true,
+              organization: { select: { name: true } },
+              createdBy: { select: { fullName: true, email: true } },
+            },
+          })
+        : Promise.resolve(null),
       prisma.project.count({
         where: { organizationId, status: { not: ProjectStatus.FINISHED } },
       }),
@@ -62,7 +84,7 @@ export async function getDashboardHero(profile: Profile) {
     return sum + categoryTotal;
   }, 0);
 
-  const heroProject = recentProjects[0] ?? null;
+  const heroProject = lastVisitedProject ?? recentProjects[0] ?? null;
   const heroOverview = heroProject
     ? await getProjectOverview(
         heroProject.id,

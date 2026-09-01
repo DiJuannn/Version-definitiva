@@ -8,9 +8,11 @@ import { getCurrentProfile, type Profile } from "@/lib/current-user";
 // Recibe el `profile` ya resuelto (en vez de leerlo él mismo) para que
 // tanto la web (cookie, getCurrentProfile) como la API de la app móvil
 // (token, getMobileProfile) compartan exactamente la misma comprobación
-// de acceso sin duplicarla.
+// de acceso sin duplicarla. La actualización de "último proyecto
+// visitado" vive aquí mismo (no solo en la web) para que, si seleccionas
+// un proyecto desde la app, "Continuar" en Inicio también lo refleje.
 export async function getProjectForProfile(profile: Profile, projectId: string) {
-  return prisma.project.findFirst({
+  const project = await prisma.project.findFirst({
     where: {
       id: projectId,
       OR: [
@@ -19,15 +21,8 @@ export async function getProjectForProfile(profile: Profile, projectId: string) 
       ],
     },
   });
-}
 
-export async function getProjectForCurrentUser(projectId: string) {
-  const profile = await getCurrentProfile();
-  if (!profile) return null;
-
-  const project = await getProjectForProfile(profile, projectId);
-
-  // No se espera esta escritura (no debe ralentizar la página) ni
+  // No se espera esta escritura (no debe ralentizar la respuesta) ni
   // importa si falla — es solo para que el dashboard sepa cuál fue el
   // último proyecto que este usuario abrió de verdad, en vez de
   // enseñar siempre el más reciente por fecha de creación/edición.
@@ -38,6 +33,13 @@ export async function getProjectForCurrentUser(projectId: string) {
   }
 
   return project;
+}
+
+export async function getProjectForCurrentUser(projectId: string) {
+  const profile = await getCurrentProfile();
+  if (!profile) return null;
+
+  return getProjectForProfile(profile, projectId);
 }
 
 // Misma idea que getProjectForProfile pero para el listado — usada por
