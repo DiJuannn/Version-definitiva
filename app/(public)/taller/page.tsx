@@ -22,7 +22,7 @@ const HERRAMIENTAS = [
   { icon: <ShotListIcon />, label: "Shot list" },
   { icon: <SceneIcon />, label: "Storyboard" },
   { icon: <BudgetIcon />, label: "Presupuesto" },
-  { icon: <DocumentIcon />, label: "Documentos" },
+  { icon: <DocumentIcon />, label: "Biblioteca de archivos" },
 ];
 
 const EJEMPLOS = [

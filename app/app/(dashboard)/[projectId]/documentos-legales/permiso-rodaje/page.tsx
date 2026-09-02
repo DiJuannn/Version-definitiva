@@ -27,7 +27,7 @@ export default async function PermisoRodajePage({
 
   return (
     <div>
-      <BackLink href={`/app/${projectId}/documentos-legales`}>← Documentos legales</BackLink>
+      <BackLink href={`/app/${projectId}/documentos-legales`}>← Plantilla de documentos</BackLink>
       <h1 className="mt-3 font-display text-2xl font-bold uppercase">
         Permiso de rodaje
       </h1>

@@ -33,7 +33,7 @@ const PRO_FEATURES = [
   `Hasta ${SCRIPT_ANALYSIS_PRO_DAILY_LIMIT} análisis de IA al día`,
   "Dossier completo del proyecto en PDF",
   "Detector de continuidad con IA",
-  "Documentos legales listos para firmar (permiso de rodaje, cesión de imagen, contrato de colaboración, autorización de menor, NDA)",
+  "Plantilla de documentos lista para firmar (permiso de rodaje, cesión de imagen, contrato de colaboración, autorización de menor, NDA)",
 ];
 
 const ROLE_LABELS = { ADMIN: "Admin", MEMBER: "Miembro" } as const;

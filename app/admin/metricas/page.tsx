@@ -28,7 +28,7 @@ const TOOL_LABELS: Record<string, string> = {
   budgetItems: "Presupuesto",
   clapLogs: "Claqueta",
   tasks: "Tareas",
-  documents: "Documentos",
+  documents: "Biblioteca de archivos",
   calendarEvents: "Calendario",
 };
 

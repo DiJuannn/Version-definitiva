@@ -32,8 +32,8 @@ const CATEGORIES = [
     label: "Organización",
     tools: [
       { label: "Tareas", href: "tareas" },
-      { label: "Documentos", href: "documentos" },
-      { label: "Documentos legales", href: "documentos-legales" },
+      { label: "Biblioteca de archivos", href: "documentos" },
+      { label: "Plantilla de documentos", href: "documentos-legales" },
       { label: "Localizaciones", href: "localizaciones" },
       { label: "Vehículos", href: "vehiculos" },
     ],

@@ -62,7 +62,7 @@ export default async function DocumentosPage({
     <div>
       <BackLink href={`/app/${projectId}`}>← {project.name}</BackLink>
       <h1 className="mt-3 font-display text-2xl font-bold uppercase">
-        Documentos
+        Biblioteca de archivos
       </h1>
 
       <section className="mt-8">

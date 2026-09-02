@@ -49,7 +49,7 @@ export default async function DocumentosLegalesPage({
     <div>
       <BackLink href={`/app/${projectId}`}>← {project.name}</BackLink>
       <h1 className="mt-3 font-display text-2xl font-bold uppercase">
-        Documentos legales
+        Plantilla de documentos
       </h1>
       <p className="mt-2 font-mono text-xs text-muted">
         Plantillas orientativas de producción, rellenas con los datos del

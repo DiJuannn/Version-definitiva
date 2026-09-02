@@ -109,13 +109,13 @@ export const TOOL_GROUPS: { label: string; tools: ToolDefinition[] }[] = [
       },
       {
         icon: <DocumentIcon />,
-        label: "Documentos",
+        label: "Biblioteca de archivos",
         href: "documentos",
         description: "Contratos, permisos y archivos del proyecto.",
       },
       {
         icon: <DocumentIcon />,
-        label: "Documentos legales",
+        label: "Plantilla de documentos",
         href: "documentos-legales",
         description: "Plantillas de permisos, cesiones y contratos, listas para firmar.",
         pro: true,
