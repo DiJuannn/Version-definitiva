@@ -29,12 +29,12 @@ export async function createProject(
   return undefined;
 }
 
-// Igual que createProject, pero para cuando se entra a la Claqueta sin
-// tener ningún proyecto todavía — crea el proyecto y entra directo a su
-// claqueta, en vez de dejar al usuario en el dashboard para que la
-// vuelva a buscar.
-export async function createProjectAndOpenClaqueta(
-  _prevState: CreateProjectState,
+// Compartido por createProjectAndOpenClaqueta y createProjectAndOpenTool
+// (el selector de herramientas de /app/proyectos): crea el proyecto y
+// entra directo a la herramienta elegida, en vez de dejar al usuario en
+// el dashboard para que la vuelva a buscar.
+async function createProjectAndOpenPath(
+  toolPath: string,
   formData: FormData,
 ): Promise<CreateProjectState> {
   const profile = await getCurrentProfile();
@@ -50,7 +50,25 @@ export async function createProjectAndOpenClaqueta(
 
   revalidatePath("/app");
   revalidatePath("/app/proyectos");
-  redirect(`/app/${result.id}/claqueta`);
+  redirect(`/app/${result.id}/${toolPath}`);
+}
+
+export async function createProjectAndOpenClaqueta(
+  _prevState: CreateProjectState,
+  formData: FormData,
+): Promise<CreateProjectState> {
+  return createProjectAndOpenPath("claqueta", formData);
+}
+
+// Usada por ToolPickerGrid (selector de herramientas de /app/proyectos)
+// con el href de la herramienta elegida ya enlazado vía `.bind(null, toolPath)`
+// antes de llegar al cliente.
+export async function createProjectAndOpenTool(
+  toolPath: string,
+  _prevState: CreateProjectState,
+  formData: FormData,
+): Promise<CreateProjectState> {
+  return createProjectAndOpenPath(toolPath, formData);
 }
 
 // Borrar un Project no cascada solo con la FK en la base de datos: Actor,

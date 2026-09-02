@@ -9,6 +9,7 @@ type Tool = {
   label: string;
   href: string;
   description: string;
+  pro?: boolean;
 };
 
 type Group = { label: string; tools: Tool[] };
@@ -50,6 +51,7 @@ export function ToolGroupCarousel({ groups }: { groups: Group[] }) {
                   label={tool.label}
                   description={tool.description}
                   href={tool.href}
+                  badge={tool.pro ? "PRO" : undefined}
                 />
               ))}
             </DashboardStagger>

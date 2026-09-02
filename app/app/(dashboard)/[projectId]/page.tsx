@@ -13,127 +13,10 @@ import { PdfLink } from "@/components/PdfLink";
 import { BackLink } from "@/components/BackLink";
 import { getProjectOverview } from "@/lib/project-roadmap";
 import { getCurrentProfile } from "@/lib/current-user";
-import {
-  BudgetIcon,
-  CalendarIcon,
-  CastIcon,
-  ClaquetaIcon,
-  DocumentIcon,
-  EventIcon,
-  LocationIcon,
-  ProjectsIcon,
-  SceneIcon,
-  ShotListIcon,
-  SummaryIcon,
-  TaskIcon,
-  VehicleIcon,
-} from "@/components/ToolIcons";
+import { SummaryIcon } from "@/components/ToolIcons";
 import { getProjectForCurrentUser, getProjectOwnerLabel } from "@/lib/project-access";
 import { updateProjectDetails } from "@/lib/actions/project-details";
-
-// Mismas categorías que ProjectSubNav — misma taxonomía en toda la app.
-const TOOL_GROUPS = [
-  {
-    label: "Preproducción",
-    tools: [
-      {
-        icon: <DocumentIcon />,
-        label: "Guion",
-        href: "guion",
-        description: "Sube el guion y gestiona las escenas.",
-      },
-      {
-        icon: <ProjectsIcon />,
-        label: "Desglose",
-        href: "desglose",
-        description: "Catálogo de atrezzo, vestuario y equipo por escena.",
-      },
-      {
-        icon: <CastIcon />,
-        label: "Personajes",
-        href: "personajes",
-        description: "El reparto: qué actor interpreta a cada personaje.",
-      },
-      {
-        icon: <ShotListIcon />,
-        label: "Shot list",
-        href: "shot-list",
-        description: "Los planos definidos para cada escena.",
-      },
-      {
-        icon: <SceneIcon />,
-        label: "Storyboard",
-        href: "storyboard",
-        description: "Viñetas visuales de los planos clave.",
-      },
-      {
-        icon: <EventIcon />,
-        label: "Calendario",
-        href: "/app/calendario",
-        absolute: true,
-        description: "Reuniones, ensayos y fechas límite de la productora.",
-      },
-    ],
-  },
-  {
-    label: "Producción",
-    tools: [
-      {
-        icon: <CalendarIcon />,
-        label: "Plan de rodaje",
-        href: "plan-de-rodaje",
-        description: "Agrupa las escenas en días de rodaje concretos.",
-      },
-      {
-        icon: <DocumentIcon />,
-        label: "Call sheets",
-        href: "call-sheets",
-        description: "La hoja de convocatoria de cada día de rodaje.",
-      },
-      {
-        icon: <BudgetIcon />,
-        label: "Presupuesto",
-        href: "presupuesto",
-        description: "Categorías de gasto, importes y coste total.",
-      },
-      {
-        icon: <ClaquetaIcon />,
-        label: "Claqueta",
-        href: "claqueta",
-        description: "Claqueta digital: marca tomas con sonido y animación.",
-      },
-    ],
-  },
-  {
-    label: "Organización",
-    tools: [
-      {
-        icon: <TaskIcon />,
-        label: "Tareas",
-        href: "tareas",
-        description: "Pendientes del proyecto, con prioridad y fecha.",
-      },
-      {
-        icon: <DocumentIcon />,
-        label: "Documentos",
-        href: "documentos",
-        description: "Contratos, permisos y archivos del proyecto.",
-      },
-      {
-        icon: <LocationIcon />,
-        label: "Localizaciones",
-        href: "localizaciones",
-        description: "Las que ya usan las escenas de este proyecto.",
-      },
-      {
-        icon: <VehicleIcon />,
-        label: "Vehículos",
-        href: "vehiculos",
-        description: "Los que ya están reservados en este proyecto.",
-      },
-    ],
-  },
-];
+import { TOOL_GROUPS } from "@/lib/tool-groups";
 
 export default async function ProjectTallerPage({
   params,
@@ -182,7 +65,8 @@ export default async function ProjectTallerPage({
       icon: tool.icon,
       label: tool.label,
       description: tool.description,
-      href: "absolute" in tool && tool.absolute ? tool.href : `/app/${project.id}/${tool.href}`,
+      href: tool.absolute ? tool.href : `/app/${project.id}/${tool.href}`,
+      pro: tool.pro,
     })),
   }));
 
@@ -258,11 +142,8 @@ export default async function ProjectTallerPage({
                     icon={tool.icon}
                     label={tool.label}
                     description={tool.description}
-                    href={
-                      "absolute" in tool && tool.absolute
-                        ? tool.href
-                        : `/app/${project.id}/${tool.href}`
-                    }
+                    href={tool.absolute ? tool.href : `/app/${project.id}/${tool.href}`}
+                    badge={tool.pro ? "PRO" : undefined}
                   />
                 ))}
               </DashboardStagger>
