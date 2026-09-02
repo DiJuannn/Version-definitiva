@@ -522,6 +522,11 @@ model ShootingDay {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Función 1 (plan PRO): cuándo se mandó el recordatorio automático del
+  // call sheet al equipo técnico — evita mandarlo dos veces si el cron
+  // se ejecuta más de una vez el mismo día.
+  reminderSentAt DateTime?
+
   project             Project              @relation(fields: [projectId], references: [id])
   scenes              ShootingDayScene[]
   callSheet           CallSheet?
