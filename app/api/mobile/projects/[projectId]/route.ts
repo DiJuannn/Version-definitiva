@@ -3,6 +3,7 @@ import { getMobileProfile } from "@/lib/mobile-auth";
 import { getProjectForProfile, getProjectOwnerLabel } from "@/lib/project-access";
 import { deleteProjectCore } from "@/lib/project-delete-core";
 import { updateProjectDetailsCore } from "@/lib/project-details-core";
+import { isProjectOwnerPro } from "@/lib/project-plan";
 import { CORS_HEADERS } from "@/lib/mobile-cors";
 
 export function OPTIONS() {
@@ -36,7 +37,10 @@ export async function GET(
   }
 
   const isOwnerOrg = project.organizationId === profile.organizationId;
-  const ownerLabel = isOwnerOrg ? null : await getProjectOwnerLabel(project);
+  const [ownerLabel, isOwnerOrgPro] = await Promise.all([
+    isOwnerOrg ? null : getProjectOwnerLabel(project),
+    isProjectOwnerPro(project.organizationId),
+  ]);
 
   return NextResponse.json(
     {
@@ -54,6 +58,9 @@ export async function GET(
         notes: project.notes,
         isOwnerOrg,
         ownerLabel,
+        // Función de PRO — la de la organización DUEÑA del proyecto, no
+        // la del usuario que mira (puede ser un proyecto compartido).
+        isOwnerOrgPro,
         createdAt: project.createdAt,
       },
     },
