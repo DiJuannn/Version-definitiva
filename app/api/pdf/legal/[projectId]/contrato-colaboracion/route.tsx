@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { getLegalDocumentContext, fieldFromForm } from "@/lib/pdf/legal/access";
 import { LegalDocumentTemplate } from "@/lib/pdf/legal/LegalDocumentTemplate";
+import { LEGAL_TEMPLATES } from "@/lib/pdf/legal/templates";
 
 export async function POST(
   request: Request,
@@ -15,50 +16,17 @@ export async function POST(
   const { project, organizationName } = context;
 
   const formData = await request.formData();
-  const nombre = fieldFromForm(formData, "nombre");
-  const dni = fieldFromForm(formData, "dni");
-  const rol = fieldFromForm(formData, "rol");
-  const fechas = fieldFromForm(formData, "fechas");
-  const remuneracion = fieldFromForm(formData, "remuneracion");
-  const condiciones = fieldFromForm(formData, "condiciones");
+  const fields = {
+    nombre: fieldFromForm(formData, "nombre"),
+    dni: fieldFromForm(formData, "dni"),
+    rol: fieldFromForm(formData, "rol"),
+    fechas: fieldFromForm(formData, "fechas"),
+    remuneracion: fieldFromForm(formData, "remuneracion"),
+    condiciones: fieldFromForm(formData, "condiciones"),
+  };
 
-  const buffer = await renderToBuffer(
-    <LegalDocumentTemplate
-      eyebrow="Documento legal orientativo"
-      title="Contrato de colaboración"
-      fieldGroups={[
-        {
-          label: "Proyecto",
-          fields: [
-            { label: "Proyecto", value: project.name },
-            { label: "Productora", value: organizationName },
-            { label: "Fecha del documento", value: new Date().toLocaleDateString("es-ES") },
-          ],
-        },
-        {
-          label: "Persona colaboradora",
-          fields: [
-            { label: "Nombre completo", value: nombre },
-            { label: "DNI / identificación", value: dni },
-            { label: "Rol / función", value: rol },
-          ],
-        },
-        {
-          label: "Condiciones",
-          fields: [
-            { label: "Fechas de colaboración", value: fechas },
-            { label: "Remuneración / contraprestación", value: remuneracion },
-          ],
-        },
-      ]}
-      bodyText={[
-        `Mediante este documento, ${organizationName || "la productora"} y la persona arriba identificada acuerdan su colaboración en el proyecto "${project.name}" en el rol y las fechas especificados, a cambio de la contraprestación indicada.`,
-        ...(condiciones ? [`Condiciones adicionales: ${condiciones}`] : []),
-        "Ambas partes se comprometen a cumplir con los horarios y condiciones de trabajo acordados y a tratar cualquier material no publicado del proyecto con la debida confidencialidad.",
-      ]}
-      signatureLines={["Firma de la persona colaboradora", "Firma de la productora"]}
-    />,
-  );
+  const content = LEGAL_TEMPLATES["contrato-colaboracion"].buildContent({ project, organizationName, fields });
+  const buffer = await renderToBuffer(<LegalDocumentTemplate {...content} />);
 
   return new NextResponse(new Uint8Array(buffer), {
     headers: {
