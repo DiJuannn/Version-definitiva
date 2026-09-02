@@ -55,6 +55,12 @@ export default async function AdminLayout({
           >
             Ir al Taller
           </Link>
+          <Link
+            href="/admin/metricas"
+            className="tracking-widest uppercase transition-colors hover:text-accent"
+          >
+            Métricas
+          </Link>
           <span className="truncate">{profile?.email}</span>
         </div>
       </header>
