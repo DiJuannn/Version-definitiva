@@ -5,33 +5,23 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { optionalString } from "@/lib/form-utils";
+import {
+  createShootingDayCore,
+  deleteShootingDayCore,
+  updateDaySceneAssignmentsCore,
+  updateShootingDayCore,
+} from "@/lib/plan-de-rodaje-core";
 
 export async function createShootingDay(projectId: string, formData: FormData) {
   const project = await getProjectForCurrentUser(projectId);
   if (!project) return;
 
-  const dateInput = String(formData.get("date") ?? "");
-  const date = new Date(dateInput);
-  if (Number.isNaN(date.getTime())) return;
-
-  // Un día doble clic (o un segundo intento porque el primero no dio
-  // ninguna señal) no debe crear dos días de rodaje para la misma fecha:
-  // si ya existe uno, se reutiliza en vez de duplicar.
-  const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
-  const existing = await prisma.shootingDay.findFirst({
-    where: { projectId, date: { gte: dayStart, lt: dayEnd } },
-  });
-  if (existing) {
-    redirect(`/app/${projectId}/plan-de-rodaje/${existing.id}`);
-  }
-
-  const day = await prisma.shootingDay.create({
-    data: { projectId, date },
-  });
+  const date = new Date(String(formData.get("date") ?? ""));
+  const result = await createShootingDayCore(projectId, date);
+  if (!result) return;
 
   revalidatePath(`/app/${projectId}/plan-de-rodaje`);
-  redirect(`/app/${projectId}/plan-de-rodaje/${day.id}`);
+  redirect(`/app/${projectId}/plan-de-rodaje/${result.id}`);
 }
 
 export async function updateShootingDay(
@@ -42,13 +32,9 @@ export async function updateShootingDay(
   const project = await getProjectForCurrentUser(projectId);
   if (!project) return;
 
-  const dateInput = String(formData.get("date") ?? "");
-  const date = new Date(dateInput);
-  if (Number.isNaN(date.getTime())) return;
-
-  await prisma.shootingDay.updateMany({
-    where: { id: shootingDayId, projectId },
-    data: { date, notes: optionalString(formData.get("notes")) },
+  await updateShootingDayCore(projectId, shootingDayId, {
+    date: new Date(String(formData.get("date") ?? "")),
+    notes: optionalString(formData.get("notes")),
   });
 
   revalidatePath(`/app/${projectId}/plan-de-rodaje`);
@@ -63,9 +49,7 @@ export async function deleteShootingDay(
   const project = await getProjectForCurrentUser(projectId);
   if (!project) return;
 
-  await prisma.shootingDay.deleteMany({
-    where: { id: shootingDayId, projectId },
-  });
+  await deleteShootingDayCore(projectId, shootingDayId);
 
   revalidatePath(`/app/${projectId}/plan-de-rodaje`);
   redirect(`/app/${projectId}/plan-de-rodaje`);
@@ -113,11 +97,6 @@ export async function updateDaySceneAssignments(
   const project = await getProjectForCurrentUser(projectId);
   if (!project) return;
 
-  const day = await prisma.shootingDay.findFirst({
-    where: { id: shootingDayId, projectId },
-  });
-  if (!day) return;
-
   const scenes = await prisma.scene.findMany({
     where: { projectId },
     select: { id: true },
@@ -131,7 +110,6 @@ export async function updateDaySceneAssignments(
       const orderInput = formData.get(`order_${scene.id}`);
       const order = orderInput ? Number(orderInput) : index;
       return {
-        shootingDayId,
         sceneId: scene.id,
         callTime,
         order: Number.isFinite(order) ? order : index,
@@ -139,10 +117,7 @@ export async function updateDaySceneAssignments(
     })
     .filter((a): a is NonNullable<typeof a> => a !== null);
 
-  await prisma.$transaction([
-    prisma.shootingDayScene.deleteMany({ where: { shootingDayId } }),
-    prisma.shootingDayScene.createMany({ data: assignments }),
-  ]);
+  await updateDaySceneAssignmentsCore(projectId, shootingDayId, assignments);
 
   revalidatePath(`/app/${projectId}/plan-de-rodaje/${shootingDayId}`);
   revalidatePath(`/app/${projectId}/call-sheets/${shootingDayId}`);
