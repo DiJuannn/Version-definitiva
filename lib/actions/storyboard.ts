@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { optionalString } from "@/lib/form-utils";
 import { uploadProjectFile } from "@/lib/storage";
+import { createStoryboardFrameCore, deleteStoryboardFrameCore } from "@/lib/storyboard-core";
 
 export async function addStoryboardFrame(
   projectId: string,
@@ -26,14 +27,9 @@ export async function addStoryboardFrame(
     imageUrl = uploaded?.url ?? null;
   }
 
-  const count = await prisma.storyboardFrame.count({ where: { shotId } });
-  await prisma.storyboardFrame.create({
-    data: {
-      shotId,
-      imageUrl,
-      description: optionalString(formData.get("description")),
-      order: count,
-    },
+  await createStoryboardFrameCore(shotId, {
+    imageUrl,
+    description: optionalString(formData.get("description")),
   });
 
   revalidatePath(`/app/${projectId}/storyboard`);
@@ -46,9 +42,7 @@ export async function deleteStoryboardFrame(
   const project = await getProjectForCurrentUser(projectId);
   if (!project) return;
 
-  await prisma.storyboardFrame.deleteMany({
-    where: { id: frameId, shot: { scene: { projectId } } },
-  });
+  await deleteStoryboardFrameCore(projectId, frameId);
 
   revalidatePath(`/app/${projectId}/storyboard`);
 }
