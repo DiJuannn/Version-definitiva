@@ -4,8 +4,13 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getCurrentProfile } from "@/lib/current-user";
 import { optionalDate, optionalString } from "@/lib/form-utils";
-import { logActivity } from "@/lib/activity-log";
-import { TaskPriority, TaskStatus } from "@/lib/generated/prisma";
+import {
+  addTaskCommentCore,
+  createTaskCore,
+  deleteTaskCore,
+  updateTaskCore,
+  updateTaskStatusCore,
+} from "@/lib/tasks-core";
 
 function revalidateTaskPaths(organizationId: string, projectId: string | null) {
   revalidatePath("/app");
@@ -17,9 +22,6 @@ export async function createTask(formData: FormData) {
   const profile = await getCurrentProfile();
   if (!profile) return;
 
-  const title = String(formData.get("title") ?? "").trim();
-  if (!title) return;
-
   const requestedProjectId = optionalString(formData.get("projectId"));
   const project = requestedProjectId
     ? await prisma.project.findFirst({
@@ -27,27 +29,15 @@ export async function createTask(formData: FormData) {
       })
     : null;
 
-  const priorityInput = String(formData.get("priority") ?? "");
-  const priority = (Object.values(TaskPriority) as string[]).includes(priorityInput)
-    ? (priorityInput as TaskPriority)
-    : TaskPriority.MEDIUM;
-
-  await prisma.task.create({
-    data: {
-      organizationId: profile.organizationId,
-      projectId: project?.id,
-      title,
-      description: optionalString(formData.get("description")),
-      assignedTo: optionalString(formData.get("assignedTo")),
-      dueDate: optionalDate(formData.get("dueDate")),
-      priority,
-      category: optionalString(formData.get("category")),
-    },
+  const created = await createTaskCore(profile.organizationId, project?.id ?? null, profile.id, {
+    title: String(formData.get("title") ?? ""),
+    description: optionalString(formData.get("description")),
+    assignedTo: optionalString(formData.get("assignedTo")),
+    dueDate: optionalDate(formData.get("dueDate")),
+    priority: String(formData.get("priority") ?? ""),
+    category: optionalString(formData.get("category")),
   });
-
-  if (project) {
-    await logActivity(project.id, profile.id, `creó la tarea "${title}"`);
-  }
+  if (!created) return;
 
   revalidateTaskPaths(profile.organizationId, project?.id ?? null);
 }
@@ -56,85 +46,56 @@ export async function updateTaskStatus(taskId: string, formData: FormData) {
   const profile = await getCurrentProfile();
   if (!profile) return;
 
-  const task = await prisma.task.findFirst({
-    where: { id: taskId, organizationId: profile.organizationId },
-  });
-  if (!task) return;
-
-  const statusInput = String(formData.get("status") ?? "");
-  if (!(Object.values(TaskStatus) as string[]).includes(statusInput)) return;
-
-  await prisma.task.update({
-    where: { id: taskId },
-    data: { status: statusInput as TaskStatus },
-  });
-
-  if (task.projectId && statusInput === TaskStatus.DONE) {
-    await logActivity(task.projectId, profile.id, `marcó como hecha la tarea "${task.title}"`);
-  }
+  const updated = await updateTaskStatusCore(
+    profile.organizationId,
+    taskId,
+    profile.id,
+    String(formData.get("status") ?? ""),
+  );
+  if (!updated) return;
 
   revalidatePath(`/app/tareas/${taskId}`);
-  revalidateTaskPaths(profile.organizationId, task.projectId);
+  revalidateTaskPaths(profile.organizationId, updated.projectId);
 }
 
 export async function updateTask(taskId: string, formData: FormData) {
   const profile = await getCurrentProfile();
   if (!profile) return;
 
-  const task = await prisma.task.findFirst({
-    where: { id: taskId, organizationId: profile.organizationId },
+  const updated = await updateTaskCore(profile.organizationId, taskId, {
+    title: String(formData.get("title") ?? ""),
+    description: optionalString(formData.get("description")),
+    assignedTo: optionalString(formData.get("assignedTo")),
+    dueDate: optionalDate(formData.get("dueDate")),
+    priority: String(formData.get("priority") ?? ""),
+    category: optionalString(formData.get("category")),
   });
-  if (!task) return;
-
-  const title = String(formData.get("title") ?? "").trim();
-  if (!title) return;
-
-  const priorityInput = String(formData.get("priority") ?? "");
-  const priority = (Object.values(TaskPriority) as string[]).includes(priorityInput)
-    ? (priorityInput as TaskPriority)
-    : task.priority;
-
-  await prisma.task.update({
-    where: { id: taskId },
-    data: {
-      title,
-      description: optionalString(formData.get("description")),
-      assignedTo: optionalString(formData.get("assignedTo")),
-      dueDate: optionalDate(formData.get("dueDate")),
-      priority,
-      category: optionalString(formData.get("category")),
-    },
-  });
+  if (!updated) return;
 
   revalidatePath(`/app/tareas/${taskId}`);
-  revalidateTaskPaths(profile.organizationId, task.projectId);
+  revalidateTaskPaths(profile.organizationId, updated.projectId);
 }
 
 export async function deleteTask(taskId: string) {
   const profile = await getCurrentProfile();
   if (!profile) return;
 
-  const task = await prisma.task.findFirst({
-    where: { id: taskId, organizationId: profile.organizationId },
-  });
-  if (!task) return;
+  const deleted = await deleteTaskCore(profile.organizationId, taskId);
+  if (!deleted) return;
 
-  await prisma.task.delete({ where: { id: taskId } });
-  revalidateTaskPaths(profile.organizationId, task.projectId);
+  revalidateTaskPaths(profile.organizationId, deleted.projectId);
 }
 
 export async function addTaskComment(taskId: string, formData: FormData) {
   const profile = await getCurrentProfile();
   if (!profile) return;
 
-  const task = await prisma.task.findFirst({
-    where: { id: taskId, organizationId: profile.organizationId },
-  });
-  if (!task) return;
+  const created = await addTaskCommentCore(
+    profile.organizationId,
+    taskId,
+    String(formData.get("body") ?? ""),
+  );
+  if (!created) return;
 
-  const body = String(formData.get("body") ?? "").trim();
-  if (!body) return;
-
-  await prisma.taskComment.create({ data: { taskId, body } });
   revalidatePath(`/app/tareas/${taskId}`);
 }
