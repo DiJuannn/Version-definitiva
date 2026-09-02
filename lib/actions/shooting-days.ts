@@ -7,6 +7,7 @@ import { getProjectForCurrentUser } from "@/lib/project-access";
 import { getCurrentProfile } from "@/lib/current-user";
 import { optionalString } from "@/lib/form-utils";
 import { logActivity } from "@/lib/activity-log";
+import { notifyCallSheetChange } from "@/lib/call-sheet-change-alert";
 import {
   createShootingDayCore,
   deleteShootingDayCore,
@@ -45,6 +46,7 @@ export async function updateShootingDay(
     date: new Date(String(formData.get("date") ?? "")),
     notes: optionalString(formData.get("notes")),
   });
+  await notifyCallSheetChange(projectId, shootingDayId);
 
   revalidatePath(`/app/${projectId}/plan-de-rodaje`);
   revalidatePath(`/app/${projectId}/plan-de-rodaje/${shootingDayId}`);
@@ -130,6 +132,7 @@ export async function updateDaySceneAssignments(
 
   const profile = await getCurrentProfile();
   await logActivity(projectId, profile?.id, `actualizó las escenas del plan de rodaje`);
+  await notifyCallSheetChange(projectId, shootingDayId);
 
   revalidatePath(`/app/${projectId}/plan-de-rodaje/${shootingDayId}`);
   revalidatePath(`/app/${projectId}/call-sheets/${shootingDayId}`);

@@ -806,6 +806,11 @@ model Task {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
+  // Idea 4 (plan PRO): cuándo se mandó el recordatorio de fecha límite
+  // cercana — evita mandarlo dos veces si el cron se ejecuta más de una
+  // vez el mismo día.
+  reminderSentAt DateTime?
+
   organization Organization  @relation(fields: [organizationId], references: [id])
   project      Project?      @relation(fields: [projectId], references: [id], onDelete: Cascade)
   shootingDay  ShootingDay?  @relation(fields: [shootingDayId], references: [id], onDelete: Cascade)

@@ -4,6 +4,7 @@ import { getProjectForCurrentUser } from "@/lib/project-access";
 import { getProjectSummary } from "@/lib/project-summary";
 import { isProjectOwnerPro } from "@/lib/project-plan";
 import { PdfLink } from "@/components/PdfLink";
+import { DossierEmailButton } from "@/components/DossierEmailButton";
 import {
   DAY_PART_LABELS,
   INT_EXT_LABELS,
@@ -128,7 +129,10 @@ export default async function ProjectSummaryPage({
       <div className="flex items-center justify-between">
         <BackLink href={`/app/${projectId}`}>← {project.name}</BackLink>
         {isPro ? (
-          <PdfLink href={`/api/pdf/dossier/${projectId}`} label="Descargar dossier" />
+          <div className="flex items-center gap-3">
+            <PdfLink href={`/api/pdf/dossier/${projectId}`} label="Descargar dossier" />
+            <DossierEmailButton projectId={projectId} />
+          </div>
         ) : (
           <Link
             href="/app/organizacion"

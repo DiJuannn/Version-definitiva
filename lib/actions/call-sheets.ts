@@ -5,6 +5,7 @@ import { getProjectForCurrentUser } from "@/lib/project-access";
 import { getCurrentProfile } from "@/lib/current-user";
 import { optionalString } from "@/lib/form-utils";
 import { logActivity } from "@/lib/activity-log";
+import { notifyCallSheetChange } from "@/lib/call-sheet-change-alert";
 import { upsertCallSheetCore } from "@/lib/call-sheets-core";
 
 export async function upsertCallSheet(
@@ -24,6 +25,7 @@ export async function upsertCallSheet(
 
   const profile = await getCurrentProfile();
   await logActivity(projectId, profile?.id, `editó el call sheet`);
+  await notifyCallSheetChange(projectId, shootingDayId);
 
   revalidatePath(`/app/${projectId}/call-sheets/${shootingDayId}`);
   revalidatePath(`/app/${projectId}/call-sheets`);
