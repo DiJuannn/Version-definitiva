@@ -1,15 +1,18 @@
 import { Document, Page, Text, View } from "@react-pdf/renderer";
 import { pdfStyles } from "@/lib/pdf/styles";
-import { PdfHeader, PdfFooter, SectionTitle, rowStyle } from "@/lib/pdf/components";
+import { PdfHeader, PdfFooter, SectionTitle, Watermark, rowStyle } from "@/lib/pdf/components";
 import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
 import type { ShootingDaySummary } from "@/lib/shooting-day-summary";
 
 export function CallSheetDocument({
   projectName,
   summary,
+  watermark,
 }: {
   projectName: string;
   summary: ShootingDaySummary;
+  // Solo en el plan Free — Pro descarga el PDF limpio.
+  watermark?: boolean;
 }) {
   const { shootingDay, sceneAssignments, locations, characters, crewMembers, breakdownElements } =
     summary;
@@ -18,6 +21,7 @@ export function CallSheetDocument({
   return (
     <Document>
       <Page size="A4" style={pdfStyles.page}>
+        {watermark && <Watermark />}
         <PdfHeader
           eyebrow="Call Sheet"
           title={projectName}

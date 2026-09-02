@@ -3,6 +3,7 @@ import { renderToBuffer } from "@react-pdf/renderer";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
 import { getShootingDaySummary } from "@/lib/shooting-day-summary";
+import { isProjectOwnerPro } from "@/lib/project-plan";
 import { CallSheetDocument } from "@/lib/pdf/CallSheetDocument";
 
 export async function GET(
@@ -36,8 +37,10 @@ export async function GET(
     return NextResponse.json({ error: "No encontrado" }, { status: 404 });
   }
 
+  const isPro = await isProjectOwnerPro(project.organizationId);
+
   const buffer = await renderToBuffer(
-    <CallSheetDocument projectName={project.name} summary={summary} />,
+    <CallSheetDocument projectName={project.name} summary={summary} watermark={!isPro} />,
   );
 
   return new NextResponse(new Uint8Array(buffer), {

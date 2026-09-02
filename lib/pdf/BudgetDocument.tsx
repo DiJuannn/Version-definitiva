@@ -1,6 +1,6 @@
 import { Document, Page, Text, View } from "@react-pdf/renderer";
 import { pdfStyles, colors } from "@/lib/pdf/styles";
-import { PdfHeader, PdfFooter, rowStyle } from "@/lib/pdf/components";
+import { PdfHeader, PdfFooter, Watermark, rowStyle } from "@/lib/pdf/components";
 
 function currency(value: number) {
   return value.toLocaleString("es-ES", { style: "currency", currency: "EUR" });
@@ -21,9 +21,12 @@ type BudgetCategoryWithItems = {
 export function BudgetDocument({
   projectName,
   categories,
+  watermark,
 }: {
   projectName: string;
   categories: BudgetCategoryWithItems[];
+  // Solo en el plan Free — Pro descarga el PDF limpio.
+  watermark?: boolean;
 }) {
   const categoriesWithTotals = categories.map((category) => {
     const rows = category.items.map((item) => {
@@ -46,6 +49,7 @@ export function BudgetDocument({
   return (
     <Document>
       <Page size="A4" style={pdfStyles.page}>
+        {watermark && <Watermark />}
         <PdfHeader eyebrow="Presupuesto" title={projectName} />
 
         {categoriesWithTotals.map((category) => {

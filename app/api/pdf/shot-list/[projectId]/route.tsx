@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
+import { isProjectOwnerPro } from "@/lib/project-plan";
 import { ShotListDocument } from "@/lib/pdf/ShotListDocument";
 
 export async function GET(
@@ -21,8 +22,10 @@ export async function GET(
     include: { shots: { orderBy: [{ order: "asc" }, { number: "asc" }] } },
   });
 
+  const isPro = await isProjectOwnerPro(project.organizationId);
+
   const buffer = await renderToBuffer(
-    <ShotListDocument projectName={project.name} scenes={scenes} />,
+    <ShotListDocument projectName={project.name} scenes={scenes} watermark={!isPro} />,
   );
 
   return new NextResponse(new Uint8Array(buffer), {

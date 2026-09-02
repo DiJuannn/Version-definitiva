@@ -1,6 +1,6 @@
 import { Document, Page, Text, View } from "@react-pdf/renderer";
 import { pdfStyles } from "@/lib/pdf/styles";
-import { PdfHeader, PdfFooter, SectionTitle, rowStyle } from "@/lib/pdf/components";
+import { PdfHeader, PdfFooter, SectionTitle, Watermark, rowStyle } from "@/lib/pdf/components";
 import type { Prisma } from "@/lib/generated/prisma";
 
 type SceneWithShots = Prisma.SceneGetPayload<{ include: { shots: true } }>;
@@ -8,13 +8,17 @@ type SceneWithShots = Prisma.SceneGetPayload<{ include: { shots: true } }>;
 export function ShotListDocument({
   projectName,
   scenes,
+  watermark,
 }: {
   projectName: string;
   scenes: SceneWithShots[];
+  // Solo en el plan Free — Pro descarga el PDF limpio.
+  watermark?: boolean;
 }) {
   return (
     <Document>
       <Page size="A4" style={pdfStyles.page}>
+        {watermark && <Watermark />}
         <PdfHeader eyebrow="Shot list" title={projectName} />
 
         {scenes.map((scene) => (
