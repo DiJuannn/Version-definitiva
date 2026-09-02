@@ -1,8 +1,11 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
+import { getCurrentProfile } from "@/lib/current-user";
 import { optionalString } from "@/lib/form-utils";
+import { logActivity } from "@/lib/activity-log";
 import {
   createCharacterCore,
   deleteCharacterCore,
@@ -21,6 +24,9 @@ export async function createCharacter(projectId: string, formData: FormData) {
     actorId: optionalString(formData.get("actorId")),
     notes: optionalString(formData.get("notes")),
   });
+
+  const profile = await getCurrentProfile();
+  await logActivity(projectId, profile?.id, `añadió el personaje ${name}`);
 
   revalidatePath(`/app/${projectId}/personajes`);
 }
@@ -41,6 +47,14 @@ export async function deleteCharacter(projectId: string, characterId: string) {
   const project = await getProjectForCurrentUser(projectId);
   if (!project) return;
 
+  const character = await prisma.character.findFirst({
+    where: { id: characterId, projectId },
+    select: { name: true },
+  });
   await deleteCharacterCore(projectId, characterId);
+
+  const profile = await getCurrentProfile();
+  await logActivity(projectId, profile?.id, `eliminó el personaje ${character?.name ?? ""}`);
+
   revalidatePath(`/app/${projectId}/personajes`);
 }

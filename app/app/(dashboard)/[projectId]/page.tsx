@@ -7,6 +7,7 @@ import { ProjectSummaryCard } from "@/components/ProjectSummaryCard";
 import { ProjectShareButton } from "@/components/ProjectShareButton";
 import { ProjectRoadmap } from "@/components/ProjectRoadmap";
 import { ProjectHealthMini } from "@/components/ProjectHealthMini";
+import { ActivityFeed } from "@/components/ActivityFeed";
 import { DashboardStagger } from "@/components/DashboardMotion";
 import { ToolGroupCarousel } from "@/components/ToolGroupCarousel";
 import { PdfLink } from "@/components/PdfLink";
@@ -35,7 +36,7 @@ export default async function ProjectTallerPage({
   if (!profile) notFound();
   const isOwnerOrg = project.organizationId === profile.organizationId;
 
-  const [ownerLabel, shares, origin] = await Promise.all([
+  const [ownerLabel, shares, origin, activityLogs] = await Promise.all([
     isOwnerOrg ? null : getProjectOwnerLabel(project),
     isOwnerOrg
       ? prisma.projectShare.findMany({
@@ -50,6 +51,17 @@ export default async function ProjectTallerPage({
         })
       : Promise.resolve([]),
     headers().then((h) => h.get("origin") ?? ""),
+    prisma.activityLog.findMany({
+      where: { projectId: project.id },
+      orderBy: { createdAt: "desc" },
+      take: 8,
+      select: {
+        id: true,
+        summary: true,
+        createdAt: true,
+        user: { select: { fullName: true, email: true } },
+      },
+    }),
   ]);
 
   const updateAction = updateProjectDetails.bind(null, project.id);
@@ -153,6 +165,15 @@ export default async function ProjectTallerPage({
       </div>
 
       <ProjectHealthMini metrics={healthMetrics} />
+
+      <ActivityFeed
+        entries={activityLogs.map((log) => ({
+          id: log.id,
+          summary: log.summary,
+          createdAt: log.createdAt,
+          userName: log.user?.fullName ?? log.user?.email ?? null,
+        }))}
+      />
     </div>
   );
 }

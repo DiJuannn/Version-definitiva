@@ -4,7 +4,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
+import { getCurrentProfile } from "@/lib/current-user";
 import { optionalString } from "@/lib/form-utils";
+import { logActivity } from "@/lib/activity-log";
 import {
   createShootingDayCore,
   deleteShootingDayCore,
@@ -19,6 +21,13 @@ export async function createShootingDay(projectId: string, formData: FormData) {
   const date = new Date(String(formData.get("date") ?? ""));
   const result = await createShootingDayCore(projectId, date);
   if (!result) return;
+
+  const profile = await getCurrentProfile();
+  await logActivity(
+    projectId,
+    profile?.id,
+    `añadió un día de rodaje (${date.toLocaleDateString("es-ES")})`,
+  );
 
   revalidatePath(`/app/${projectId}/plan-de-rodaje`);
   redirect(`/app/${projectId}/plan-de-rodaje/${result.id}`);
@@ -118,6 +127,9 @@ export async function updateDaySceneAssignments(
     .filter((a): a is NonNullable<typeof a> => a !== null);
 
   await updateDaySceneAssignmentsCore(projectId, shootingDayId, assignments);
+
+  const profile = await getCurrentProfile();
+  await logActivity(projectId, profile?.id, `actualizó las escenas del plan de rodaje`);
 
   revalidatePath(`/app/${projectId}/plan-de-rodaje/${shootingDayId}`);
   revalidatePath(`/app/${projectId}/call-sheets/${shootingDayId}`);

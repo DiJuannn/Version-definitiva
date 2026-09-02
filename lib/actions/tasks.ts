@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getCurrentProfile } from "@/lib/current-user";
 import { optionalDate, optionalString } from "@/lib/form-utils";
+import { logActivity } from "@/lib/activity-log";
 import { TaskPriority, TaskStatus } from "@/lib/generated/prisma";
 
 function revalidateTaskPaths(organizationId: string, projectId: string | null) {
@@ -44,6 +45,10 @@ export async function createTask(formData: FormData) {
     },
   });
 
+  if (project) {
+    await logActivity(project.id, profile.id, `creó la tarea "${title}"`);
+  }
+
   revalidateTaskPaths(profile.organizationId, project?.id ?? null);
 }
 
@@ -63,6 +68,10 @@ export async function updateTaskStatus(taskId: string, formData: FormData) {
     where: { id: taskId },
     data: { status: statusInput as TaskStatus },
   });
+
+  if (task.projectId && statusInput === TaskStatus.DONE) {
+    await logActivity(task.projectId, profile.id, `marcó como hecha la tarea "${task.title}"`);
+  }
 
   revalidatePath(`/app/tareas/${taskId}`);
   revalidateTaskPaths(profile.organizationId, task.projectId);

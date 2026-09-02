@@ -2,8 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
+import { getCurrentProfile } from "@/lib/current-user";
 import { optionalString } from "@/lib/form-utils";
+import { logActivity } from "@/lib/activity-log";
 import {
   createSceneCore,
   deleteAllScenesCore,
@@ -15,8 +18,12 @@ export async function createScene(projectId: string, formData: FormData) {
   const project = await getProjectForCurrentUser(projectId);
   if (!project) return;
 
-  const scene = await createSceneCore(projectId, String(formData.get("number") ?? ""));
+  const number = String(formData.get("number") ?? "");
+  const scene = await createSceneCore(projectId, number);
   if (!scene) return;
+
+  const profile = await getCurrentProfile();
+  await logActivity(projectId, profile?.id, `creó la escena ${number}`);
 
   revalidatePath(`/app/${projectId}/guion`);
   redirect(`/app/${projectId}/guion/${scene.id}`);
@@ -36,8 +43,10 @@ export async function updateScene(
     breakdownConditions[id] = optionalString(formData.get(`condition_${id}`));
   }
 
+  const number = String(formData.get("number") ?? "");
+
   await updateSceneCore(projectId, sceneId, project.organizationId, {
-    number: String(formData.get("number") ?? ""),
+    number,
     intExt: String(formData.get("intExt") ?? ""),
     dayPart: String(formData.get("dayPart") ?? ""),
     locationId: optionalString(formData.get("locationId")),
@@ -57,6 +66,9 @@ export async function updateScene(
     crewMemberIds: formData.getAll("crewMemberIds").map(String),
   });
 
+  const profile = await getCurrentProfile();
+  await logActivity(projectId, profile?.id, `editó la escena ${number}`);
+
   revalidatePath(`/app/${projectId}/guion`);
   revalidatePath(`/app/${projectId}/guion/${sceneId}`);
   revalidatePath(`/app/${projectId}/desglose`);
@@ -67,7 +79,12 @@ export async function deleteScene(projectId: string, sceneId: string) {
   const project = await getProjectForCurrentUser(projectId);
   if (!project) return;
 
+  const scene = await prisma.scene.findFirst({ where: { id: sceneId, projectId }, select: { number: true } });
   await deleteSceneCore(projectId, sceneId);
+
+  const profile = await getCurrentProfile();
+  await logActivity(projectId, profile?.id, `eliminó la escena ${scene?.number ?? ""}`);
+
   revalidatePath(`/app/${projectId}/guion`);
   redirect(`/app/${projectId}/guion`);
 }

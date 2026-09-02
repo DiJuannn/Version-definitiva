@@ -143,6 +143,7 @@ model User {
   scriptAnalyses   ScriptAnalysis[]
   createdProjects  Project[]
   projectShares    ProjectShare[]
+  activityLogs     ActivityLog[]
 
   @@index([organizationId])
 }
@@ -189,8 +190,27 @@ model Project {
   continuityChecks  ContinuityCheck[]
   clapLogs          ClapLog[]
   shares            ProjectShare[]
+  activityLogs      ActivityLog[]
 
   @@index([organizationId])
+}
+
+// Registro de actividad reciente del proyecto (Función 2, plan Free) —
+// una línea por cada acción relevante que hace un colaborador. `summary`
+// guarda solo la parte de la frase después del nombre (ej. "editó la
+// escena 12"); el nombre y el "hace X" se resuelven al mostrarlo, no al
+// guardarlo, para no tener que reescribir filas antiguas si algo cambia.
+model ActivityLog {
+  id        String   @id @default(cuid())
+  projectId String
+  userId    String?
+  summary   String
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([projectId, createdAt])
 }
 
 // Compartir UN proyecto concreto con una persona, sin darle acceso al
