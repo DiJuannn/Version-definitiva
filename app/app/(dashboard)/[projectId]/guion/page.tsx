@@ -17,7 +17,7 @@ import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
 import { BackLink } from "@/components/BackLink";
 import { FileOpenLink } from "@/components/FileOpenLink";
 import { SubmitButton } from "@/components/SubmitButton";
-import { SCRIPT_ANALYSIS_FREE_LIMIT } from "@/lib/limits";
+import { SCRIPT_ANALYSIS_FREE_DAILY_LIMIT, SCRIPT_ANALYSIS_HOURLY_LIMIT } from "@/lib/limits";
 import { SparkleIcon } from "@/components/ToolIcons";
 
 // El análisis de guion y la revisión de continuidad llaman a Mistral y
@@ -40,41 +40,54 @@ export default async function GuionPage({
   const profile = await getCurrentProfile();
   if (!profile) notFound();
 
-  const [scriptFiles, scenes, pendingAnalyses, pendingContinuityChecks, analysisCount] =
-    await Promise.all([
-      prisma.scriptFile.findMany({
-        where: { projectId },
-        orderBy: { uploadedAt: "desc" },
-      }),
-      prisma.scene.findMany({
-        where: { projectId },
-        orderBy: [{ order: "asc" }, { number: "asc" }],
-        select: {
-          id: true,
-          number: true,
-          intExt: true,
-          dayPart: true,
-          location: { select: { name: true } },
-          _count: { select: { characters: true } },
-        },
-      }),
-      prisma.scriptAnalysis.findMany({
-        where: { projectId, status: "PENDING" },
-        orderBy: { createdAt: "desc" },
-      }),
-      prisma.continuityCheck.findMany({
-        where: { projectId, status: "PENDING" },
-        orderBy: { createdAt: "desc" },
-        include: { _count: { select: { issues: true } } },
-      }),
-      prisma.scriptAnalysis.count({ where: { createdById: profile.id } }),
-    ]);
+  const now = new Date();
+  const hourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+  const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+  const [
+    scriptFiles,
+    scenes,
+    pendingAnalyses,
+    pendingContinuityChecks,
+    analysesLastHour,
+    analysesLastDay,
+  ] = await Promise.all([
+    prisma.scriptFile.findMany({
+      where: { projectId },
+      orderBy: { uploadedAt: "desc" },
+    }),
+    prisma.scene.findMany({
+      where: { projectId },
+      orderBy: [{ order: "asc" }, { number: "asc" }],
+      select: {
+        id: true,
+        number: true,
+        intExt: true,
+        dayPart: true,
+        location: { select: { name: true } },
+        _count: { select: { characters: true } },
+      },
+    }),
+    prisma.scriptAnalysis.findMany({
+      where: { projectId, status: "PENDING" },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.continuityCheck.findMany({
+      where: { projectId, status: "PENDING" },
+      orderBy: { createdAt: "desc" },
+      include: { _count: { select: { issues: true } } },
+    }),
+    prisma.scriptAnalysis.count({ where: { createdById: profile.id, createdAt: { gte: hourAgo } } }),
+    prisma.scriptAnalysis.count({ where: { createdById: profile.id, createdAt: { gte: dayAgo } } }),
+  ]);
 
   const uploadAction = uploadScript.bind(null, projectId);
   const createSceneAction = createScene.bind(null, projectId);
   const runContinuityAction = runContinuityCheck.bind(null, projectId);
   const isPro = profile.organization.plan === "PRO";
-  const analysisLimitReached = !isPro && analysisCount >= SCRIPT_ANALYSIS_FREE_LIMIT;
+  const hourlyLimitReached = analysesLastHour >= SCRIPT_ANALYSIS_HOURLY_LIMIT;
+  const dailyLimitReached = !isPro && analysesLastDay >= SCRIPT_ANALYSIS_FREE_DAILY_LIMIT;
+  const analysisLimitReached = hourlyLimitReached || dailyLimitReached;
 
   return (
     <div>
@@ -132,8 +145,8 @@ export default async function GuionPage({
                     Lee el guion y propone escenas, personajes, localizaciones
                     y atrezzo a partir de él.{" "}
                     {isPro
-                      ? "Sin límite con tu plan PRO."
-                      : `Límite de ${SCRIPT_ANALYSIS_FREE_LIMIT} usos por cuenta, en total entre todos tus proyectos.`}
+                      ? `Hasta ${SCRIPT_ANALYSIS_HOURLY_LIMIT} análisis por hora.`
+                      : `Hasta ${SCRIPT_ANALYSIS_FREE_DAILY_LIMIT} análisis al día (y máximo ${SCRIPT_ANALYSIS_HOURLY_LIMIT} por hora).`}
                   </p>
                 </div>
               </div>
@@ -141,12 +154,17 @@ export default async function GuionPage({
               <div className="mt-4 flex items-center justify-between gap-4 border-t border-line pt-4">
                 {analysisLimitReached ? (
                   <p className="font-mono text-xs text-muted">
-                    Límite de tu cuenta usado ({SCRIPT_ANALYSIS_FREE_LIMIT}/
-                    {SCRIPT_ANALYSIS_FREE_LIMIT}) —{" "}
-                    <Link href="/app/organizacion" className="text-accent hover:underline">
-                      pásate a PRO
-                    </Link>{" "}
-                    para uso ilimitado.
+                    {dailyLimitReached ? (
+                      <>
+                        Límite diario usado ({analysesLastDay}/{SCRIPT_ANALYSIS_FREE_DAILY_LIMIT}) —{" "}
+                        <Link href="/app/organizacion" className="text-accent hover:underline">
+                          pásate a PRO
+                        </Link>{" "}
+                        para analizar más.
+                      </>
+                    ) : (
+                      `Límite de ${SCRIPT_ANALYSIS_HOURLY_LIMIT} análisis por hora alcanzado. Espera un poco e inténtalo de nuevo.`
+                    )}
                   </p>
                 ) : (
                   <>
@@ -159,8 +177,8 @@ export default async function GuionPage({
                     </ActionButtonForm>
                     <span className="font-mono text-[10px] text-muted">
                       {isPro
-                        ? "PRO · sin límite"
-                        : `${analysisCount}/${SCRIPT_ANALYSIS_FREE_LIMIT} usos de tu cuenta`}
+                        ? `${analysesLastHour}/${SCRIPT_ANALYSIS_HOURLY_LIMIT} esta hora`
+                        : `${analysesLastDay}/${SCRIPT_ANALYSIS_FREE_DAILY_LIMIT} hoy`}
                     </span>
                   </>
                 )}

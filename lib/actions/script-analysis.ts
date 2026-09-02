@@ -7,7 +7,7 @@ import { getProjectForCurrentUser } from "@/lib/project-access";
 import { getCurrentProfile } from "@/lib/current-user";
 import { analyzeScriptPdf, type ScriptAnalysisProposal } from "@/lib/mistral";
 import { BreakdownCategory, DayPart, IntExt } from "@/lib/generated/prisma";
-import { SCRIPT_ANALYSIS_FREE_LIMIT } from "@/lib/limits";
+import { SCRIPT_ANALYSIS_FREE_DAILY_LIMIT, SCRIPT_ANALYSIS_HOURLY_LIMIT } from "@/lib/limits";
 
 function cleanText(value: string | undefined | null): string | null {
   const trimmed = (value ?? "").trim();
@@ -36,17 +36,29 @@ export async function analyzeScript(
   });
   if (!scriptFile) return { error: "No se encontró el guion. Recarga la página." };
 
-  // Límite del plan gratuito — por cuenta (por correo), no por proyecto: se
-  // cuentan todos los análisis que ha lanzado este usuario en cualquier
-  // proyecto, se hayan importado o no, porque cada uno supone una llamada
-  // real a la IA. Las organizaciones PRO no tienen límite.
+  // Tope por hora — igual para gratis y PRO, protege la cuota compartida
+  // de tokens/minuto de Mistral de que una sola cuenta la agote lanzando
+  // análisis seguidos (ver lib/limits.ts).
+  const hourAgo = new Date(Date.now() - 60 * 60 * 1000);
+  const analysesLastHour = await prisma.scriptAnalysis.count({
+    where: { createdById: profile.id, createdAt: { gte: hourAgo } },
+  });
+  if (analysesLastHour >= SCRIPT_ANALYSIS_HOURLY_LIMIT) {
+    return {
+      error: `Has lanzado ${SCRIPT_ANALYSIS_HOURLY_LIMIT} análisis en la última hora, que es el máximo. Espera un poco e inténtalo de nuevo.`,
+    };
+  }
+
+  // Tope adicional solo para el plan gratuito, por día — el plan PRO no
+  // tiene este segundo límite, solo el de la hora de arriba.
   if (profile.organization.plan !== "PRO") {
-    const analysisCount = await prisma.scriptAnalysis.count({
-      where: { createdById: profile.id },
+    const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const analysesLastDay = await prisma.scriptAnalysis.count({
+      where: { createdById: profile.id, createdAt: { gte: dayAgo } },
     });
-    if (analysisCount >= SCRIPT_ANALYSIS_FREE_LIMIT) {
+    if (analysesLastDay >= SCRIPT_ANALYSIS_FREE_DAILY_LIMIT) {
       return {
-        error: `Has usado los ${SCRIPT_ANALYSIS_FREE_LIMIT} análisis disponibles en tu cuenta. Pásate a PRO en Organización para tener uso ilimitado.`,
+        error: `Has usado los ${SCRIPT_ANALYSIS_FREE_DAILY_LIMIT} análisis disponibles hoy en el plan gratuito. Pásate a PRO en Organización para analizar más.`,
       };
     }
   }

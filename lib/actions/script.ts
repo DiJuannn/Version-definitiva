@@ -3,7 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
+import { getCurrentProfile } from "@/lib/current-user";
 import { deleteProjectFile, uploadProjectFile } from "@/lib/storage";
+import { countDocumentPages } from "@/lib/document-pages";
+import { SCRIPT_PAGE_LIMIT_FREE, SCRIPT_PAGE_LIMIT_PRO } from "@/lib/limits";
 
 export type UploadScriptState = { error: string } | undefined;
 
@@ -18,9 +21,24 @@ export async function uploadScript(
   const project = await getProjectForCurrentUser(projectId);
   if (!project) return { error: "No tienes acceso a este proyecto." };
 
+  const profile = await getCurrentProfile();
+  if (!profile) return { error: "No tienes acceso a este proyecto." };
+
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {
     return { error: "Selecciona un archivo antes de subir." };
+  }
+
+  const pageLimit =
+    profile.organization.plan === "PRO" ? SCRIPT_PAGE_LIMIT_PRO : SCRIPT_PAGE_LIMIT_FREE;
+  const pageCount = await countDocumentPages(file);
+  if (pageCount !== null && pageCount > pageLimit) {
+    return {
+      error:
+        profile.organization.plan === "PRO"
+          ? `Este guion tiene ${pageCount} páginas — el máximo por análisis es ${pageLimit}.`
+          : `Este guion tiene ${pageCount} páginas — el plan gratuito permite hasta ${pageLimit}. Pásate a PRO para guiones más largos.`,
+    };
   }
 
   const uploaded = await uploadProjectFile(projectId, file);
