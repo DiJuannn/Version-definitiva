@@ -4,22 +4,17 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getCurrentProfile } from "@/lib/current-user";
 import { optionalString } from "@/lib/form-utils";
+import { createVehicleCore, deleteVehicleCore, updateVehicleCore } from "@/lib/vehicles-core";
 
 export async function createVehicle(formData: FormData) {
   const profile = await getCurrentProfile();
   if (!profile) return;
 
-  const name = String(formData.get("name") ?? "").trim();
-  if (!name) return;
-
-  await prisma.vehicle.create({
-    data: {
-      organizationId: profile.organizationId,
-      name,
-      plate: optionalString(formData.get("plate")),
-      type: optionalString(formData.get("type")),
-      notes: optionalString(formData.get("notes")),
-    },
+  await createVehicleCore(profile.organizationId, {
+    name: String(formData.get("name") ?? ""),
+    type: optionalString(formData.get("type")),
+    plate: optionalString(formData.get("plate")),
+    notes: optionalString(formData.get("notes")),
   });
 
   revalidatePath("/app/vehiculos");
@@ -29,17 +24,11 @@ export async function updateVehicle(vehicleId: string, formData: FormData) {
   const profile = await getCurrentProfile();
   if (!profile) return;
 
-  const name = String(formData.get("name") ?? "").trim();
-  if (!name) return;
-
-  await prisma.vehicle.updateMany({
-    where: { id: vehicleId, organizationId: profile.organizationId },
-    data: {
-      name,
-      plate: optionalString(formData.get("plate")),
-      type: optionalString(formData.get("type")),
-      notes: optionalString(formData.get("notes")),
-    },
+  await updateVehicleCore(profile.organizationId, vehicleId, {
+    name: String(formData.get("name") ?? ""),
+    type: optionalString(formData.get("type")),
+    plate: optionalString(formData.get("plate")),
+    notes: optionalString(formData.get("notes")),
   });
 
   revalidatePath("/app/vehiculos");
@@ -49,10 +38,7 @@ export async function deleteVehicle(vehicleId: string) {
   const profile = await getCurrentProfile();
   if (!profile) return;
 
-  await prisma.vehicle.deleteMany({
-    where: { id: vehicleId, organizationId: profile.organizationId },
-  });
-
+  await deleteVehicleCore(profile.organizationId, vehicleId);
   revalidatePath("/app/vehiculos");
 }
 
