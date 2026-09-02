@@ -9,6 +9,7 @@ import { deleteScriptFile, uploadScript } from "@/lib/actions/script";
 import { analyzeScript } from "@/lib/actions/script-analysis";
 import { runContinuityCheck } from "@/lib/actions/continuity";
 import { isProjectOwnerPro } from "@/lib/project-plan";
+import { isPro as isProPlan } from "@/lib/plan";
 import { DeleteButton } from "@/components/DeleteButton";
 import { HelpTip } from "@/components/HelpTip";
 import { EmptyState } from "@/components/EmptyState";
@@ -76,7 +77,7 @@ export default async function GuionPage({
   const uploadAction = uploadScript.bind(null, projectId);
   const createSceneAction = createScene.bind(null, projectId);
   const runContinuityAction = runContinuityCheck.bind(null, projectId);
-  const isPro = profile.organization.plan === "PRO";
+  const isPro = isProPlan(profile.organization.plan);
   const isProjectPro = await isProjectOwnerPro(project.organizationId);
 
   return (

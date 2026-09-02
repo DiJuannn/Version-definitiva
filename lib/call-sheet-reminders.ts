@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getResendClient } from "@/lib/email/resend-client";
 import { buildCallSheetEmailHtml, getCallSheetEmailData } from "@/lib/email/call-sheet-email";
+import { isPro } from "@/lib/plan";
 
 // Función 1 (plan PRO): manda un recordatorio con el call sheet del día
 // siguiente al equipo técnico de cada rodaje planificado para mañana —
@@ -32,7 +33,7 @@ export async function sendCallSheetReminders(): Promise<{
 
   for (const shootingDay of shootingDays) {
     // Solo PRO — en Free, el call sheet se sigue compartiendo a mano.
-    if (shootingDay.project.organization.plan === "PRO") {
+    if (isPro(shootingDay.project.organization.plan)) {
       const data = await getCallSheetEmailData(shootingDay.id);
 
       if (data && data.crewEmails.length > 0) {

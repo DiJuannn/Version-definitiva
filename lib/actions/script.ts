@@ -7,6 +7,7 @@ import { getCurrentProfile } from "@/lib/current-user";
 import { deleteProjectFile, uploadProjectFile } from "@/lib/storage";
 import { countDocumentPages } from "@/lib/document-pages";
 import { SCRIPT_PAGE_LIMIT_FREE, SCRIPT_PAGE_LIMIT_PRO } from "@/lib/limits";
+import { isPro } from "@/lib/plan";
 
 export type UploadScriptState = { error: string } | undefined;
 
@@ -29,15 +30,14 @@ export async function uploadScript(
     return { error: "Selecciona un archivo antes de subir." };
   }
 
-  const pageLimit =
-    profile.organization.plan === "PRO" ? SCRIPT_PAGE_LIMIT_PRO : SCRIPT_PAGE_LIMIT_FREE;
+  const orgIsPro = isPro(profile.organization.plan);
+  const pageLimit = orgIsPro ? SCRIPT_PAGE_LIMIT_PRO : SCRIPT_PAGE_LIMIT_FREE;
   const pageCount = await countDocumentPages(file);
   if (pageCount !== null && pageCount > pageLimit) {
     return {
-      error:
-        profile.organization.plan === "PRO"
-          ? `Este guion tiene ${pageCount} páginas — el máximo por análisis es ${pageLimit}.`
-          : `Este guion tiene ${pageCount} páginas — el plan gratuito permite hasta ${pageLimit}. Pásate a PRO para guiones más largos.`,
+      error: orgIsPro
+        ? `Este guion tiene ${pageCount} páginas — el máximo por análisis es ${pageLimit}.`
+        : `Este guion tiene ${pageCount} páginas — el plan gratuito permite hasta ${pageLimit}. Pásate a PRO para guiones más largos.`,
     };
   }
 

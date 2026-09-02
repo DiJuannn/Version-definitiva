@@ -5,6 +5,7 @@ import { AjoloteLogo } from "@/components/AjoloteLogo";
 import { DashboardNav } from "@/components/DashboardNav";
 import { signOut } from "@/lib/actions/auth";
 import { getCurrentProfile } from "@/lib/current-user";
+import { isPro } from "@/lib/plan";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -57,12 +58,12 @@ export default async function DashboardLayout({
               <Link
                 href="/app/organizacion"
                 className={
-                  profile.organization.plan === "PRO"
+                  isPro(profile.organization.plan)
                     ? "shrink-0 rounded-full bg-accent px-2.5 py-1 font-mono text-[10px] tracking-widest text-bg uppercase"
                     : "shrink-0 rounded-full border border-accent px-2.5 py-1 font-mono text-[10px] tracking-widest text-accent uppercase transition-colors hover:bg-accent hover:text-bg"
                 }
               >
-                {profile.organization.plan === "PRO" ? "PRO" : "Hazte PRO"}
+                {isPro(profile.organization.plan) ? "PRO" : "Hazte PRO"}
               </Link>
             )}
             <span className="hidden sm:inline">{profile?.email}</span>

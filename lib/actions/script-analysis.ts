@@ -15,6 +15,7 @@ import {
 } from "@/lib/limits";
 import { checkScriptAnalysisRateLimit, formatWait } from "@/lib/script-analysis-rate-limit";
 import { MistralBusyError, withMistralSlot } from "@/lib/mistral-concurrency";
+import { isPro as isProPlan } from "@/lib/plan";
 import * as Sentry from "@sentry/nextjs";
 
 function cleanText(value: string | undefined | null): string | null {
@@ -44,7 +45,7 @@ export async function analyzeScript(
   });
   if (!scriptFile) return { error: "No se encontró el guion. Recarga la página." };
 
-  const isPro = profile.organization.plan === "PRO";
+  const isPro = isProPlan(profile.organization.plan);
 
   // Tope de por vida solo para el plan gratuito — es una prueba del
   // producto, no una herramienta de uso habitual. Sin tiempo de espera:

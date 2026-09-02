@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { isPro, PRO_PLANS } from "@/lib/plan";
 import {
   SCRIPT_ANALYSIS_FREE_DAILY_LIMIT,
   SCRIPT_ANALYSIS_FREE_LIFETIME_LIMIT,
@@ -9,9 +10,12 @@ import {
 // Precios actuales del plan PRO (Lemon Squeezy) — no guardamos qué
 // variante (mensual/anual) eligió cada organización, así que el
 // ingreso mensual recurrente se muestra como rango entre los dos
-// precios en vez de una cifra falsamente exacta.
+// precios en vez de una cifra falsamente exacta. El pago único (PRO
+// para siempre, 120€) no es recurrente, así que no entra en el MRR —
+// se cuenta aparte como ingreso puntual.
 const PRICE_MONTHLY = 6.99;
 const PRICE_YEARLY_MONTHLY_EQUIVALENT = 69.99 / 12;
+const PRICE_LIFETIME = 120;
 
 function currency(value: number) {
   return value.toLocaleString("es-ES", { style: "currency", currency: "EUR" });
@@ -56,7 +60,7 @@ export default async function AdminMetricsPage() {
     prisma.organization.groupBy({ by: ["plan"], _count: true }),
     Promise.all([
       prisma.user.count({ where: { organization: { plan: "FREE" } } }),
-      prisma.user.count({ where: { organization: { plan: "PRO" } } }),
+      prisma.user.count({ where: { organization: { plan: { in: PRO_PLANS } } } }),
     ]),
     Promise.all([
       prisma.scene.count(),
@@ -99,11 +103,16 @@ export default async function AdminMetricsPage() {
   ]);
 
   const freeOrgs = orgsByPlan.find((o) => o.plan === "FREE")?._count ?? 0;
-  const proOrgs = orgsByPlan.find((o) => o.plan === "PRO")?._count ?? 0;
+  const subscriptionProOrgs = orgsByPlan.find((o) => o.plan === "PRO")?._count ?? 0;
+  const lifetimeOrgs = orgsByPlan.find((o) => o.plan === "PRO_LIFETIME")?._count ?? 0;
+  const proOrgs = subscriptionProOrgs + lifetimeOrgs;
   const [freeUsers, proUsers] = usersByPlan;
 
-  const mrrLow = proOrgs * PRICE_YEARLY_MONTHLY_EQUIVALENT;
-  const mrrHigh = proOrgs * PRICE_MONTHLY;
+  // Solo las suscripciones (mensual/anual) generan ingreso recurrente — el
+  // pago único ya se cobró una vez y no vuelve a sumar cada mes.
+  const mrrLow = subscriptionProOrgs * PRICE_YEARLY_MONTHLY_EQUIVALENT;
+  const mrrHigh = subscriptionProOrgs * PRICE_MONTHLY;
+  const lifetimeRevenue = lifetimeOrgs * PRICE_LIFETIME;
 
   const [
     scenes,
@@ -160,12 +169,12 @@ export default async function AdminMetricsPage() {
       const hourly = hourlyByUser.get(u.id) ?? 0;
       const daily = dailyByUser.get(u.id) ?? 0;
       const lifetime = lifetimeByUser.get(u.id) ?? 0;
-      const isPro = u.organization.plan === "PRO";
-      const dailyLimit = isPro ? SCRIPT_ANALYSIS_PRO_DAILY_LIMIT : SCRIPT_ANALYSIS_FREE_DAILY_LIMIT;
+      const userIsPro = isPro(u.organization.plan);
+      const dailyLimit = userIsPro ? SCRIPT_ANALYSIS_PRO_DAILY_LIMIT : SCRIPT_ANALYSIS_FREE_DAILY_LIMIT;
       const flags: string[] = [];
       if (hourly >= SCRIPT_ANALYSIS_HOURLY_LIMIT) flags.push(`${hourly}/${SCRIPT_ANALYSIS_HOURLY_LIMIT} esta hora`);
       if (daily >= dailyLimit) flags.push(`${daily}/${dailyLimit} hoy`);
-      if (!isPro && lifetime >= SCRIPT_ANALYSIS_FREE_LIFETIME_LIMIT) {
+      if (!userIsPro && lifetime >= SCRIPT_ANALYSIS_FREE_LIFETIME_LIMIT) {
         flags.push(`${lifetime}/${SCRIPT_ANALYSIS_FREE_LIFETIME_LIMIT} de por vida`);
       }
       return { email: u.email, plan: u.organization.plan, hourly, daily, lifetime, flags };
@@ -197,6 +206,11 @@ export default async function AdminMetricsPage() {
           <p className="mt-1 font-mono text-xs text-muted">
             {freeUsers} usuarios en Free · {proUsers} en PRO
           </p>
+          {lifetimeOrgs > 0 && (
+            <p className="mt-1 font-mono text-xs text-muted">
+              {subscriptionProOrgs} PRO por suscripción · {lifetimeOrgs} PRO de pago único
+            </p>
+          )}
         </div>
         <div className="border border-accent p-5">
           <p className="font-mono text-[10px] tracking-widest text-accent uppercase">
@@ -206,8 +220,15 @@ export default async function AdminMetricsPage() {
             {currency(mrrLow)} – {currency(mrrHigh)}
           </p>
           <p className="mt-1 font-mono text-xs text-muted">
-            {proOrgs} organizaciones PRO · rango según mensual (6,99€) o anual (69,99€/año) — no
-            distinguimos cuál eligió cada una.
+            {subscriptionProOrgs} organizaciones PRO por suscripción · rango según mensual (6,99€)
+            o anual (69,99€/año) — no distinguimos cuál eligió cada una.
+            {lifetimeOrgs > 0 && (
+              <>
+                {" "}
+                Además, {currency(lifetimeRevenue)} en pagos únicos ({lifetimeOrgs} × 120€, no
+                recurrente).
+              </>
+            )}
           </p>
         </div>
       </section>
@@ -259,7 +280,7 @@ export default async function AdminMetricsPage() {
               >
                 <span className="font-mono text-sm">
                   {u.email}{" "}
-                  <span className="text-muted">({u.plan === "PRO" ? "PRO" : "Gratis"})</span>
+                  <span className="text-muted">({isPro(u.plan) ? "PRO" : "Gratis"})</span>
                 </span>
                 <span className="font-mono text-xs text-accent">{u.flags.join(" · ")}</span>
               </div>
@@ -281,7 +302,7 @@ export default async function AdminMetricsPage() {
               <div key={u.id} className="border-b border-line py-3">
                 <p className="font-mono text-sm">{u.fullName || u.email}</p>
                 <p className="mt-0.5 font-mono text-xs text-muted">
-                  {u.organization.name} · {u.organization.plan === "PRO" ? "PRO" : "Gratis"} ·{" "}
+                  {u.organization.name} · {isPro(u.organization.plan) ? "PRO" : "Gratis"} ·{" "}
                   {u.createdAt.toLocaleDateString("es-ES")}
                 </p>
               </div>

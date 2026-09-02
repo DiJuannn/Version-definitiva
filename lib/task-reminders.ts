@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getResendClient, escapeHtml } from "@/lib/email/resend-client";
+import { isPro } from "@/lib/plan";
 
 const PRIORITY_LABELS: Record<string, string> = {
   LOW: "Baja",
@@ -68,7 +69,7 @@ export async function sendTaskReminders(): Promise<{ processed: number; emailsSe
   for (const task of tasks) {
     const assignedTo = task.assignedTo?.trim();
 
-    if (task.organization.plan === "PRO" && assignedTo && looksLikeEmail(assignedTo)) {
+    if (isPro(task.organization.plan) && assignedTo && looksLikeEmail(assignedTo)) {
       const html = buildTaskReminderHtml({
         title: task.title,
         description: task.description,

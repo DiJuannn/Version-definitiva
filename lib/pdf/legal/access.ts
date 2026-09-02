@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser, getProjectForProfile } from "@/lib/project-access";
+import { isPro } from "@/lib/plan";
 import type { Profile } from "@/lib/current-user";
 
 // Comprobación compartida por las 5 rutas de documentos legales: acceso
@@ -27,7 +28,7 @@ async function checkPlanAndBuildContext(project: { id: string; name: string; org
     where: { id: project.organizationId },
     select: { name: true, plan: true },
   });
-  if (org?.plan !== "PRO") {
+  if (!org || !isPro(org.plan)) {
     return {
       error: "Los documentos legales son una función de PRO." as const,
       status: 403 as const,

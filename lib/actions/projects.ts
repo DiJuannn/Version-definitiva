@@ -6,6 +6,7 @@ import { getCurrentProfile } from "@/lib/current-user";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { deleteProjectCore } from "@/lib/project-delete-core";
 import { createProjectCore } from "@/lib/projects-core";
+import { isPro } from "@/lib/plan";
 
 export type CreateProjectState = { error: string } | undefined;
 
@@ -20,7 +21,7 @@ export async function createProject(
     profile.organizationId,
     profile.id,
     String(formData.get("name") ?? ""),
-    profile.organization.plan === "PRO",
+    isPro(profile.organization.plan),
   );
   if ("error" in result) return result;
 
@@ -44,7 +45,7 @@ async function createProjectAndOpenPath(
     profile.organizationId,
     profile.id,
     String(formData.get("name") ?? ""),
-    profile.organization.plan === "PRO",
+    isPro(profile.organization.plan),
   );
   if ("error" in result) return result;
 

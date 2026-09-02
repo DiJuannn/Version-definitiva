@@ -10,6 +10,7 @@ import { FeatureIntro } from "@/components/FeatureIntro";
 import { SubmitButton } from "@/components/SubmitButton";
 import { InviteForm } from "@/components/InviteForm";
 import { getCheckoutUrls, buildCheckoutUrl } from "@/lib/lemonsqueezy";
+import { isPro } from "@/lib/plan";
 import {
   FREE_ACTIVE_PROJECTS_LIMIT,
   FREE_PROJECT_COLLABORATORS_LIMIT,
@@ -81,16 +82,16 @@ export default async function OrganizacionPage() {
           </p>
           <span
             className={`rounded-full px-3 py-1 font-mono text-[10px] tracking-widest uppercase ${
-              profile.organization.plan === "PRO"
+              isPro(profile.organization.plan)
                 ? "bg-accent text-bg"
                 : "border border-line text-muted"
             }`}
           >
-            {profile.organization.plan === "PRO" ? "PRO" : "Gratis"}
+            {isPro(profile.organization.plan) ? "PRO" : "Gratis"}
           </span>
         </div>
 
-        {profile.organization.plan === "PRO" ? (
+        {isPro(profile.organization.plan) ? (
           <ul className="mt-4 space-y-1.5 font-mono text-xs text-muted">
             {PRO_FEATURES.map((feature) => (
               <li key={feature} className="flex gap-2">
@@ -130,7 +131,11 @@ export default async function OrganizacionPage() {
               </div>
             </div>
             {checkoutUrls ? (
-              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              <div
+                className={`mt-5 grid gap-4 ${
+                  checkoutUrls.lifetime ? "sm:grid-cols-3" : "sm:grid-cols-2"
+                }`}
+              >
                 <div className="border border-line p-4">
                   <p className="font-display text-2xl font-bold">
                     6,99€
@@ -170,6 +175,30 @@ export default async function OrganizacionPage() {
                     Pasarme a PRO
                   </a>
                 </div>
+                {checkoutUrls.lifetime && (
+                  <div className="border border-line p-4">
+                    <p className="font-display text-2xl font-bold">
+                      120€
+                      <span className="font-mono text-xs font-normal text-muted">
+                        {" "}
+                        pago único
+                      </span>
+                    </p>
+                    <p className="mt-1 font-mono text-[10px] tracking-widest text-muted uppercase">
+                      Para siempre, sin renovaciones
+                    </p>
+                    <a
+                      href={buildCheckoutUrl(
+                        checkoutUrls.lifetime,
+                        profile.organizationId,
+                        profile.email,
+                      )}
+                      className="mt-3 inline-block rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+                    >
+                      Pasarme a PRO
+                    </a>
+                  </div>
+                )}
               </div>
             ) : (
               <p className="mt-4 font-mono text-xs text-muted">

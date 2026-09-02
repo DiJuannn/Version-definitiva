@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getMobileProfile } from "@/lib/mobile-auth";
 import { listProjectsForProfile } from "@/lib/project-access";
 import { createProjectCore } from "@/lib/projects-core";
+import { isPro } from "@/lib/plan";
 import { CORS_HEADERS } from "@/lib/mobile-cors";
 
 export function OPTIONS() {
@@ -56,7 +57,7 @@ export async function POST(request: Request) {
     profile.organizationId,
     profile.id,
     String(body?.name ?? ""),
-    profile.organization.plan === "PRO",
+    isPro(profile.organization.plan),
   );
   if ("error" in result) {
     return NextResponse.json({ error: result.error }, { status: 400, headers: CORS_HEADERS });

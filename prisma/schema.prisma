@@ -15,6 +15,12 @@ datasource db {
 enum OrganizationPlan {
   FREE
   PRO
+  // Pago único, no recurrente — se ve exactamente igual que PRO en toda
+  // la web (mismo badge "PRO", mismos límites), pero el webhook de Lemon
+  // Squeezy nunca lo toca al procesar avisos de suscripciones canceladas,
+  // porque no es una suscripción. Ver lib/plan.ts (isPro) — todo el
+  // código que comprueba "¿es de pago?" trata PRO y PRO_LIFETIME igual.
+  PRO_LIFETIME
 }
 
 model Organization {

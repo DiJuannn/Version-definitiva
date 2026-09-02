@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getCurrentProfile } from "@/lib/current-user";
 import { FREE_PROJECT_COLLABORATORS_LIMIT } from "@/lib/limits";
+import { isPro } from "@/lib/plan";
 
 export type CreateProjectShareState = { error: string } | undefined;
 
@@ -33,7 +34,7 @@ export async function createProjectShare(
   const profile = await requireOwningOrg(projectId);
   if (!profile) return { error: "No tienes acceso a este proyecto." };
 
-  if (profile.organization.plan !== "PRO") {
+  if (!isPro(profile.organization.plan)) {
     const count = await prisma.projectShare.count({ where: { projectId } });
     if (count >= FREE_PROJECT_COLLABORATORS_LIMIT) {
       return {

@@ -1,14 +1,17 @@
 import { createHmac, timingSafeEqual } from "crypto";
 
-// Los dos enlaces de checkout se pegan tal cual desde Lemon Squeezy (Store >
+// Los enlaces de checkout se pegan tal cual desde Lemon Squeezy (Store >
 // Products > variante > "Copy checkout URL") — no hace falta construirlos a
-// mano. Si no están configurados todavía, la sección de precios se oculta
-// sola en vez de mostrar un botón roto.
+// mano. Si las dos suscripciones no están configuradas todavía, la sección
+// de precios se oculta sola en vez de mostrar un botón roto. El pago único
+// (lifetime) es opcional aparte: puede activarse más tarde sin tocar nada
+// de las suscripciones.
 export function getCheckoutUrls() {
   const monthly = process.env.LEMONSQUEEZY_CHECKOUT_URL_MONTHLY;
   const yearly = process.env.LEMONSQUEEZY_CHECKOUT_URL_YEARLY;
   if (!monthly || !yearly) return null;
-  return { monthly, yearly };
+  const lifetime = process.env.LEMONSQUEEZY_CHECKOUT_URL_LIFETIME ?? null;
+  return { monthly, yearly, lifetime };
 }
 
 // Añade el email y el id de la organización al enlace de checkout — Lemon

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { isPro } from "@/lib/plan";
 
 // El plan que manda para las funciones de un proyecto es el de la
 // organización DUEÑA de ese proyecto (project.organizationId) — no el
@@ -10,5 +11,5 @@ export async function isProjectOwnerPro(organizationId: string): Promise<boolean
     where: { id: organizationId },
     select: { plan: true },
   });
-  return org?.plan === "PRO";
+  return org ? isPro(org.plan) : false;
 }
