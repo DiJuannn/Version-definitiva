@@ -11,12 +11,30 @@ import { SubmitButton } from "@/components/SubmitButton";
 import { InviteForm } from "@/components/InviteForm";
 import { getCheckoutUrls, buildCheckoutUrl } from "@/lib/lemonsqueezy";
 import {
+  FREE_ACTIVE_PROJECTS_LIMIT,
+  FREE_PROJECT_COLLABORATORS_LIMIT,
   SCRIPT_ANALYSIS_FREE_DAILY_LIMIT,
   SCRIPT_ANALYSIS_FREE_LIFETIME_LIMIT,
   SCRIPT_ANALYSIS_PRO_DAILY_LIMIT,
   SCRIPT_PAGE_LIMIT_FREE,
   SCRIPT_PAGE_LIMIT_PRO,
 } from "@/lib/limits";
+
+const FREE_FEATURES = [
+  `Hasta ${FREE_ACTIVE_PROJECTS_LIMIT} proyectos activos`,
+  `Hasta ${FREE_PROJECT_COLLABORATORS_LIMIT} colaboradores por proyecto`,
+  `Guiones de hasta ${SCRIPT_PAGE_LIMIT_FREE} páginas`,
+  `${SCRIPT_ANALYSIS_FREE_DAILY_LIMIT} análisis de IA al día, ${SCRIPT_ANALYSIS_FREE_LIFETIME_LIMIT} en total`,
+];
+
+const PRO_FEATURES = [
+  "Proyectos y colaboradores ilimitados",
+  `Guiones de hasta ${SCRIPT_PAGE_LIMIT_PRO} páginas`,
+  `Hasta ${SCRIPT_ANALYSIS_PRO_DAILY_LIMIT} análisis de IA al día`,
+  "Dossier completo del proyecto en PDF",
+  "Detector de continuidad con IA",
+  "Documentos legales listos para firmar (permiso de rodaje, cesión de imagen, contrato de colaboración, autorización de menor, NDA)",
+];
 
 const ROLE_LABELS = { ADMIN: "Admin", MEMBER: "Miembro" } as const;
 
@@ -73,25 +91,49 @@ export default async function OrganizacionPage() {
         </div>
 
         {profile.organization.plan === "PRO" ? (
-          <p className="mt-3 font-mono text-xs text-muted">
-            Guiones de hasta {SCRIPT_PAGE_LIMIT_PRO} páginas, hasta{" "}
-            {SCRIPT_ANALYSIS_PRO_DAILY_LIMIT} análisis al día por cuenta, en
-            todos los proyectos de la organización.
-          </p>
+          <ul className="mt-4 space-y-1.5 font-mono text-xs text-muted">
+            {PRO_FEATURES.map((feature) => (
+              <li key={feature} className="flex gap-2">
+                <span className="text-accent">✓</span>
+                {feature}
+              </li>
+            ))}
+          </ul>
         ) : (
           <>
-            <p className="mt-3 font-mono text-xs text-muted">
-              El plan gratuito incluye guiones de hasta {SCRIPT_PAGE_LIMIT_FREE}{" "}
-              páginas, {SCRIPT_ANALYSIS_FREE_DAILY_LIMIT} análisis al día y{" "}
-              {SCRIPT_ANALYSIS_FREE_LIFETIME_LIMIT} en total por cuenta. Con
-              PRO, guiones de hasta {SCRIPT_PAGE_LIMIT_PRO} páginas y hasta{" "}
-              {SCRIPT_ANALYSIS_PRO_DAILY_LIMIT} análisis al día.
-            </p>
+            <div className="mt-4 grid gap-6 sm:grid-cols-2">
+              <div>
+                <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                  Tu plan — Gratis
+                </p>
+                <ul className="mt-2 space-y-1.5 font-mono text-xs text-muted">
+                  {FREE_FEATURES.map((feature) => (
+                    <li key={feature} className="flex gap-2">
+                      <span>·</span>
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <p className="font-mono text-[10px] tracking-widest text-accent uppercase">
+                  Con PRO
+                </p>
+                <ul className="mt-2 space-y-1.5 font-mono text-xs text-muted">
+                  {PRO_FEATURES.map((feature) => (
+                    <li key={feature} className="flex gap-2">
+                      <span className="text-accent">✓</span>
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
             {checkoutUrls ? (
               <div className="mt-5 grid gap-4 sm:grid-cols-2">
                 <div className="border border-line p-4">
                   <p className="font-display text-2xl font-bold">
-                    4,99€
+                    6,99€
                     <span className="font-mono text-xs font-normal text-muted">
                       /mes
                     </span>
@@ -109,7 +151,7 @@ export default async function OrganizacionPage() {
                 </div>
                 <div className="border border-accent p-4">
                   <p className="font-display text-2xl font-bold">
-                    49,99€
+                    69,99€
                     <span className="font-mono text-xs font-normal text-muted">
                       /año
                     </span>
