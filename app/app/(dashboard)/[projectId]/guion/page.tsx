@@ -8,6 +8,7 @@ import { DangerConfirmButton } from "@/components/DangerConfirmButton";
 import { deleteScriptFile, uploadScript } from "@/lib/actions/script";
 import { analyzeScript } from "@/lib/actions/script-analysis";
 import { runContinuityCheck } from "@/lib/actions/continuity";
+import { isProjectOwnerPro } from "@/lib/project-plan";
 import { DeleteButton } from "@/components/DeleteButton";
 import { HelpTip } from "@/components/HelpTip";
 import { EmptyState } from "@/components/EmptyState";
@@ -76,6 +77,7 @@ export default async function GuionPage({
   const createSceneAction = createScene.bind(null, projectId);
   const runContinuityAction = runContinuityCheck.bind(null, projectId);
   const isPro = profile.organization.plan === "PRO";
+  const isProjectPro = await isProjectOwnerPro(project.organizationId);
 
   return (
     <div>
@@ -259,13 +261,22 @@ export default async function GuionPage({
           u otros detalles.
         </p>
         <div className="mt-4">
-          <ActionButtonForm
-            action={runContinuityAction}
-            pendingLabel="Revisando…"
-            className="rounded-full border border-accent px-4 py-1.5 font-mono text-xs tracking-widest text-accent uppercase transition-colors hover:bg-accent hover:text-bg disabled:opacity-50"
-          >
-            Revisar continuidad
-          </ActionButtonForm>
+          {isProjectPro ? (
+            <ActionButtonForm
+              action={runContinuityAction}
+              pendingLabel="Revisando…"
+              className="rounded-full border border-accent px-4 py-1.5 font-mono text-xs tracking-widest text-accent uppercase transition-colors hover:bg-accent hover:text-bg disabled:opacity-50"
+            >
+              Revisar continuidad
+            </ActionButtonForm>
+          ) : (
+            <Link
+              href="/app/organizacion"
+              className="inline-flex rounded-full border border-line px-4 py-1.5 font-mono text-xs tracking-widest uppercase text-muted transition-colors hover:border-accent hover:text-accent"
+            >
+              Revisar continuidad — solo PRO
+            </Link>
+          )}
         </div>
 
         {pendingContinuityChecks.length > 0 && (

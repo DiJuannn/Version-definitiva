@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import { createProjectShare, revokeProjectShare } from "@/lib/actions/project-shares";
 import { CopyLinkButton } from "@/components/CopyLinkButton";
 import { DeleteButton } from "@/components/DeleteButton";
@@ -30,6 +30,10 @@ export function ProjectShareButton({
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   useClickOutside(containerRef, open, () => setOpen(false));
+  const [shareState, createShareAction] = useActionState(
+    createProjectShare.bind(null, projectId),
+    undefined,
+  );
 
   return (
     <div ref={containerRef} className="relative">
@@ -51,7 +55,7 @@ export function ProjectShareButton({
             <p className="font-mono text-[10px] tracking-widest text-accent uppercase">
               Compartir proyecto
             </p>
-            <form action={createProjectShare.bind(null, projectId)}>
+            <form action={createShareAction}>
               <SubmitButton
                 pendingLabel="Generando…"
                 className="font-mono text-[10px] tracking-widest text-muted uppercase hover:text-accent"
@@ -64,6 +68,9 @@ export function ProjectShareButton({
             Quien entre con este enlace verá y podrá editar solo este
             proyecto — no el resto de tu organización.
           </p>
+          {shareState?.error && (
+            <p className="mt-2 font-mono text-[11px] text-accent">{shareState.error}</p>
+          )}
 
           {shares.length > 0 && (
             <div className="mt-4 divide-y divide-line border-t border-line">

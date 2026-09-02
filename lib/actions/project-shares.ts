@@ -4,6 +4,9 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getCurrentProfile } from "@/lib/current-user";
+import { FREE_PROJECT_COLLABORATORS_LIMIT } from "@/lib/limits";
+
+export type CreateProjectShareState = { error: string } | undefined;
 
 // Solo la organización dueña del proyecto puede generar o revocar enlaces
 // para compartirlo — alguien que ya tiene acceso solo por un enlace
@@ -19,12 +22,29 @@ async function requireOwningOrg(projectId: string) {
   return project ? profile : null;
 }
 
-export async function createProjectShare(projectId: string) {
+export async function createProjectShare(
+  projectId: string,
+  // Firma exigida por useActionState (prevState, formData), sin usarlos.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _prevState: CreateProjectShareState,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _formData: FormData,
+): Promise<CreateProjectShareState> {
   const profile = await requireOwningOrg(projectId);
-  if (!profile) return;
+  if (!profile) return { error: "No tienes acceso a este proyecto." };
+
+  if (profile.organization.plan !== "PRO") {
+    const count = await prisma.projectShare.count({ where: { projectId } });
+    if (count >= FREE_PROJECT_COLLABORATORS_LIMIT) {
+      return {
+        error: `El plan gratuito permite hasta ${FREE_PROJECT_COLLABORATORS_LIMIT} colaboradores por proyecto. Pásate a PRO para invitar a más gente.`,
+      };
+    }
+  }
 
   await prisma.projectShare.create({ data: { projectId } });
   revalidatePath(`/app/${projectId}`);
+  return undefined;
 }
 
 export async function revokeProjectShare(projectId: string, shareId: string) {

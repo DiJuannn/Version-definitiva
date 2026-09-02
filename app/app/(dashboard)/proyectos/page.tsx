@@ -5,7 +5,7 @@ import { listProjectsForProfile } from "@/lib/project-access";
 import { StatusPill } from "@/components/StatusPill";
 import { EmptyState } from "@/components/EmptyState";
 import { DeleteProjectButton } from "@/components/DeleteProjectButton";
-import { SubmitButton } from "@/components/SubmitButton";
+import { CreateProjectForm } from "@/components/CreateProjectForm";
 import { BackLink } from "@/components/BackLink";
 
 export default async function ProyectosPage() {
@@ -23,20 +23,14 @@ export default async function ProyectosPage() {
         Elige un proyecto para abrir su Taller, o crea uno nuevo.
       </p>
 
-      <form action={createProject} className="mt-6 flex max-w-md gap-2">
-        <input
-          name="name"
-          placeholder="Nombre del proyecto"
-          required
-          className="w-full border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+      <div className="mt-6 max-w-md">
+        <CreateProjectForm
+          action={createProject}
+          formClassName="flex gap-2"
+          inputClassName="w-full border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+          buttonClassName="shrink-0 rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90 disabled:opacity-70"
         />
-        <SubmitButton
-          pendingLabel="Creando…"
-          className="shrink-0 rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90 disabled:opacity-70"
-        >
-          Crear
-        </SubmitButton>
-      </form>
+      </div>
 
       {projects.length === 0 ? (
         <EmptyState

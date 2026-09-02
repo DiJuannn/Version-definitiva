@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { getProjectSummary } from "@/lib/project-summary";
+import { isProjectOwnerPro } from "@/lib/project-plan";
 import { DossierDocument } from "@/lib/pdf/DossierDocument";
 
 export async function GET(
@@ -13,6 +14,13 @@ export async function GET(
   const project = await getProjectForCurrentUser(projectId);
   if (!project) {
     return NextResponse.json({ error: "No encontrado" }, { status: 404 });
+  }
+
+  if (!(await isProjectOwnerPro(project.organizationId))) {
+    return NextResponse.json(
+      { error: "El dossier completo en PDF es una función de PRO." },
+      { status: 403 },
+    );
   }
 
   // Misma función que usa la pantalla de Resumen — el dossier no debe

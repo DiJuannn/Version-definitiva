@@ -35,3 +35,11 @@ export const SCRIPT_PAGE_LIMIT_PRO = 200;
 // seguro es muy bajo. Súbelo si la cuota de Mistral sube de forma
 // notable (ver lib/mistral-concurrency.ts).
 export const MISTRAL_MAX_CONCURRENT_CALLS = 2;
+
+// Plan gratuito: cuántos proyectos puede tener la organización (creados
+// por ella, no compartidos con ella) y cuántos colaboradores puede
+// invitar a UN proyecto por enlace (ver lib/actions/project-shares.ts).
+// Los proyectos y colaboradores que ya existan nunca se tocan al bajar
+// de PRO a gratis — solo se bloquea crear uno más por encima del tope.
+export const FREE_ACTIVE_PROJECTS_LIMIT = 2;
+export const FREE_PROJECT_COLLABORATORS_LIMIT = 2;

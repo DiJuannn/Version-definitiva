@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { getProjectSummary } from "@/lib/project-summary";
+import { isProjectOwnerPro } from "@/lib/project-plan";
 import { PdfLink } from "@/components/PdfLink";
 import {
   DAY_PART_LABELS,
@@ -84,6 +85,8 @@ export default async function ProjectSummaryPage({
   const access = await getProjectForCurrentUser(projectId);
   if (!access) notFound();
 
+  const isPro = await isProjectOwnerPro(access.organizationId);
+
   const {
     project,
     locations,
@@ -124,7 +127,16 @@ export default async function ProjectSummaryPage({
     <div>
       <div className="flex items-center justify-between">
         <BackLink href={`/app/${projectId}`}>← {project.name}</BackLink>
-        <PdfLink href={`/api/pdf/dossier/${projectId}`} label="Descargar dossier" />
+        {isPro ? (
+          <PdfLink href={`/api/pdf/dossier/${projectId}`} label="Descargar dossier" />
+        ) : (
+          <Link
+            href="/app/organizacion"
+            className="inline-flex items-center gap-1.5 rounded-full border border-line px-5 py-2 font-mono text-xs tracking-widest uppercase text-muted transition-colors hover:border-accent hover:text-accent print:hidden"
+          >
+            Dossier en PDF — solo PRO
+          </Link>
+        )}
       </div>
       <h1 className="mt-3 font-display text-2xl font-bold uppercase">Resumen</h1>
       <p className="mt-2 font-mono text-xs text-muted">

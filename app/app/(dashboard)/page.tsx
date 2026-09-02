@@ -10,7 +10,7 @@ import { DashboardReveal, DashboardStagger } from "@/components/DashboardMotion"
 import { createProject, deleteProject } from "@/lib/actions/projects";
 import { DeleteProjectButton } from "@/components/DeleteProjectButton";
 import { ProjectShareButton } from "@/components/ProjectShareButton";
-import { SubmitButton } from "@/components/SubmitButton";
+import { CreateProjectForm } from "@/components/CreateProjectForm";
 import { NewProjectPanel } from "@/components/NewProjectPanel";
 import { LinkPendingHint } from "@/components/LinkPendingHint";
 import { getProjectOverview } from "@/lib/project-roadmap";
@@ -212,24 +212,15 @@ export default async function DashboardPage() {
             Todo en Taller —guion, presupuesto, plan de rodaje— cuelga de un
             proyecto. Empieza dándole un nombre.
           </p>
-          <form
-            action={createProject}
-            className="mx-auto mt-6 flex max-w-sm flex-col gap-2 sm:flex-row"
-          >
-            <input
-              name="name"
-              placeholder="Nombre del proyecto"
-              required
+          <div className="mx-auto mt-6 max-w-sm">
+            <CreateProjectForm
+              action={createProject}
+              formClassName="flex flex-col gap-2 sm:flex-row"
+              inputClassName="w-full border border-line bg-transparent px-3 py-2.5 text-sm outline-none transition-colors focus:border-accent"
+              buttonClassName="shrink-0 rounded-full bg-accent px-6 py-2.5 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90 disabled:opacity-70"
               autoFocus
-              className="w-full border border-line bg-transparent px-3 py-2.5 text-sm outline-none transition-colors focus:border-accent"
             />
-            <SubmitButton
-              pendingLabel="Creando…"
-              className="shrink-0 rounded-full bg-accent px-6 py-2.5 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90 disabled:opacity-70"
-            >
-              Crear
-            </SubmitButton>
-          </form>
+          </div>
         </DashboardReveal>
       ) : (
         <DashboardReveal className="mt-8 border border-accent p-6 sm:p-8">

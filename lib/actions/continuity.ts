@@ -8,6 +8,7 @@ import { analyzeContinuity, type ContinuitySceneInput } from "@/lib/mistral";
 import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
 import { ContinuityIssueStatus } from "@/lib/generated/prisma";
 import { MistralBusyError, withMistralSlot } from "@/lib/mistral-concurrency";
+import { isProjectOwnerPro } from "@/lib/project-plan";
 
 export type RunContinuityState = { error: string } | undefined;
 
@@ -21,6 +22,10 @@ export async function runContinuityCheck(
 ): Promise<RunContinuityState> {
   const project = await getProjectForCurrentUser(projectId);
   if (!project) return { error: "No tienes acceso a este proyecto." };
+
+  if (!(await isProjectOwnerPro(project.organizationId))) {
+    return { error: "El detector de continuidad es una función de PRO." };
+  }
 
   const scenes = await prisma.scene.findMany({
     where: { projectId },

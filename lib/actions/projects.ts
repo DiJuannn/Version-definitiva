@@ -2,44 +2,55 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/prisma";
 import { getCurrentProfile } from "@/lib/current-user";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { deleteProjectCore } from "@/lib/project-delete-core";
+import { createProjectCore } from "@/lib/projects-core";
 
-export async function createProject(formData: FormData) {
-  const name = String(formData.get("name") ?? "").trim();
-  if (!name) return;
+export type CreateProjectState = { error: string } | undefined;
 
+export async function createProject(
+  _prevState: CreateProjectState,
+  formData: FormData,
+): Promise<CreateProjectState> {
   const profile = await getCurrentProfile();
-  if (!profile) return;
+  if (!profile) return { error: "No se pudo crear el proyecto." };
 
-  await prisma.project.create({
-    data: { name, organizationId: profile.organizationId, createdById: profile.id },
-  });
+  const result = await createProjectCore(
+    profile.organizationId,
+    profile.id,
+    String(formData.get("name") ?? ""),
+    profile.organization.plan === "PRO",
+  );
+  if ("error" in result) return result;
 
   revalidatePath("/app");
   revalidatePath("/app/proyectos");
+  return undefined;
 }
 
 // Igual que createProject, pero para cuando se entra a la Claqueta sin
 // tener ningún proyecto todavía — crea el proyecto y entra directo a su
 // claqueta, en vez de dejar al usuario en el dashboard para que la
 // vuelva a buscar.
-export async function createProjectAndOpenClaqueta(formData: FormData) {
-  const name = String(formData.get("name") ?? "").trim();
-  if (!name) return;
-
+export async function createProjectAndOpenClaqueta(
+  _prevState: CreateProjectState,
+  formData: FormData,
+): Promise<CreateProjectState> {
   const profile = await getCurrentProfile();
-  if (!profile) return;
+  if (!profile) return { error: "No se pudo crear el proyecto." };
 
-  const project = await prisma.project.create({
-    data: { name, organizationId: profile.organizationId, createdById: profile.id },
-  });
+  const result = await createProjectCore(
+    profile.organizationId,
+    profile.id,
+    String(formData.get("name") ?? ""),
+    profile.organization.plan === "PRO",
+  );
+  if ("error" in result) return result;
 
   revalidatePath("/app");
   revalidatePath("/app/proyectos");
-  redirect(`/app/${project.id}/claqueta`);
+  redirect(`/app/${result.id}/claqueta`);
 }
 
 // Borrar un Project no cascada solo con la FK en la base de datos: Actor,

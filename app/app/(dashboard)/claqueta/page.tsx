@@ -4,7 +4,7 @@ import { getCurrentProfile } from "@/lib/current-user";
 import { listProjectsForProfile } from "@/lib/project-access";
 import { createProjectAndOpenClaqueta } from "@/lib/actions/projects";
 import { BackLink } from "@/components/BackLink";
-import { SubmitButton } from "@/components/SubmitButton";
+import { CreateProjectForm } from "@/components/CreateProjectForm";
 import { LinkPendingHint } from "@/components/LinkPendingHint";
 import { ClaquetaIcon } from "@/components/ToolIcons";
 
@@ -35,24 +35,16 @@ export default async function ClaquetaEntryPage() {
             La claqueta cuelga de un proyecto — crea el primero para
             empezar a usarla.
           </p>
-          <form
-            action={createProjectAndOpenClaqueta}
-            className="mt-6 flex max-w-md gap-2"
-          >
-            <input
-              name="name"
-              placeholder="Nombre del proyecto"
-              required
+          <div className="mt-6 max-w-md">
+            <CreateProjectForm
+              action={createProjectAndOpenClaqueta}
+              formClassName="flex gap-2"
+              inputClassName="w-full border border-line bg-transparent px-3 py-2.5 text-sm outline-none transition-colors focus:border-accent"
+              buttonClassName="shrink-0 rounded-full bg-accent px-6 py-2.5 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90 disabled:opacity-70"
+              buttonLabel="Crear y abrir"
               autoFocus
-              className="w-full border border-line bg-transparent px-3 py-2.5 text-sm outline-none transition-colors focus:border-accent"
             />
-            <SubmitButton
-              pendingLabel="Creando…"
-              className="shrink-0 rounded-full bg-accent px-6 py-2.5 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90 disabled:opacity-70"
-            >
-              Crear y abrir
-            </SubmitButton>
-          </form>
+          </div>
         </>
       ) : (
         <>
