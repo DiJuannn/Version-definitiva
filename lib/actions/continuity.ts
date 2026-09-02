@@ -9,6 +9,7 @@ import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
 import { ContinuityIssueStatus } from "@/lib/generated/prisma";
 import { MistralBusyError, withMistralSlot } from "@/lib/mistral-concurrency";
 import { isProjectOwnerPro } from "@/lib/project-plan";
+import * as Sentry from "@sentry/nextjs";
 
 export type RunContinuityState = { error: string } | undefined;
 
@@ -69,6 +70,10 @@ export async function runContinuityCheck(
       };
     }
     console.error("runContinuityCheck: fallo llamando a Mistral", error);
+    Sentry.captureException(error, {
+      tags: { area: "mistral", action: "runContinuityCheck" },
+      extra: { projectId },
+    });
     return {
       error:
         "La IA no está disponible en este momento. Tus datos están seguros — inténtalo de nuevo en un rato.",

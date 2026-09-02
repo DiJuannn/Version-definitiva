@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { prisma } from "@/lib/prisma";
+import * as Sentry from "@sentry/nextjs";
 
 export type SignUpInput = {
   organizationName: string;
@@ -67,9 +68,20 @@ export async function signUpCore(
       signup_disabled: "El registro de cuentas nuevas está desactivado ahora mismo. Contacta con soporte.",
     };
 
+    const knownMessage = KNOWN_ERRORS[error.code ?? ""];
+    if (!knownMessage) {
+      // Un código que no está en la lista de arriba es, por definición,
+      // uno que no hemos visto ni traducido todavía — vale la pena que
+      // salte una alerta en vez de perderse en el log del servidor.
+      Sentry.captureException(error, {
+        tags: { area: "auth", action: "signUp" },
+        extra: { code: error.code, status: error.status },
+      });
+    }
+
     return {
       ok: false,
-      error: KNOWN_ERRORS[error.code ?? ""] ?? "No se pudo crear la cuenta. Inténtalo de nuevo.",
+      error: knownMessage ?? "No se pudo crear la cuenta. Inténtalo de nuevo.",
     };
   }
 
@@ -90,7 +102,14 @@ export async function signUpCore(
         },
       },
     });
-  } catch {
+  } catch (error) {
+    // Aquí ya existe un usuario de Supabase Auth sin Organization/User en
+    // Prisma — una cuenta huérfana que necesita intervención manual, así
+    // que esto siempre merece una alerta, no solo quedarse en el log.
+    Sentry.captureException(error, {
+      tags: { area: "auth", action: "signUp-createOrganization" },
+      extra: { supabaseUserId: data.user.id },
+    });
     return {
       ok: false,
       error:

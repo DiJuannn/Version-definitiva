@@ -15,6 +15,7 @@ import {
 } from "@/lib/limits";
 import { checkScriptAnalysisRateLimit, formatWait } from "@/lib/script-analysis-rate-limit";
 import { MistralBusyError, withMistralSlot } from "@/lib/mistral-concurrency";
+import * as Sentry from "@sentry/nextjs";
 
 function cleanText(value: string | undefined | null): string | null {
   const trimmed = (value ?? "").trim();
@@ -95,6 +96,10 @@ export async function analyzeScript(
       };
     }
     console.error("analyzeScript: fallo llamando a Mistral", error);
+    Sentry.captureException(error, {
+      tags: { area: "mistral", action: "analyzeScript" },
+      extra: { projectId, scriptFileId },
+    });
     return {
       error:
         "La IA no está disponible en este momento. Tus datos están seguros — inténtalo de nuevo en un rato.",

@@ -1,4 +1,5 @@
 import { cache } from "react";
+import * as Sentry from "@sentry/nextjs";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@/lib/supabase/server";
 
@@ -14,6 +15,9 @@ export const getCurrentProfile = cache(async () => {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return null;
+
+  // Solo el id — nunca el email, para no mandar PII a un servicio externo.
+  Sentry.setUser({ id: user.id });
 
   return getProfileByUserId(user.id);
 });

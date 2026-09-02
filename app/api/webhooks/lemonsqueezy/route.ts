@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyLemonSqueezySignature, isActiveSubscriptionStatus } from "@/lib/lemonsqueezy";
+import * as Sentry from "@sentry/nextjs";
 
 // Lemon Squeezy manda aquí cada cambio de la suscripción PRO (alta, baja,
 // impago...). El cuerpo hay que leerlo en crudo (antes de parsear el JSON)
@@ -81,6 +82,12 @@ export async function POST(request: Request) {
     // pruebas) — no hay nada que actualizar, pero no debe romper el
     // webhook ni hacer que Lemon Squeezy lo reintente sin parar.
     console.error("Webhook Lemon Squeezy: organización no encontrada", organizationId, error);
+    // Un fallo aquí significa que una suscripción de pago no se activó o
+    // no se desactivó correctamente — merece una alerta, no solo el log.
+    Sentry.captureException(error, {
+      tags: { area: "billing", action: "lemonsqueezy-webhook" },
+      extra: { organizationId, eventName, incomingSubscriptionId, plan },
+    });
   }
 
   return NextResponse.json({ received: true });

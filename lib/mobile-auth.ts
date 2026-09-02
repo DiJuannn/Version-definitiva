@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import * as Sentry from "@sentry/nextjs";
 import { getProfileByUserId, type Profile } from "@/lib/current-user";
 
 // La web identifica al usuario por la cookie de sesión que deja
@@ -30,6 +31,8 @@ export async function getMobileProfile(request: Request): Promise<Profile | null
     data: { user },
   } = await supabase.auth.getUser(token);
   if (!user) return null;
+
+  Sentry.setUser({ id: user.id });
 
   return getProfileByUserId(user.id);
 }
