@@ -4,7 +4,14 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getCurrentProfile } from "@/lib/current-user";
 import { optionalDecimal, optionalString } from "@/lib/form-utils";
-import { uploadProjectFile } from "@/lib/storage";
+import {
+  addLocationPhotoCore,
+  createLocationCore,
+  deleteLocationCore,
+  removeLocationPhotoCore,
+  updateLocationCore,
+  type LocationInput,
+} from "@/lib/locations-core";
 import { LocationCharacteristic } from "@/lib/generated/prisma";
 
 function optionalFloat(value: FormDataEntryValue | null): number | null {
@@ -20,6 +27,24 @@ function readCharacteristics(formData: FormData): LocationCharacteristic[] {
     .getAll("characteristics")
     .map(String)
     .filter((value): value is LocationCharacteristic => valid.has(value));
+}
+
+function readLocationInput(formData: FormData): LocationInput {
+  return {
+    name: String(formData.get("name") ?? ""),
+    address: optionalString(formData.get("address")),
+    latitude: optionalFloat(formData.get("latitude")),
+    longitude: optionalFloat(formData.get("longitude")),
+    contactName: optionalString(formData.get("contactName")),
+    contactPhone: optionalString(formData.get("contactPhone")),
+    availability: optionalString(formData.get("availability")),
+    cost: optionalDecimal(formData.get("cost")),
+    characteristics: readCharacteristics(formData),
+    permitsNotes: optionalString(formData.get("permitsNotes")),
+    restrictions: optionalString(formData.get("restrictions")),
+    productionNotes: optionalString(formData.get("productionNotes")),
+    notes: optionalString(formData.get("notes")),
+  };
 }
 
 export type GeocodeCandidate = { lat: number; lng: number; label: string };
@@ -53,27 +78,7 @@ export async function createLocation(formData: FormData) {
   const profile = await getCurrentProfile();
   if (!profile) return;
 
-  const name = String(formData.get("name") ?? "").trim();
-  if (!name) return;
-
-  await prisma.location.create({
-    data: {
-      organizationId: profile.organizationId,
-      name,
-      address: optionalString(formData.get("address")),
-      latitude: optionalFloat(formData.get("latitude")),
-      longitude: optionalFloat(formData.get("longitude")),
-      contactName: optionalString(formData.get("contactName")),
-      contactPhone: optionalString(formData.get("contactPhone")),
-      availability: optionalString(formData.get("availability")),
-      cost: optionalDecimal(formData.get("cost")),
-      characteristics: readCharacteristics(formData),
-      permitsNotes: optionalString(formData.get("permitsNotes")),
-      restrictions: optionalString(formData.get("restrictions")),
-      productionNotes: optionalString(formData.get("productionNotes")),
-      notes: optionalString(formData.get("notes")),
-    },
-  });
+  await createLocationCore(profile.organizationId, readLocationInput(formData));
 
   revalidatePath("/app/localizaciones");
 }
@@ -82,27 +87,7 @@ export async function updateLocation(locationId: string, formData: FormData) {
   const profile = await getCurrentProfile();
   if (!profile) return;
 
-  const name = String(formData.get("name") ?? "").trim();
-  if (!name) return;
-
-  await prisma.location.updateMany({
-    where: { id: locationId, organizationId: profile.organizationId },
-    data: {
-      name,
-      address: optionalString(formData.get("address")),
-      latitude: optionalFloat(formData.get("latitude")),
-      longitude: optionalFloat(formData.get("longitude")),
-      contactName: optionalString(formData.get("contactName")),
-      contactPhone: optionalString(formData.get("contactPhone")),
-      availability: optionalString(formData.get("availability")),
-      cost: optionalDecimal(formData.get("cost")),
-      characteristics: readCharacteristics(formData),
-      permitsNotes: optionalString(formData.get("permitsNotes")),
-      restrictions: optionalString(formData.get("restrictions")),
-      productionNotes: optionalString(formData.get("productionNotes")),
-      notes: optionalString(formData.get("notes")),
-    },
-  });
+  await updateLocationCore(profile.organizationId, locationId, readLocationInput(formData));
 
   revalidatePath("/app/localizaciones");
   revalidatePath(`/app/localizaciones/${locationId}`);
@@ -115,19 +100,7 @@ export async function addLocationPhoto(locationId: string, formData: FormData) {
   const file = formData.get("photo");
   if (!(file instanceof File) || file.size === 0) return;
 
-  const location = await prisma.location.findFirst({
-    where: { id: locationId, organizationId: profile.organizationId },
-  });
-  if (!location) return;
-
-  const uploaded = await uploadProjectFile(profile.organizationId, file);
-  if (!uploaded) return;
-
-  await prisma.location.update({
-    where: { id: locationId },
-    data: { photoUrls: [...location.photoUrls, uploaded.url] },
-  });
-
+  await addLocationPhotoCore(profile.organizationId, locationId, file);
   revalidatePath(`/app/localizaciones/${locationId}`);
 }
 
@@ -135,16 +108,7 @@ export async function removeLocationPhoto(locationId: string, photoUrl: string) 
   const profile = await getCurrentProfile();
   if (!profile) return;
 
-  const location = await prisma.location.findFirst({
-    where: { id: locationId, organizationId: profile.organizationId },
-  });
-  if (!location) return;
-
-  await prisma.location.update({
-    where: { id: locationId },
-    data: { photoUrls: location.photoUrls.filter((url) => url !== photoUrl) },
-  });
-
+  await removeLocationPhotoCore(profile.organizationId, locationId, photoUrl);
   revalidatePath(`/app/localizaciones/${locationId}`);
 }
 
@@ -189,9 +153,6 @@ export async function deleteLocation(locationId: string) {
   const profile = await getCurrentProfile();
   if (!profile) return;
 
-  await prisma.location.deleteMany({
-    where: { id: locationId, organizationId: profile.organizationId },
-  });
-
+  await deleteLocationCore(profile.organizationId, locationId);
   revalidatePath("/app/localizaciones");
 }
