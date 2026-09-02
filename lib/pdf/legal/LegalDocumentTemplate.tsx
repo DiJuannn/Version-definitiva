@@ -1,80 +1,146 @@
-import { Document, Page, Text, View } from "@react-pdf/renderer";
-import { colors, pdfStyles } from "@/lib/pdf/styles";
+import { Document, Page, StyleSheet, Text, View } from "@react-pdf/renderer";
 
-export type LegalField = { label: string; value: string };
-export type LegalFieldGroup = { label: string; fields: LegalField[] };
+export type LegalSignature = {
+  role: string;
+  name: string;
+  meta?: string;
+};
 
-// Layout compartido por las 5 plantillas legales — cada una aporta su
-// propio texto (título, párrafos, campos, líneas de firma), esto solo
-// pone en pantalla el mismo aspecto para todas y, sobre todo, el aviso
-// legal obligatorio al final de cada una.
+const ink = "#1a1a1a";
+const muted = "#6b6b66";
+
+// Estilo deliberadamente distinto del resto de PDFs de la app
+// (lib/pdf/styles.ts, pensado para dossiers/informes): un documento
+// legal para imprimir y firmar tiene que parecerse a un documento
+// legal de verdad — Times, prosa justificada con los datos ya
+// incrustados en las frases, y un bloque de firma al final, no una
+// lista de campos con etiquetas. Times-Roman/Bold son fuentes base del
+// PDF (sin necesitar Font.register ni cargar nada por red).
+const styles = StyleSheet.create({
+  page: {
+    paddingTop: 72,
+    paddingBottom: 72,
+    paddingHorizontal: 64,
+    fontSize: 11,
+    fontFamily: "Times-Roman",
+    color: ink,
+  },
+  letterhead: {
+    textAlign: "center",
+    fontSize: 8,
+    letterSpacing: 1.2,
+    color: muted,
+    textTransform: "uppercase",
+    marginBottom: 6,
+  },
+  caution: {
+    textAlign: "center",
+    fontSize: 8,
+    fontFamily: "Times-Italic",
+    color: muted,
+    marginBottom: 20,
+  },
+  title: {
+    textAlign: "center",
+    fontSize: 15,
+    fontFamily: "Times-Bold",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    textDecoration: "underline",
+    marginBottom: 28,
+  },
+  paragraph: {
+    textAlign: "justify",
+    lineHeight: 1.55,
+    marginBottom: 14,
+  },
+  signatureRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 56,
+  },
+  signatureBlock: {
+    width: "44%",
+  },
+  signatureSpace: {
+    height: 36,
+  },
+  signatureLine: {
+    borderTopWidth: 1,
+    borderTopColor: ink,
+  },
+  signatureName: {
+    marginTop: 6,
+    fontSize: 10,
+    fontFamily: "Times-Bold",
+  },
+  signatureMeta: {
+    marginTop: 1,
+    fontSize: 9,
+    color: muted,
+  },
+  signatureRole: {
+    marginTop: 1,
+    fontSize: 8,
+    color: muted,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  disclaimer: {
+    position: "absolute",
+    bottom: 36,
+    left: 64,
+    right: 64,
+    fontSize: 7,
+    lineHeight: 1.4,
+    color: muted,
+    textAlign: "center",
+  },
+});
+
 export function LegalDocumentTemplate({
-  eyebrow,
+  letterhead,
+  caution,
   title,
-  fieldGroups,
-  bodyText,
-  signatureLines,
+  paragraphs,
+  signatures,
+  disclaimer,
 }: {
-  eyebrow: string;
+  letterhead: string;
+  caution?: string;
   title: string;
-  fieldGroups: LegalFieldGroup[];
-  bodyText: string[];
-  signatureLines: string[];
+  paragraphs: string[];
+  signatures: LegalSignature[];
+  disclaimer: string;
 }) {
   return (
     <Document>
-      <Page size="A4" style={pdfStyles.page}>
-        <View style={pdfStyles.header}>
-          <View>
-            <Text style={pdfStyles.eyebrow}>{eyebrow}</Text>
-            <Text style={pdfStyles.title}>{title}</Text>
-          </View>
-        </View>
+      <Page size="A4" style={styles.page}>
+        <Text style={styles.letterhead}>{letterhead}</Text>
+        {caution && <Text style={styles.caution}>{caution}</Text>}
+        <Text style={styles.title}>{title}</Text>
 
-        {fieldGroups.map((group) => (
-          <View key={group.label} style={pdfStyles.section}>
-            <Text style={pdfStyles.sectionLabel}>{group.label}</Text>
-            {group.fields.map((field) => (
-              <View key={field.label} style={{ flexDirection: "row", marginBottom: 3 }}>
-                <Text style={{ fontSize: 9, width: 150, color: colors.muted }}>
-                  {field.label}
-                </Text>
-                <Text style={{ fontSize: 9, flex: 1 }}>{field.value || "—"}</Text>
-              </View>
-            ))}
-          </View>
+        {paragraphs.map((paragraph, i) => (
+          <Text key={i} style={styles.paragraph}>
+            {paragraph}
+          </Text>
         ))}
 
-        <View style={[pdfStyles.section, { marginTop: 6 }]}>
-          {bodyText.map((paragraph, i) => (
-            <Text key={i} style={{ fontSize: 9, lineHeight: 1.5, marginBottom: 8 }}>
-              {paragraph}
-            </Text>
-          ))}
-        </View>
-
-        <View style={{ marginTop: 24, flexDirection: "row", gap: 40 }}>
-          {signatureLines.map((label) => (
-            <View key={label} style={{ flex: 1 }}>
-              <View style={{ borderTopWidth: 1, borderTopColor: colors.ink, marginTop: 46 }} />
-              <Text style={{ fontSize: 8, marginTop: 4, color: colors.muted }}>{label}</Text>
+        <View style={styles.signatureRow}>
+          {signatures.map((sig) => (
+            <View key={sig.role} style={styles.signatureBlock}>
+              <View style={styles.signatureSpace} />
+              <View style={styles.signatureLine} />
+              <Text style={styles.signatureName}>{sig.name || "—"}</Text>
+              {sig.meta && <Text style={styles.signatureMeta}>{sig.meta}</Text>}
+              <Text style={styles.signatureRole}>{sig.role}</Text>
             </View>
           ))}
         </View>
 
-        <View style={{ position: "absolute", bottom: 44, left: 32, right: 32 }}>
-          <Text style={{ fontSize: 7, color: colors.muted, lineHeight: 1.4 }}>
-            Esta plantilla es orientativa y no sustituye asesoría legal profesional. La
-            validez y los requisitos de este documento varían según el país y la
-            jurisdicción — revísalo con un profesional antes de usarlo de forma
-            vinculante.
-          </Text>
-        </View>
-
-        <View style={pdfStyles.footer} fixed>
-          <Text>Versión definitiva — Taller</Text>
-          <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
-        </View>
+        <Text style={styles.disclaimer} fixed>
+          {disclaimer}
+        </Text>
       </Page>
     </Document>
   );

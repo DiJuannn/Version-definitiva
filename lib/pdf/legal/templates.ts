@@ -1,4 +1,4 @@
-import type { LegalFieldGroup } from "@/lib/pdf/legal/LegalDocumentTemplate";
+import type { LegalSignature } from "@/lib/pdf/legal/LegalDocumentTemplate";
 
 export type LegalTemplateSlug =
   | "permiso-rodaje"
@@ -8,11 +8,12 @@ export type LegalTemplateSlug =
   | "nda";
 
 export type LegalTemplateContent = {
-  eyebrow: string;
+  letterhead: string;
+  caution?: string;
   title: string;
-  fieldGroups: LegalFieldGroup[];
-  bodyText: string[];
-  signatureLines: string[];
+  paragraphs: string[];
+  signatures: LegalSignature[];
+  disclaimer: string;
 };
 
 type BuildInput = {
@@ -21,207 +22,183 @@ type BuildInput = {
   fields: Record<string, string>;
 };
 
+const DISCLAIMER =
+  "Esta plantilla es orientativa y no sustituye asesoría legal profesional. La validez y los requisitos de este documento varían según el país y la jurisdicción — revísalo con un profesional antes de usarlo de forma vinculante.";
+
+// Los campos libres (condiciones, remuneración...) se insertan justo
+// antes de un punto final ya escrito en la plantilla — sin esto, si
+// alguien termina su texto con un punto, el PDF sale con "..".
+function cleanFields(fields: Record<string, string>): Record<string, string> {
+  const cleaned: Record<string, string> = {};
+  for (const [key, value] of Object.entries(fields)) {
+    cleaned[key] = value.trim().replace(/[.\s]+$/, "");
+  }
+  return cleaned;
+}
+
+function letterheadFor({ project, organizationName }: BuildInput): string {
+  const date = new Date().toLocaleDateString("es-ES", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  return `${organizationName || "Productora"} · ${project.name} · ${date}`;
+}
+
 // Contenido de las 5 plantillas legales — antes vivía repetido dentro de
 // cada ruta de la web (app/api/pdf/legal/[projectId]/**). Se extrajo
 // aquí para que la app móvil pueda generar el mismo PDF, con el mismo
 // texto, sin duplicarlo (ver app/api/mobile/projects/[projectId]/documentos-legales/[template]/route.tsx).
+// El texto de cada documento está pensado para leerse como un
+// documento legal de verdad — los datos van incrustados en la propia
+// prosa, no en una lista de campos aparte.
 export const LEGAL_TEMPLATES: Record<
   LegalTemplateSlug,
   { title: string; buildContent: (input: BuildInput) => LegalTemplateContent }
 > = {
   "permiso-rodaje": {
     title: "Permiso de rodaje",
-    buildContent({ project, organizationName, fields }) {
+    buildContent(input) {
+      const { project, organizationName } = input;
+      const fields = cleanFields(input.fields);
       const { localizacion, direccion, fechas, horario, nombreAutoriza, dniAutoriza, condiciones } = fields;
+
+      const paragraphs = [
+        `Yo, ${nombreAutoriza || "—"}${dniAutoriza ? `, con documento de identidad número ${dniAutoriza}` : ""}, en mi condición de responsable autorizado de la localización «${localizacion || "—"}»${direccion ? `, situada en ${direccion}` : ""}, autorizo de manera libre y voluntaria a ${organizationName || "la productora"} y a su personal técnico y artístico a acceder a dicho espacio con los equipos de filmación, escenarios temporales y demás recursos necesarios para la grabación audiovisual del proyecto «${project.name}»${fechas ? `, durante las fechas ${fechas}` : ""}${horario ? `, en el horario de ${horario}` : ""}.`,
+        `Asimismo, autorizo el uso de las imágenes y grabaciones de audio y vídeo captadas en la localización, dentro o alrededor de la misma, con los exclusivos efectos de su integración en la producción audiovisual del proyecto «${project.name}» y su posterior explotación, publicación y promoción por cualquier medio, conocido o por conocer.`,
+        ...(condiciones
+          ? [`Se establecen además las siguientes condiciones especiales para el acceso y uso de la localización: ${condiciones}.`]
+          : []),
+        `El equipo de producción se compromete a respetar en todo momento las condiciones aquí establecidas y a dejar el espacio en las mismas condiciones en que se encontraba antes del rodaje. He leído el presente documento antes de firmarlo y garantizo que comprendo su contenido.`,
+      ];
+
       return {
-        eyebrow: "Documento legal orientativo",
+        letterhead: letterheadFor(input),
         title: "Permiso de rodaje",
-        fieldGroups: [
+        paragraphs,
+        signatures: [
           {
-            label: "Proyecto",
-            fields: [
-              { label: "Proyecto", value: project.name },
-              { label: "Productora", value: organizationName },
-              { label: "Fecha del documento", value: new Date().toLocaleDateString("es-ES") },
-            ],
+            role: "Autoriza el acceso a la localización",
+            name: nombreAutoriza,
+            meta: dniAutoriza ? `DNI: ${dniAutoriza}` : undefined,
           },
-          {
-            label: "Localización y fechas de rodaje",
-            fields: [
-              { label: "Localización", value: localizacion ?? "" },
-              { label: "Dirección", value: direccion ?? "" },
-              { label: "Fechas de rodaje", value: fechas ?? "" },
-              { label: "Horario", value: horario ?? "" },
-            ],
-          },
-          {
-            label: "Quien autoriza",
-            fields: [
-              { label: "Nombre", value: nombreAutoriza ?? "" },
-              { label: "DNI / identificación", value: dniAutoriza ?? "" },
-            ],
-          },
+          { role: "Por la productora", name: organizationName },
         ],
-        bodyText: [
-          `Por la presente, ${organizationName || "la productora"} solicita autorización para realizar labores de grabación audiovisual del proyecto "${project.name}" en la localización indicada, en las fechas y el horario especificados arriba. El equipo se compromete a respetar en todo momento las condiciones establecidas por quien autoriza y a dejar el espacio en las mismas condiciones en que se encontraba antes del rodaje.`,
-          ...(condiciones ? [`Condiciones especiales: ${condiciones}`] : []),
-        ],
-        signatureLines: ["Firma de la productora", "Firma de quien autoriza"],
+        disclaimer: DISCLAIMER,
       };
     },
   },
 
   "cesion-imagen": {
     title: "Cesión de derechos de imagen",
-    buildContent({ project, organizationName, fields }) {
+    buildContent(input) {
+      const { project, organizationName } = input;
+      const fields = cleanFields(input.fields);
       const { nombre, dni, alcance, duracion } = fields;
+
+      const paragraphs = [
+        `Yo, ${nombre || "—"}${dni ? `, con documento de identidad número ${dni}` : ""}, autorizo de manera libre y voluntaria a ${organizationName || "la productora"} a captar, fijar, reproducir y difundir mi imagen dentro de la producción audiovisual del proyecto «${project.name}».`,
+        `Esta cesión se realiza para su uso${alcance ? ` en ${alcance}` : ""}, con una duración${duracion ? ` de ${duracion}` : " indefinida, salvo revocación expresa por escrito"}, sin que suponga contraprestación económica adicional salvo pacto expreso entre las partes.`,
+        `Esta autorización puede revocarse en cualquier momento mediante comunicación por escrito, sin efecto retroactivo sobre el material ya utilizado conforme a los términos aquí descritos. He leído el presente documento antes de firmarlo y garantizo que comprendo su contenido.`,
+      ];
+
       return {
-        eyebrow: "Documento legal orientativo",
+        letterhead: letterheadFor(input),
         title: "Cesión de derechos de imagen",
-        fieldGroups: [
-          {
-            label: "Proyecto",
-            fields: [
-              { label: "Proyecto", value: project.name },
-              { label: "Productora", value: organizationName },
-              { label: "Fecha del documento", value: new Date().toLocaleDateString("es-ES") },
-            ],
-          },
-          {
-            label: "Persona que cede su imagen",
-            fields: [
-              { label: "Nombre completo", value: nombre ?? "" },
-              { label: "DNI / identificación", value: dni ?? "" },
-            ],
-          },
-          {
-            label: "Alcance de la cesión",
-            fields: [
-              { label: "Uso autorizado", value: alcance ?? "" },
-              { label: "Duración", value: duracion ?? "" },
-            ],
-          },
+        paragraphs,
+        signatures: [
+          { role: "Cede su imagen", name: nombre, meta: dni ? `DNI: ${dni}` : undefined },
+          { role: "Por la productora", name: organizationName },
         ],
-        bodyText: [
-          `La persona abajo firmante autoriza a ${organizationName || "la productora"} a captar, fijar, reproducir y difundir su imagen dentro de la producción audiovisual "${project.name}", conforme al uso y duración especificados arriba, sin que ello suponga contraprestación económica adicional salvo pacto expreso por escrito.`,
-          "Esta cesión puede revocarse en cualquier momento por escrito, sin efecto retroactivo sobre el material ya utilizado conforme a los términos aquí descritos.",
-        ],
-        signatureLines: ["Firma de la persona", "Firma de la productora"],
+        disclaimer: DISCLAIMER,
       };
     },
   },
 
   "contrato-colaboracion": {
     title: "Contrato de colaboración",
-    buildContent({ project, organizationName, fields }) {
+    buildContent(input) {
+      const { project, organizationName } = input;
+      const fields = cleanFields(input.fields);
       const { nombre, dni, rol, fechas, remuneracion, condiciones } = fields;
+
+      const paragraphs = [
+        `Entre ${organizationName || "la productora"}, productora del proyecto «${project.name}», y ${nombre || "—"}${dni ? `, con documento de identidad número ${dni}` : ""}, se acuerda la colaboración de esta última persona en el proyecto${rol ? ` en calidad de ${rol}` : ""}${fechas ? `, durante las fechas ${fechas}` : ""}.`,
+        `Como contraprestación por esta colaboración, se acuerda${remuneracion ? ` lo siguiente: ${remuneracion}` : " una colaboración sin contraprestación económica, salvo pacto distinto entre las partes"}.`,
+        ...(condiciones ? [`Se establecen además las siguientes condiciones adicionales: ${condiciones}.`] : []),
+        `Ambas partes se comprometen a cumplir con los horarios y condiciones de trabajo acordados y a tratar con la debida confidencialidad cualquier material no publicado del proyecto al que tengan acceso durante la colaboración. Leído el presente documento, ambas partes lo firman en señal de conformidad.`,
+      ];
+
       return {
-        eyebrow: "Documento legal orientativo",
+        letterhead: letterheadFor(input),
         title: "Contrato de colaboración",
-        fieldGroups: [
+        paragraphs,
+        signatures: [
           {
-            label: "Proyecto",
-            fields: [
-              { label: "Proyecto", value: project.name },
-              { label: "Productora", value: organizationName },
-              { label: "Fecha del documento", value: new Date().toLocaleDateString("es-ES") },
-            ],
+            role: "Persona colaboradora",
+            name: nombre,
+            meta: [dni ? `DNI: ${dni}` : null, rol].filter(Boolean).join(" · ") || undefined,
           },
-          {
-            label: "Persona colaboradora",
-            fields: [
-              { label: "Nombre completo", value: nombre ?? "" },
-              { label: "DNI / identificación", value: dni ?? "" },
-              { label: "Rol / función", value: rol ?? "" },
-            ],
-          },
-          {
-            label: "Condiciones",
-            fields: [
-              { label: "Fechas de colaboración", value: fechas ?? "" },
-              { label: "Remuneración / contraprestación", value: remuneracion ?? "" },
-            ],
-          },
+          { role: "Por la productora", name: organizationName },
         ],
-        bodyText: [
-          `Mediante este documento, ${organizationName || "la productora"} y la persona arriba identificada acuerdan su colaboración en el proyecto "${project.name}" en el rol y las fechas especificados, a cambio de la contraprestación indicada.`,
-          ...(condiciones ? [`Condiciones adicionales: ${condiciones}`] : []),
-          "Ambas partes se comprometen a cumplir con los horarios y condiciones de trabajo acordados y a tratar cualquier material no publicado del proyecto con la debida confidencialidad.",
-        ],
-        signatureLines: ["Firma de la persona colaboradora", "Firma de la productora"],
+        disclaimer: DISCLAIMER,
       };
     },
   },
 
   "autorizacion-menor": {
     title: "Autorización de menor en pantalla",
-    buildContent({ project, organizationName, fields }) {
+    buildContent(input) {
+      const { project, organizationName } = input;
+      const fields = cleanFields(input.fields);
       const { nombreMenor, nombreTutor, dniTutor, relacion, condiciones } = fields;
+
+      const paragraphs = [
+        `Yo, ${nombreTutor || "—"}${dniTutor ? `, con documento de identidad número ${dniTutor}` : ""}, en mi condición de${relacion ? ` ${relacion}` : " tutor o tutora legal"} de ${nombreMenor || "—"}, autorizo de manera libre y voluntaria su participación en el rodaje del proyecto «${project.name}» de ${organizationName || "la productora"}, incluida su aparición en pantalla en el material audiovisual resultante.`,
+        ...(condiciones ? [`Se establecen además las siguientes condiciones específicas para esta autorización: ${condiciones}.`] : []),
+        `Esta autorización puede revocarse por escrito en cualquier momento antes del uso del material, y queda en todo caso sujeta a la normativa de protección de menores vigente en la jurisdicción correspondiente. He leído el presente documento antes de firmarlo y garantizo que comprendo su contenido.`,
+      ];
+
       return {
-        eyebrow: "Documento legal orientativo — datos sensibles",
+        letterhead: letterheadFor(input),
+        caution: "Documento con datos sensibles de una persona menor de edad",
         title: "Autorización de menor en pantalla",
-        fieldGroups: [
+        paragraphs,
+        signatures: [
           {
-            label: "Proyecto",
-            fields: [
-              { label: "Proyecto", value: project.name },
-              { label: "Productora", value: organizationName },
-              { label: "Fecha del documento", value: new Date().toLocaleDateString("es-ES") },
-            ],
+            role: "Tutor o tutora legal",
+            name: nombreTutor,
+            meta: [dniTutor ? `DNI: ${dniTutor}` : null, relacion].filter(Boolean).join(" · ") || undefined,
           },
-          {
-            label: "Menor",
-            fields: [{ label: "Nombre completo", value: nombreMenor ?? "" }],
-          },
-          {
-            label: "Tutor o tutora legal",
-            fields: [
-              { label: "Nombre completo", value: nombreTutor ?? "" },
-              { label: "DNI / identificación", value: dniTutor ?? "" },
-              { label: "Relación con el menor", value: relacion ?? "" },
-            ],
-          },
+          { role: "Por la productora", name: organizationName },
         ],
-        bodyText: [
-          `Yo, la persona identificada como tutor/a legal arriba, autorizo la participación de la persona menor de edad indicada en el rodaje del proyecto "${project.name}" de ${organizationName || "la productora"}, incluida su aparición en pantalla en el material resultante.`,
-          ...(condiciones ? [`Condiciones específicas de esta autorización: ${condiciones}`] : []),
-          "Esta autorización puede revocarse por escrito en cualquier momento antes del uso del material, y queda sujeta en todo caso a la normativa de protección de menores vigente en la jurisdicción correspondiente.",
-        ],
-        signatureLines: ["Firma del tutor o tutora legal", "Firma de la productora"],
+        disclaimer: DISCLAIMER,
       };
     },
   },
 
   nda: {
     title: "Acuerdo de confidencialidad",
-    buildContent({ project, organizationName, fields }) {
+    buildContent(input) {
+      const { project, organizationName } = input;
+      const fields = cleanFields(input.fields);
       const { nombre, dni, duracion } = fields;
+
+      const paragraphs = [
+        `Yo, ${nombre || "—"}${dni ? `, con documento de identidad número ${dni}` : ""}, me comprometo a mantener la confidencialidad de todo el guion, material de producción e información no publicada del proyecto «${project.name}» de ${organizationName || "la productora"} a la que tenga acceso, y a no divulgarla a terceros sin autorización previa y expresa por escrito.`,
+        `Esta obligación de confidencialidad se mantiene vigente${duracion ? ` durante ${duracion}` : " durante todo el tiempo que dure mi relación con el proyecto y con posterioridad a su finalización"}.`,
+        `He leído el presente documento antes de firmarlo y garantizo que comprendo y acepto el compromiso de confidencialidad aquí descrito.`,
+      ];
+
       return {
-        eyebrow: "Documento legal orientativo",
+        letterhead: letterheadFor(input),
         title: "Acuerdo de confidencialidad",
-        fieldGroups: [
-          {
-            label: "Proyecto",
-            fields: [
-              { label: "Proyecto", value: project.name },
-              { label: "Productora", value: organizationName },
-              { label: "Fecha del documento", value: new Date().toLocaleDateString("es-ES") },
-            ],
-          },
-          {
-            label: "Persona firmante",
-            fields: [
-              { label: "Nombre completo", value: nombre ?? "" },
-              { label: "DNI / identificación", value: dni ?? "" },
-              { label: "Duración del acuerdo", value: duracion ?? "" },
-            ],
-          },
+        paragraphs,
+        signatures: [
+          { role: "Persona firmante", name: nombre, meta: dni ? `DNI: ${dni}` : undefined },
+          { role: "Por la productora", name: organizationName },
         ],
-        bodyText: [
-          `La persona abajo firmante se compromete a mantener la confidencialidad de todo el material, guion, información de producción y cualquier otro contenido no publicado del proyecto "${project.name}" de ${organizationName || "la productora"} al que tenga acceso, y a no divulgarlo a terceros sin autorización expresa por escrito.`,
-          "Esta obligación de confidencialidad se mantiene vigente durante el tiempo indicado arriba, incluso después de finalizar su relación con el proyecto.",
-        ],
-        signatureLines: ["Firma de la persona firmante", "Firma de la productora"],
+        disclaimer: DISCLAIMER,
       };
     },
   },
