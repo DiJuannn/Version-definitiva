@@ -874,3 +874,20 @@ model ClapLog {
   @@index([projectId])
   @@index([sceneId])
 }
+
+// Un hueco mientras dura una llamada a Mistral (análisis de guion o
+// revisión de continuidad) — no guarda a quién pertenece ni qué generó,
+// solo sirve para contar cuántas llamadas hay en marcha a la vez en toda
+// la cuenta, porque la cuota de tokens/minuto de Mistral es compartida
+// por toda la organización dueña de la plataforma, no por proyecto ni
+// por usuario (ver lib/mistral-concurrency.ts). finishedAt se rellena al
+// terminar (con éxito o error); si una función se corta a medias sin
+// llegar a rellenarlo, el hueco expira solo pasado STALE_MS en vez de
+// quedar bloqueado para siempre.
+model MistralAnalysisJob {
+  id         String    @id @default(cuid())
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+
+  @@index([finishedAt, startedAt])
+}

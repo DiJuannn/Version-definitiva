@@ -7,6 +7,7 @@ import { getProjectForCurrentUser } from "@/lib/project-access";
 import { analyzeContinuity, type ContinuitySceneInput } from "@/lib/mistral";
 import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
 import { ContinuityIssueStatus } from "@/lib/generated/prisma";
+import { MistralBusyError, withMistralSlot } from "@/lib/mistral-concurrency";
 
 export type RunContinuityState = { error: string } | undefined;
 
@@ -55,8 +56,13 @@ export async function runContinuityCheck(
 
   let issues;
   try {
-    issues = await analyzeContinuity(payload);
+    issues = await withMistralSlot(() => analyzeContinuity(payload));
   } catch (error) {
+    if (error instanceof MistralBusyError) {
+      return {
+        error: "Hay varios análisis en marcha ahora mismo. Inténtalo de nuevo en unos segundos.",
+      };
+    }
     console.error("runContinuityCheck: fallo llamando a Mistral", error);
     return {
       error:

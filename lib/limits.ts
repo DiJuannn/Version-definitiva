@@ -26,3 +26,12 @@ export const SCRIPT_ANALYSIS_PRO_DAILY_LIMIT = 50;
 // de IA (ver lib/mistral.ts).
 export const SCRIPT_PAGE_LIMIT_FREE = 80;
 export const SCRIPT_PAGE_LIMIT_PRO = 200;
+
+// Cuántas llamadas a Mistral (análisis de guion o continuidad) pueden
+// estar en marcha a la vez, en toda la cuenta — no por usuario. Con la
+// cuota actual de tokens/minuto del workspace (ver
+// admin.mistral.ai/plateforme/limits), un guion largo puede consumir
+// casi toda la cuota de un minuto él solo, así que de momento el número
+// seguro es muy bajo. Súbelo si la cuota de Mistral sube de forma
+// notable (ver lib/mistral-concurrency.ts).
+export const MISTRAL_MAX_CONCURRENT_CALLS = 2;

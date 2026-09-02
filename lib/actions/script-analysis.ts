@@ -14,6 +14,7 @@ import {
   SCRIPT_ANALYSIS_PRO_DAILY_LIMIT,
 } from "@/lib/limits";
 import { checkScriptAnalysisRateLimit, formatWait } from "@/lib/script-analysis-rate-limit";
+import { MistralBusyError, withMistralSlot } from "@/lib/mistral-concurrency";
 
 function cleanText(value: string | undefined | null): string | null {
   const trimmed = (value ?? "").trim();
@@ -86,8 +87,13 @@ export async function analyzeScript(
 
   let proposal;
   try {
-    proposal = await analyzeScriptPdf(scriptFile.fileUrl);
+    proposal = await withMistralSlot(() => analyzeScriptPdf(scriptFile.fileUrl));
   } catch (error) {
+    if (error instanceof MistralBusyError) {
+      return {
+        error: "Hay varios análisis en marcha ahora mismo. Inténtalo de nuevo en unos segundos.",
+      };
+    }
     console.error("analyzeScript: fallo llamando a Mistral", error);
     return {
       error:
