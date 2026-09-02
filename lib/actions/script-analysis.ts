@@ -7,7 +7,13 @@ import { getProjectForCurrentUser } from "@/lib/project-access";
 import { getCurrentProfile } from "@/lib/current-user";
 import { analyzeScriptPdf, type ScriptAnalysisProposal } from "@/lib/mistral";
 import { BreakdownCategory, DayPart, IntExt } from "@/lib/generated/prisma";
-import { SCRIPT_ANALYSIS_FREE_DAILY_LIMIT, SCRIPT_ANALYSIS_HOURLY_LIMIT } from "@/lib/limits";
+import {
+  SCRIPT_ANALYSIS_FREE_DAILY_LIMIT,
+  SCRIPT_ANALYSIS_FREE_LIFETIME_LIMIT,
+  SCRIPT_ANALYSIS_HOURLY_LIMIT,
+  SCRIPT_ANALYSIS_PRO_DAILY_LIMIT,
+} from "@/lib/limits";
+import { checkScriptAnalysisRateLimit, formatWait } from "@/lib/script-analysis-rate-limit";
 
 function cleanText(value: string | undefined | null): string | null {
   const trimmed = (value ?? "").trim();
@@ -36,31 +42,46 @@ export async function analyzeScript(
   });
   if (!scriptFile) return { error: "No se encontró el guion. Recarga la página." };
 
+  const isPro = profile.organization.plan === "PRO";
+
+  // Tope de por vida solo para el plan gratuito — es una prueba del
+  // producto, no una herramienta de uso habitual. Sin tiempo de espera:
+  // hay que pasarse a PRO.
+  if (!isPro) {
+    const lifetimeCount = await prisma.scriptAnalysis.count({
+      where: { createdById: profile.id },
+    });
+    if (lifetimeCount >= SCRIPT_ANALYSIS_FREE_LIFETIME_LIMIT) {
+      return {
+        error: `Has usado los ${SCRIPT_ANALYSIS_FREE_LIFETIME_LIMIT} análisis disponibles en tu cuenta gratuita. Pásate a PRO en Organización para seguir analizando.`,
+      };
+    }
+  }
+
   // Tope por hora — igual para gratis y PRO, protege la cuota compartida
   // de tokens/minuto de Mistral de que una sola cuenta la agote lanzando
-  // análisis seguidos (ver lib/limits.ts).
-  const hourAgo = new Date(Date.now() - 60 * 60 * 1000);
-  const analysesLastHour = await prisma.scriptAnalysis.count({
-    where: { createdById: profile.id, createdAt: { gte: hourAgo } },
-  });
-  if (analysesLastHour >= SCRIPT_ANALYSIS_HOURLY_LIMIT) {
+  // análisis seguidos (ver lib/limits.ts). No se anuncia en ningún
+  // sitio salvo cuando se llega a él.
+  const hourlyStatus = await checkScriptAnalysisRateLimit(
+    profile.id,
+    SCRIPT_ANALYSIS_HOURLY_LIMIT,
+    60 * 60 * 1000,
+  );
+  if (hourlyStatus.blocked && hourlyStatus.retryAt) {
     return {
-      error: `Has lanzado ${SCRIPT_ANALYSIS_HOURLY_LIMIT} análisis en la última hora, que es el máximo. Espera un poco e inténtalo de nuevo.`,
+      error: `Has lanzado ${SCRIPT_ANALYSIS_HOURLY_LIMIT} análisis seguidos. Puedes volver a intentarlo en ${formatWait(hourlyStatus.retryAt)}.`,
     };
   }
 
-  // Tope adicional solo para el plan gratuito, por día — el plan PRO no
-  // tiene este segundo límite, solo el de la hora de arriba.
-  if (profile.organization.plan !== "PRO") {
-    const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const analysesLastDay = await prisma.scriptAnalysis.count({
-      where: { createdById: profile.id, createdAt: { gte: dayAgo } },
-    });
-    if (analysesLastDay >= SCRIPT_ANALYSIS_FREE_DAILY_LIMIT) {
-      return {
-        error: `Has usado los ${SCRIPT_ANALYSIS_FREE_DAILY_LIMIT} análisis disponibles hoy en el plan gratuito. Pásate a PRO en Organización para analizar más.`,
-      };
-    }
+  // Tope diario — 1 al día en gratis, 50 al día en PRO.
+  const dailyLimit = isPro ? SCRIPT_ANALYSIS_PRO_DAILY_LIMIT : SCRIPT_ANALYSIS_FREE_DAILY_LIMIT;
+  const dailyStatus = await checkScriptAnalysisRateLimit(profile.id, dailyLimit, 24 * 60 * 60 * 1000);
+  if (dailyStatus.blocked && dailyStatus.retryAt) {
+    return {
+      error: isPro
+        ? `Has alcanzado el máximo de ${dailyLimit} análisis en 24 horas. Puedes volver a intentarlo en ${formatWait(dailyStatus.retryAt)}.`
+        : `Ya has usado tu análisis de hoy en el plan gratuito. Puedes volver a intentarlo en ${formatWait(dailyStatus.retryAt)}, o pásate a PRO en Organización para analizar más.`,
+    };
   }
 
   let proposal;

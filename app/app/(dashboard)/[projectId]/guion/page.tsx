@@ -17,7 +17,11 @@ import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
 import { BackLink } from "@/components/BackLink";
 import { FileOpenLink } from "@/components/FileOpenLink";
 import { SubmitButton } from "@/components/SubmitButton";
-import { SCRIPT_ANALYSIS_FREE_DAILY_LIMIT, SCRIPT_ANALYSIS_HOURLY_LIMIT } from "@/lib/limits";
+import {
+  SCRIPT_ANALYSIS_FREE_DAILY_LIMIT,
+  SCRIPT_ANALYSIS_FREE_LIFETIME_LIMIT,
+  SCRIPT_ANALYSIS_PRO_DAILY_LIMIT,
+} from "@/lib/limits";
 import { SparkleIcon } from "@/components/ToolIcons";
 
 // El análisis de guion y la revisión de continuidad llaman a Mistral y
@@ -40,18 +44,7 @@ export default async function GuionPage({
   const profile = await getCurrentProfile();
   if (!profile) notFound();
 
-  const now = new Date();
-  const hourAgo = new Date(now.getTime() - 60 * 60 * 1000);
-  const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-
-  const [
-    scriptFiles,
-    scenes,
-    pendingAnalyses,
-    pendingContinuityChecks,
-    analysesLastHour,
-    analysesLastDay,
-  ] = await Promise.all([
+  const [scriptFiles, scenes, pendingAnalyses, pendingContinuityChecks] = await Promise.all([
     prisma.scriptFile.findMany({
       where: { projectId },
       orderBy: { uploadedAt: "desc" },
@@ -77,17 +70,12 @@ export default async function GuionPage({
       orderBy: { createdAt: "desc" },
       include: { _count: { select: { issues: true } } },
     }),
-    prisma.scriptAnalysis.count({ where: { createdById: profile.id, createdAt: { gte: hourAgo } } }),
-    prisma.scriptAnalysis.count({ where: { createdById: profile.id, createdAt: { gte: dayAgo } } }),
   ]);
 
   const uploadAction = uploadScript.bind(null, projectId);
   const createSceneAction = createScene.bind(null, projectId);
   const runContinuityAction = runContinuityCheck.bind(null, projectId);
   const isPro = profile.organization.plan === "PRO";
-  const hourlyLimitReached = analysesLastHour >= SCRIPT_ANALYSIS_HOURLY_LIMIT;
-  const dailyLimitReached = !isPro && analysesLastDay >= SCRIPT_ANALYSIS_FREE_DAILY_LIMIT;
-  const analysisLimitReached = hourlyLimitReached || dailyLimitReached;
 
   return (
     <div>
@@ -145,43 +133,20 @@ export default async function GuionPage({
                     Lee el guion y propone escenas, personajes, localizaciones
                     y atrezzo a partir de él.{" "}
                     {isPro
-                      ? `Hasta ${SCRIPT_ANALYSIS_HOURLY_LIMIT} análisis por hora.`
-                      : `Hasta ${SCRIPT_ANALYSIS_FREE_DAILY_LIMIT} análisis al día (y máximo ${SCRIPT_ANALYSIS_HOURLY_LIMIT} por hora).`}
+                      ? `Hasta ${SCRIPT_ANALYSIS_PRO_DAILY_LIMIT} análisis al día.`
+                      : `${SCRIPT_ANALYSIS_FREE_DAILY_LIMIT} análisis al día, ${SCRIPT_ANALYSIS_FREE_LIFETIME_LIMIT} en total con el plan gratuito.`}
                   </p>
                 </div>
               </div>
 
-              <div className="mt-4 flex items-center justify-between gap-4 border-t border-line pt-4">
-                {analysisLimitReached ? (
-                  <p className="font-mono text-xs text-muted">
-                    {dailyLimitReached ? (
-                      <>
-                        Límite diario usado ({analysesLastDay}/{SCRIPT_ANALYSIS_FREE_DAILY_LIMIT}) —{" "}
-                        <Link href="/app/organizacion" className="text-accent hover:underline">
-                          pásate a PRO
-                        </Link>{" "}
-                        para analizar más.
-                      </>
-                    ) : (
-                      `Límite de ${SCRIPT_ANALYSIS_HOURLY_LIMIT} análisis por hora alcanzado. Espera un poco e inténtalo de nuevo.`
-                    )}
-                  </p>
-                ) : (
-                  <>
-                    <ActionButtonForm
-                      action={analyzeScript.bind(null, projectId, scriptFiles[0].id)}
-                      pendingLabel="Analizando…"
-                      className="rounded-full border border-accent px-5 py-2 font-mono text-xs tracking-widest text-accent uppercase transition-colors hover:bg-accent hover:text-bg disabled:opacity-50"
-                    >
-                      Analizar
-                    </ActionButtonForm>
-                    <span className="font-mono text-[10px] text-muted">
-                      {isPro
-                        ? `${analysesLastHour}/${SCRIPT_ANALYSIS_HOURLY_LIMIT} esta hora`
-                        : `${analysesLastDay}/${SCRIPT_ANALYSIS_FREE_DAILY_LIMIT} hoy`}
-                    </span>
-                  </>
-                )}
+              <div className="mt-4 border-t border-line pt-4">
+                <ActionButtonForm
+                  action={analyzeScript.bind(null, projectId, scriptFiles[0].id)}
+                  pendingLabel="Analizando…"
+                  className="rounded-full border border-accent px-5 py-2 font-mono text-xs tracking-widest text-accent uppercase transition-colors hover:bg-accent hover:text-bg disabled:opacity-50"
+                >
+                  Analizar
+                </ActionButtonForm>
               </div>
             </div>
           </>

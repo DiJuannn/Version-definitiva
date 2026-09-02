@@ -10,7 +10,13 @@ import { FeatureIntro } from "@/components/FeatureIntro";
 import { SubmitButton } from "@/components/SubmitButton";
 import { InviteForm } from "@/components/InviteForm";
 import { getCheckoutUrls, buildCheckoutUrl } from "@/lib/lemonsqueezy";
-import { SCRIPT_ANALYSIS_FREE_DAILY_LIMIT, SCRIPT_ANALYSIS_HOURLY_LIMIT } from "@/lib/limits";
+import {
+  SCRIPT_ANALYSIS_FREE_DAILY_LIMIT,
+  SCRIPT_ANALYSIS_FREE_LIFETIME_LIMIT,
+  SCRIPT_ANALYSIS_PRO_DAILY_LIMIT,
+  SCRIPT_PAGE_LIMIT_FREE,
+  SCRIPT_PAGE_LIMIT_PRO,
+} from "@/lib/limits";
 
 const ROLE_LABELS = { ADMIN: "Admin", MEMBER: "Miembro" } as const;
 
@@ -68,16 +74,18 @@ export default async function OrganizacionPage() {
 
         {profile.organization.plan === "PRO" ? (
           <p className="mt-3 font-mono text-xs text-muted">
-            Análisis de guion hasta {SCRIPT_ANALYSIS_HOURLY_LIMIT} por hora,
-            sin límite diario, en todos los proyectos de la organización.
+            Guiones de hasta {SCRIPT_PAGE_LIMIT_PRO} páginas, hasta{" "}
+            {SCRIPT_ANALYSIS_PRO_DAILY_LIMIT} análisis al día por cuenta, en
+            todos los proyectos de la organización.
           </p>
         ) : (
           <>
             <p className="mt-3 font-mono text-xs text-muted">
-              El plan gratuito incluye {SCRIPT_ANALYSIS_FREE_DAILY_LIMIT}{" "}
-              análisis de guion al día por cuenta, en total entre todos los
-              proyectos. Con PRO, hasta {SCRIPT_ANALYSIS_HOURLY_LIMIT} por
-              hora, sin límite diario.
+              El plan gratuito incluye guiones de hasta {SCRIPT_PAGE_LIMIT_FREE}{" "}
+              páginas, {SCRIPT_ANALYSIS_FREE_DAILY_LIMIT} análisis al día y{" "}
+              {SCRIPT_ANALYSIS_FREE_LIFETIME_LIMIT} en total por cuenta. Con
+              PRO, guiones de hasta {SCRIPT_PAGE_LIMIT_PRO} páginas y hasta{" "}
+              {SCRIPT_ANALYSIS_PRO_DAILY_LIMIT} análisis al día.
             </p>
             {checkoutUrls ? (
               <div className="mt-5 grid gap-4 sm:grid-cols-2">
