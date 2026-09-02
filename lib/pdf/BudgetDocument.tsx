@@ -1,5 +1,6 @@
 import { Document, Page, Text, View } from "@react-pdf/renderer";
 import { pdfStyles, colors } from "@/lib/pdf/styles";
+import { PdfHeader, PdfFooter, rowStyle } from "@/lib/pdf/components";
 
 function currency(value: number) {
   return value.toLocaleString("es-ES", { style: "currency", currency: "EUR" });
@@ -45,12 +46,7 @@ export function BudgetDocument({
   return (
     <Document>
       <Page size="A4" style={pdfStyles.page}>
-        <View style={pdfStyles.header}>
-          <View>
-            <Text style={pdfStyles.eyebrow}>Presupuesto</Text>
-            <Text style={pdfStyles.title}>{projectName}</Text>
-          </View>
-        </View>
+        <PdfHeader eyebrow="Presupuesto" title={projectName} />
 
         {categoriesWithTotals.map((category) => {
           const { rows, categoryTotal } = category;
@@ -61,23 +57,24 @@ export function BudgetDocument({
                 style={{
                   flexDirection: "row",
                   justifyContent: "space-between",
-                  marginBottom: 4,
+                  alignItems: "flex-end",
+                  marginBottom: 6,
                 }}
               >
-                <Text style={pdfStyles.sectionLabel}>{category.name}</Text>
-                <Text style={[pdfStyles.sectionLabel, { color: colors.accent }]}>
+                <Text style={pdfStyles.sectionTitle}>{category.name}</Text>
+                <Text style={{ fontSize: 12, fontFamily: "Helvetica-Bold", color: colors.accent }}>
                   {currency(categoryTotal)}
                 </Text>
               </View>
-              <View style={pdfStyles.rowHeader}>
+              <View style={pdfStyles.tableHeader}>
                 <Text style={[pdfStyles.th, { flex: 1 }]}>Concepto</Text>
                 <Text style={[pdfStyles.th, { width: 50 }]}>Cant.</Text>
                 <Text style={[pdfStyles.th, { width: 70 }]}>Precio</Text>
                 <Text style={[pdfStyles.th, { width: 40 }]}>IVA</Text>
                 <Text style={[pdfStyles.th, { width: 70 }]}>Total</Text>
               </View>
-              {rows.map((item) => (
-                <View key={item.id} style={pdfStyles.row}>
+              {rows.map((item, i) => (
+                <View key={item.id} style={rowStyle(i)}>
                   <Text style={[pdfStyles.td, { flex: 1 }]}>{item.description}</Text>
                   <Text style={[pdfStyles.td, { width: 50 }]}>{item.quantity}</Text>
                   <Text style={[pdfStyles.td, { width: 70 }]}>
@@ -97,26 +94,22 @@ export function BudgetDocument({
           style={{
             flexDirection: "row",
             justifyContent: "space-between",
-            borderTopWidth: 1.5,
-            borderTopColor: colors.ink,
-            paddingTop: 8,
+            alignItems: "center",
+            backgroundColor: colors.ink,
+            paddingVertical: 10,
+            paddingHorizontal: 10,
             marginTop: 8,
           }}
         >
-          <Text style={{ fontSize: 12, fontFamily: "Helvetica-Bold" }}>TOTAL</Text>
-          <Text
-            style={{ fontSize: 12, fontFamily: "Helvetica-Bold", color: colors.accent }}
-          >
+          <Text style={{ fontSize: 12, fontFamily: "Helvetica-Bold", color: colors.bg, textTransform: "uppercase", letterSpacing: 1 }}>
+            Total
+          </Text>
+          <Text style={{ fontSize: 14, fontFamily: "Helvetica-Bold", color: colors.accent }}>
             {currency(grandTotal)}
           </Text>
         </View>
 
-        <View style={pdfStyles.footer} fixed>
-          <Text>Versión definitiva — Taller</Text>
-          <Text
-            render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`}
-          />
-        </View>
+        <PdfFooter projectName={projectName} />
       </Page>
     </Document>
   );

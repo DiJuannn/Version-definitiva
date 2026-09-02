@@ -1,5 +1,6 @@
 import { Document, Page, Text, View } from "@react-pdf/renderer";
 import { colors, pdfStyles } from "@/lib/pdf/styles";
+import { PdfHeader, PdfFooter, SectionTitle, rowStyle } from "@/lib/pdf/components";
 import {
   BREAKDOWN_CATEGORY_LABELS,
   DAY_PART_LABELS,
@@ -25,19 +26,6 @@ function formatDate(date: Date | null) {
   return date ? date.toLocaleDateString("es-ES") : "—";
 }
 
-function Footer() {
-  return (
-    <View style={pdfStyles.footer} fixed>
-      <Text>Versión definitiva — Taller</Text>
-      <Text render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} />
-    </View>
-  );
-}
-
-function PageTitle({ children }: { children: string }) {
-  return <Text style={[pdfStyles.title, { fontSize: 14, marginBottom: 12 }]}>{children}</Text>;
-}
-
 // Mismos datos que la pantalla de Resumen (getProjectSummary) — nada se
 // vuelve a calcular aquí, para que el dossier nunca se quede corto de lo
 // que ya se ve en pantalla.
@@ -59,16 +47,66 @@ export function DossierDocument({ summary }: { summary: ProjectSummaryData }) {
     items: project.breakdownElements.filter((el) => el.category === category),
   }));
 
+  const subtitle = [
+    project.director && `Dirección: ${project.director}`,
+    project.producer && `Producción: ${project.producer}`,
+  ]
+    .filter(Boolean)
+    .join("   ·   ");
+
   return (
     <Document>
       {/* Portada */}
       <Page size="A4" style={pdfStyles.page}>
-        <View style={pdfStyles.header}>
-          <View>
-            <Text style={pdfStyles.eyebrow}>Dossier de producción</Text>
-            <Text style={pdfStyles.title}>{project.name}</Text>
-          </View>
+        <View style={pdfStyles.brandBar} fixed />
+        <View style={{ flex: 1, justifyContent: "center" }}>
+          <Text
+            style={{
+              fontSize: 9,
+              letterSpacing: 3,
+              color: colors.accent,
+              textTransform: "uppercase",
+              fontFamily: "Helvetica-Bold",
+              marginBottom: 18,
+            }}
+          >
+            Dossier de producción
+          </Text>
+          <Text
+            style={{
+              fontSize: 34,
+              fontFamily: "Helvetica-Bold",
+              textTransform: "uppercase",
+              lineHeight: 1.15,
+            }}
+          >
+            {project.name}
+          </Text>
+          <View
+            style={{
+              width: 64,
+              height: 3,
+              backgroundColor: colors.accent,
+              marginTop: 22,
+              marginBottom: 18,
+            }}
+          />
+          {subtitle && <Text style={{ fontSize: 11, color: colors.muted }}>{subtitle}</Text>}
         </View>
+        <Text style={{ fontSize: 8, color: colors.muted }}>
+          Generado el{" "}
+          {new Date().toLocaleDateString("es-ES", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          })}{" "}
+          — Versión definitiva · Taller
+        </Text>
+      </Page>
+
+      {/* Resumen */}
+      <Page size="A4" style={pdfStyles.page}>
+        <PdfHeader eyebrow="Dossier de producción" title="Resumen" />
 
         <View style={[pdfStyles.section, pdfStyles.grid3]}>
           <View style={pdfStyles.col}>
@@ -107,22 +145,26 @@ export function DossierDocument({ summary }: { summary: ProjectSummaryData }) {
           </View>
         )}
 
-        <View style={[pdfStyles.section, pdfStyles.grid3]}>
+        <View
+          style={{
+            flexDirection: "row",
+            backgroundColor: colors.accentSoft,
+            padding: 14,
+            marginTop: 8,
+            marginBottom: 16,
+          }}
+        >
           <View style={pdfStyles.col}>
             <Text style={pdfStyles.sectionLabel}>Escenas</Text>
-            <Text style={{ fontSize: 16, fontFamily: "Helvetica-Bold" }}>
-              {project.scenes.length}
-            </Text>
+            <Text style={pdfStyles.statValue}>{project.scenes.length}</Text>
           </View>
           <View style={pdfStyles.col}>
             <Text style={pdfStyles.sectionLabel}>Días de rodaje</Text>
-            <Text style={{ fontSize: 16, fontFamily: "Helvetica-Bold" }}>
-              {project.shootingDays.length}
-            </Text>
+            <Text style={pdfStyles.statValue}>{project.shootingDays.length}</Text>
           </View>
           <View style={pdfStyles.col}>
             <Text style={pdfStyles.sectionLabel}>Presupuesto total</Text>
-            <Text style={{ fontSize: 16, fontFamily: "Helvetica-Bold", color: colors.accent }}>
+            <Text style={[pdfStyles.statValue, { color: colors.accent }]}>
               {currency(budgetGrandTotal)}
             </Text>
           </View>
@@ -142,13 +184,13 @@ export function DossierDocument({ summary }: { summary: ProjectSummaryData }) {
           </View>
         </View>
 
-        <Footer />
+        <PdfFooter projectName={project.name} />
       </Page>
 
       {/* Escenas */}
       <Page size="A4" style={pdfStyles.page}>
-        <PageTitle>Escenas</PageTitle>
-        <View style={pdfStyles.rowHeader}>
+        <PdfHeader eyebrow="Dossier de producción" title="Escenas" />
+        <View style={pdfStyles.tableHeader}>
           <Text style={[pdfStyles.th, { width: 40 }]}>Nº</Text>
           <Text style={[pdfStyles.th, { width: 90 }]}>INT/EXT · Día</Text>
           <Text style={[pdfStyles.th, { width: 110 }]}>Localización</Text>
@@ -157,8 +199,8 @@ export function DossierDocument({ summary }: { summary: ProjectSummaryData }) {
         {project.scenes.length === 0 ? (
           <Text style={[pdfStyles.td, { paddingVertical: 6 }]}>Sin escenas.</Text>
         ) : (
-          project.scenes.map((scene) => (
-            <View key={scene.id} style={pdfStyles.row}>
+          project.scenes.map((scene, i) => (
+            <View key={scene.id} style={rowStyle(i)}>
               <Text style={[pdfStyles.td, { width: 40 }]}>{scene.number}</Text>
               <Text style={[pdfStyles.td, { width: 90 }]}>
                 {INT_EXT_LABELS[scene.intExt]} · {DAY_PART_LABELS[scene.dayPart]}
@@ -172,49 +214,51 @@ export function DossierDocument({ summary }: { summary: ProjectSummaryData }) {
             </View>
           ))
         )}
-        <Footer />
+        <PdfFooter projectName={project.name} />
       </Page>
 
       {/* Personajes, actores y localizaciones */}
       <Page size="A4" style={pdfStyles.page}>
-        <PageTitle>Personajes y actores</PageTitle>
-        <View style={pdfStyles.rowHeader}>
+        <PdfHeader eyebrow="Dossier de producción" title="Personajes y actores" />
+        <View style={pdfStyles.tableHeader}>
           <Text style={[pdfStyles.th, { flex: 1 }]}>Personaje</Text>
           <Text style={[pdfStyles.th, { flex: 1 }]}>Actor/Actriz</Text>
         </View>
         {project.characters.length === 0 ? (
           <Text style={[pdfStyles.td, { paddingVertical: 6 }]}>Sin personajes.</Text>
         ) : (
-          project.characters.map((character) => (
-            <View key={character.id} style={pdfStyles.row}>
+          project.characters.map((character, i) => (
+            <View key={character.id} style={rowStyle(i)}>
               <Text style={[pdfStyles.td, { flex: 1 }]}>{character.name}</Text>
               <Text style={[pdfStyles.td, { flex: 1 }]}>{character.actor?.name ?? "—"}</Text>
             </View>
           ))
         )}
 
-        <Text style={[pdfStyles.sectionLabel, { marginTop: 20 }]}>Localizaciones</Text>
-        <View style={pdfStyles.rowHeader}>
+        <View style={{ marginTop: 22 }}>
+          <SectionTitle>Localizaciones</SectionTitle>
+        </View>
+        <View style={pdfStyles.tableHeader}>
           <Text style={[pdfStyles.th, { flex: 1 }]}>Nombre</Text>
           <Text style={[pdfStyles.th, { flex: 1 }]}>Escenas</Text>
         </View>
         {locations.length === 0 ? (
           <Text style={[pdfStyles.td, { paddingVertical: 6 }]}>Sin localizaciones.</Text>
         ) : (
-          locations.map((location) => (
-            <View key={location.id} style={pdfStyles.row}>
+          locations.map((location, i) => (
+            <View key={location.id} style={rowStyle(i)}>
               <Text style={[pdfStyles.td, { flex: 1 }]}>{location.name}</Text>
               <Text style={[pdfStyles.td, { flex: 1 }]}>{location.sceneCount}</Text>
             </View>
           ))
         )}
-        <Footer />
+        <PdfFooter projectName={project.name} />
       </Page>
 
       {/* Equipo técnico */}
       <Page size="A4" style={pdfStyles.page}>
-        <PageTitle>Equipo técnico</PageTitle>
-        <View style={pdfStyles.rowHeader}>
+        <PdfHeader eyebrow="Dossier de producción" title="Equipo técnico" />
+        <View style={pdfStyles.tableHeader}>
           <Text style={[pdfStyles.th, { flex: 1 }]}>Nombre</Text>
           <Text style={[pdfStyles.th, { flex: 1 }]}>Rol</Text>
           <Text style={[pdfStyles.th, { flex: 1 }]}>Contacto</Text>
@@ -222,8 +266,8 @@ export function DossierDocument({ summary }: { summary: ProjectSummaryData }) {
         {project.crewMembers.length === 0 ? (
           <Text style={[pdfStyles.td, { paddingVertical: 6 }]}>Sin equipo técnico.</Text>
         ) : (
-          project.crewMembers.map((member) => (
-            <View key={member.id} style={pdfStyles.row}>
+          project.crewMembers.map((member, i) => (
+            <View key={member.id} style={rowStyle(i)}>
               <Text style={[pdfStyles.td, { flex: 1 }]}>{member.name}</Text>
               <Text style={[pdfStyles.td, { flex: 1 }]}>{member.role ?? "—"}</Text>
               <Text style={[pdfStyles.td, { flex: 1 }]}>
@@ -232,12 +276,12 @@ export function DossierDocument({ summary }: { summary: ProjectSummaryData }) {
             </View>
           ))
         )}
-        <Footer />
+        <PdfFooter projectName={project.name} />
       </Page>
 
       {/* Desglose */}
       <Page size="A4" style={pdfStyles.page}>
-        <PageTitle>Desglose</PageTitle>
+        <PdfHeader eyebrow="Dossier de producción" title="Desglose" />
         {project.breakdownElements.length === 0 ? (
           <Text style={pdfStyles.td}>Sin elementos de desglose.</Text>
         ) : (
@@ -254,13 +298,13 @@ export function DossierDocument({ summary }: { summary: ProjectSummaryData }) {
               </View>
             ))
         )}
-        <Footer />
+        <PdfFooter projectName={project.name} />
       </Page>
 
       {/* Inventario y vehículos */}
       <Page size="A4" style={pdfStyles.page}>
-        <PageTitle>Inventario</PageTitle>
-        <View style={pdfStyles.rowHeader}>
+        <PdfHeader eyebrow="Dossier de producción" title="Inventario" />
+        <View style={pdfStyles.tableHeader}>
           <Text style={[pdfStyles.th, { flex: 1 }]}>Elemento</Text>
           <Text style={[pdfStyles.th, { width: 90 }]}>Categoría</Text>
           <Text style={[pdfStyles.th, { width: 90 }]}>Días reservado</Text>
@@ -268,8 +312,8 @@ export function DossierDocument({ summary }: { summary: ProjectSummaryData }) {
         {inventoryItems.length === 0 ? (
           <Text style={[pdfStyles.td, { paddingVertical: 6 }]}>Sin equipo reservado.</Text>
         ) : (
-          inventoryItems.map((item) => (
-            <View key={item.id} style={pdfStyles.row}>
+          inventoryItems.map((item, i) => (
+            <View key={item.id} style={rowStyle(i)}>
               <Text style={[pdfStyles.td, { flex: 1 }]}>{item.name}</Text>
               <Text style={[pdfStyles.td, { width: 90 }]}>
                 {INVENTORY_CATEGORY_LABELS[item.category as keyof typeof INVENTORY_CATEGORY_LABELS] ??
@@ -280,8 +324,10 @@ export function DossierDocument({ summary }: { summary: ProjectSummaryData }) {
           ))
         )}
 
-        <Text style={[pdfStyles.sectionLabel, { marginTop: 20 }]}>Vehículos</Text>
-        <View style={pdfStyles.rowHeader}>
+        <View style={{ marginTop: 22 }}>
+          <SectionTitle>Vehículos</SectionTitle>
+        </View>
+        <View style={pdfStyles.tableHeader}>
           <Text style={[pdfStyles.th, { flex: 1 }]}>Nombre</Text>
           <Text style={[pdfStyles.th, { width: 90 }]}>Matrícula</Text>
           <Text style={[pdfStyles.th, { width: 90 }]}>Días reservado</Text>
@@ -289,20 +335,20 @@ export function DossierDocument({ summary }: { summary: ProjectSummaryData }) {
         {vehicles.length === 0 ? (
           <Text style={[pdfStyles.td, { paddingVertical: 6 }]}>Sin vehículos reservados.</Text>
         ) : (
-          vehicles.map((vehicle) => (
-            <View key={vehicle.id} style={pdfStyles.row}>
+          vehicles.map((vehicle, i) => (
+            <View key={vehicle.id} style={rowStyle(i)}>
               <Text style={[pdfStyles.td, { flex: 1 }]}>{vehicle.name}</Text>
               <Text style={[pdfStyles.td, { width: 90 }]}>{vehicle.plate ?? "—"}</Text>
               <Text style={[pdfStyles.td, { width: 90 }]}>{vehicle.daysCount}</Text>
             </View>
           ))
         )}
-        <Footer />
+        <PdfFooter projectName={project.name} />
       </Page>
 
       {/* Plan de rodaje — qué llevar cada día */}
       <Page size="A4" style={pdfStyles.page}>
-        <PageTitle>Plan de rodaje</PageTitle>
+        <PdfHeader eyebrow="Dossier de producción" title="Plan de rodaje" />
         {shootingDaysWithNeeds.length === 0 ? (
           <Text style={pdfStyles.td}>Sin días de rodaje planificados.</Text>
         ) : (
@@ -333,28 +379,19 @@ export function DossierDocument({ summary }: { summary: ProjectSummaryData }) {
             </View>
           ))
         )}
-        <Footer />
+        <PdfFooter projectName={project.name} />
       </Page>
 
       {/* Presupuesto */}
       <Page size="A4" style={pdfStyles.page}>
-        <PageTitle>Presupuesto</PageTitle>
+        <PdfHeader eyebrow="Dossier de producción" title="Presupuesto" />
         {budgetCategoriesWithTotals.length === 0 ? (
           <Text style={pdfStyles.td}>Sin presupuesto definido.</Text>
         ) : (
           <>
-            {budgetCategoriesWithTotals.map((category) => (
-              <View
-                key={category.id}
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  borderBottomWidth: 0.5,
-                  borderBottomColor: colors.line,
-                  paddingVertical: 6,
-                }}
-              >
-                <Text style={pdfStyles.td}>{category.name}</Text>
+            {budgetCategoriesWithTotals.map((category, i) => (
+              <View key={category.id} style={rowStyle(i)}>
+                <Text style={[pdfStyles.td, { flex: 1 }]}>{category.name}</Text>
                 <Text style={pdfStyles.td}>{currency(category.total)}</Text>
               </View>
             ))}
@@ -362,20 +399,31 @@ export function DossierDocument({ summary }: { summary: ProjectSummaryData }) {
               style={{
                 flexDirection: "row",
                 justifyContent: "space-between",
-                borderTopWidth: 1.5,
-                borderTopColor: colors.ink,
-                paddingTop: 8,
+                alignItems: "center",
+                backgroundColor: colors.ink,
+                paddingVertical: 10,
+                paddingHorizontal: 10,
                 marginTop: 8,
               }}
             >
-              <Text style={{ fontSize: 12, fontFamily: "Helvetica-Bold" }}>TOTAL</Text>
-              <Text style={{ fontSize: 12, fontFamily: "Helvetica-Bold", color: colors.accent }}>
+              <Text
+                style={{
+                  fontSize: 12,
+                  fontFamily: "Helvetica-Bold",
+                  color: colors.bg,
+                  textTransform: "uppercase",
+                  letterSpacing: 1,
+                }}
+              >
+                Total
+              </Text>
+              <Text style={{ fontSize: 14, fontFamily: "Helvetica-Bold", color: colors.accent }}>
                 {currency(budgetGrandTotal)}
               </Text>
             </View>
           </>
         )}
-        <Footer />
+        <PdfFooter projectName={project.name} />
       </Page>
     </Document>
   );

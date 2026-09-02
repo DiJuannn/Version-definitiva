@@ -1,5 +1,6 @@
 import { Document, Page, Text, View } from "@react-pdf/renderer";
 import { pdfStyles } from "@/lib/pdf/styles";
+import { PdfHeader, PdfFooter, SectionTitle, rowStyle } from "@/lib/pdf/components";
 import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
 import type { ShootingDaySummary } from "@/lib/shooting-day-summary";
 
@@ -17,20 +18,16 @@ export function CallSheetDocument({
   return (
     <Document>
       <Page size="A4" style={pdfStyles.page}>
-        <View style={pdfStyles.header}>
-          <View>
-            <Text style={pdfStyles.eyebrow}>Call Sheet</Text>
-            <Text style={pdfStyles.title}>{projectName}</Text>
-          </View>
-          <Text style={pdfStyles.headerRight}>
-            {shootingDay.date.toLocaleDateString("es-ES", {
-              weekday: "long",
-              day: "2-digit",
-              month: "long",
-              year: "numeric",
-            })}
-          </Text>
-        </View>
+        <PdfHeader
+          eyebrow="Call Sheet"
+          title={projectName}
+          meta={shootingDay.date.toLocaleDateString("es-ES", {
+            weekday: "long",
+            day: "2-digit",
+            month: "long",
+            year: "numeric",
+          })}
+        />
 
         <View style={[pdfStyles.section, pdfStyles.grid2]}>
           <View style={pdfStyles.col}>
@@ -46,8 +43,8 @@ export function CallSheetDocument({
         </View>
 
         <View style={pdfStyles.section}>
-          <Text style={pdfStyles.sectionLabel}>Escenas</Text>
-          <View style={pdfStyles.rowHeader}>
+          <SectionTitle>Escenas</SectionTitle>
+          <View style={pdfStyles.tableHeader}>
             <Text style={[pdfStyles.th, { width: 50 }]}>Hora</Text>
             <Text style={[pdfStyles.th, { flex: 1 }]}>Escena</Text>
             <Text style={[pdfStyles.th, { flex: 1 }]}>Personajes</Text>
@@ -57,8 +54,8 @@ export function CallSheetDocument({
               Sin escenas asignadas.
             </Text>
           ) : (
-            sceneAssignments.map((assignment) => (
-              <View key={assignment.id} style={pdfStyles.row}>
+            sceneAssignments.map((assignment, i) => (
+              <View key={assignment.id} style={rowStyle(i)}>
                 <Text style={[pdfStyles.td, { width: 50 }]}>
                   {assignment.callTime ?? "—"}
                 </Text>
@@ -117,12 +114,7 @@ export function CallSheetDocument({
           </View>
         </View>
 
-        <View style={pdfStyles.footer} fixed>
-          <Text>Versión definitiva — Taller</Text>
-          <Text
-            render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`}
-          />
-        </View>
+        <PdfFooter projectName={projectName} />
       </Page>
     </Document>
   );
