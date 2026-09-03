@@ -11,31 +11,7 @@ import { SubmitButton } from "@/components/SubmitButton";
 import { InviteForm } from "@/components/InviteForm";
 import { getCheckoutUrls, buildCheckoutUrl } from "@/lib/lemonsqueezy";
 import { isPro } from "@/lib/plan";
-import {
-  FREE_ACTIVE_PROJECTS_LIMIT,
-  FREE_PROJECT_COLLABORATORS_LIMIT,
-  SCRIPT_ANALYSIS_FREE_DAILY_LIMIT,
-  SCRIPT_ANALYSIS_FREE_LIFETIME_LIMIT,
-  SCRIPT_ANALYSIS_PRO_DAILY_LIMIT,
-  SCRIPT_PAGE_LIMIT_FREE,
-  SCRIPT_PAGE_LIMIT_PRO,
-} from "@/lib/limits";
-
-const FREE_FEATURES = [
-  `Hasta ${FREE_ACTIVE_PROJECTS_LIMIT} proyectos activos`,
-  `Hasta ${FREE_PROJECT_COLLABORATORS_LIMIT} colaboradores por proyecto`,
-  `Guiones de hasta ${SCRIPT_PAGE_LIMIT_FREE} páginas`,
-  `${SCRIPT_ANALYSIS_FREE_DAILY_LIMIT} análisis de IA al día, ${SCRIPT_ANALYSIS_FREE_LIFETIME_LIMIT} en total`,
-];
-
-const PRO_FEATURES = [
-  "Proyectos y colaboradores ilimitados",
-  `Guiones de hasta ${SCRIPT_PAGE_LIMIT_PRO} páginas`,
-  `Hasta ${SCRIPT_ANALYSIS_PRO_DAILY_LIMIT} análisis de IA al día`,
-  "Dossier completo del proyecto en PDF",
-  "Detector de continuidad con IA",
-  "Plantilla de documentos lista para firmar (permiso de rodaje, cesión de imagen, contrato de colaboración, autorización de menor, NDA)",
-];
+import { FREE_FEATURES, PRO_FEATURES } from "@/lib/plan-features";
 
 const ROLE_LABELS = { ADMIN: "Admin", MEMBER: "Miembro" } as const;
 

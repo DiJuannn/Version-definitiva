@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { PlaceholderFrame } from "@/components/PlaceholderFrame";
 import { Reveal } from "@/components/Reveal";
+import { FREE_FEATURES, PRO_FEATURES } from "@/lib/plan-features";
 import {
   BudgetIcon,
   CalendarIcon,
@@ -185,6 +186,85 @@ export default function TallerMarketingPage() {
               </p>
             </div>
           </Reveal>
+        </div>
+      </section>
+
+      <section id="precios" className="scroll-mt-24 border-t border-line px-6 py-24">
+        <div className="mx-auto max-w-6xl">
+          <Reveal>
+            <span className="font-mono text-xs tracking-widest text-accent uppercase">
+              Precios
+            </span>
+            <h2 className="mt-4 max-w-2xl font-display text-4xl font-black uppercase sm:text-5xl">
+              Elige cómo trabajas.
+            </h2>
+            <p className="mt-4 max-w-xl font-mono text-sm text-muted">
+              Empieza gratis. Pásate a PRO cuando el proyecto lo pida — sin
+              perder nada de lo que ya tienes montado.
+            </p>
+          </Reveal>
+
+          <div className="mt-12 grid gap-6 sm:grid-cols-2">
+            <Reveal delay={0.05}>
+              <div className="flex h-full flex-col border border-line p-8">
+                <span className="font-mono text-xs tracking-widest text-muted uppercase">
+                  Gratis
+                </span>
+                <p className="mt-3 font-display text-4xl font-black">0€</p>
+                <ul className="mt-8 space-y-3 font-mono text-sm text-muted">
+                  {FREE_FEATURES.map((feature) => (
+                    <li key={feature} className="flex gap-2.5">
+                      <span>·</span>
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  href="/app/signup"
+                  className="mt-8 inline-block self-start border border-line px-5 py-2.5 font-mono text-xs tracking-widest uppercase transition-colors hover:border-accent hover:text-accent"
+                >
+                  Empieza gratis
+                </Link>
+              </div>
+            </Reveal>
+
+            <Reveal delay={0.1}>
+              <div className="flex h-full flex-col border border-accent p-8">
+                <span className="font-mono text-xs tracking-widest text-accent uppercase">
+                  PRO
+                </span>
+                <p className="mt-3 font-display text-4xl font-black">
+                  6,99€
+                  <span className="font-mono text-sm font-normal text-muted">
+                    {" "}
+                    /mes
+                  </span>
+                </p>
+                <p className="mt-1 font-mono text-xs tracking-widest text-accent uppercase">
+                  o 69,99€/año — 2 meses gratis
+                </p>
+                <ul className="mt-8 space-y-3 font-mono text-sm text-muted">
+                  {PRO_FEATURES.map((feature) => (
+                    <li key={feature} className="flex gap-2.5">
+                      <span className="text-accent">✓</span>
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  href="/app/signup"
+                  className="mt-8 inline-block self-start border border-accent bg-accent px-5 py-2.5 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+                >
+                  Empieza gratis
+                </Link>
+              </div>
+            </Reveal>
+          </div>
+
+          <p className="mt-6 font-mono text-xs text-muted">
+            El pago se activa dentro del Taller, desde Organización — la
+            cuenta empieza siempre en el plan gratuito.
+          </p>
         </div>
       </section>
 
