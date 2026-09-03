@@ -14,6 +14,8 @@ import { CreateProjectForm } from "@/components/CreateProjectForm";
 import { NewProjectPanel } from "@/components/NewProjectPanel";
 import { LinkPendingHint } from "@/components/LinkPendingHint";
 import { getProjectOverview } from "@/lib/project-roadmap";
+import { isPro } from "@/lib/plan";
+import { FREE_ACTIVE_PROJECTS_LIMIT } from "@/lib/limits";
 
 function currency(value: number) {
   return value.toLocaleString("es-ES", { style: "currency", currency: "EUR" });
@@ -340,6 +342,23 @@ export default async function DashboardPage() {
             Presupuesto general
           </span>
         </div>
+        {/* Ambientalmente visible, sin ser un banner que interrumpa — solo
+            para el plan gratuito, para que la organización sepa dónde está
+            sin tener que ir a buscarlo a Organización. En PRO no hace
+            falta, la pastilla del nav ya lo deja claro. */}
+        {!isPro(profile.organization.plan) && (
+          <Link
+            href="/app/organizacion"
+            className="flex items-baseline gap-2 transition-colors hover:text-accent"
+          >
+            <span className="font-display text-xl font-bold text-muted">
+              {activeProjectsCount}/{FREE_ACTIVE_PROJECTS_LIMIT}
+            </span>
+            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+              Plan Free · Ver PRO
+            </span>
+          </Link>
+        )}
       </div>
 
       <DashboardReveal className="mt-8" delay={0.1}>
