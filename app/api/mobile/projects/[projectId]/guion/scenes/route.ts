@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getMobileProfile } from "@/lib/mobile-auth";
 import { getProjectForProfile } from "@/lib/project-access";
-import { createSceneCore } from "@/lib/scenes-core";
+import { createSceneCore, deleteAllScenesCore } from "@/lib/scenes-core";
 import { CORS_HEADERS } from "@/lib/mobile-cors";
 
 export function OPTIONS() {
@@ -41,4 +41,32 @@ export async function POST(
   }
 
   return NextResponse.json({ id: scene.id, number: scene.number }, { headers: CORS_HEADERS });
+}
+
+// DELETE — borra TODAS las escenas del proyecto (reparto, desglose y
+// equipo asignados a cada una se van con ellas por cascade). Mismo botón
+// "Eliminar todas" que ya tiene la web en Guion.
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ projectId: string }> },
+) {
+  const profile = await getMobileProfile(request);
+  if (!profile) {
+    return NextResponse.json(
+      { error: "No autenticado." },
+      { status: 401, headers: CORS_HEADERS },
+    );
+  }
+
+  const { projectId } = await params;
+  const project = await getProjectForProfile(profile, projectId);
+  if (!project) {
+    return NextResponse.json(
+      { error: "Proyecto no encontrado." },
+      { status: 404, headers: CORS_HEADERS },
+    );
+  }
+
+  await deleteAllScenesCore(projectId);
+  return NextResponse.json({ ok: true }, { headers: CORS_HEADERS });
 }

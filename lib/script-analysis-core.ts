@@ -185,8 +185,18 @@ export async function importScriptAnalysisCore(
     propIdByName.set(key, created.id);
   }
 
-  const existingSceneCount = await prisma.scene.count({ where: { projectId } });
-  let order = existingSceneCount;
+  // Un análisis nuevo del mismo guion vuelve a proponer las mismas escenas
+  // — sin esto, cada vez que se importa se duplicaban (dos "Escena 04"
+  // distintas en vez de una sola actualizada). Se identifican por
+  // "number" (el mismo criterio que ya usa la web para pedirlo al crear
+  // una escena a mano): si ya existe una escena con ese número en el
+  // proyecto, se actualiza en vez de crear otra.
+  const existingScenes = await prisma.scene.findMany({
+    where: { projectId },
+    select: { id: true, number: true },
+  });
+  const existingSceneIdByNumber = new Map(existingScenes.map((s) => [s.number, s.id]));
+  let order = existingScenes.length;
   const sceneIndexSet = new Set(selections.sceneIndices);
 
   for (let i = 0; i < proposal.scenes.length; i++) {
@@ -213,34 +223,38 @@ export async function importScriptAnalysisCore(
       ? (scene.dayPart as DayPart)
       : undefined;
 
-    const createdScene = await prisma.scene.create({
-      data: {
-        projectId,
-        number: scene.number,
-        intExt,
-        dayPart,
-        locationId,
-        description: cleanText(scene.description),
-        action: cleanText(scene.action),
-        dialogueNotes: cleanText(scene.dialogueNotes),
-        order: order++,
-      },
-    });
+    const sceneData = {
+      intExt,
+      dayPart,
+      locationId,
+      description: cleanText(scene.description),
+      action: cleanText(scene.action),
+      dialogueNotes: cleanText(scene.dialogueNotes),
+    };
 
+    const existingSceneId = existingSceneIdByNumber.get(scene.number);
+    const sceneId = existingSceneId
+      ? (await prisma.scene.update({ where: { id: existingSceneId }, data: sceneData })).id
+      : (
+          await prisma.scene.create({
+            data: { projectId, number: scene.number, ...sceneData, order: order++ },
+          })
+        ).id;
+    if (!existingSceneId) existingSceneIdByNumber.set(scene.number, sceneId);
+
+    // Igual que al editar una escena a mano: se borran los vínculos
+    // anteriores y se vuelven a crear con la propuesta nueva, en vez de
+    // acumularlos.
+    await prisma.sceneCharacter.deleteMany({ where: { sceneId } });
     if (characterIds.length > 0) {
       await prisma.sceneCharacter.createMany({
-        data: characterIds.map((characterId) => ({
-          sceneId: createdScene.id,
-          characterId,
-        })),
+        data: characterIds.map((characterId) => ({ sceneId, characterId })),
       });
     }
+    await prisma.sceneBreakdownElement.deleteMany({ where: { sceneId } });
     if (propIds.length > 0) {
       await prisma.sceneBreakdownElement.createMany({
-        data: propIds.map((breakdownElementId) => ({
-          sceneId: createdScene.id,
-          breakdownElementId,
-        })),
+        data: propIds.map((breakdownElementId) => ({ sceneId, breakdownElementId })),
       });
     }
   }
