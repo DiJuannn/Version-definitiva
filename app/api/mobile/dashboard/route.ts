@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getMobileProfile } from "@/lib/mobile-auth";
 import { getDashboardHero } from "@/lib/dashboard-data";
+import { isPro } from "@/lib/plan";
+import { FREE_ACTIVE_PROJECTS_LIMIT } from "@/lib/limits";
 import { CORS_HEADERS } from "@/lib/mobile-cors";
 
 export function OPTIONS() {
@@ -27,6 +29,8 @@ export async function GET(request: Request) {
     {
       activeProjectsCount: data.activeProjectsCount,
       budgetTotal: data.budgetTotal,
+      isPro: isPro(profile.organization.plan),
+      freeActiveProjectsLimit: FREE_ACTIVE_PROJECTS_LIMIT,
       nextShootingDay: data.nextShootingDay
         ? {
             id: data.nextShootingDay.id,
