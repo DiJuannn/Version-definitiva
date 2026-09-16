@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 import { getMobileProfile } from "@/lib/mobile-auth";
 import { getProjectForProfile, getProjectOwnerLabel } from "@/lib/project-access";
 import { deleteProjectCore } from "@/lib/project-delete-core";
@@ -37,9 +38,20 @@ export async function GET(
   }
 
   const isOwnerOrg = project.organizationId === profile.organizationId;
-  const [ownerLabel, isOwnerOrgPro] = await Promise.all([
+  const [ownerLabel, isOwnerOrgPro, activityLogs] = await Promise.all([
     isOwnerOrg ? null : getProjectOwnerLabel(project),
     isProjectOwnerPro(project.organizationId),
+    prisma.activityLog.findMany({
+      where: { projectId: project.id },
+      orderBy: { createdAt: "desc" },
+      take: 8,
+      select: {
+        id: true,
+        summary: true,
+        createdAt: true,
+        user: { select: { fullName: true, email: true } },
+      },
+    }),
   ]);
 
   return NextResponse.json(
@@ -63,6 +75,15 @@ export async function GET(
         isOwnerOrgPro,
         createdAt: project.createdAt,
       },
+      // Función 2 (plan Free, sin restricciones) — mismo bloque
+      // "Actividad reciente" que ya tiene la web en la ficha del
+      // proyecto (components/ActivityFeed.tsx).
+      activityLogs: activityLogs.map((log) => ({
+        id: log.id,
+        summary: log.summary,
+        createdAt: log.createdAt,
+        userName: log.user?.fullName ?? log.user?.email ?? null,
+      })),
     },
     { headers: CORS_HEADERS },
   );
