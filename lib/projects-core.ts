@@ -12,7 +12,7 @@ export async function createProjectCore(
   createdById: string,
   name: string,
   isPro: boolean,
-): Promise<{ id: string; name: string } | { error: string }> {
+): Promise<{ id: string; name: string } | { error: string; upgrade?: boolean }> {
   const trimmed = name.trim();
   if (!trimmed) return { error: "Ponle un nombre al proyecto." };
 
@@ -21,6 +21,9 @@ export async function createProjectCore(
     if (count >= FREE_ACTIVE_PROJECTS_LIMIT) {
       return {
         error: `El plan gratuito permite hasta ${FREE_ACTIVE_PROJECTS_LIMIT} proyectos. Pásate a PRO para crear más.`,
+        // Marca este error como "de plan" para que la UI pueda enseñar un
+        // enlace directo a Organización en vez de solo el texto suelto.
+        upgrade: true,
       };
     }
   }

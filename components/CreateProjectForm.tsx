@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import Link from "next/link";
 import { SubmitButton } from "@/components/SubmitButton";
 import type { CreateProjectState } from "@/lib/actions/projects";
 
@@ -36,7 +37,17 @@ export function CreateProjectForm({
         </SubmitButton>
       </form>
       {state?.error && (
-        <p className="mt-2 font-mono text-xs text-accent">{state.error}</p>
+        <p className="mt-2 font-mono text-xs text-accent">
+          {state.error}
+          {state.upgrade && (
+            <>
+              {" "}
+              <Link href="/app/organizacion" className="underline hover:no-underline">
+                Ver planes →
+              </Link>
+            </>
+          )}
+        </p>
       )}
     </div>
   );

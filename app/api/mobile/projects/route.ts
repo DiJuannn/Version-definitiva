@@ -60,7 +60,10 @@ export async function POST(request: Request) {
     isPro(profile.organization.plan),
   );
   if ("error" in result) {
-    return NextResponse.json({ error: result.error }, { status: 400, headers: CORS_HEADERS });
+    return NextResponse.json(
+      { error: result.error, upgrade: result.upgrade ?? false },
+      { status: 400, headers: CORS_HEADERS },
+    );
   }
 
   return NextResponse.json(

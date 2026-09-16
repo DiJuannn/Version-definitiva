@@ -8,7 +8,7 @@ import { deleteProjectCore } from "@/lib/project-delete-core";
 import { createProjectCore } from "@/lib/projects-core";
 import { isPro } from "@/lib/plan";
 
-export type CreateProjectState = { error: string } | undefined;
+export type CreateProjectState = { error: string; upgrade?: boolean } | undefined;
 
 export async function createProject(
   _prevState: CreateProjectState,
