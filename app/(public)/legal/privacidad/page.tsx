@@ -62,6 +62,15 @@ export default async function PrivacidadPage() {
           producción que introduzcas voluntariamente en la herramienta
           (escenas, personajes, localizaciones, presupuestos, guiones, etc.).
         </li>
+        <li>
+          Si usas la <strong className="text-fg">app móvil de Taller</strong>:
+          los mismos datos de cuenta y producción que en la web, más las
+          fotos concretas que decides subir tú mismo desde tu galería
+          (storyboard, localizaciones) — la app nunca accede al resto de tu
+          galería ni a tu cámara sin que la abras tú desde ese botón
+          concreto. La app no recoge datos de geolocalización ni de
+          publicidad.
+        </li>
       </ul>
 
       <LegalHeading>Finalidad y legitimación</LegalHeading>
@@ -97,15 +106,30 @@ export default async function PrivacidadPage() {
           decides usar esa función dentro de Taller) — empresa con sede en la
           Unión Europea.
         </li>
+        <li>
+          <strong className="text-fg">Sentry</strong> (registro de errores
+          técnicos, en la web y en la app móvil, para detectar y corregir
+          fallos) — recibe únicamente información técnica del error (qué
+          falló, en qué pantalla, tipo de dispositivo), nunca el contenido de
+          tus proyectos.
+        </li>
+        <li>
+          <strong className="text-fg">Resend</strong> (envío de los correos
+          automáticos del servicio: recordatorios de rodaje, avisos de
+          tareas, y los documentos que decides mandar por email desde
+          Taller) — recibe la dirección de correo del destinatario y el
+          contenido del envío en cada caso.
+        </li>
       </ul>
       <p>No vendemos ni cedemos tus datos a terceros con fines comerciales.</p>
 
       <LegalHeading>Plazo de conservación</LegalHeading>
       <p>
-        Conservamos los datos de tu cuenta mientras esté activa. Si solicitas
-        la baja o eliminación de tu cuenta, los datos se eliminan o
-        anonimizan en un plazo razonable, salvo obligación legal de
-        conservación superior.
+        Conservamos los datos de tu cuenta mientras esté activa. Puedes
+        borrarla tú mismo en cualquier momento, sin esperar a nadie, desde
+        Organización (en la web) o Perfil (en la app) — la eliminación es
+        inmediata y definitiva. Si prefieres pedirlo por email en vez de
+        hacerlo tú, también puedes escribirnos a {contactEmail}.
       </p>
 
       <LegalHeading>Tus derechos</LegalHeading>
