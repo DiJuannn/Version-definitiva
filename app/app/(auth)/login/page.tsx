@@ -19,6 +19,7 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const justSignedUp = searchParams.get("confirm") === "1";
   const justConfirmed = searchParams.get("confirmed") === "1";
+  const justDeleted = searchParams.get("deleted") === "1";
   const next = searchParams.get("next");
 
   return (
@@ -33,6 +34,11 @@ function LoginForm() {
       {justConfirmed && (
         <p className="mt-4 border border-accent px-3 py-2 font-mono text-xs text-accent">
           ✓ Cuenta confirmada. Ya puedes entrar con tu contraseña.
+        </p>
+      )}
+      {justDeleted && (
+        <p className="mt-4 border border-line px-3 py-2 font-mono text-xs text-muted">
+          Tu cuenta se ha borrado. Gracias por haber usado Taller.
         </p>
       )}
 

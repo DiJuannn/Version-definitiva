@@ -12,6 +12,7 @@ import { InviteForm } from "@/components/InviteForm";
 import { getCheckoutUrls, buildCheckoutUrl } from "@/lib/lemonsqueezy";
 import { isPro } from "@/lib/plan";
 import { FREE_FEATURES, PRO_FEATURES } from "@/lib/plan-features";
+import { DeleteAccountCard } from "@/components/DeleteAccountCard";
 
 const ROLE_LABELS = { ADMIN: "Admin", MEMBER: "Miembro" } as const;
 
@@ -269,6 +270,8 @@ export default async function OrganizacionPage() {
           </div>
         )}
       </section>
+
+      <DeleteAccountCard soleMember={members.length === 1} />
     </div>
   );
 }
