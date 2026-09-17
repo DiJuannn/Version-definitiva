@@ -5,6 +5,7 @@ import { Reveal } from "@/components/Reveal";
 import { PortfolioSection } from "@/components/PortfolioSection";
 import { BudgetRequestForm } from "@/components/BudgetRequestForm";
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
+import { CameraOverlay } from "@/components/CameraOverlay";
 
 const DEFAULT_TAGS = [
   "FICCIÓN",
@@ -123,7 +124,8 @@ export default async function PublicHomePage() {
     "\n",
   );
   const heroSubtitle =
-    site?.heroSubtitle ?? "Versión definitiva — de la idea al montaje final.";
+    site?.heroSubtitle ??
+    "Ficción, publicidad y documental, rodados por el mismo equipo que te atiende de principio a fin.";
   const tags = site?.marqueeTags.length ? site.marqueeTags : DEFAULT_TAGS;
   const servicios =
     site && site.services.length > 0
@@ -151,6 +153,7 @@ export default async function PublicHomePage() {
     <>
       <section className="relative h-screen w-full overflow-hidden">
         <PlaceholderFrame className="absolute inset-0">
+          <CameraOverlay />
           <div className="relative flex h-full flex-col">
             <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 pt-28 font-mono text-[11px] tracking-[0.25em] text-muted uppercase">
               <HeroReveal>
