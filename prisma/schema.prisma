@@ -51,6 +51,7 @@ model Organization {
   invites            Invite[]
   inventoryItems     InventoryItem[]
   vehicles           Vehicle[]
+  budgetRequests     BudgetRequest[]
 }
 
 enum UserRole {
@@ -96,6 +97,36 @@ model SiteContent {
   organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   services       ServiceItem[]
   portfolioItems PortfolioItem[]
+  teamMembers    TeamMember[]
+}
+
+model BudgetRequest {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  email          String
+  projectType    String
+  budgetRange    String
+  message        String?
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+}
+
+model TeamMember {
+  id            String  @id @default(cuid())
+  siteContentId String
+  name          String
+  role          String
+  bio           String?
+  photoUrl      String?
+  order         Int     @default(0)
+
+  siteContent SiteContent @relation(fields: [siteContentId], references: [id], onDelete: Cascade)
+
+  @@index([siteContentId])
 }
 
 model ServiceItem {

@@ -25,18 +25,9 @@
 body {
   background: var(--bg);
   color: var(--fg);
-  /* Red de seguridad: elementos decorativos a sangre (la cinta animada, la
-     marca de agua del ajolote) no deben poder producir scroll horizontal. */
+  /* Red de seguridad: elementos decorativos a sangre (p. ej. la marca de
+     agua del ajolote) no deben poder producir scroll horizontal. */
   overflow-x: hidden;
-}
-
-@keyframes marquee {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
 }
 
 .custom-cursor-active,

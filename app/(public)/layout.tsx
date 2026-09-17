@@ -13,11 +13,11 @@ const LEGAL_LINKS = [
 ];
 
 const NAV = [
-  { href: "#servicios", label: "Servicios" },
-  { href: "#nosotros", label: "Sobre nosotros" },
-  { href: "#portfolio", label: "Portfolio" },
-  { href: "/taller#precios", label: "Precios" },
-  { href: "#contacto", label: "Contacto" },
+  { href: "/#servicios", label: "Servicios" },
+  { href: "/#nosotros", label: "Sobre nosotros" },
+  { href: "/#portfolio", label: "Portfolio" },
+  { href: "/#presupuesto", label: "Presupuesto" },
+  { href: "/#contacto", label: "Contacto" },
 ];
 
 export default async function PublicLayout({ children }: LayoutProps<"/">) {

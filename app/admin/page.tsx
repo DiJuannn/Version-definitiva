@@ -4,11 +4,14 @@ import { getCurrentProfile } from "@/lib/current-user";
 import {
   createPortfolioItem,
   createServiceItem,
+  createTeamMember,
   deletePortfolioItem,
   deleteServiceItem,
+  deleteTeamMember,
   updatePortfolioItem,
   updateServiceItem,
   updateSiteContent,
+  updateTeamMember,
 } from "@/lib/actions/site-content";
 import { DeleteButton } from "@/components/DeleteButton";
 import { FeatureIntro } from "@/components/FeatureIntro";
@@ -33,6 +36,7 @@ export default async function AdminPage() {
     include: {
       services: { orderBy: { order: "asc" } },
       portfolioItems: { orderBy: { order: "asc" } },
+      teamMembers: { orderBy: { order: "asc" } },
     },
   });
 
@@ -226,6 +230,80 @@ export default async function AdminPage() {
         >
           <input name="title" placeholder="Título (ej. Ficción)" required className={smallFieldClass} />
           <input name="description" placeholder="Descripción breve" className={smallFieldClass} />
+          <SubmitButton
+            pendingLabel="Añadiendo…"
+            savedLabel="✓ Añadido"
+            className="font-mono text-[11px] tracking-widest text-accent uppercase hover:opacity-80"
+          >
+            Añadir
+          </SubmitButton>
+        </form>
+      </section>
+
+      <section className="mt-10 border border-line p-6">
+        <div className="flex items-center gap-1.5">
+          <p className="font-mono text-xs tracking-widest text-accent uppercase">
+            Equipo
+          </p>
+          <HelpTip text="Aparece como sección propia en la web, justo después de 'Sobre nosotros'. Si no añades a nadie, la sección no se muestra." />
+        </div>
+        <div className="mt-4 space-y-4">
+          {site.teamMembers.map((member) => (
+            <form
+              key={member.id}
+              action={updateTeamMember.bind(null, member.id)}
+              className="grid gap-2 border border-line p-4 sm:grid-cols-2"
+            >
+              <input
+                name="name"
+                defaultValue={member.name}
+                placeholder="Nombre"
+                required
+                className={smallFieldClass}
+              />
+              <input
+                name="role"
+                defaultValue={member.role}
+                placeholder="Rol (ej. Directora, Producción)"
+                required
+                className={smallFieldClass}
+              />
+              <input
+                name="photoUrl"
+                defaultValue={member.photoUrl ?? ""}
+                placeholder="URL de foto (opcional)"
+                className={smallFieldClass + " sm:col-span-2"}
+              />
+              <textarea
+                name="bio"
+                defaultValue={member.bio ?? ""}
+                placeholder="Breve bio (opcional)"
+                rows={2}
+                className={smallFieldClass + " sm:col-span-2"}
+              />
+              <div className="flex gap-3">
+                <SubmitButton
+                  pendingLabel="Guardando…"
+                  savedLabel="✓ Guardado"
+                  className="font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent"
+                >
+                  Guardar
+                </SubmitButton>
+                <DeleteButton
+                  formAction={deleteTeamMember.bind(null, member.id)}
+                  confirmMessage="¿Eliminar a esta persona del equipo? No se puede deshacer."
+                  className="font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent"
+                />
+              </div>
+            </form>
+          ))}
+        </div>
+        <form
+          action={createTeamMember}
+          className="mt-4 grid gap-2 border border-dashed border-line p-4 sm:grid-cols-2"
+        >
+          <input name="name" placeholder="Nombre" required className={smallFieldClass} />
+          <input name="role" placeholder="Rol" required className={smallFieldClass} />
           <SubmitButton
             pendingLabel="Añadiendo…"
             savedLabel="✓ Añadido"

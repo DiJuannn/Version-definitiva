@@ -1,5 +1,12 @@
 import type { ReactNode } from "react";
 
+// Grano de película real (ruido vía SVG), no el degradado suave de "orbe de
+// color" típico de plantillas SaaS — mismo motivo que cualquier viñeta de
+// cine, siempre visible (no depende de hover, que en una sección a pantalla
+// completa como el hero casi nadie llega a activar).
+const GRAIN_URL =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E";
+
 export function PlaceholderFrame({
   children,
   className,
@@ -16,26 +23,24 @@ export function PlaceholderFrame({
 
   return (
     <div
-      className={`group ${hasOwnPosition ? "" : "relative"} overflow-hidden bg-bg-raised ${className ?? ""}`}
-      style={{
-        backgroundImage:
-          "radial-gradient(120% 140% at 15% -10%, #232320 0%, #101010 55%, #0a0a0a 100%)",
-      }}
+      className={`${hasOwnPosition ? "" : "relative"} overflow-hidden bg-bg-raised ${className ?? ""}`}
     >
       <div
         aria-hidden
-        className="absolute inset-0 opacity-[0.4] transition-opacity duration-500 group-hover:opacity-70"
-        style={{
-          backgroundImage:
-            "repeating-linear-gradient(115deg, rgba(255,255,255,0.035) 0px, rgba(255,255,255,0.035) 1px, transparent 1px, transparent 3px)",
-        }}
+        className="pointer-events-none absolute inset-0"
+        style={{ boxShadow: "inset 0 0 18vw rgba(0,0,0,0.55)" }}
       />
       <div
         aria-hidden
-        className="absolute -inset-1 scale-105 opacity-0 transition-opacity duration-700 group-hover:opacity-100"
+        className="pointer-events-none absolute inset-0 opacity-[0.12] mix-blend-overlay"
+        style={{ backgroundImage: `url("${GRAIN_URL}")` }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-[0.35]"
         style={{
           backgroundImage:
-            "linear-gradient(120deg, transparent 30%, rgba(255,77,28,0.08) 50%, transparent 70%)",
+            "repeating-linear-gradient(115deg, rgba(255,255,255,0.035) 0px, rgba(255,255,255,0.035) 1px, transparent 1px, transparent 3px)",
         }}
       />
       {children}

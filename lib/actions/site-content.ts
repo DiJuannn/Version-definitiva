@@ -114,6 +114,67 @@ export async function deleteServiceItem(itemId: string) {
   revalidatePath("/");
 }
 
+export async function createTeamMember(formData: FormData) {
+  const site = await requireSiteContent();
+  if (!site) return;
+
+  const name = String(formData.get("name") ?? "").trim();
+  const role = String(formData.get("role") ?? "").trim();
+  if (!name || !role) return;
+
+  const count = await prisma.teamMember.count({
+    where: { siteContentId: site.id },
+  });
+
+  await prisma.teamMember.create({
+    data: {
+      siteContentId: site.id,
+      name,
+      role,
+      bio: optionalString(formData.get("bio")),
+      photoUrl: optionalString(formData.get("photoUrl")),
+      order: count,
+    },
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/");
+}
+
+export async function updateTeamMember(memberId: string, formData: FormData) {
+  const profile = await requireAdminProfile();
+  if (!profile) return;
+
+  const name = String(formData.get("name") ?? "").trim();
+  const role = String(formData.get("role") ?? "").trim();
+  if (!name || !role) return;
+
+  await prisma.teamMember.updateMany({
+    where: { id: memberId, siteContent: { organizationId: profile.organizationId } },
+    data: {
+      name,
+      role,
+      bio: optionalString(formData.get("bio")),
+      photoUrl: optionalString(formData.get("photoUrl")),
+    },
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/");
+}
+
+export async function deleteTeamMember(memberId: string) {
+  const profile = await requireAdminProfile();
+  if (!profile) return;
+
+  await prisma.teamMember.deleteMany({
+    where: { id: memberId, siteContent: { organizationId: profile.organizationId } },
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/");
+}
+
 export async function createPortfolioItem(formData: FormData) {
   const site = await requireSiteContent();
   if (!site) return;

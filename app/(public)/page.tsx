@@ -1,9 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { HeroReveal } from "@/components/HeroReveal";
-import { Marquee } from "@/components/Marquee";
 import { PlaceholderFrame } from "@/components/PlaceholderFrame";
 import { Reveal } from "@/components/Reveal";
 import { PortfolioSection } from "@/components/PortfolioSection";
+import { BudgetRequestForm } from "@/components/BudgetRequestForm";
 
 const DEFAULT_TAGS = [
   "FICCIÓN",
@@ -20,25 +20,29 @@ const DEFAULT_SERVICIOS = [
     num: "01",
     title: "Ficción",
     description: "Cortometrajes y largometrajes, del guion al montaje final.",
-    details: null as string | null,
+    details:
+      "Desarrollo de guion, dirección, producción y montaje. Trabajamos con equipos reducidos y flexibles, adaptando el rodaje al presupuesto real del proyecto sin renunciar a la calidad de imagen y sonido.",
   },
   {
     num: "02",
     title: "Publicidad",
     description: "Spots y branded content con mirada cinematográfica.",
-    details: null as string | null,
+    details:
+      "Spots, branded content y vídeo para redes. Del concepto al entregado final, con formatos pensados para cada plataforma (TV, YouTube, Instagram, TikTok) desde la misma grabación.",
   },
   {
     num: "03",
     title: "Documental",
     description: "Historias reales, contadas con tiempo y cuidado.",
-    details: null as string | null,
+    details:
+      "Documental de autor y documental corporativo. Investigación, rodaje con disponibilidad para adaptarse a los tiempos reales de la historia, y montaje narrativo cuidado.",
   },
   {
     num: "04",
     title: "Corporativo",
     description: "Vídeo institucional, eventos y contenido de marca.",
-    details: null as string | null,
+    details:
+      "Vídeo institucional, cobertura de eventos y contenido de marca para uso interno o comercial. Entrega rápida y formatos listos para web, redes o presentaciones.",
   },
 ];
 
@@ -51,6 +55,7 @@ export default async function PublicHomePage() {
         where: { published: true },
         orderBy: [{ featured: "desc" }, { order: "asc" }],
       },
+      teamMembers: { orderBy: { order: "asc" } },
     },
   });
 
@@ -75,6 +80,7 @@ export default async function PublicHomePage() {
     "Somos un equipo pequeño que trabaja como uno grande: desde el guion hasta la entrega final, cuidando cada decisión de imagen, ritmo y sonido.";
   const contactEmail = site?.contactEmail ?? "hola@versiondefinitiva.com";
   const portfolioItems = site?.portfolioItems ?? [];
+  const teamMembers = site?.teamMembers ?? [];
 
   return (
     <>
@@ -143,7 +149,16 @@ export default async function PublicHomePage() {
       </section>
 
       <div className="border-y border-line bg-bg-raised py-4">
-        <Marquee items={tags} />
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-6">
+          {tags.map((tag, i) => (
+            <span key={i} className="flex items-center gap-6">
+              <span className="font-mono text-sm tracking-widest whitespace-nowrap uppercase">
+                {tag}
+              </span>
+              {i < tags.length - 1 && <span className="text-accent">●</span>}
+            </span>
+          ))}
+        </div>
       </div>
 
       <section id="servicios" className="px-6 py-28">
@@ -209,6 +224,51 @@ export default async function PublicHomePage() {
         </div>
       </section>
 
+      {teamMembers.length > 0 && (
+        <section id="equipo" className="border-t border-line px-6 py-28">
+          <div className="mx-auto max-w-6xl">
+            <Reveal>
+              <span className="font-mono text-xs tracking-widest text-accent uppercase">
+                Equipo
+              </span>
+            </Reveal>
+            <div className="mt-8 grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
+              {teamMembers.map((member, i) => (
+                <Reveal key={member.id} delay={i * 0.06}>
+                  <div className="flex gap-4">
+                    {member.photoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={member.photoUrl}
+                        alt={member.name}
+                        className="h-16 w-16 shrink-0 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-line font-display text-xl font-bold text-accent">
+                        {member.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div>
+                      <h3 className="font-display text-lg font-bold uppercase">
+                        {member.name}
+                      </h3>
+                      <span className="font-mono text-xs tracking-widest text-accent uppercase">
+                        {member.role}
+                      </span>
+                      {member.bio && (
+                        <p className="mt-2 font-mono text-sm text-muted">
+                          {member.bio}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       <section id="portfolio" className="border-t border-line px-6 py-28">
         <div className="mx-auto max-w-6xl">
           <Reveal>
@@ -218,6 +278,27 @@ export default async function PublicHomePage() {
           </Reveal>
 
           <PortfolioSection items={portfolioItems} />
+        </div>
+      </section>
+
+      <section id="presupuesto" className="border-t border-line px-6 py-28">
+        <div className="mx-auto grid max-w-6xl gap-10 sm:grid-cols-[1fr_1.2fr]">
+          <Reveal>
+            <span className="font-mono text-xs tracking-widest text-accent uppercase">
+              Presupuesto
+            </span>
+            <p className="mt-4 font-display text-3xl leading-tight font-bold uppercase sm:text-4xl">
+              ¿Tienes un proyecto en mente?
+            </p>
+            <p className="mt-4 max-w-md font-mono text-sm text-muted">
+              Cada rodaje es distinto, así que no publicamos tarifas fijas.
+              Cuéntanos la idea y te respondemos con un presupuesto ajustado
+              en 24-48h, sin compromiso.
+            </p>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <BudgetRequestForm />
+          </Reveal>
         </div>
       </section>
 
