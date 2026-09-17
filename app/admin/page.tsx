@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentProfile } from "@/lib/current-user";
+import { creditsToText } from "@/lib/credits";
 import {
   createEquipmentItem,
   createFaqItem,
@@ -10,7 +11,6 @@ import {
   createServiceItem,
   createTeamMember,
   createTestimonial,
-  creditsToText,
   deleteEquipmentItem,
   deleteFaqItem,
   deletePortfolioItem,

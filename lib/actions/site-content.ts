@@ -403,14 +403,6 @@ function parseCredits(text: string): { role: string; value: string }[] {
     .filter((c) => c.role && c.value);
 }
 
-export function creditsToText(credits: unknown): string {
-  if (!Array.isArray(credits)) return "";
-  return credits
-    .filter((c): c is { role: string; value: string } => !!c && typeof c === "object")
-    .map((c) => `${c.role}: ${c.value}`)
-    .join("\n");
-}
-
 export async function createPortfolioItem(formData: FormData) {
   const site = await requireSiteContent();
   if (!site) return;
