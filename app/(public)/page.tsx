@@ -125,25 +125,6 @@ export default async function PublicHomePage() {
                 </div>
               </HeroReveal>
             </div>
-
-            <div className="flex flex-col items-center gap-2 pb-8">
-              <span className="font-mono text-[10px] tracking-[0.3em] text-muted uppercase">
-                Scroll
-              </span>
-              <svg
-                className="h-4 w-4 animate-bounce text-muted"
-                viewBox="0 0 24 24"
-                fill="none"
-              >
-                <path
-                  d="M6 9l6 6 6-6"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
           </div>
         </PlaceholderFrame>
       </section>
