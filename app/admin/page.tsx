@@ -2,13 +2,19 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentProfile } from "@/lib/current-user";
 import {
+  createFaqItem,
   createPortfolioItem,
+  createProcessStep,
   createServiceItem,
   createTeamMember,
+  deleteFaqItem,
   deletePortfolioItem,
+  deleteProcessStep,
   deleteServiceItem,
   deleteTeamMember,
+  updateFaqItem,
   updatePortfolioItem,
+  updateProcessStep,
   updateServiceItem,
   updateSiteContent,
   updateTeamMember,
@@ -37,6 +43,8 @@ export default async function AdminPage() {
       services: { orderBy: { order: "asc" } },
       portfolioItems: { orderBy: { order: "asc" } },
       teamMembers: { orderBy: { order: "asc" } },
+      processSteps: { orderBy: { order: "asc" } },
+      faqItems: { orderBy: { order: "asc" } },
     },
   });
 
@@ -243,6 +251,74 @@ export default async function AdminPage() {
       <section className="mt-10 border border-line p-6">
         <div className="flex items-center gap-1.5">
           <p className="font-mono text-xs tracking-widest text-accent uppercase">
+            Cómo trabajamos
+          </p>
+          <HelpTip text="Pasos del proceso, en orden (Brief, Preproducción, Rodaje...). Aparece como sección propia en la web, justo después de Servicios." />
+        </div>
+        <div className="mt-4 space-y-4">
+          {site.processSteps.map((step) => (
+            <form
+              key={step.id}
+              action={updateProcessStep.bind(null, step.id)}
+              className="grid gap-2 border border-line p-4 sm:grid-cols-[1fr_2fr_auto]"
+            >
+              <input
+                name="title"
+                defaultValue={step.title}
+                placeholder="Título (ej. Brief)"
+                required
+                className={smallFieldClass}
+              />
+              <textarea
+                name="description"
+                defaultValue={step.description}
+                placeholder="Descripción"
+                rows={2}
+                required
+                className={smallFieldClass}
+              />
+              <div className="flex gap-3">
+                <SubmitButton
+                  pendingLabel="Guardando…"
+                  savedLabel="✓ Guardado"
+                  className="font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent"
+                >
+                  Guardar
+                </SubmitButton>
+                <DeleteButton
+                  formAction={deleteProcessStep.bind(null, step.id)}
+                  confirmMessage="¿Eliminar este paso? No se puede deshacer."
+                  className="font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent"
+                />
+              </div>
+            </form>
+          ))}
+        </div>
+        <form
+          action={createProcessStep}
+          className="mt-4 grid gap-2 border border-dashed border-line p-4 sm:grid-cols-[1fr_2fr_auto]"
+        >
+          <input name="title" placeholder="Título" required className={smallFieldClass} />
+          <textarea
+            name="description"
+            placeholder="Descripción"
+            rows={2}
+            required
+            className={smallFieldClass}
+          />
+          <SubmitButton
+            pendingLabel="Añadiendo…"
+            savedLabel="✓ Añadido"
+            className="font-mono text-[11px] tracking-widest text-accent uppercase hover:opacity-80"
+          >
+            Añadir
+          </SubmitButton>
+        </form>
+      </section>
+
+      <section className="mt-10 border border-line p-6">
+        <div className="flex items-center gap-1.5">
+          <p className="font-mono text-xs tracking-widest text-accent uppercase">
             Equipo
           </p>
           <HelpTip text="Aparece como sección propia en la web, justo después de 'Sobre nosotros'. Si no añades a nadie, la sección no se muestra." />
@@ -398,6 +474,74 @@ export default async function AdminPage() {
               Añadir pieza
             </SubmitButton>
           </div>
+        </form>
+      </section>
+
+      <section className="mt-10 border border-line p-6">
+        <div className="flex items-center gap-1.5">
+          <p className="font-mono text-xs tracking-widest text-accent uppercase">
+            Preguntas frecuentes
+          </p>
+          <HelpTip text="Aparece justo antes del formulario de Presupuesto, como acordeón desplegable." />
+        </div>
+        <div className="mt-4 space-y-4">
+          {site.faqItems.map((item) => (
+            <form
+              key={item.id}
+              action={updateFaqItem.bind(null, item.id)}
+              className="grid gap-2 border border-line p-4 sm:grid-cols-[1fr_2fr_auto]"
+            >
+              <input
+                name="question"
+                defaultValue={item.question}
+                placeholder="Pregunta"
+                required
+                className={smallFieldClass}
+              />
+              <textarea
+                name="answer"
+                defaultValue={item.answer}
+                placeholder="Respuesta"
+                rows={2}
+                required
+                className={smallFieldClass}
+              />
+              <div className="flex gap-3">
+                <SubmitButton
+                  pendingLabel="Guardando…"
+                  savedLabel="✓ Guardado"
+                  className="font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent"
+                >
+                  Guardar
+                </SubmitButton>
+                <DeleteButton
+                  formAction={deleteFaqItem.bind(null, item.id)}
+                  confirmMessage="¿Eliminar esta pregunta? No se puede deshacer."
+                  className="font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent"
+                />
+              </div>
+            </form>
+          ))}
+        </div>
+        <form
+          action={createFaqItem}
+          className="mt-4 grid gap-2 border border-dashed border-line p-4 sm:grid-cols-[1fr_2fr_auto]"
+        >
+          <input name="question" placeholder="Pregunta" required className={smallFieldClass} />
+          <textarea
+            name="answer"
+            placeholder="Respuesta"
+            rows={2}
+            required
+            className={smallFieldClass}
+          />
+          <SubmitButton
+            pendingLabel="Añadiendo…"
+            savedLabel="✓ Añadida"
+            className="font-mono text-[11px] tracking-widest text-accent uppercase hover:opacity-80"
+          >
+            Añadir
+          </SubmitButton>
         </form>
       </section>
     </div>

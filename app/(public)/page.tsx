@@ -15,6 +15,62 @@ const DEFAULT_TAGS = [
   "MONTAJE",
 ];
 
+const DEFAULT_PROCESS_STEPS = [
+  {
+    title: "Brief",
+    description:
+      "Nos cuentas la idea, el objetivo y el presupuesto orientativo. En 24-48h te proponemos un enfoque y un presupuesto ajustado.",
+  },
+  {
+    title: "Preproducción",
+    description:
+      "Guion, desglose, localizaciones y plan de rodaje cerrados antes de encender una cámara — así no hay sorpresas el día del rodaje.",
+  },
+  {
+    title: "Rodaje",
+    description:
+      "Equipo técnico y creativo coordinado con un plan de rodaje claro, adaptado al tiempo y presupuesto reales del proyecto.",
+  },
+  {
+    title: "Postproducción",
+    description:
+      "Montaje, color y sonido. Revisas el corte y ajustamos hasta que el resultado sea el que buscabas.",
+  },
+  {
+    title: "Entrega",
+    description:
+      "Formatos listos para donde vaya a vivir el vídeo — TV, redes, web o presentación — sin trabajo extra por tu parte.",
+  },
+];
+
+const DEFAULT_FAQS = [
+  {
+    question: "¿Cuánto tarda un proyecto típico?",
+    answer:
+      "Depende del formato: un spot puede estar listo en 2-3 semanas desde el brief; un documental o una ficción más larga necesita más tiempo de preproducción. Te damos un calendario concreto en la propuesta.",
+  },
+  {
+    question: "¿Os desplazáis fuera de vuestra zona habitual?",
+    answer:
+      "Sí, nos adaptamos a dónde tenga que pasar el rodaje — cuéntanoslo en el formulario de presupuesto y te lo confirmamos.",
+  },
+  {
+    question: "¿Qué necesito preparar antes de la primera reunión?",
+    answer:
+      "Con una idea del objetivo y del presupuesto orientativo es suficiente para empezar — el resto lo concretamos juntos.",
+  },
+  {
+    question: "¿El presupuesto incluye guion y dirección de arte?",
+    answer:
+      "Depende del proyecto — te lo detallamos en la propuesta para que no haya sorpresas después.",
+  },
+  {
+    question: "¿Puedo pedir cambios después de ver el primer montaje?",
+    answer:
+      "Sí, el número de rondas de revisión se acuerda antes de empezar y va incluido en el presupuesto.",
+  },
+];
+
 const DEFAULT_SERVICIOS = [
   {
     num: "01",
@@ -56,6 +112,8 @@ export default async function PublicHomePage() {
         orderBy: [{ featured: "desc" }, { order: "asc" }],
       },
       teamMembers: { orderBy: { order: "asc" } },
+      processSteps: { orderBy: { order: "asc" } },
+      faqItems: { orderBy: { order: "asc" } },
     },
   });
 
@@ -81,6 +139,10 @@ export default async function PublicHomePage() {
   const contactEmail = site?.contactEmail ?? "hola@versiondefinitiva.com";
   const portfolioItems = site?.portfolioItems ?? [];
   const teamMembers = site?.teamMembers ?? [];
+  const processSteps =
+    site && site.processSteps.length > 0 ? site.processSteps : DEFAULT_PROCESS_STEPS;
+  const faqs = site && site.faqItems.length > 0 ? site.faqItems : DEFAULT_FAQS;
+  const hasPortfolio = portfolioItems.length > 0;
 
   return (
     <>
@@ -114,10 +176,10 @@ export default async function PublicHomePage() {
                     {heroSubtitle}
                   </p>
                   <a
-                    href="#portfolio"
+                    href={hasPortfolio ? "#portfolio" : "#presupuesto"}
                     className="group inline-flex items-center gap-2 border-b border-accent pb-0.5 font-mono text-xs tracking-widest text-fg uppercase transition-colors hover:text-accent"
                   >
-                    Ver portfolio
+                    {hasPortfolio ? "Ver portfolio" : "Cuéntanos tu proyecto"}
                     <span className="transition-transform duration-300 group-hover:translate-x-1">
                       →
                     </span>
@@ -195,6 +257,33 @@ export default async function PublicHomePage() {
         </div>
       </section>
 
+      <section id="proceso" className="border-t border-line px-6 py-28">
+        <div className="mx-auto max-w-6xl">
+          <Reveal>
+            <span className="font-mono text-xs tracking-widest text-accent uppercase">
+              Cómo trabajamos
+            </span>
+          </Reveal>
+          <div className="mt-10 grid gap-10 sm:grid-cols-2 lg:grid-cols-5 lg:gap-6">
+            {processSteps.map((step, i) => (
+              <Reveal key={step.title} delay={i * 0.06}>
+                <div className="border-t border-accent pt-4">
+                  <span className="font-mono text-xs text-muted">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <h3 className="mt-2 font-display text-lg font-bold uppercase">
+                    {step.title}
+                  </h3>
+                  <p className="mt-2 font-mono text-sm text-muted">
+                    {step.description}
+                  </p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section id="nosotros" className="border-t border-line px-6 py-28">
         <div className="mx-auto grid max-w-6xl gap-10 sm:grid-cols-[2fr_1fr]">
           <Reveal>
@@ -220,15 +309,46 @@ export default async function PublicHomePage() {
         </div>
       </section>
 
-      <section id="portfolio" className="border-t border-line px-6 py-28">
-        <div className="mx-auto max-w-6xl">
+      {hasPortfolio && (
+        <section id="portfolio" className="border-t border-line px-6 py-28">
+          <div className="mx-auto max-w-6xl">
+            <Reveal>
+              <span className="font-mono text-xs tracking-widest text-accent uppercase">
+                Portfolio
+              </span>
+            </Reveal>
+
+            <PortfolioSection items={portfolioItems} />
+          </div>
+        </section>
+      )}
+
+      <section id="faq" className="border-t border-line px-6 py-28">
+        <div className="mx-auto max-w-3xl">
           <Reveal>
             <span className="font-mono text-xs tracking-widest text-accent uppercase">
-              Portfolio
+              Preguntas frecuentes
             </span>
           </Reveal>
-
-          <PortfolioSection items={portfolioItems} />
+          <div className="mt-8 border-t border-line">
+            {faqs.map((faq, i) => (
+              <Reveal key={faq.question} delay={i * 0.06}>
+                <details className="group/faq border-b border-line py-5">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-6 [&::-webkit-details-marker]:hidden">
+                    <h3 className="font-mono text-sm font-bold text-fg">
+                      {faq.question}
+                    </h3>
+                    <span className="shrink-0 font-mono text-muted transition-transform duration-300 group-open/faq:rotate-45">
+                      +
+                    </span>
+                  </summary>
+                  <p className="mt-3 max-w-xl font-mono text-sm text-muted">
+                    {faq.answer}
+                  </p>
+                </details>
+              </Reveal>
+            ))}
+          </div>
         </div>
       </section>
 

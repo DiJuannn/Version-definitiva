@@ -98,6 +98,32 @@ model SiteContent {
   services       ServiceItem[]
   portfolioItems PortfolioItem[]
   teamMembers    TeamMember[]
+  processSteps   ProcessStep[]
+  faqItems       FaqItem[]
+}
+
+model ProcessStep {
+  id            String  @id @default(cuid())
+  siteContentId String
+  title         String
+  description   String
+  order         Int     @default(0)
+
+  siteContent SiteContent @relation(fields: [siteContentId], references: [id], onDelete: Cascade)
+
+  @@index([siteContentId])
+}
+
+model FaqItem {
+  id            String  @id @default(cuid())
+  siteContentId String
+  question      String
+  answer        String
+  order         Int     @default(0)
+
+  siteContent SiteContent @relation(fields: [siteContentId], references: [id], onDelete: Cascade)
+
+  @@index([siteContentId])
 }
 
 model BudgetRequest {

@@ -4,6 +4,7 @@ import { CookieNotice } from "@/components/CookieNotice";
 import { CustomCursor } from "@/components/CustomCursor";
 import { IntroOverlay } from "@/components/IntroOverlay";
 import { getCurrentProfile } from "@/lib/current-user";
+import { prisma } from "@/lib/prisma";
 
 const LEGAL_LINKS = [
   { href: "/legal/aviso-legal", label: "Aviso legal" },
@@ -12,16 +13,22 @@ const LEGAL_LINKS = [
   { href: "/legal/terminos", label: "Términos de uso" },
 ];
 
-const NAV = [
-  { href: "/#servicios", label: "Servicios" },
-  { href: "/equipo", label: "Sobre nosotros" },
-  { href: "/#portfolio", label: "Portfolio" },
-  { href: "/#presupuesto", label: "Presupuesto" },
-  { href: "/#contacto", label: "Contacto" },
-];
-
 export default async function PublicLayout({ children }: LayoutProps<"/">) {
-  const profile = await getCurrentProfile();
+  const [profile, portfolioCount] = await Promise.all([
+    getCurrentProfile(),
+    prisma.portfolioItem.count({
+      where: { published: true, siteContent: { organization: { isPlatformOwner: true } } },
+    }),
+  ]);
+
+  const NAV = [
+    { href: "/#servicios", label: "Servicios" },
+    { href: "/#proceso", label: "Cómo trabajamos" },
+    { href: "/equipo", label: "Sobre nosotros" },
+    ...(portfolioCount > 0 ? [{ href: "/#portfolio", label: "Portfolio" }] : []),
+    { href: "/#presupuesto", label: "Presupuesto" },
+    { href: "/#contacto", label: "Contacto" },
+  ];
 
   return (
     <div className="flex flex-1 flex-col">

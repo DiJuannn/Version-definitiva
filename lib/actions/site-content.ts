@@ -175,6 +175,104 @@ export async function deleteTeamMember(memberId: string) {
   revalidatePath("/");
 }
 
+export async function createProcessStep(formData: FormData) {
+  const site = await requireSiteContent();
+  if (!site) return;
+
+  const title = String(formData.get("title") ?? "").trim();
+  const description = String(formData.get("description") ?? "").trim();
+  if (!title || !description) return;
+
+  const count = await prisma.processStep.count({
+    where: { siteContentId: site.id },
+  });
+
+  await prisma.processStep.create({
+    data: { siteContentId: site.id, title, description, order: count },
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/");
+}
+
+export async function updateProcessStep(stepId: string, formData: FormData) {
+  const profile = await requireAdminProfile();
+  if (!profile) return;
+
+  const title = String(formData.get("title") ?? "").trim();
+  const description = String(formData.get("description") ?? "").trim();
+  if (!title || !description) return;
+
+  await prisma.processStep.updateMany({
+    where: { id: stepId, siteContent: { organizationId: profile.organizationId } },
+    data: { title, description },
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/");
+}
+
+export async function deleteProcessStep(stepId: string) {
+  const profile = await requireAdminProfile();
+  if (!profile) return;
+
+  await prisma.processStep.deleteMany({
+    where: { id: stepId, siteContent: { organizationId: profile.organizationId } },
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/");
+}
+
+export async function createFaqItem(formData: FormData) {
+  const site = await requireSiteContent();
+  if (!site) return;
+
+  const question = String(formData.get("question") ?? "").trim();
+  const answer = String(formData.get("answer") ?? "").trim();
+  if (!question || !answer) return;
+
+  const count = await prisma.faqItem.count({
+    where: { siteContentId: site.id },
+  });
+
+  await prisma.faqItem.create({
+    data: { siteContentId: site.id, question, answer, order: count },
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/");
+}
+
+export async function updateFaqItem(itemId: string, formData: FormData) {
+  const profile = await requireAdminProfile();
+  if (!profile) return;
+
+  const question = String(formData.get("question") ?? "").trim();
+  const answer = String(formData.get("answer") ?? "").trim();
+  if (!question || !answer) return;
+
+  await prisma.faqItem.updateMany({
+    where: { id: itemId, siteContent: { organizationId: profile.organizationId } },
+    data: { question, answer },
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/");
+}
+
+export async function deleteFaqItem(itemId: string) {
+  const profile = await requireAdminProfile();
+  if (!profile) return;
+
+  await prisma.faqItem.deleteMany({
+    where: { id: itemId, siteContent: { organizationId: profile.organizationId } },
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/");
+}
+
 export async function createPortfolioItem(formData: FormData) {
   const site = await requireSiteContent();
   if (!site) return;
