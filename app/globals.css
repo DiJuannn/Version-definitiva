@@ -8,6 +8,17 @@
   --muted: #8a8a84;
   --line: #2a2a27;
   --accent: #ff4d1c;
+  --accent-purple: #4c1d95;
+  --accent-purple-soft: #9b87c4;
+}
+
+/* Paleta de la web de la productora (home, equipo, legal, cabecera) —
+   deliberadamente NO se aplica dentro de /taller, que conserva la paleta
+   original de siempre (ver app/(public)/taller/layout.tsx, que revierte
+   estas variables para su propio subárbol). */
+.palette-productora {
+  --accent: #ffa500;
+  --bg-raised: #140f1e;
 }
 
 @theme inline {
@@ -17,6 +28,8 @@
   --color-muted: var(--muted);
   --color-line: var(--line);
   --color-accent: var(--accent);
+  --color-accent-purple: var(--accent-purple);
+  --color-accent-purple-soft: var(--accent-purple-soft);
   --font-display: var(--font-archivo);
   --font-mono: var(--font-jetbrains-mono);
   --font-sans: var(--font-archivo);

@@ -31,7 +31,7 @@ export default async function PublicLayout({ children }: LayoutProps<"/">) {
   ];
 
   return (
-    <div className="flex flex-1 flex-col">
+    <div className="palette-productora flex flex-1 flex-col">
       <header className="fixed top-0 z-40 w-full border-b border-line/60 bg-bg/70 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link href="/" className="flex items-center gap-2.5">

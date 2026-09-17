@@ -30,7 +30,7 @@ export default async function EquipoPage() {
     <section className="px-6 py-32">
       <div className="mx-auto max-w-5xl">
         <Reveal>
-          <span className="font-mono text-xs tracking-widest text-accent uppercase">
+          <span className="font-mono text-xs tracking-widest text-accent-purple-soft uppercase">
             Equipo
           </span>
           <h1 className="mt-4 font-display text-4xl leading-tight font-black uppercase sm:text-6xl">
@@ -82,7 +82,7 @@ export default async function EquipoPage() {
 
         <div className="mt-24 border-t border-line pt-16">
           <Reveal>
-            <span className="font-mono text-xs tracking-widest text-accent uppercase">
+            <span className="font-mono text-xs tracking-widest text-accent-purple-soft uppercase">
               Equipamiento
             </span>
           </Reveal>

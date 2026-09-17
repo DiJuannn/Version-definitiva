@@ -210,7 +210,7 @@ export default async function PublicHomePage() {
                   <span className="font-mono text-sm tracking-widest whitespace-nowrap uppercase">
                     {tag}
                   </span>
-                  <span className="text-accent">●</span>
+                  <span className="text-accent-purple-soft">●</span>
                 </span>
               ))}
             </div>
@@ -271,7 +271,7 @@ export default async function PublicHomePage() {
         <section id="portfolio" className="border-t border-line px-6 py-28">
           <div className="mx-auto max-w-6xl">
             <Reveal>
-              <span className="font-mono text-xs tracking-widest text-accent uppercase">
+              <span className="font-mono text-xs tracking-widest text-accent-purple-soft uppercase">
                 Portfolio
               </span>
             </Reveal>
@@ -284,7 +284,7 @@ export default async function PublicHomePage() {
       <section id="proceso" className="border-t border-line px-6 py-28">
         <div className="mx-auto max-w-6xl">
           <Reveal>
-            <span className="font-mono text-xs tracking-widest text-accent uppercase">
+            <span className="font-mono text-xs tracking-widest text-accent-purple-soft uppercase">
               Cómo trabajamos
             </span>
           </Reveal>
@@ -337,7 +337,7 @@ export default async function PublicHomePage() {
         <section className="border-t border-line px-6 py-28">
           <div className="mx-auto max-w-6xl">
             <Reveal>
-              <span className="font-mono text-xs tracking-widest text-accent uppercase">
+              <span className="font-mono text-xs tracking-widest text-accent-purple-soft uppercase">
                 Lo que dicen
               </span>
             </Reveal>
@@ -429,7 +429,7 @@ export default async function PublicHomePage() {
       <section className="border-t border-line px-6 py-16">
         <div className="mx-auto max-w-4xl">
           <Reveal>
-            <span className="font-mono text-xs tracking-widest text-accent uppercase">
+            <span className="font-mono text-xs tracking-widest text-accent-purple-soft uppercase">
               Color y postproducción
             </span>
             <p className="mt-3 font-display text-xl leading-tight font-bold uppercase sm:text-2xl">
@@ -472,7 +472,7 @@ export default async function PublicHomePage() {
       <section id="faq" className="border-t border-line px-6 py-28">
         <div className="mx-auto max-w-3xl">
           <Reveal>
-            <span className="font-mono text-xs tracking-widest text-accent uppercase">
+            <span className="font-mono text-xs tracking-widest text-accent-purple-soft uppercase">
               Preguntas frecuentes
             </span>
           </Reveal>
