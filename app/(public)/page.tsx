@@ -172,13 +172,7 @@ export default async function PublicHomePage() {
         <PlaceholderFrame className="absolute inset-0">
           <CameraOverlay />
           <div className="relative flex h-full flex-col">
-            <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 pt-28 font-mono text-[11px] tracking-[0.25em] text-muted uppercase">
-              <HeroReveal>
-                <div className="flex items-center gap-2 text-accent">
-                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
-                  Productora audiovisual
-                </div>
-              </HeroReveal>
+            <div className="mx-auto flex w-full max-w-6xl items-center justify-end px-6 pt-28 font-mono text-[11px] tracking-[0.25em] text-muted uppercase">
               <span className="hidden sm:inline">
                 © {new Date().getFullYear()}
               </span>
@@ -461,6 +455,27 @@ export default async function PublicHomePage() {
         </div>
       </section>
 
+      <section id="presupuesto" className="border-t border-line px-6 py-28">
+        <div className="mx-auto grid max-w-6xl gap-10 sm:grid-cols-[1fr_1.2fr]">
+          <Reveal>
+            <span className="font-mono text-xs tracking-widest text-accent uppercase">
+              Presupuesto
+            </span>
+            <p className="mt-4 font-display text-3xl leading-tight font-bold uppercase sm:text-4xl">
+              ¿Tienes un proyecto en mente?
+            </p>
+            <p className="mt-4 max-w-md font-mono text-sm text-muted">
+              Cada rodaje es distinto, así que no publicamos tarifas fijas.
+              Cuéntanos la idea y te respondemos con un presupuesto ajustado
+              en 24-48h, sin compromiso.
+            </p>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <BudgetRequestForm />
+          </Reveal>
+        </div>
+      </section>
+
       <section id="faq" className="border-t border-line px-6 py-28">
         <div className="mx-auto max-w-3xl">
           <Reveal>
@@ -487,27 +502,6 @@ export default async function PublicHomePage() {
               </Reveal>
             ))}
           </div>
-        </div>
-      </section>
-
-      <section id="presupuesto" className="border-t border-line px-6 py-28">
-        <div className="mx-auto grid max-w-6xl gap-10 sm:grid-cols-[1fr_1.2fr]">
-          <Reveal>
-            <span className="font-mono text-xs tracking-widest text-accent uppercase">
-              Presupuesto
-            </span>
-            <p className="mt-4 font-display text-3xl leading-tight font-bold uppercase sm:text-4xl">
-              ¿Tienes un proyecto en mente?
-            </p>
-            <p className="mt-4 max-w-md font-mono text-sm text-muted">
-              Cada rodaje es distinto, así que no publicamos tarifas fijas.
-              Cuéntanos la idea y te respondemos con un presupuesto ajustado
-              en 24-48h, sin compromiso.
-            </p>
-          </Reveal>
-          <Reveal delay={0.1}>
-            <BudgetRequestForm />
-          </Reveal>
         </div>
       </section>
 

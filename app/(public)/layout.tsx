@@ -36,8 +36,13 @@ export default async function PublicLayout({ children }: LayoutProps<"/">) {
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link href="/" className="flex items-center gap-2.5">
             <AjoloteLogo className="h-6 w-auto text-fg" priority />
-            <span className="font-mono text-xs tracking-[0.2em] uppercase">
-              Versión definitiva
+            <span className="flex flex-col leading-tight">
+              <span className="font-mono text-xs tracking-[0.2em] uppercase">
+                Versión definitiva
+              </span>
+              <span className="hidden font-mono text-[9px] tracking-[0.2em] text-muted uppercase sm:block">
+                Productora audiovisual
+              </span>
             </span>
           </Link>
           <nav className="hidden gap-8 font-mono text-xs tracking-widest uppercase sm:flex">

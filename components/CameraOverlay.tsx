@@ -30,7 +30,7 @@ export function CameraOverlay() {
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  const bracket = "absolute h-5 w-5 border-fg/40";
+  const bracket = "absolute h-4 w-4 border-fg/25";
 
   return (
     <div
@@ -42,12 +42,12 @@ export function CameraOverlay() {
       <span className={`${bracket} bottom-0 left-0 border-b border-l`} />
       <span className={`${bracket} bottom-0 right-0 border-b border-r`} />
 
-      <div className="absolute bottom-0 left-0 flex items-center gap-1.5 font-mono text-[10px] tracking-widest text-fg/60 uppercase">
-        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#ff2b2b]" />
+      <div className="absolute top-1/2 right-0 flex -translate-y-1/2 items-center gap-1.5 font-mono text-[9px] tracking-widest text-fg/35 uppercase">
+        <span className="h-1 w-1 animate-pulse rounded-full bg-[#ff2b2b]/70" />
         Rec
       </div>
 
-      <div className="absolute right-0 bottom-0 font-mono text-[10px] tracking-widest text-fg/50 tabular-nums">
+      <div className="absolute right-0 bottom-0 font-mono text-[9px] tracking-widest text-fg/30 tabular-nums">
         {formatTimecode(elapsed)}
       </div>
     </div>
