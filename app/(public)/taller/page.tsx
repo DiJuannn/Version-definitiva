@@ -45,43 +45,76 @@ const FLUJO = [
   "Documentación",
 ];
 
+const PREGUNTAS = [
+  {
+    question: "¿Necesito tarjeta para probarlo?",
+    answer:
+      "No. El plan gratuito no pide tarjeta ni caduca — puedes quedarte en él todo el tiempo que quieras.",
+  },
+  {
+    question: "¿Puedo invitar a mi equipo?",
+    answer:
+      "Sí, hasta 2 colaboradores por proyecto en el plan gratuito, sin límite en PRO.",
+  },
+  {
+    question: "¿Qué pasa si supero el límite de proyectos activos gratuitos?",
+    answer:
+      "Los proyectos existentes no se bloquean — simplemente no puedes crear uno nuevo hasta pasarte a PRO o archivar alguno.",
+  },
+  {
+    question: "¿Mis datos y guiones son privados?",
+    answer:
+      "Sí, cada proyecto es visible solo para quien invites — no compartimos ni indexamos nada.",
+  },
+  {
+    question: "¿Puedo cancelar cuando quiera?",
+    answer:
+      "Sí, sin permanencia — si cancelas, tu organización vuelve al plan gratuito y conserva sus datos.",
+  },
+];
+
 export default function TallerMarketingPage() {
   return (
     <>
-      <section className="relative overflow-hidden px-6 pb-20 pt-40">
-        <div className="mx-auto max-w-6xl">
-          <Reveal>
-            <div className="mb-6 flex items-center gap-2 font-mono text-xs tracking-[0.25em] text-accent uppercase">
-              <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-              Producto — Taller
+      <section className="overflow-hidden">
+        <PlaceholderFrame>
+          <div className="relative px-6 pb-20 pt-40">
+            <div className="mx-auto max-w-6xl">
+              <Reveal>
+                <div className="mb-6 flex items-center gap-2 font-mono text-xs tracking-[0.25em] text-accent uppercase">
+                  <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                  Producto — Taller
+                </div>
+                <h1 className="max-w-3xl font-display text-6xl leading-[0.95] font-black tracking-tight text-fg uppercase sm:text-7xl">
+                  El taller de tu
+                  <br />
+                  próxima producción.
+                </h1>
+                <p className="mt-6 max-w-xl font-mono text-sm text-muted">
+                  Taller es nuestro espacio digital de producción
+                  audiovisual, diseñado para organizar un proyecto desde el
+                  guion hasta el rodaje. Guion, desglose, planificación, call
+                  sheets, shot list y storyboard, todo conectado en un mismo
+                  sitio.
+                </p>
+                <div className="mt-10 flex flex-wrap items-center gap-4">
+                  <Link
+                    href="/app/signup"
+                    className="group relative overflow-hidden border border-accent bg-accent px-6 py-3 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+                  >
+                    Probar Taller
+                  </Link>
+                  <Link
+                    href="/app/login"
+                    className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
+                  >
+                    Ya tengo cuenta →
+                  </Link>
+                </div>
+              </Reveal>
             </div>
-            <h1 className="max-w-3xl font-display text-6xl leading-[0.95] font-black tracking-tight text-fg uppercase sm:text-7xl">
-              El taller de tu
-              <br />
-              próxima producción.
-            </h1>
-            <p className="mt-6 max-w-xl font-mono text-sm text-muted">
-              Taller es nuestro espacio digital de producción audiovisual,
-              diseñado para organizar un proyecto desde el guion hasta el
-              rodaje. Guion, desglose, planificación, call sheets, shot list y
-              storyboard, todo conectado en un mismo sitio.
-            </p>
-            <div className="mt-10 flex flex-wrap items-center gap-4">
-              <Link
-                href="/app/signup"
-                className="group relative overflow-hidden border border-accent bg-accent px-6 py-3 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
-              >
-                Probar Taller
-              </Link>
-              <Link
-                href="/app/login"
-                className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
-              >
-                Ya tengo cuenta →
-              </Link>
-            </div>
-          </Reveal>
-        </div>
+          </div>
+        </PlaceholderFrame>
       </section>
 
       <section className="border-t border-line px-6 py-24">
@@ -186,6 +219,35 @@ export default function TallerMarketingPage() {
               </p>
             </div>
           </Reveal>
+        </div>
+      </section>
+
+      <section className="border-t border-line px-6 py-24">
+        <div className="mx-auto max-w-3xl">
+          <Reveal>
+            <span className="font-mono text-xs tracking-widest text-accent uppercase">
+              Preguntas frecuentes
+            </span>
+          </Reveal>
+          <div className="mt-8 border-t border-line">
+            {PREGUNTAS.map((faq, i) => (
+              <Reveal key={faq.question} delay={i * 0.06}>
+                <details className="group/faq border-b border-line py-5">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-6 [&::-webkit-details-marker]:hidden">
+                    <h3 className="font-mono text-sm font-bold text-fg">
+                      {faq.question}
+                    </h3>
+                    <span className="shrink-0 font-mono text-muted transition-transform duration-300 group-open/faq:rotate-45">
+                      +
+                    </span>
+                  </summary>
+                  <p className="mt-3 max-w-xl font-mono text-sm text-muted">
+                    {faq.answer}
+                  </p>
+                </details>
+              </Reveal>
+            ))}
+          </div>
         </div>
       </section>
 
