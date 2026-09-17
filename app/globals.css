@@ -22,6 +22,46 @@
   --font-sans: var(--font-archivo);
 }
 
+@keyframes credits-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Parpadeo de proyector — nada que ver con un pulso/breathing suave y
+   regular: paradas irregulares para que se sienta como luz de película
+   real, no como una animación de "respiración" de plantilla. Ciclo lento
+   (6s) a propósito: un parpadeo real a 24fps sería demasiado rápido y
+   entra en el umbral de "contenido intermitente" que puede desencadenar
+   fotosensibilidad (WCAG 2.3.1). */
+@keyframes film-flicker {
+  0%,
+  100% {
+    opacity: 0.12;
+  }
+  8% {
+    opacity: 0.16;
+  }
+  22% {
+    opacity: 0.09;
+  }
+  38% {
+    opacity: 0.14;
+  }
+  55% {
+    opacity: 0.1;
+  }
+  71% {
+    opacity: 0.15;
+  }
+  86% {
+    opacity: 0.11;
+  }
+}
+
 body {
   background: var(--bg);
   color: var(--fg);

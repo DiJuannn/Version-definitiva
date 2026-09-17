@@ -148,15 +148,19 @@ export default async function PublicHomePage() {
         </PlaceholderFrame>
       </section>
 
-      <div className="border-y border-line bg-bg-raised py-4">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-6">
-          {tags.map((tag, i) => (
-            <span key={i} className="flex items-center gap-6">
-              <span className="font-mono text-sm tracking-widest whitespace-nowrap uppercase">
-                {tag}
-              </span>
-              {i < tags.length - 1 && <span className="text-accent">●</span>}
-            </span>
+      <div className="group flex w-full overflow-hidden border-y border-line bg-bg-raised py-4 [contain:layout_paint]">
+        <div className="flex w-max animate-[credits-scroll_70s_linear_infinite] group-hover:[animation-play-state:paused]">
+          {[0, 1].map((copy) => (
+            <div key={copy} className="flex shrink-0 items-center gap-6 pr-6">
+              {tags.map((tag, i) => (
+                <span key={i} className="flex items-center gap-6">
+                  <span className="font-mono text-sm tracking-widest whitespace-nowrap uppercase">
+                    {tag}
+                  </span>
+                  <span className="text-accent">●</span>
+                </span>
+              ))}
+            </div>
           ))}
         </div>
       </div>
@@ -220,54 +224,20 @@ export default async function PublicHomePage() {
           </Reveal>
           <Reveal delay={0.1}>
             <p className="font-mono text-sm text-muted">{aboutText}</p>
+            {teamMembers.length > 0 && (
+              <a
+                href="/equipo"
+                className="group mt-4 inline-flex items-center gap-2 border-b border-accent pb-0.5 font-mono text-xs tracking-widest text-fg uppercase transition-colors hover:text-accent"
+              >
+                Conoce al equipo
+                <span className="transition-transform duration-300 group-hover:translate-x-1">
+                  →
+                </span>
+              </a>
+            )}
           </Reveal>
         </div>
       </section>
-
-      {teamMembers.length > 0 && (
-        <section id="equipo" className="border-t border-line px-6 py-28">
-          <div className="mx-auto max-w-6xl">
-            <Reveal>
-              <span className="font-mono text-xs tracking-widest text-accent uppercase">
-                Equipo
-              </span>
-            </Reveal>
-            <div className="mt-8 grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
-              {teamMembers.map((member, i) => (
-                <Reveal key={member.id} delay={i * 0.06}>
-                  <div className="flex gap-4">
-                    {member.photoUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={member.photoUrl}
-                        alt={member.name}
-                        className="h-16 w-16 shrink-0 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full border border-line font-display text-xl font-bold text-accent">
-                        {member.name.charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                    <div>
-                      <h3 className="font-display text-lg font-bold uppercase">
-                        {member.name}
-                      </h3>
-                      <span className="font-mono text-xs tracking-widest text-accent uppercase">
-                        {member.role}
-                      </span>
-                      {member.bio && (
-                        <p className="mt-2 font-mono text-sm text-muted">
-                          {member.bio}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </Reveal>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
 
       <section id="portfolio" className="border-t border-line px-6 py-28">
         <div className="mx-auto max-w-6xl">

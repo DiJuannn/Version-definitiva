@@ -15,6 +15,7 @@ const LEGAL_LINKS = [
 const NAV = [
   { href: "/#servicios", label: "Servicios" },
   { href: "/#nosotros", label: "Sobre nosotros" },
+  { href: "/equipo", label: "Equipo" },
   { href: "/#portfolio", label: "Portfolio" },
   { href: "/#presupuesto", label: "Presupuesto" },
   { href: "/#contacto", label: "Contacto" },

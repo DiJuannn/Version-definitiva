@@ -32,7 +32,7 @@ export function PlaceholderFrame({
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.12] mix-blend-overlay"
+        className="pointer-events-none absolute inset-0 mix-blend-overlay [animation:film-flicker_6s_ease-in-out_infinite]"
         style={{ backgroundImage: `url("${GRAIN_URL}")` }}
       />
       <div
