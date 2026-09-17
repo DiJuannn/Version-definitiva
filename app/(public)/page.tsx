@@ -284,37 +284,6 @@ export default async function PublicHomePage() {
         </div>
       </section>
 
-      <section className="border-t border-line bg-bg-raised px-6 py-28">
-        <div className="mx-auto grid max-w-6xl gap-10 sm:grid-cols-[1.2fr_1fr] sm:items-center">
-          <Reveal>
-            <span className="font-mono text-xs tracking-widest text-accent uppercase">
-              Producto — Taller
-            </span>
-            <p className="mt-4 font-display text-3xl leading-tight font-bold uppercase sm:text-4xl">
-              Así organizamos cada rodaje: con Taller.
-            </p>
-            <p className="mt-4 max-w-xl font-mono text-sm text-muted">
-              Guion, desglose, plan de rodaje, call sheets, shot list y
-              presupuesto — todo conectado en un mismo sitio. Lo construimos
-              para nosotros, y ahora lo usa cualquier productora que quiera
-              dejar las hojas de cálculo sueltas.
-            </p>
-            <a
-              href="/taller"
-              className="group mt-6 inline-flex items-center gap-2 border-b border-accent pb-0.5 font-mono text-xs tracking-widest text-fg uppercase transition-colors hover:text-accent"
-            >
-              Descubre Taller
-              <span className="transition-transform duration-300 group-hover:translate-x-1">
-                →
-              </span>
-            </a>
-          </Reveal>
-          <Reveal delay={0.1}>
-            <PlaceholderFrame className="aspect-[4/3]" />
-          </Reveal>
-        </div>
-      </section>
-
       <section id="nosotros" className="border-t border-line px-6 py-28">
         <div className="mx-auto grid max-w-6xl gap-10 sm:grid-cols-[2fr_1fr]">
           <Reveal>
@@ -353,6 +322,38 @@ export default async function PublicHomePage() {
           </div>
         </section>
       )}
+
+      <section className="border-t border-line bg-bg-raised px-6 py-20">
+        <div className="mx-auto grid max-w-6xl gap-10 sm:grid-cols-[1.2fr_1fr] sm:items-center">
+          <Reveal>
+            <span className="font-mono text-xs tracking-widest text-accent uppercase">
+              Producto — Taller
+            </span>
+            <p className="mt-4 font-display text-2xl leading-tight font-bold uppercase sm:text-3xl">
+              El mismo proceso, pero digital.
+            </p>
+            <p className="mt-4 max-w-xl font-mono text-sm text-muted">
+              Guion, desglose, plan de rodaje, call sheets, shot list,
+              storyboard y presupuesto: cada proyecto que hacemos pasa por
+              esta misma herramienta antes de llegar a rodaje. La construimos
+              para nosotros y ahora la puedes usar tú también — gratis para
+              tus dos primeros proyectos.
+            </p>
+            <a
+              href="/taller"
+              className="group mt-6 inline-flex items-center gap-2 border-b border-accent pb-0.5 font-mono text-xs tracking-widest text-fg uppercase transition-colors hover:text-accent"
+            >
+              Descubre Taller
+              <span className="transition-transform duration-300 group-hover:translate-x-1">
+                →
+              </span>
+            </a>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <PlaceholderFrame className="aspect-[16/9] sm:aspect-[4/3]" />
+          </Reveal>
+        </div>
+      </section>
 
       <section id="faq" className="border-t border-line px-6 py-28">
         <div className="mx-auto max-w-3xl">

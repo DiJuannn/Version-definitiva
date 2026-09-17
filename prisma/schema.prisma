@@ -132,6 +132,8 @@ model BudgetRequest {
   name           String
   email          String
   projectType    String
+  hasScript      String
+  duration       String
   budgetRange    String
   message        String?
   createdAt      DateTime @default(now())

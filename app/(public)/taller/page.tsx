@@ -14,16 +14,56 @@ import {
 } from "@/components/ToolIcons";
 
 const HERRAMIENTAS = [
-  { icon: <DocumentIcon />, label: "Guion" },
-  { icon: <ProjectsIcon />, label: "Desglose" },
-  { icon: <CastIcon />, label: "Personajes y actores" },
-  { icon: <LocationIcon />, label: "Localizaciones" },
-  { icon: <CalendarIcon />, label: "Plan de rodaje" },
-  { icon: <DocumentIcon />, label: "Call sheets" },
-  { icon: <ShotListIcon />, label: "Shot list" },
-  { icon: <SceneIcon />, label: "Storyboard" },
-  { icon: <BudgetIcon />, label: "Presupuesto" },
-  { icon: <DocumentIcon />, label: "Biblioteca de archivos" },
+  {
+    icon: <DocumentIcon />,
+    label: "Guion",
+    description: "Sube el guion en PDF y Taller detecta las escenas solo.",
+  },
+  {
+    icon: <ProjectsIcon />,
+    label: "Desglose",
+    description: "Atrezzo, vestuario y equipo necesario, escena por escena.",
+  },
+  {
+    icon: <CastIcon />,
+    label: "Personajes y actores",
+    description: "Qué actor interpreta a cada personaje, con contacto y disponibilidad.",
+  },
+  {
+    icon: <LocationIcon />,
+    label: "Localizaciones",
+    description: "Ficha de cada localización, con fotos y datos de contacto.",
+  },
+  {
+    icon: <CalendarIcon />,
+    label: "Plan de rodaje",
+    description: "Agrupa las escenas en días de rodaje concretos.",
+  },
+  {
+    icon: <DocumentIcon />,
+    label: "Call sheets",
+    description: "La hoja de convocatoria de cada día, generada sola.",
+  },
+  {
+    icon: <ShotListIcon />,
+    label: "Shot list",
+    description: "Los planos definidos para cada escena.",
+  },
+  {
+    icon: <SceneIcon />,
+    label: "Storyboard",
+    description: "Viñetas visuales de los planos clave.",
+  },
+  {
+    icon: <BudgetIcon />,
+    label: "Presupuesto",
+    description: "Categorías de gasto, importes y coste total.",
+  },
+  {
+    icon: <DocumentIcon />,
+    label: "Biblioteca de archivos",
+    description: "Contratos, permisos y archivos del proyecto, todos en un sitio.",
+  },
 ];
 
 const EJEMPLOS = [
@@ -127,11 +167,18 @@ export default function TallerMarketingPage() {
           <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
             {HERRAMIENTAS.map((tool, i) => (
               <Reveal key={tool.label} delay={i * 0.03}>
-                <div className="flex aspect-square flex-col items-center justify-center gap-3 border border-line p-4 text-center">
-                  <div className="h-8 w-8 text-muted">{tool.icon}</div>
-                  <span className="font-display text-sm font-bold uppercase">
+                <div className="group relative flex aspect-square flex-col items-center justify-center gap-3 overflow-hidden border border-line p-4 text-center transition-colors duration-300 hover:border-accent">
+                  <div className="h-8 w-8 text-muted transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:scale-110 group-hover:text-accent">
+                    {tool.icon}
+                  </div>
+                  <span className="font-display text-sm font-bold uppercase transition-colors duration-300 group-hover:text-accent">
                     {tool.label}
                   </span>
+                  <div className="absolute inset-0 flex items-center justify-center bg-bg/95 p-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                    <p className="font-mono text-[11px] leading-relaxed text-muted">
+                      {tool.description}
+                    </p>
+                  </div>
                 </div>
               </Reveal>
             ))}

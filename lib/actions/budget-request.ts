@@ -22,10 +22,12 @@ export async function submitBudgetRequest(
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
   const projectType = String(formData.get("projectType") ?? "").trim();
+  const hasScript = String(formData.get("hasScript") ?? "").trim();
+  const duration = String(formData.get("duration") ?? "").trim();
   const budgetRange = String(formData.get("budgetRange") ?? "").trim();
   const message = optionalString(formData.get("message"));
 
-  if (!name || !email || !projectType || !budgetRange) {
+  if (!name || !email || !projectType || !hasScript || !duration || !budgetRange) {
     return { error: "Faltan campos por rellenar." };
   }
   if (!EMAIL_RE.test(email)) {
@@ -46,6 +48,8 @@ export async function submitBudgetRequest(
       name,
       email,
       projectType,
+      hasScript,
+      duration,
       budgetRange,
       message,
     },
@@ -64,6 +68,8 @@ export async function submitBudgetRequest(
           <p><strong>Nombre:</strong> ${escapeHtml(name)}</p>
           <p><strong>Email:</strong> ${escapeHtml(email)}</p>
           <p><strong>Tipo de proyecto:</strong> ${escapeHtml(projectType)}</p>
+          <p><strong>¿Tiene guion?:</strong> ${escapeHtml(hasScript)}</p>
+          <p><strong>Duración aproximada:</strong> ${escapeHtml(duration)}</p>
           <p><strong>Presupuesto orientativo:</strong> ${escapeHtml(budgetRange)}</p>
           ${message ? `<p><strong>Mensaje:</strong><br />${escapeHtml(message).replace(/\n/g, "<br />")}</p>` : ""}
         `,
