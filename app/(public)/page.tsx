@@ -333,40 +333,6 @@ export default async function PublicHomePage() {
         </section>
       )}
 
-      <section className="border-t border-line bg-bg-raised px-6 py-20">
-        <div className="mx-auto max-w-6xl">
-          <Reveal>
-            <span className="font-mono text-xs tracking-widest text-accent uppercase">
-              Producto — Taller
-            </span>
-            <p className="mt-4 max-w-2xl font-display text-3xl leading-tight font-bold uppercase sm:text-4xl">
-              La producción, sin el caos.
-            </p>
-            <p className="mt-4 max-w-xl font-mono text-sm text-muted">
-              Creamos la herramienta que queríamos usar nosotros mismos.
-              Cada proyecto que hacemos pasa por aquí antes de llegar a
-              rodaje — gratis para tus dos primeros proyectos.
-            </p>
-          </Reveal>
-
-          <div className="mt-16">
-            <TallerShowcase />
-          </div>
-
-          <Reveal>
-            <a
-              href="/taller"
-              className="group mt-16 inline-flex items-center gap-2 border-b border-accent pb-0.5 font-mono text-xs tracking-widest text-fg uppercase transition-colors hover:text-accent"
-            >
-              Descubre Taller
-              <span className="transition-transform duration-300 group-hover:translate-x-1">
-                →
-              </span>
-            </a>
-          </Reveal>
-        </div>
-      </section>
-
       <section className="border-t border-line px-6 py-16">
         <div className="mx-auto max-w-4xl">
           <Reveal>
@@ -406,6 +372,40 @@ export default async function PublicHomePage() {
           </Reveal>
           <Reveal delay={0.1}>
             <BudgetRequestForm />
+          </Reveal>
+        </div>
+      </section>
+
+      <section className="border-t border-line bg-bg-raised px-6 py-20">
+        <div className="mx-auto max-w-6xl">
+          <Reveal>
+            <span className="font-mono text-xs tracking-widest text-accent uppercase">
+              Producto — Taller
+            </span>
+            <p className="mt-4 max-w-2xl font-display text-3xl leading-tight font-bold uppercase sm:text-4xl">
+              La producción, sin el caos.
+            </p>
+            <p className="mt-4 max-w-xl font-mono text-sm text-muted">
+              Creamos la herramienta que queríamos usar nosotros mismos.
+              Cada proyecto que hacemos pasa por aquí antes de llegar a
+              rodaje — gratis para tus dos primeros proyectos.
+            </p>
+          </Reveal>
+
+          <div className="mt-16">
+            <TallerShowcase />
+          </div>
+
+          <Reveal>
+            <a
+              href="/taller"
+              className="group mt-16 inline-flex items-center gap-2 border-b border-accent pb-0.5 font-mono text-xs tracking-widest text-fg uppercase transition-colors hover:text-accent"
+            >
+              Descubre Taller
+              <span className="transition-transform duration-300 group-hover:translate-x-1">
+                →
+              </span>
+            </a>
           </Reveal>
         </div>
       </section>
