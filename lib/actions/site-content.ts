@@ -273,6 +273,116 @@ export async function deleteFaqItem(itemId: string) {
   revalidatePath("/");
 }
 
+export async function createEquipmentItem(formData: FormData) {
+  const site = await requireSiteContent();
+  if (!site) return;
+
+  const category = String(formData.get("category") ?? "").trim();
+  const detail = String(formData.get("detail") ?? "").trim();
+  if (!category || !detail) return;
+
+  const count = await prisma.equipmentItem.count({
+    where: { siteContentId: site.id },
+  });
+
+  await prisma.equipmentItem.create({
+    data: { siteContentId: site.id, category, detail, order: count },
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/equipo");
+}
+
+export async function updateEquipmentItem(itemId: string, formData: FormData) {
+  const profile = await requireAdminProfile();
+  if (!profile) return;
+
+  const category = String(formData.get("category") ?? "").trim();
+  const detail = String(formData.get("detail") ?? "").trim();
+  if (!category || !detail) return;
+
+  await prisma.equipmentItem.updateMany({
+    where: { id: itemId, siteContent: { organizationId: profile.organizationId } },
+    data: { category, detail },
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/equipo");
+}
+
+export async function deleteEquipmentItem(itemId: string) {
+  const profile = await requireAdminProfile();
+  if (!profile) return;
+
+  await prisma.equipmentItem.deleteMany({
+    where: { id: itemId, siteContent: { organizationId: profile.organizationId } },
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/equipo");
+}
+
+export async function createTestimonial(formData: FormData) {
+  const site = await requireSiteContent();
+  if (!site) return;
+
+  const quote = String(formData.get("quote") ?? "").trim();
+  const author = String(formData.get("author") ?? "").trim();
+  if (!quote || !author) return;
+
+  const count = await prisma.testimonial.count({
+    where: { siteContentId: site.id },
+  });
+
+  await prisma.testimonial.create({
+    data: {
+      siteContentId: site.id,
+      quote,
+      author,
+      role: optionalString(formData.get("role")),
+      photoUrl: optionalString(formData.get("photoUrl")),
+      order: count,
+    },
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/");
+}
+
+export async function updateTestimonial(itemId: string, formData: FormData) {
+  const profile = await requireAdminProfile();
+  if (!profile) return;
+
+  const quote = String(formData.get("quote") ?? "").trim();
+  const author = String(formData.get("author") ?? "").trim();
+  if (!quote || !author) return;
+
+  await prisma.testimonial.updateMany({
+    where: { id: itemId, siteContent: { organizationId: profile.organizationId } },
+    data: {
+      quote,
+      author,
+      role: optionalString(formData.get("role")),
+      photoUrl: optionalString(formData.get("photoUrl")),
+    },
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/");
+}
+
+export async function deleteTestimonial(itemId: string) {
+  const profile = await requireAdminProfile();
+  if (!profile) return;
+
+  await prisma.testimonial.deleteMany({
+    where: { id: itemId, siteContent: { organizationId: profile.organizationId } },
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/");
+}
+
 export async function createPortfolioItem(formData: FormData) {
   const site = await requireSiteContent();
   if (!site) return;

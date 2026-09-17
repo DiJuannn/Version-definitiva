@@ -5,12 +5,26 @@ export const metadata = {
   title: "Equipo",
 };
 
+// Ejemplo de partida — se muestra solo si nadie ha cargado equipamiento real
+// todavía desde /admin, para que la sección no quede vacía mientras tanto.
+const DEFAULT_EQUIPMENT = [
+  { category: "Cámara", detail: "Por confirmar — añade la vuestra desde /admin." },
+  { category: "Ópticas", detail: "Por confirmar — añade las vuestras desde /admin." },
+  { category: "Iluminación", detail: "Por confirmar — añade la vuestra desde /admin." },
+  { category: "Flujo de trabajo", detail: "Por confirmar — formatos y códecs de entrega." },
+];
+
 export default async function EquipoPage() {
   const site = await prisma.siteContent.findFirst({
     where: { organization: { isPlatformOwner: true } },
-    include: { teamMembers: { orderBy: { order: "asc" } } },
+    include: {
+      teamMembers: { orderBy: { order: "asc" } },
+      equipmentItems: { orderBy: { order: "asc" } },
+    },
   });
   const teamMembers = site?.teamMembers ?? [];
+  const equipmentItems =
+    site && site.equipmentItems.length > 0 ? site.equipmentItems : DEFAULT_EQUIPMENT;
 
   return (
     <section className="px-6 py-32">
@@ -65,6 +79,28 @@ export default async function EquipoPage() {
             ))}
           </div>
         )}
+
+        <div className="mt-24 border-t border-line pt-16">
+          <Reveal>
+            <span className="font-mono text-xs tracking-widest text-accent uppercase">
+              Equipamiento
+            </span>
+          </Reveal>
+          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {equipmentItems.map((item, i) => (
+              <Reveal key={item.category} delay={i * 0.06}>
+                <div className="border-t border-accent pt-3">
+                  <h3 className="font-mono text-xs tracking-widest text-muted uppercase">
+                    {item.category}
+                  </h3>
+                  <p className="mt-2 font-display text-sm font-bold uppercase">
+                    {item.detail}
+                  </p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   );

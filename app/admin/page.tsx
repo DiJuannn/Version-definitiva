@@ -2,22 +2,28 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentProfile } from "@/lib/current-user";
 import {
+  createEquipmentItem,
   createFaqItem,
   createPortfolioItem,
   createProcessStep,
   createServiceItem,
   createTeamMember,
+  createTestimonial,
+  deleteEquipmentItem,
   deleteFaqItem,
   deletePortfolioItem,
   deleteProcessStep,
   deleteServiceItem,
   deleteTeamMember,
+  deleteTestimonial,
+  updateEquipmentItem,
   updateFaqItem,
   updatePortfolioItem,
   updateProcessStep,
   updateServiceItem,
   updateSiteContent,
   updateTeamMember,
+  updateTestimonial,
 } from "@/lib/actions/site-content";
 import { DeleteButton } from "@/components/DeleteButton";
 import { FeatureIntro } from "@/components/FeatureIntro";
@@ -45,6 +51,8 @@ export default async function AdminPage() {
       teamMembers: { orderBy: { order: "asc" } },
       processSteps: { orderBy: { order: "asc" } },
       faqItems: { orderBy: { order: "asc" } },
+      equipmentItems: { orderBy: { order: "asc" } },
+      testimonials: { orderBy: { order: "asc" } },
     },
   });
 
@@ -393,6 +401,67 @@ export default async function AdminPage() {
       <section className="mt-10 border border-line p-6">
         <div className="flex items-center gap-1.5">
           <p className="font-mono text-xs tracking-widest text-accent uppercase">
+            Equipamiento
+          </p>
+          <HelpTip text="Aparece en la página /equipo, debajo del equipo humano. Cámara, ópticas, iluminación, flujo de trabajo... lo que quieras enseñar." />
+        </div>
+        <div className="mt-4 space-y-4">
+          {site.equipmentItems.map((item) => (
+            <form
+              key={item.id}
+              action={updateEquipmentItem.bind(null, item.id)}
+              className="grid gap-2 border border-line p-4 sm:grid-cols-[1fr_2fr_auto]"
+            >
+              <input
+                name="category"
+                defaultValue={item.category}
+                placeholder="Categoría (ej. Cámara)"
+                required
+                className={smallFieldClass}
+              />
+              <input
+                name="detail"
+                defaultValue={item.detail}
+                placeholder="Detalle"
+                required
+                className={smallFieldClass}
+              />
+              <div className="flex gap-3">
+                <SubmitButton
+                  pendingLabel="Guardando…"
+                  savedLabel="✓ Guardado"
+                  className="font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent"
+                >
+                  Guardar
+                </SubmitButton>
+                <DeleteButton
+                  formAction={deleteEquipmentItem.bind(null, item.id)}
+                  confirmMessage="¿Eliminar esta línea de equipamiento? No se puede deshacer."
+                  className="font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent"
+                />
+              </div>
+            </form>
+          ))}
+        </div>
+        <form
+          action={createEquipmentItem}
+          className="mt-4 grid gap-2 border border-dashed border-line p-4 sm:grid-cols-[1fr_2fr_auto]"
+        >
+          <input name="category" placeholder="Categoría" required className={smallFieldClass} />
+          <input name="detail" placeholder="Detalle" required className={smallFieldClass} />
+          <SubmitButton
+            pendingLabel="Añadiendo…"
+            savedLabel="✓ Añadido"
+            className="font-mono text-[11px] tracking-widest text-accent uppercase hover:opacity-80"
+          >
+            Añadir
+          </SubmitButton>
+        </form>
+      </section>
+
+      <section className="mt-10 border border-line p-6">
+        <div className="flex items-center gap-1.5">
+          <p className="font-mono text-xs tracking-widest text-accent uppercase">
             Portfolio / Cortos
           </p>
           <HelpTip text="El vídeo se enlaza desde YouTube o Vimeo — pega la URL normal (por ejemplo, la de la barra de direcciones al ver el vídeo) y se incrusta solo. No hace falta subir ningún archivo de vídeo aquí. Marca 'Destacado' en como mucho una pieza — es la que aparece grande arriba del todo." />
@@ -539,6 +608,87 @@ export default async function AdminPage() {
             pendingLabel="Añadiendo…"
             savedLabel="✓ Añadida"
             className="font-mono text-[11px] tracking-widest text-accent uppercase hover:opacity-80"
+          >
+            Añadir
+          </SubmitButton>
+        </form>
+      </section>
+
+      <section className="mt-10 border border-line p-6">
+        <div className="flex items-center gap-1.5">
+          <p className="font-mono text-xs tracking-widest text-accent uppercase">
+            Testimonios
+          </p>
+          <HelpTip text="Aparece en la home solo si hay al menos uno — no publiques nada aquí que no sea una cita real de un cliente o colaborador de verdad." />
+        </div>
+        <div className="mt-4 space-y-4">
+          {site.testimonials.map((item) => (
+            <form
+              key={item.id}
+              action={updateTestimonial.bind(null, item.id)}
+              className="grid gap-2 border border-line p-4 sm:grid-cols-2"
+            >
+              <textarea
+                name="quote"
+                defaultValue={item.quote}
+                placeholder="Cita"
+                rows={2}
+                required
+                className={smallFieldClass + " sm:col-span-2"}
+              />
+              <input
+                name="author"
+                defaultValue={item.author}
+                placeholder="Nombre"
+                required
+                className={smallFieldClass}
+              />
+              <input
+                name="role"
+                defaultValue={item.role ?? ""}
+                placeholder="Cargo / empresa (opcional)"
+                className={smallFieldClass}
+              />
+              <input
+                name="photoUrl"
+                defaultValue={item.photoUrl ?? ""}
+                placeholder="URL de foto (opcional)"
+                className={smallFieldClass + " sm:col-span-2"}
+              />
+              <div className="flex gap-3">
+                <SubmitButton
+                  pendingLabel="Guardando…"
+                  savedLabel="✓ Guardado"
+                  className="font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent"
+                >
+                  Guardar
+                </SubmitButton>
+                <DeleteButton
+                  formAction={deleteTestimonial.bind(null, item.id)}
+                  confirmMessage="¿Eliminar este testimonio? No se puede deshacer."
+                  className="font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent"
+                />
+              </div>
+            </form>
+          ))}
+        </div>
+        <form
+          action={createTestimonial}
+          className="mt-4 grid gap-2 border border-dashed border-line p-4 sm:grid-cols-2"
+        >
+          <textarea
+            name="quote"
+            placeholder="Cita"
+            rows={2}
+            required
+            className={smallFieldClass + " sm:col-span-2"}
+          />
+          <input name="author" placeholder="Nombre" required className={smallFieldClass} />
+          <input name="role" placeholder="Cargo / empresa (opcional)" className={smallFieldClass} />
+          <SubmitButton
+            pendingLabel="Añadiendo…"
+            savedLabel="✓ Añadido"
+            className="font-mono text-[11px] tracking-widest text-accent uppercase hover:opacity-80 sm:col-span-2"
           >
             Añadir
           </SubmitButton>

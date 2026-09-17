@@ -4,6 +4,7 @@ import { PlaceholderFrame } from "@/components/PlaceholderFrame";
 import { Reveal } from "@/components/Reveal";
 import { PortfolioSection } from "@/components/PortfolioSection";
 import { BudgetRequestForm } from "@/components/BudgetRequestForm";
+import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 
 const DEFAULT_TAGS = [
   "FICCIÓN",
@@ -114,6 +115,7 @@ export default async function PublicHomePage() {
       teamMembers: { orderBy: { order: "asc" } },
       processSteps: { orderBy: { order: "asc" } },
       faqItems: { orderBy: { order: "asc" } },
+      testimonials: { orderBy: { order: "asc" } },
     },
   });
 
@@ -143,6 +145,7 @@ export default async function PublicHomePage() {
     site && site.processSteps.length > 0 ? site.processSteps : DEFAULT_PROCESS_STEPS;
   const faqs = site && site.faqItems.length > 0 ? site.faqItems : DEFAULT_FAQS;
   const hasPortfolio = portfolioItems.length > 0;
+  const testimonials = site?.testimonials ?? [];
 
   return (
     <>
@@ -284,6 +287,28 @@ export default async function PublicHomePage() {
         </div>
       </section>
 
+      <section className="border-t border-line px-6 py-28">
+        <div className="mx-auto max-w-4xl">
+          <Reveal>
+            <span className="font-mono text-xs tracking-widest text-accent uppercase">
+              Color y postproducción
+            </span>
+            <p className="mt-4 font-display text-3xl leading-tight font-bold uppercase sm:text-4xl">
+              Arrastra para ver la diferencia.
+            </p>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <div className="mt-8">
+              <BeforeAfterSlider />
+              <p className="mt-3 font-mono text-xs text-muted">
+                Ejemplo ilustrativo del mecanismo — lo sustituiremos por un
+                fotograma real en cuanto tengamos metraje graduado que enseñar.
+              </p>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
       <section id="nosotros" className="border-t border-line px-6 py-28">
         <div className="mx-auto grid max-w-6xl gap-10 sm:grid-cols-[2fr_1fr]">
           <Reveal>
@@ -319,6 +344,53 @@ export default async function PublicHomePage() {
             </Reveal>
 
             <PortfolioSection items={portfolioItems} />
+          </div>
+        </section>
+      )}
+
+      {testimonials.length > 0 && (
+        <section className="border-t border-line px-6 py-28">
+          <div className="mx-auto max-w-6xl">
+            <Reveal>
+              <span className="font-mono text-xs tracking-widest text-accent uppercase">
+                Lo que dicen
+              </span>
+            </Reveal>
+            <div className="mt-8 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              {testimonials.map((item, i) => (
+                <Reveal key={item.id} delay={i * 0.06}>
+                  <div className="flex h-full flex-col border border-line p-6">
+                    <p className="flex-1 font-mono text-sm leading-relaxed text-fg">
+                      &ldquo;{item.quote}&rdquo;
+                    </p>
+                    <div className="mt-5 flex items-center gap-3">
+                      {item.photoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={item.photoUrl}
+                          alt={item.author}
+                          className="h-10 w-10 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-line font-display text-sm font-bold text-accent">
+                          {item.author.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div>
+                        <p className="font-mono text-xs font-bold text-fg">
+                          {item.author}
+                        </p>
+                        {item.role && (
+                          <p className="font-mono text-[11px] text-muted">
+                            {item.role}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </Reveal>
+              ))}
+            </div>
           </div>
         </section>
       )}

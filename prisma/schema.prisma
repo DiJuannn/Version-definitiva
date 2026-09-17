@@ -100,6 +100,34 @@ model SiteContent {
   teamMembers    TeamMember[]
   processSteps   ProcessStep[]
   faqItems       FaqItem[]
+  equipmentItems EquipmentItem[]
+  testimonials   Testimonial[]
+}
+
+model EquipmentItem {
+  id            String  @id @default(cuid())
+  siteContentId String
+  category      String
+  detail        String
+  order         Int     @default(0)
+
+  siteContent SiteContent @relation(fields: [siteContentId], references: [id], onDelete: Cascade)
+
+  @@index([siteContentId])
+}
+
+model Testimonial {
+  id            String  @id @default(cuid())
+  siteContentId String
+  quote         String
+  author        String
+  role          String?
+  photoUrl      String?
+  order         Int     @default(0)
+
+  siteContent SiteContent @relation(fields: [siteContentId], references: [id], onDelete: Cascade)
+
+  @@index([siteContentId])
 }
 
 model ProcessStep {
