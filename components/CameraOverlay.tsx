@@ -30,24 +30,24 @@ export function CameraOverlay() {
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  const bracket = "absolute h-5 w-5 border-fg/50";
+  const bracket = "absolute h-5 w-5 border-fg/40";
 
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute inset-x-6 top-24 bottom-6 sm:inset-x-10 sm:top-28 sm:bottom-10"
+      className="pointer-events-none absolute inset-x-6 top-32 bottom-8 sm:inset-x-10 sm:top-36 sm:bottom-10"
     >
       <span className={`${bracket} top-0 left-0 border-t border-l`} />
       <span className={`${bracket} top-0 right-0 border-t border-r`} />
       <span className={`${bracket} bottom-0 left-0 border-b border-l`} />
       <span className={`${bracket} bottom-0 right-0 border-b border-r`} />
 
-      <div className="absolute top-0 left-1/2 flex -translate-x-1/2 items-center gap-1.5 font-mono text-[10px] tracking-widest text-fg/70 uppercase">
+      <div className="absolute bottom-0 left-0 flex items-center gap-1.5 font-mono text-[10px] tracking-widest text-fg/60 uppercase">
         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#ff2b2b]" />
         Rec
       </div>
 
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 font-mono text-[10px] tracking-widest text-fg/50 tabular-nums">
+      <div className="absolute right-0 bottom-0 font-mono text-[10px] tracking-widest text-fg/50 tabular-nums">
         {formatTimecode(elapsed)}
       </div>
     </div>

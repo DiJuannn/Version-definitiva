@@ -23,9 +23,9 @@ export default async function PublicLayout({ children }: LayoutProps<"/">) {
 
   const NAV = [
     { href: "/#servicios", label: "Servicios" },
+    ...(portfolioCount > 0 ? [{ href: "/#portfolio", label: "Portfolio" }] : []),
     { href: "/#proceso", label: "Cómo trabajamos" },
     { href: "/equipo", label: "Sobre nosotros" },
-    ...(portfolioCount > 0 ? [{ href: "/#portfolio", label: "Portfolio" }] : []),
     { href: "/#presupuesto", label: "Presupuesto" },
     { href: "/#contacto", label: "Contacto" },
   ];

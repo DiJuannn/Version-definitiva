@@ -6,6 +6,23 @@ import { PortfolioSection } from "@/components/PortfolioSection";
 import { BudgetRequestForm } from "@/components/BudgetRequestForm";
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 import { CameraOverlay } from "@/components/CameraOverlay";
+import {
+  BudgetIcon,
+  CalendarIcon,
+  DocumentIcon,
+  ProjectsIcon,
+  ShotListIcon,
+  SceneIcon,
+} from "@/components/ToolIcons";
+
+const TALLER_PREVIEW = [
+  { icon: <DocumentIcon />, label: "Guion" },
+  { icon: <ProjectsIcon />, label: "Desglose" },
+  { icon: <CalendarIcon />, label: "Plan de rodaje" },
+  { icon: <ShotListIcon />, label: "Shot list" },
+  { icon: <SceneIcon />, label: "Storyboard" },
+  { icon: <BudgetIcon />, label: "Presupuesto" },
+];
 
 const DEFAULT_TAGS = [
   "FICCIÓN",
@@ -263,6 +280,20 @@ export default async function PublicHomePage() {
         </div>
       </section>
 
+      {hasPortfolio && (
+        <section id="portfolio" className="border-t border-line px-6 py-28">
+          <div className="mx-auto max-w-6xl">
+            <Reveal>
+              <span className="font-mono text-xs tracking-widest text-accent uppercase">
+                Portfolio
+              </span>
+            </Reveal>
+
+            <PortfolioSection items={portfolioItems} />
+          </div>
+        </section>
+      )}
+
       <section id="proceso" className="border-t border-line px-6 py-28">
         <div className="mx-auto max-w-6xl">
           <Reveal>
@@ -290,28 +321,6 @@ export default async function PublicHomePage() {
         </div>
       </section>
 
-      <section className="border-t border-line px-6 py-28">
-        <div className="mx-auto max-w-4xl">
-          <Reveal>
-            <span className="font-mono text-xs tracking-widest text-accent uppercase">
-              Color y postproducción
-            </span>
-            <p className="mt-4 font-display text-3xl leading-tight font-bold uppercase sm:text-4xl">
-              Arrastra para ver la diferencia.
-            </p>
-          </Reveal>
-          <Reveal delay={0.1}>
-            <div className="mt-8">
-              <BeforeAfterSlider />
-              <p className="mt-3 font-mono text-xs text-muted">
-                Ejemplo ilustrativo del mecanismo — lo sustituiremos por un
-                fotograma real en cuanto tengamos metraje graduado que enseñar.
-              </p>
-            </div>
-          </Reveal>
-        </div>
-      </section>
-
       <section id="nosotros" className="border-t border-line px-6 py-28">
         <div className="mx-auto grid max-w-6xl gap-10 sm:grid-cols-[2fr_1fr]">
           <Reveal>
@@ -336,20 +345,6 @@ export default async function PublicHomePage() {
           </Reveal>
         </div>
       </section>
-
-      {hasPortfolio && (
-        <section id="portfolio" className="border-t border-line px-6 py-28">
-          <div className="mx-auto max-w-6xl">
-            <Reveal>
-              <span className="font-mono text-xs tracking-widest text-accent uppercase">
-                Portfolio
-              </span>
-            </Reveal>
-
-            <PortfolioSection items={portfolioItems} />
-          </div>
-        </section>
-      )}
 
       {testimonials.length > 0 && (
         <section className="border-t border-line px-6 py-28">
@@ -425,7 +420,43 @@ export default async function PublicHomePage() {
             </a>
           </Reveal>
           <Reveal delay={0.1}>
-            <PlaceholderFrame className="aspect-[16/9] sm:aspect-[4/3]" />
+            <PlaceholderFrame className="aspect-[16/9] sm:aspect-[4/3]">
+              <div className="absolute inset-0 grid grid-cols-3 gap-px bg-line p-px">
+                {TALLER_PREVIEW.map((tool) => (
+                  <div
+                    key={tool.label}
+                    className="flex flex-col items-center justify-center gap-2 bg-bg-raised p-3 text-center"
+                  >
+                    <div className="h-6 w-6 text-accent">{tool.icon}</div>
+                    <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                      {tool.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </PlaceholderFrame>
+          </Reveal>
+        </div>
+      </section>
+
+      <section className="border-t border-line px-6 py-16">
+        <div className="mx-auto max-w-4xl">
+          <Reveal>
+            <span className="font-mono text-xs tracking-widest text-accent uppercase">
+              Color y postproducción
+            </span>
+            <p className="mt-3 font-display text-xl leading-tight font-bold uppercase sm:text-2xl">
+              Arrastra para ver la diferencia.
+            </p>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <div className="mt-6">
+              <BeforeAfterSlider />
+              <p className="mt-3 font-mono text-xs text-muted">
+                Ejemplo ilustrativo del mecanismo — lo sustituiremos por un
+                fotograma real en cuanto tengamos metraje graduado que enseñar.
+              </p>
+            </div>
           </Reveal>
         </div>
       </section>
