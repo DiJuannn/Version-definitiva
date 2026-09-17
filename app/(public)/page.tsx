@@ -141,8 +141,7 @@ export default async function PublicHomePage() {
     "\n",
   );
   const heroSubtitle =
-    site?.heroSubtitle ??
-    "Ficción, publicidad y documental, rodados por el mismo equipo que te atiende de principio a fin.";
+    site?.heroSubtitle ?? "Versión definitiva — Productora audiovisual.";
   const tags = site?.marqueeTags.length ? site.marqueeTags : DEFAULT_TAGS;
   const servicios =
     site && site.services.length > 0
@@ -172,12 +171,6 @@ export default async function PublicHomePage() {
         <PlaceholderFrame className="absolute inset-0">
           <CameraOverlay />
           <div className="relative flex h-full flex-col">
-            <div className="mx-auto flex w-full max-w-6xl items-center justify-end px-6 pt-28 font-mono text-[11px] tracking-[0.25em] text-muted uppercase">
-              <span className="hidden sm:inline">
-                © {new Date().getFullYear()}
-              </span>
-            </div>
-
             <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col justify-center px-6">
               <HeroReveal>
                 <h1 className="max-w-4xl font-display text-5xl leading-[0.95] font-black tracking-tight text-fg uppercase sm:text-7xl lg:text-[7rem]">

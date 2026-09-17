@@ -35,19 +35,19 @@ export function CameraOverlay() {
   return (
     <div
       aria-hidden
-      className="pointer-events-none absolute inset-x-6 top-32 bottom-8 sm:inset-x-10 sm:top-36 sm:bottom-10"
+      className="pointer-events-none absolute inset-x-6 top-24 bottom-8 sm:inset-x-10 sm:top-28 sm:bottom-10"
     >
       <span className={`${bracket} top-0 left-0 border-t border-l`} />
       <span className={`${bracket} top-0 right-0 border-t border-r`} />
       <span className={`${bracket} bottom-0 left-0 border-b border-l`} />
       <span className={`${bracket} bottom-0 right-0 border-b border-r`} />
 
-      <div className="absolute top-1/2 right-0 flex -translate-y-1/2 items-center gap-1.5 font-mono text-[9px] tracking-widest text-fg/35 uppercase">
+      <div className="absolute top-0 left-1/2 flex -translate-x-1/2 items-center gap-1.5 font-mono text-[9px] tracking-widest text-fg/40 uppercase">
         <span className="h-1 w-1 animate-pulse rounded-full bg-[#ff2b2b]/70" />
         Rec
       </div>
 
-      <div className="absolute right-0 bottom-0 font-mono text-[9px] tracking-widest text-fg/30 tabular-nums">
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 font-mono text-[9px] tracking-widest text-fg/30 tabular-nums">
         {formatTimecode(elapsed)}
       </div>
     </div>
