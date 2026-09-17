@@ -42,6 +42,7 @@ export async function updateSiteContent(formData: FormData) {
     data: {
       heroTitle: String(formData.get("heroTitle") ?? site.heroTitle),
       heroSubtitle: String(formData.get("heroSubtitle") ?? site.heroSubtitle),
+      heroImageUrl: optionalString(formData.get("heroImageUrl")),
       aboutQuestion: String(formData.get("aboutQuestion") ?? site.aboutQuestion),
       aboutText: String(formData.get("aboutText") ?? site.aboutText),
       contactEmail: String(formData.get("contactEmail") ?? site.contactEmail),
@@ -74,6 +75,7 @@ export async function createServiceItem(formData: FormData) {
       title,
       description,
       details: optionalString(formData.get("details")),
+      imageUrl: optionalString(formData.get("imageUrl")),
       order: count,
     },
   });
@@ -95,6 +97,7 @@ export async function updateServiceItem(itemId: string, formData: FormData) {
       title,
       description: String(formData.get("description") ?? "").trim(),
       details: optionalString(formData.get("details")),
+      imageUrl: optionalString(formData.get("imageUrl")),
     },
   });
 
@@ -133,6 +136,7 @@ export async function createTeamMember(formData: FormData) {
       role,
       bio: optionalString(formData.get("bio")),
       photoUrl: optionalString(formData.get("photoUrl")),
+      btsPhotoUrl: optionalString(formData.get("btsPhotoUrl")),
       order: count,
     },
   });
@@ -156,11 +160,13 @@ export async function updateTeamMember(memberId: string, formData: FormData) {
       role,
       bio: optionalString(formData.get("bio")),
       photoUrl: optionalString(formData.get("photoUrl")),
+      btsPhotoUrl: optionalString(formData.get("btsPhotoUrl")),
     },
   });
 
   revalidatePath("/admin");
   revalidatePath("/");
+  revalidatePath("/equipo");
 }
 
 export async function deleteTeamMember(memberId: string) {
@@ -383,6 +389,28 @@ export async function deleteTestimonial(itemId: string) {
   revalidatePath("/");
 }
 
+// Formulario de créditos como texto plano, una línea por crédito
+// ("Dirección: Nombre") — evita modelar una tabla aparte para algo que
+// varía mucho de un proyecto a otro (no todos tienen director de
+// fotografía, por ejemplo).
+function parseCredits(text: string): { role: string; value: string }[] {
+  return text
+    .split("\n")
+    .map((line) => {
+      const [role, ...rest] = line.split(":");
+      return { role: (role ?? "").trim(), value: rest.join(":").trim() };
+    })
+    .filter((c) => c.role && c.value);
+}
+
+export function creditsToText(credits: unknown): string {
+  if (!Array.isArray(credits)) return "";
+  return credits
+    .filter((c): c is { role: string; value: string } => !!c && typeof c === "object")
+    .map((c) => `${c.role}: ${c.value}`)
+    .join("\n");
+}
+
 export async function createPortfolioItem(formData: FormData) {
   const site = await requireSiteContent();
   if (!site) return;
@@ -403,6 +431,15 @@ export async function createPortfolioItem(formData: FormData) {
       videoUrl: optionalString(formData.get("videoUrl")),
       featured: formData.get("featured") === "on",
       order: count,
+      slug: optionalString(formData.get("slug")),
+      year: formData.get("year") ? Number(formData.get("year")) : null,
+      genre: optionalString(formData.get("genre")),
+      logline: optionalString(formData.get("logline")),
+      synopsis: optionalString(formData.get("synopsis")),
+      heroImageUrl: optionalString(formData.get("heroImageUrl")),
+      credits: parseCredits(String(formData.get("credits") ?? "")),
+      usesTaller: formData.get("usesTaller") === "on",
+      tallerNote: optionalString(formData.get("tallerNote")),
     },
   });
 
@@ -426,11 +463,21 @@ export async function updatePortfolioItem(itemId: string, formData: FormData) {
       videoUrl: optionalString(formData.get("videoUrl")),
       featured: formData.get("featured") === "on",
       published: formData.get("published") === "on",
+      slug: optionalString(formData.get("slug")),
+      year: formData.get("year") ? Number(formData.get("year")) : null,
+      genre: optionalString(formData.get("genre")),
+      logline: optionalString(formData.get("logline")),
+      synopsis: optionalString(formData.get("synopsis")),
+      heroImageUrl: optionalString(formData.get("heroImageUrl")),
+      credits: parseCredits(String(formData.get("credits") ?? "")),
+      usesTaller: formData.get("usesTaller") === "on",
+      tallerNote: optionalString(formData.get("tallerNote")),
     },
   });
 
   revalidatePath("/admin");
   revalidatePath("/");
+  revalidatePath("/proyectos/[slug]", "page");
 }
 
 export async function deletePortfolioItem(itemId: string) {
@@ -443,4 +490,39 @@ export async function deletePortfolioItem(itemId: string) {
 
   revalidatePath("/admin");
   revalidatePath("/");
+}
+
+export async function createProjectImage(portfolioItemId: string, formData: FormData) {
+  const profile = await requireAdminProfile();
+  if (!profile) return;
+
+  const url = String(formData.get("url") ?? "").trim();
+  const kind = String(formData.get("kind") ?? "FRAME");
+  if (!url) return;
+
+  const item = await prisma.portfolioItem.findFirst({
+    where: { id: portfolioItemId, siteContent: { organizationId: profile.organizationId } },
+  });
+  if (!item) return;
+
+  const count = await prisma.projectImage.count({ where: { portfolioItemId } });
+
+  await prisma.projectImage.create({
+    data: { portfolioItemId, url, kind, order: count },
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/proyectos/[slug]", "page");
+}
+
+export async function deleteProjectImage(imageId: string) {
+  const profile = await requireAdminProfile();
+  if (!profile) return;
+
+  await prisma.projectImage.deleteMany({
+    where: { id: imageId, portfolioItem: { siteContent: { organizationId: profile.organizationId } } },
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/proyectos/[slug]", "page");
 }

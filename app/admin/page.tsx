@@ -6,13 +6,16 @@ import {
   createFaqItem,
   createPortfolioItem,
   createProcessStep,
+  createProjectImage,
   createServiceItem,
   createTeamMember,
   createTestimonial,
+  creditsToText,
   deleteEquipmentItem,
   deleteFaqItem,
   deletePortfolioItem,
   deleteProcessStep,
+  deleteProjectImage,
   deleteServiceItem,
   deleteTeamMember,
   deleteTestimonial,
@@ -47,7 +50,10 @@ export default async function AdminPage() {
     update: {},
     include: {
       services: { orderBy: { order: "asc" } },
-      portfolioItems: { orderBy: { order: "asc" } },
+      portfolioItems: {
+        orderBy: { order: "asc" },
+        include: { images: { orderBy: { order: "asc" } } },
+      },
       teamMembers: { orderBy: { order: "asc" } },
       processSteps: { orderBy: { order: "asc" } },
       faqItems: { orderBy: { order: "asc" } },
@@ -93,6 +99,18 @@ export default async function AdminPage() {
             <input
               name="heroSubtitle"
               defaultValue={site.heroSubtitle}
+              className={fieldClass}
+            />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="flex items-center gap-1.5 font-mono text-[10px] tracking-widest text-muted uppercase">
+              Fotografía de fondo del hero
+              <HelpTip text="URL de una fotografía real de rodaje, panorámica (16:9 o más ancha). Sin esto, el hero se queda con el fondo con grano de siempre." />
+            </span>
+            <input
+              name="heroImageUrl"
+              defaultValue={site.heroImageUrl ?? ""}
+              placeholder="https://…"
               className={fieldClass}
             />
           </label>
@@ -237,6 +255,12 @@ export default async function AdminPage() {
                 rows={2}
                 className={smallFieldClass + " sm:col-span-3"}
               />
+              <input
+                name="imageUrl"
+                defaultValue={service.imageUrl ?? ""}
+                placeholder="URL de fotografía asociada (opcional) — aparece al pasar el ratón por este servicio"
+                className={smallFieldClass + " sm:col-span-3"}
+              />
             </form>
           ))}
         </div>
@@ -355,7 +379,13 @@ export default async function AdminPage() {
               <input
                 name="photoUrl"
                 defaultValue={member.photoUrl ?? ""}
-                placeholder="URL de foto (opcional)"
+                placeholder="URL de retrato (opcional)"
+                className={smallFieldClass + " sm:col-span-2"}
+              />
+              <input
+                name="btsPhotoUrl"
+                defaultValue={member.btsPhotoUrl ?? ""}
+                placeholder="URL de foto en rodaje / BTS (opcional)"
                 className={smallFieldClass + " sm:col-span-2"}
               />
               <textarea
@@ -519,6 +549,112 @@ export default async function AdminPage() {
                   confirmMessage="¿Eliminar esta pieza del portfolio? No se puede deshacer."
                   className="font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent"
                 />
+              </div>
+
+              <div className="mt-2 border-t border-line pt-3 sm:col-span-2">
+                <div className="flex items-center gap-1.5">
+                  <p className="font-mono text-[10px] tracking-widest text-accent uppercase">
+                    Ficha de proyecto (opcional)
+                  </p>
+                  <HelpTip text="Rellena esto para que la pieza tenga su propia página en /proyectos/[slug], con hero, sinopsis, créditos y fotogramas. Sin slug, la pieza sigue apareciendo en el portfolio pero sin página propia." />
+                </div>
+                <div className="mt-2 grid gap-2 sm:grid-cols-4">
+                  <input
+                    name="slug"
+                    defaultValue={item.slug ?? ""}
+                    placeholder="slug (ej. distorsion)"
+                    className={smallFieldClass}
+                  />
+                  <input
+                    name="year"
+                    type="number"
+                    defaultValue={item.year ?? ""}
+                    placeholder="Año"
+                    className={smallFieldClass}
+                  />
+                  <input
+                    name="genre"
+                    defaultValue={item.genre ?? ""}
+                    placeholder="Género (opcional)"
+                    className={smallFieldClass + " sm:col-span-2"}
+                  />
+                  <input
+                    name="logline"
+                    defaultValue={item.logline ?? ""}
+                    placeholder="Logline — una frase potente"
+                    className={smallFieldClass + " sm:col-span-4"}
+                  />
+                  <textarea
+                    name="synopsis"
+                    defaultValue={item.synopsis ?? ""}
+                    placeholder="Sinopsis breve"
+                    rows={2}
+                    className={smallFieldClass + " sm:col-span-4"}
+                  />
+                  <input
+                    name="heroImageUrl"
+                    defaultValue={item.heroImageUrl ?? ""}
+                    placeholder="URL del fotograma principal (hero de la ficha)"
+                    className={smallFieldClass + " sm:col-span-4"}
+                  />
+                  <textarea
+                    name="credits"
+                    defaultValue={creditsToText(item.credits)}
+                    placeholder={"Créditos, uno por línea:\nDirección: Nombre\nGuion: Nombre\nDuración: 14 min"}
+                    rows={4}
+                    className={smallFieldClass + " sm:col-span-4"}
+                  />
+                  <label className="flex items-center gap-2 font-mono text-xs sm:col-span-4">
+                    <input type="checkbox" name="usesTaller" defaultChecked={item.usesTaller} />
+                    Este proyecto se organizó con Taller
+                  </label>
+                  <input
+                    name="tallerNote"
+                    defaultValue={item.tallerNote ?? ""}
+                    placeholder="Nota breve sobre cómo se usó Taller en este proyecto (opcional)"
+                    className={smallFieldClass + " sm:col-span-4"}
+                  />
+                </div>
+
+                <div className="mt-3">
+                  <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                    Fotogramas y BTS
+                  </p>
+                  <div className="mt-2 space-y-1">
+                    {item.images.map((img) => (
+                      <div key={img.id} className="flex items-center gap-2">
+                        <span className="font-mono text-[10px] text-accent uppercase">
+                          {img.kind}
+                        </span>
+                        <span className="flex-1 truncate font-mono text-[11px] text-muted">
+                          {img.url}
+                        </span>
+                        <DeleteButton
+                          formAction={deleteProjectImage.bind(null, img.id)}
+                          confirmMessage="¿Eliminar esta imagen? No se puede deshacer."
+                          className="font-mono text-[10px] tracking-widest text-muted uppercase hover:text-accent"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <form
+                    action={createProjectImage.bind(null, item.id)}
+                    className="mt-2 grid grid-cols-[auto_1fr_auto] gap-2"
+                  >
+                    <select name="kind" defaultValue="FRAME" className={smallFieldClass}>
+                      <option value="FRAME">Fotograma</option>
+                      <option value="BTS">BTS</option>
+                    </select>
+                    <input name="url" placeholder="URL de la imagen" className={smallFieldClass} />
+                    <SubmitButton
+                      pendingLabel="…"
+                      savedLabel="✓"
+                      className="font-mono text-[10px] tracking-widest text-accent uppercase hover:opacity-80"
+                    >
+                      Añadir
+                    </SubmitButton>
+                  </form>
+                </div>
               </div>
             </form>
           ))}

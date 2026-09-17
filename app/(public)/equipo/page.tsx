@@ -49,18 +49,28 @@ export default async function EquipoPage() {
             {teamMembers.map((member, i) => (
               <Reveal key={member.id} delay={i * 0.08}>
                 <div className="grid gap-6 py-12 sm:grid-cols-[14rem_1fr] sm:gap-12">
-                  {member.photoUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={member.photoUrl}
-                      alt={member.name}
-                      className="aspect-[4/5] w-full max-w-56 rounded-sm border border-line object-cover"
-                    />
-                  ) : (
-                    <div className="flex aspect-[4/5] w-full max-w-56 items-center justify-center rounded-sm border border-line bg-bg-raised font-display text-6xl font-black text-accent">
-                      {member.name.charAt(0).toUpperCase()}
-                    </div>
-                  )}
+                  <div className="flex gap-3">
+                    {member.photoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={member.photoUrl}
+                        alt={member.name}
+                        className="aspect-[4/5] w-full max-w-56 rounded-sm border border-line object-cover"
+                      />
+                    ) : (
+                      <div className="flex aspect-[4/5] w-full max-w-56 items-center justify-center rounded-sm border border-line bg-bg-raised font-display text-6xl font-black text-accent">
+                        {member.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    {member.btsPhotoUrl && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={member.btsPhotoUrl}
+                        alt={`${member.name} en rodaje`}
+                        className="hidden aspect-[4/5] w-24 shrink-0 rounded-sm border border-line object-cover sm:block"
+                      />
+                    )}
+                  </div>
                   <div className="flex flex-col justify-center">
                     <span className="font-mono text-xs tracking-widest text-accent uppercase">
                       {member.role}

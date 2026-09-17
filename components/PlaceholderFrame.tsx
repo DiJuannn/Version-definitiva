@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Image from "next/image";
 
 // Grano de película real (ruido vía SVG), no el degradado suave de "orbe de
 // color" típico de plantillas SaaS — mismo motivo que cualquier viñeta de
@@ -10,9 +11,20 @@ const GRAIN_URL =
 export function PlaceholderFrame({
   children,
   className,
+  imageUrl,
+  imageAlt,
+  imagePriority,
+  imageSizes,
 }: {
   children?: ReactNode;
   className?: string;
+  // Fotografía real opcional detrás del grano/viñeta — el marco decorativo
+  // es el mismo con o sin foto, así que un hero sin imagen todavía y uno
+  // con fotografía real de rodaje comparten exactamente la misma identidad.
+  imageUrl?: string | null;
+  imageAlt?: string;
+  imagePriority?: boolean;
+  imageSizes?: string;
 }) {
   // "relative" solo se aplica si el que llama no ha pedido ya su propia
   // posición (p. ej. "absolute inset-0" para ocupar toda la pantalla) —
@@ -25,10 +37,30 @@ export function PlaceholderFrame({
     <div
       className={`${hasOwnPosition ? "" : "relative"} overflow-hidden bg-bg-raised ${className ?? ""}`}
     >
+      {imageUrl && (
+        <Image
+          src={imageUrl}
+          alt={imageAlt ?? ""}
+          fill
+          priority={imagePriority}
+          sizes={imageSizes ?? "100vw"}
+          className="object-cover [animation:hero-kenburns_28s_ease-in-out_infinite_alternate]"
+        />
+      )}
+      {/* Con foto real hace falta más contraste para que el texto encima
+          siga siendo legible — sin foto, la viñeta suave de siempre. */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
-        style={{ boxShadow: "inset 0 0 18vw rgba(0,0,0,0.55)" }}
+        style={
+          imageUrl
+            ? {
+                background:
+                  "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.35) 35%, rgba(0,0,0,0.6) 100%)",
+                boxShadow: "inset 0 0 18vw rgba(0,0,0,0.5)",
+              }
+            : { boxShadow: "inset 0 0 18vw rgba(0,0,0,0.55)" }
+        }
       />
       <div
         aria-hidden

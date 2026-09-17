@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { PlaceholderFrame } from "@/components/PlaceholderFrame";
+import { MediaFrame } from "@/components/MediaFrame";
 import { Reveal } from "@/components/Reveal";
 import { getEmbedUrl } from "@/lib/video-embed";
 
@@ -11,54 +13,62 @@ export type PortfolioItemView = {
   description: string | null;
   videoUrl: string | null;
   featured: boolean;
+  slug?: string | null;
+  year?: number | null;
+  heroImageUrl?: string | null;
 };
 
-function ProjectCard({ item }: { item: PortfolioItemView }) {
+function ProjectCard({ item, reversed }: { item: PortfolioItemView; reversed: boolean }) {
   const embedUrl = getEmbedUrl(item.videoUrl);
 
-  return (
-    <div className={item.featured ? "sm:col-span-2" : ""}>
-      <PlaceholderFrame
-        className={
-          "transition-transform duration-500 " +
-          (item.featured ? "aspect-[16/8] hover:scale-[1.01]" : "aspect-video hover:scale-[1.02]")
-        }
-      >
-        {embedUrl ? (
-          <iframe
-            src={embedUrl}
-            title={item.title}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            className="absolute inset-0 h-full w-full"
-          />
-        ) : (
-          <div className="absolute bottom-6 left-6">
-            <div className="font-mono text-xs tracking-widest text-muted uppercase">
-              {item.category ?? "Proyecto"}
-            </div>
-            <div className="mt-1 font-display text-2xl font-bold uppercase sm:text-3xl">
-              {item.title}
-            </div>
-          </div>
-        )}
-      </PlaceholderFrame>
-      <div className="mt-4 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-        <div>
-          <span className="font-mono text-[11px] tracking-widest text-accent uppercase">
-            {item.category ?? "Proyecto"}
-          </span>
-          <h3 className="mt-1 font-display text-lg font-bold uppercase sm:text-xl">
-            {item.title}
-          </h3>
-        </div>
+  const media = embedUrl ? (
+    <PlaceholderFrame className="aspect-video transition-transform duration-500 group-hover:scale-[1.01]">
+      <iframe
+        src={embedUrl}
+        title={item.title}
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+        className="absolute inset-0 h-full w-full"
+      />
+    </PlaceholderFrame>
+  ) : (
+    <MediaFrame
+      src={item.heroImageUrl}
+      alt={item.title}
+      label={`${item.title} — fotograma`}
+      className="aspect-[16/10] transition-transform duration-500 group-hover:scale-[1.01] sm:aspect-video"
+    />
+  );
+
+  const content = (
+    <div
+      className={`flex flex-col gap-6 sm:items-end sm:gap-10 ${
+        reversed ? "sm:flex-row-reverse" : "sm:flex-row"
+      }`}
+    >
+      <div className="sm:w-[68%]">{media}</div>
+      <div className={`sm:w-[32%] ${reversed ? "sm:text-left" : "sm:text-right"}`}>
+        <span className="font-mono text-[11px] tracking-widest text-accent-purple-soft uppercase">
+          {[item.category, item.year].filter(Boolean).join(" · ") || "Proyecto"}
+        </span>
+        <h3 className="mt-1 font-display text-2xl font-bold uppercase sm:text-3xl">
+          {item.title}
+        </h3>
         {item.description && (
-          <p className="max-w-md font-mono text-sm text-muted">
-            {item.description}
-          </p>
+          <p className="mt-2 font-mono text-sm text-muted">{item.description}</p>
         )}
       </div>
     </div>
+  );
+
+  if (!item.slug) {
+    return <div className="group">{content}</div>;
+  }
+
+  return (
+    <Link href={`/proyectos/${item.slug}`} className="group block">
+      {content}
+    </Link>
   );
 }
 
@@ -76,10 +86,10 @@ export function PortfolioSection({ items }: { items: PortfolioItemView[] }) {
   }
 
   return (
-    <div className="mt-8 grid gap-x-8 gap-y-12 sm:grid-cols-2">
+    <div className="mt-8 flex flex-col gap-16 sm:gap-24">
       {items.map((item, i) => (
-        <Reveal key={item.id} delay={i * 0.06} className={item.featured ? "sm:col-span-2" : ""}>
-          <ProjectCard item={item} />
+        <Reveal key={item.id} delay={i * 0.08}>
+          <ProjectCard item={item} reversed={i % 2 === 1} />
         </Reveal>
       ))}
     </div>

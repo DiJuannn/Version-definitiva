@@ -6,23 +6,8 @@ import { PortfolioSection } from "@/components/PortfolioSection";
 import { BudgetRequestForm } from "@/components/BudgetRequestForm";
 import { BeforeAfterSlider } from "@/components/BeforeAfterSlider";
 import { CameraOverlay } from "@/components/CameraOverlay";
-import {
-  BudgetIcon,
-  CalendarIcon,
-  DocumentIcon,
-  ProjectsIcon,
-  ShotListIcon,
-  SceneIcon,
-} from "@/components/ToolIcons";
-
-const TALLER_PREVIEW = [
-  { icon: <DocumentIcon />, label: "Guion" },
-  { icon: <ProjectsIcon />, label: "Desglose" },
-  { icon: <CalendarIcon />, label: "Plan de rodaje" },
-  { icon: <ShotListIcon />, label: "Shot list" },
-  { icon: <SceneIcon />, label: "Storyboard" },
-  { icon: <BudgetIcon />, label: "Presupuesto" },
-];
+import { ServiciosSection } from "@/components/ServiciosSection";
+import { TallerShowcase } from "@/components/TallerShowcase";
 
 const DEFAULT_TAGS = [
   "FICCIÓN",
@@ -150,6 +135,7 @@ export default async function PublicHomePage() {
           title: s.title,
           description: s.description,
           details: s.details,
+          imageUrl: s.imageUrl,
         }))
       : DEFAULT_SERVICIOS;
   const aboutQuestion = site?.aboutQuestion ?? "¿Qué historia merece contarse?";
@@ -168,7 +154,12 @@ export default async function PublicHomePage() {
   return (
     <>
       <section className="relative h-screen w-full overflow-hidden">
-        <PlaceholderFrame className="absolute inset-0">
+        <PlaceholderFrame
+          className="absolute inset-0"
+          imageUrl={site?.heroImageUrl}
+          imageAlt="Rodaje de Versión definitiva"
+          imagePriority
+        >
           <CameraOverlay />
           <div className="relative flex h-full flex-col">
             <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col justify-center px-6">
@@ -225,45 +216,7 @@ export default async function PublicHomePage() {
               Servicios
             </span>
           </Reveal>
-          <div className="mt-8 border-t border-line">
-            {servicios.map((servicio, i) => (
-              <Reveal key={servicio.num} delay={i * 0.06}>
-                {servicio.details ? (
-                  <details className="group/service border-b border-line">
-                    <summary className="grid cursor-pointer list-none grid-cols-[3rem_1fr_2fr_auto] items-baseline gap-6 py-6 pl-0 transition-all duration-300 [&::-webkit-details-marker]:hidden hover:pl-4 sm:grid-cols-[4rem_1fr_2fr_auto]">
-                      <span className="font-mono text-sm text-muted transition-colors group-hover/service:text-accent">
-                        {servicio.num}
-                      </span>
-                      <h3 className="font-display text-2xl font-bold uppercase transition-colors sm:text-3xl group-hover/service:text-accent">
-                        {servicio.title}
-                      </h3>
-                      <p className="font-mono text-sm text-muted">
-                        {servicio.description}
-                      </p>
-                      <span className="font-mono text-muted transition-transform duration-300 group-open/service:rotate-45">
-                        +
-                      </span>
-                    </summary>
-                    <p className="-mt-2 max-w-2xl pb-6 font-mono text-sm text-muted sm:pl-[calc(4rem+1.5rem)]">
-                      {servicio.details}
-                    </p>
-                  </details>
-                ) : (
-                  <div className="group grid grid-cols-[3rem_1fr_2fr] items-baseline gap-6 border-b border-line py-6 pl-0 transition-all duration-300 hover:pl-4 sm:grid-cols-[4rem_1fr_2fr]">
-                    <span className="font-mono text-sm text-muted transition-colors group-hover:text-accent">
-                      {servicio.num}
-                    </span>
-                    <h3 className="font-display text-2xl font-bold uppercase transition-colors sm:text-3xl group-hover:text-accent">
-                      {servicio.title}
-                    </h3>
-                    <p className="font-mono text-sm text-muted">
-                      {servicio.description}
-                    </p>
-                  </div>
-                )}
-              </Reveal>
-            ))}
-          </div>
+          <ServiciosSection servicios={servicios} />
         </div>
       </section>
 
@@ -381,47 +334,35 @@ export default async function PublicHomePage() {
       )}
 
       <section className="border-t border-line bg-bg-raised px-6 py-20">
-        <div className="mx-auto grid max-w-6xl gap-10 sm:grid-cols-[1.2fr_1fr] sm:items-center">
+        <div className="mx-auto max-w-6xl">
           <Reveal>
             <span className="font-mono text-xs tracking-widest text-accent uppercase">
               Producto — Taller
             </span>
-            <p className="mt-4 font-display text-2xl leading-tight font-bold uppercase sm:text-3xl">
-              El mismo proceso, pero digital.
+            <p className="mt-4 max-w-2xl font-display text-3xl leading-tight font-bold uppercase sm:text-4xl">
+              La producción, sin el caos.
             </p>
             <p className="mt-4 max-w-xl font-mono text-sm text-muted">
-              Guion, desglose, plan de rodaje, call sheets, shot list,
-              storyboard y presupuesto: cada proyecto que hacemos pasa por
-              esta misma herramienta antes de llegar a rodaje. La construimos
-              para nosotros y ahora la puedes usar tú también — gratis para
-              tus dos primeros proyectos.
+              Creamos la herramienta que queríamos usar nosotros mismos.
+              Cada proyecto que hacemos pasa por aquí antes de llegar a
+              rodaje — gratis para tus dos primeros proyectos.
             </p>
+          </Reveal>
+
+          <div className="mt-16">
+            <TallerShowcase />
+          </div>
+
+          <Reveal>
             <a
               href="/taller"
-              className="group mt-6 inline-flex items-center gap-2 border-b border-accent pb-0.5 font-mono text-xs tracking-widest text-fg uppercase transition-colors hover:text-accent"
+              className="group mt-16 inline-flex items-center gap-2 border-b border-accent pb-0.5 font-mono text-xs tracking-widest text-fg uppercase transition-colors hover:text-accent"
             >
               Descubre Taller
               <span className="transition-transform duration-300 group-hover:translate-x-1">
                 →
               </span>
             </a>
-          </Reveal>
-          <Reveal delay={0.1}>
-            <PlaceholderFrame className="aspect-[16/9] sm:aspect-[4/3]">
-              <div className="absolute inset-0 grid grid-cols-3 gap-px bg-line p-px">
-                {TALLER_PREVIEW.map((tool) => (
-                  <div
-                    key={tool.label}
-                    className="flex flex-col items-center justify-center gap-2 bg-bg-raised p-3 text-center"
-                  >
-                    <div className="h-6 w-6 text-accent">{tool.icon}</div>
-                    <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-                      {tool.label}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </PlaceholderFrame>
           </Reveal>
         </div>
       </section>

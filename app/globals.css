@@ -44,6 +44,18 @@
   }
 }
 
+/* Zoom extremadamente lento sobre la fotografía del hero — "ligero
+   parallax" sin librería: 28s de ida y vuelta, apenas perceptible salvo
+   por la sensación de que la imagen respira. */
+@keyframes hero-kenburns {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.06);
+  }
+}
+
 /* Parpadeo de proyector — nada que ver con un pulso/breathing suave y
    regular: paradas irregulares para que se sienta como luz de película
    real, no como una animación de "respiración" de plantilla. Ciclo lento

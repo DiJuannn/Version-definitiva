@@ -85,6 +85,7 @@ model SiteContent {
   organizationId String   @unique
   heroTitle      String   @default("Historias que\nse quedan.")
   heroSubtitle   String   @default("Versión definitiva — de la idea al montaje final.")
+  heroImageUrl   String?
   aboutQuestion  String   @default("¿Qué historia merece contarse?")
   aboutText      String   @default("Somos un equipo pequeño que trabaja como uno grande: desde el guion hasta la entrega final, cuidando cada decisión de imagen, ritmo y sonido.")
   contactEmail   String   @default("hola@versiondefinitiva.com")
@@ -178,6 +179,7 @@ model TeamMember {
   role          String
   bio           String?
   photoUrl      String?
+  btsPhotoUrl   String?
   order         Int     @default(0)
 
   siteContent SiteContent @relation(fields: [siteContentId], references: [id], onDelete: Cascade)
@@ -191,6 +193,7 @@ model ServiceItem {
   title         String
   description   String
   details       String?
+  imageUrl      String?
   order         Int     @default(0)
 
   siteContent SiteContent @relation(fields: [siteContentId], references: [id], onDelete: Cascade)
@@ -211,9 +214,38 @@ model PortfolioItem {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  siteContent SiteContent @relation(fields: [siteContentId], references: [id], onDelete: Cascade)
+  // Campos de la ficha de proyecto (/proyectos/[slug]) — todos opcionales
+  // porque un proyecto puede publicarse en el portfolio de la home sin
+  // tener todavía página propia (basta con no rellenar el slug).
+  slug         String? @unique
+  year         Int?
+  genre        String?
+  logline      String?
+  synopsis     String?
+  heroImageUrl String?
+  // Array de { role, value } — créditos dinámicos, distintos por proyecto
+  // (no todos tienen director de fotografía, productor, etc.), así que no
+  // tiene sentido una columna fija por rol.
+  credits      Json?
+  usesTaller   Boolean @default(false)
+  tallerNote   String?
+
+  siteContent SiteContent   @relation(fields: [siteContentId], references: [id], onDelete: Cascade)
+  images      ProjectImage[]
 
   @@index([siteContentId])
+}
+
+model ProjectImage {
+  id              String  @id @default(cuid())
+  portfolioItemId String
+  url             String
+  kind            String // "FRAME" | "BTS"
+  order           Int     @default(0)
+
+  portfolioItem PortfolioItem @relation(fields: [portfolioItemId], references: [id], onDelete: Cascade)
+
+  @@index([portfolioItemId])
 }
 
 // El id coincide con el id de Supabase Auth (auth.users.id), no se autogenera aquí.
