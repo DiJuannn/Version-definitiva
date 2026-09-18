@@ -190,6 +190,13 @@ body {
   outline-offset: 2px;
 }
 
+/* Casillas y radios con el acento de la paleta (morado en Taller, naranja en
+   la web pública) en vez del azul del navegador. */
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--accent);
+}
+
 /* Sistema de botones: un primario (morado) por pantalla para avanzar, un
    secundario blanco para enviar formularios, contorno para acciones
    terciarias, peligro (rojo) solo para confirmar borrados. */

@@ -101,6 +101,120 @@ export async function analyzeScriptCore(
   return { analysisId: analysis.id };
 }
 
+// Límites de la propuesta editada que llega del cliente: la revisión es
+// editable (nombres, categorías, datos de escena), así que lo recibido se
+// trata como entrada de usuario — se recorta, se valida y se descarta lo
+// vacío antes de tocar la base de datos.
+const MAX_ITEMS = 500;
+const MAX_NAME = 160;
+const MAX_TEXT = 4000;
+
+function str(value: unknown, max: number): string {
+  return typeof value === "string" ? value.trim().slice(0, max) : "";
+}
+
+function names(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.map((v) => str(v, MAX_NAME)).filter((v) => v.length > 0).slice(0, MAX_ITEMS);
+}
+
+export function sanitizeProposal(input: unknown): ScriptAnalysisProposal {
+  const raw = (input && typeof input === "object" ? input : {}) as Record<string, unknown>;
+  const list = (key: string): Record<string, unknown>[] =>
+    Array.isArray(raw[key])
+      ? (raw[key] as unknown[])
+          .filter((v): v is Record<string, unknown> => !!v && typeof v === "object")
+          .slice(0, MAX_ITEMS)
+      : [];
+
+  const intExts = Object.values(IntExt) as string[];
+  const dayParts = Object.values(DayPart) as string[];
+  const categories = Object.values(BreakdownCategory) as string[];
+
+  return {
+    characters: list("characters")
+      .map((c) => ({ name: str(c.name, MAX_NAME), notes: str(c.notes, MAX_TEXT) || undefined }))
+      .filter((c) => c.name),
+    locations: list("locations")
+      .map((l) => ({ name: str(l.name, MAX_NAME), notes: str(l.notes, MAX_TEXT) || undefined }))
+      .filter((l) => l.name),
+    props: list("props")
+      .map((p) => ({
+        name: str(p.name, MAX_NAME),
+        category: categories.includes(String(p.category)) ? String(p.category) : "PROP",
+      }))
+      .filter((p) => p.name),
+    scenes: list("scenes")
+      .map((s) => ({
+        number: str(s.number, 40),
+        intExt: intExts.includes(String(s.intExt)) ? (String(s.intExt) as "INT" | "EXT" | "INT_EXT") : undefined,
+        dayPart: dayParts.includes(String(s.dayPart))
+          ? (String(s.dayPart) as "DAY" | "NIGHT" | "DUSK" | "DAWN")
+          : undefined,
+        locationName: str(s.locationName, MAX_NAME) || undefined,
+        description: str(s.description, MAX_TEXT) || undefined,
+        action: str(s.action, MAX_TEXT) || undefined,
+        dialogueNotes: str(s.dialogueNotes, MAX_TEXT) || undefined,
+        characterNames: names(s.characterNames),
+        propNames: names(s.propNames),
+      }))
+      .filter((s) => s.number),
+  };
+}
+
+// Importa una propuesta ya revisada y corregida por la persona: todo lo que
+// llega se importa (lo que no quería se ha quitado en la pantalla de
+// revisión). Marca el análisis como revisado igual que la importación por
+// índices.
+export async function importReviewedProposalCore(
+  projectId: string,
+  organizationId: string,
+  analysisId: string,
+  reviewed: unknown,
+): Promise<boolean> {
+  const proposal = sanitizeProposal(reviewed);
+
+  // Una escena puede citar (p. ej. escribiendo la localización a mano) algo
+  // que no está en las listas: se añade para que el vínculo no se pierda
+  // en silencio. Si ya existe en el proyecto, el importador lo reutiliza.
+  const known = {
+    characters: new Set(proposal.characters.map((c) => c.name.toLowerCase())),
+    locations: new Set(proposal.locations.map((l) => l.name.toLowerCase())),
+    props: new Set(proposal.props.map((p) => p.name.toLowerCase())),
+  };
+  for (const scene of proposal.scenes) {
+    if (scene.locationName && !known.locations.has(scene.locationName.toLowerCase())) {
+      known.locations.add(scene.locationName.toLowerCase());
+      proposal.locations.push({ name: scene.locationName });
+    }
+    for (const name of scene.characterNames ?? []) {
+      if (!known.characters.has(name.toLowerCase())) {
+        known.characters.add(name.toLowerCase());
+        proposal.characters.push({ name });
+      }
+    }
+    for (const name of scene.propNames ?? []) {
+      if (!known.props.has(name.toLowerCase())) {
+        known.props.add(name.toLowerCase());
+        proposal.props.push({ name, category: "PROP" });
+      }
+    }
+  }
+
+  return importScriptAnalysisCore(
+    projectId,
+    organizationId,
+    analysisId,
+    {
+      characterIndices: proposal.characters.map((_, i) => i),
+      locationIndices: proposal.locations.map((_, i) => i),
+      props: proposal.props.map((p, i) => ({ index: i, category: p.category ?? "PROP" })),
+      sceneIndices: proposal.scenes.map((_, i) => i),
+    },
+    proposal,
+  );
+}
+
 export type ImportSelections = {
   characterIndices: number[];
   locationIndices: number[];
@@ -113,13 +227,15 @@ export async function importScriptAnalysisCore(
   organizationId: string,
   analysisId: string,
   selections: ImportSelections,
+  // Propuesta editada; si no se pasa, se usa la que guardó la IA.
+  overrideProposal?: ScriptAnalysisProposal,
 ): Promise<boolean> {
   const analysis = await prisma.scriptAnalysis.findFirst({
     where: { id: analysisId, projectId },
   });
   if (!analysis) return false;
 
-  const proposal = analysis.proposedData as unknown as ScriptAnalysisProposal;
+  const proposal = overrideProposal ?? (analysis.proposedData as unknown as ScriptAnalysisProposal);
 
   const [existingCharacters, existingLocations, existingProps] = await Promise.all([
     prisma.character.findMany({ where: { projectId } }),

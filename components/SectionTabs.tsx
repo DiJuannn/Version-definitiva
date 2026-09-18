@@ -7,7 +7,7 @@ export type SectionTab = {
   label: string;
   // Número de elementos de la pestaña; se muestra aunque sea 0 para que se
   // vea que existe y se puede rellenar.
-  count?: number;
+  count?: number | string;
   // Punto de aviso (algo pendiente de revisar dentro de la pestaña).
   alert?: boolean;
   // Solo con layout="side": título del grupo, en pantallas anchas.
@@ -132,12 +132,12 @@ export function SectionTabs({
                     aria-label="Pendiente de revisar"
                   />
                 )}
-                {typeof tab.count === "number" && (
+                {tab.count !== undefined && (
                   <span
                     className={`rounded-full border px-1.5 py-px text-[10px] tracking-normal ${
                       isActive
                         ? "border-accent text-accent"
-                        : tab.count === 0
+                          : tab.count === 0 || tab.count === "0"
                           ? "border-line text-muted/60"
                           : "border-line text-muted"
                     }`}

@@ -5,7 +5,11 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { getCurrentProfile } from "@/lib/current-user";
-import { analyzeScriptCore, importScriptAnalysisCore } from "@/lib/script-analysis-core";
+import {
+  analyzeScriptCore,
+  importReviewedProposalCore,
+  importScriptAnalysisCore,
+} from "@/lib/script-analysis-core";
 import { BreakdownCategory } from "@/lib/generated/prisma";
 
 export type AnalyzeScriptState = { error: string } | undefined;
@@ -35,6 +39,34 @@ export async function analyzeScript(
 
   revalidatePath(`/app/${projectId}/guion`);
   redirect(`/app/${projectId}/guion/analisis/${result.analysisId}`);
+}
+
+export type ImportReviewedState = { error: string } | undefined;
+
+// Importa la propuesta tal como quedó tras la revisión editable (nombres,
+// categorías y datos de escena corregidos por la persona). Devuelve un error
+// visible en vez de fallar en silencio; si va bien, redirige a Guion.
+export async function importReviewedScriptAnalysis(
+  projectId: string,
+  analysisId: string,
+  reviewed: unknown,
+): Promise<ImportReviewedState> {
+  const project = await getProjectForCurrentUser(projectId);
+  if (!project) return { error: "No tienes acceso a este proyecto." };
+
+  const ok = await importReviewedProposalCore(
+    projectId,
+    project.organizationId,
+    analysisId,
+    reviewed,
+  );
+  if (!ok) return { error: "No se encontró el análisis. Recarga la página." };
+
+  revalidatePath(`/app/${projectId}/guion`);
+  revalidatePath(`/app/${projectId}/desglose`);
+  revalidatePath(`/app/${projectId}/personajes`);
+  revalidatePath("/app/localizaciones");
+  redirect(`/app/${projectId}/guion`);
 }
 
 export async function importScriptAnalysis(

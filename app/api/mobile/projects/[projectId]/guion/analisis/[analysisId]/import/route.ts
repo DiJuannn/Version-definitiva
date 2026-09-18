@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getMobileProfile } from "@/lib/mobile-auth";
 import { getProjectForProfile } from "@/lib/project-access";
-import { importScriptAnalysisCore } from "@/lib/script-analysis-core";
+import { importReviewedProposalCore, importScriptAnalysisCore } from "@/lib/script-analysis-core";
 import { CORS_HEADERS } from "@/lib/mobile-cors";
 
 export function OPTIONS() {
@@ -39,12 +39,16 @@ export async function POST(
     return NextResponse.json({ error: "Cuerpo inválido." }, { status: 400, headers: CORS_HEADERS });
   }
 
-  const ok = await importScriptAnalysisCore(projectId, project.organizationId, analysisId, {
-    characterIndices: Array.isArray(body.characterIndices) ? body.characterIndices : [],
-    locationIndices: Array.isArray(body.locationIndices) ? body.locationIndices : [],
-    props: Array.isArray(body.props) ? body.props : [],
-    sceneIndices: Array.isArray(body.sceneIndices) ? body.sceneIndices : [],
-  });
+  // Con `proposal` llega la propuesta ya revisada y editada (lo que envía la
+  // pantalla actual de la app); sin ella, el formato antiguo por índices.
+  const ok = body.proposal
+    ? await importReviewedProposalCore(projectId, project.organizationId, analysisId, body.proposal)
+    : await importScriptAnalysisCore(projectId, project.organizationId, analysisId, {
+        characterIndices: Array.isArray(body.characterIndices) ? body.characterIndices : [],
+        locationIndices: Array.isArray(body.locationIndices) ? body.locationIndices : [],
+        props: Array.isArray(body.props) ? body.props : [],
+        sceneIndices: Array.isArray(body.sceneIndices) ? body.sceneIndices : [],
+      });
   if (!ok) {
     return NextResponse.json(
       { error: "No se encontró el análisis." },

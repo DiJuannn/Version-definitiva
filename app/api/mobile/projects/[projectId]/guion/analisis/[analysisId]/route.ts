@@ -46,13 +46,14 @@ export async function GET(
 
   const proposal = analysis.proposedData as unknown as ScriptAnalysisProposal;
 
-  const [existingCharacters, existingLocations, existingProps] = await Promise.all([
+  const [existingCharacters, existingLocations, existingProps, existingScenes] = await Promise.all([
     prisma.character.findMany({ where: { projectId }, select: { name: true } }),
     prisma.location.findMany({
       where: { organizationId: project.organizationId },
       select: { name: true },
     }),
     prisma.breakdownElement.findMany({ where: { projectId }, select: { name: true } }),
+    prisma.scene.findMany({ where: { projectId }, select: { number: true } }),
   ]);
 
   const existingCharacterNames = new Set(existingCharacters.map((c) => c.name.toLowerCase()));
@@ -75,6 +76,9 @@ export async function GET(
         exists: existingPropNames.has(p.name.toLowerCase()),
       })),
       scenes: proposal.scenes,
+      // Números de escena que ya existen: importar una con el mismo número la
+      // actualiza en vez de crear otra.
+      existingSceneNumbers: existingScenes.map((s) => s.number),
     },
     { headers: CORS_HEADERS },
   );

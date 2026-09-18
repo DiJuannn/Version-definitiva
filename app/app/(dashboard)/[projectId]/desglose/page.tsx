@@ -233,7 +233,7 @@ export default async function DesglosePage({
 
   const tabs = [...categoryTabs, crewTab];
   // Si no se pide ninguna, se abre la primera categoría que ya tenga algo.
-  const firstFilled = tabs.find((t) => (t.count ?? 0) > 0)?.id;
+  const firstFilled = tabs.find((t) => Number(t.count ?? 0) > 0)?.id;
 
   return (
     <div>

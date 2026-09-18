@@ -16,6 +16,7 @@ import { SubmitButton } from "@/components/SubmitButton";
 import { PageHeader } from "@/components/PageHeader";
 import { DeleteButton } from "@/components/DeleteButton";
 import { EmptyState } from "@/components/EmptyState";
+import { SectionTabs } from "@/components/SectionTabs";
 
 function toDateInputValue(date: Date): string {
   return date.toISOString().slice(0, 10);
@@ -23,10 +24,13 @@ function toDateInputValue(date: Date): string {
 
 export default async function ShootingDayDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ projectId: string; dayId: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }) {
   const { projectId, dayId } = await params;
+  const { tab } = await searchParams;
 
   const project = await getProjectForCurrentUser(projectId);
   if (!project) notFound();
@@ -81,7 +85,21 @@ export default async function ShootingDayDetailPage({
       <PageHeader
         backHref={`/app/${projectId}/plan-de-rodaje`}
         backLabel="← Plan de rodaje"
+        eyebrow="Producción"
         title={`${summary.shootingDay.date.toLocaleDateString("es-ES", { weekday: "long", day: "2-digit", month: "long", year: "numeric", })}`}
+        actions={
+          summary.shootingDay.callSheet ? (
+            <Link href={`/app/${projectId}/call-sheets/${dayId}`} className="btn btn-primary btn-sm">
+              Ver call sheet
+            </Link>
+          ) : (
+            <form action={generateAction}>
+              <SubmitButton pendingLabel="Generando…" className="btn btn-primary btn-sm">
+                Generar call sheet
+              </SubmitButton>
+            </form>
+          )
+        }
       />
 
       {availabilityWarnings.length > 0 && (
@@ -159,222 +177,232 @@ export default async function ShootingDayDetailPage({
         </div>
       </form>
 
-      <form action={saveDayAction}>
-      <section className="mt-10">
-        <h2 className="font-mono text-xs tracking-widest text-accent uppercase">
-          Escenas del día
-        </h2>
-        {allScenes.length === 0 ? (
-          <EmptyState
-            title="No hay escenas creadas todavía"
-            description="Créalas en Guion para poder asignarlas a este día."
-            actionLabel="Ir a Guion"
-            actionHref={`/app/${projectId}/guion`}
-          />
-        ) : (
-          <div className="mt-4">
-            <div className="border-t border-line">
-              <div
-                aria-hidden
-                className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 border-b border-line py-2 font-mono text-[10px] tracking-widest text-muted uppercase"
-              >
-                <span className="w-4" />
-                <span>Escena</span>
-                <span className="w-24">Hora de llamada</span>
-                <span className="w-20">Orden</span>
-              </div>
-              {allScenes.map((scene) => {
-                const assignment = assignedByScene.get(scene.id);
-                return (
-                  <div
-                    key={scene.id}
-                    className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 border-b border-line py-3"
-                  >
-                    <input
-                      type="checkbox"
-                      name={`assign_${scene.id}`}
-                      aria-label={`Incluir la escena ${scene.number} en este día`}
-                      defaultChecked={Boolean(assignment)}
-                    />
-                    <div>
-                      <span className="font-mono text-sm">
-                        Escena {scene.number}
-                      </span>
-                      <span className="ml-2 font-mono text-xs text-muted">
-                        {INT_EXT_LABELS[scene.intExt]} ·{" "}
-                        {DAY_PART_LABELS[scene.dayPart]}
-                        {scene.location ? ` · ${scene.location.name}` : ""}
-                      </span>
-                    </div>
-                    <input
-                      name={`callTime_${scene.id}`}
-                      aria-label={`Hora de llamada de la escena ${scene.number}`}
-                      placeholder="08:30"
-                      defaultValue={assignment?.callTime ?? ""}
-                      className="w-24 border border-line bg-transparent px-2 py-1 text-xs outline-none transition-colors focus:border-accent"
-                    />
-                    <input
-                      name={`order_${scene.id}`}
-                      type="number"
-                      aria-label={`Orden de la escena ${scene.number}`}
-                      placeholder="1"
-                      defaultValue={assignment?.order ?? ""}
-                      className="w-20 border border-line bg-transparent px-2 py-1 text-xs outline-none transition-colors focus:border-accent"
-                    />
-                  </div>
-                );
-              })}
-            </div>
-            </div>
-        )}
-      </section>
+      <form action={saveDayAction} className="mt-10">
+        <SectionTabs
+          ariaLabel="Plan del día"
+          initial={tab}
+          tabs={[
+            {
+              id: "escenas",
+              label: "Escenas",
+              count: summary.sceneAssignments.length,
+              content: (
+                <div>
+                          {allScenes.length === 0 ? (
+                            <EmptyState
+                              title="No hay escenas creadas todavía"
+                              description="Créalas en Guion para poder asignarlas a este día."
+                              actionLabel="Ir a Guion"
+                              actionHref={`/app/${projectId}/guion`}
+                            />
+                          ) : (
+                            <div className="mt-4">
+                              <div className="border-t border-line">
+                                <div
+                                  aria-hidden
+                                  className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 border-b border-line py-2 font-mono text-[10px] tracking-widest text-muted uppercase"
+                                >
+                                  <span className="w-4" />
+                                  <span>Escena</span>
+                                  <span className="w-24">Hora de llamada</span>
+                                  <span className="w-20">Orden</span>
+                                </div>
+                                {allScenes.map((scene) => {
+                                  const assignment = assignedByScene.get(scene.id);
+                                  return (
+                                    <div
+                                      key={scene.id}
+                                      className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 border-b border-line py-3"
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        name={`assign_${scene.id}`}
+                                        aria-label={`Incluir la escena ${scene.number} en este día`}
+                                        defaultChecked={Boolean(assignment)}
+                                      />
+                                      <div>
+                                        <span className="font-mono text-sm">
+                                          Escena {scene.number}
+                                        </span>
+                                        <span className="ml-2 font-mono text-xs text-muted">
+                                          {INT_EXT_LABELS[scene.intExt]} ·{" "}
+                                          {DAY_PART_LABELS[scene.dayPart]}
+                                          {scene.location ? ` · ${scene.location.name}` : ""}
+                                        </span>
+                                      </div>
+                                      <input
+                                        name={`callTime_${scene.id}`}
+                                        aria-label={`Hora de llamada de la escena ${scene.number}`}
+                                        placeholder="08:30"
+                                        defaultValue={assignment?.callTime ?? ""}
+                                        className="w-24 border border-line bg-transparent px-2 py-1 text-xs outline-none transition-colors focus:border-accent"
+                                      />
+                                      <input
+                                        name={`order_${scene.id}`}
+                                        type="number"
+                                        aria-label={`Orden de la escena ${scene.number}`}
+                                        placeholder="1"
+                                        defaultValue={assignment?.order ?? ""}
+                                        className="w-20 border border-line bg-transparent px-2 py-1 text-xs outline-none transition-colors focus:border-accent"
+                                      />
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                              </div>
+                          )}
+                </div>
+              ),
+            },
+            {
+              id: "material",
+              label: "Material",
+              count: reservedItemQty.size,
+              content: (
+                <div>
+                            {inventoryItems.length === 0 ? (
+                              <p className="mt-4 font-mono text-sm text-muted">
+                                No hay material en{" "}
+                                <Link href="/app/inventario" className="text-fg hover:text-accent">
+                                  Inventario
+                                </Link>
+                                .
+                              </p>
+                            ) : (
+                              <div className="mt-4">
+                                <div className="border-t border-line">
+                                  {inventoryItems.map((item) => (
+                                    <div
+                                      key={item.id}
+                                      className="grid grid-cols-[auto_1fr_auto] items-center gap-3 border-b border-line py-3"
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        name={`reserve_${item.id}`}
+                                        aria-label={`Reservar ${item.name}`}
+                                        defaultChecked={reservedItemQty.has(item.id)}
+                                      />
+                                      <div>
+                                        <span className="font-mono text-sm">{item.name}</span>
+                                        <span className="ml-2 font-mono text-xs text-muted">
+                                          {INVENTORY_CATEGORY_LABELS[item.category]} · disponible{" "}
+                                          {item.quantity}
+                                        </span>
+                                      </div>
+                                      <input
+                                        name={`qty_${item.id}`}
+                                        type="number"
+                                        min={1}
+                                        aria-label={`Unidades reservadas de ${item.name}`}
+                                        placeholder="Uds."
+                                        defaultValue={reservedItemQty.get(item.id) ?? 1}
+                                        className="w-16 border border-line bg-transparent px-2 py-1 text-xs outline-none transition-colors focus:border-accent"
+                                      />
+                                    </div>
+                                  ))}
+                                </div>
+                                </div>
+                            )}
+                </div>
+              ),
+            },
+            {
+              id: "vehiculos",
+              label: "Vehículos",
+              count: reservedVehicleIds.size,
+              content: (
+                <div>
+                            {vehicles.length === 0 ? (
+                              <p className="mt-4 font-mono text-sm text-muted">
+                                No hay vehículos en{" "}
+                                <Link href="/app/vehiculos" className="text-fg hover:text-accent">
+                                  Vehículos
+                                </Link>
+                                .
+                              </p>
+                            ) : (
+                              <div className="mt-4">
+                                <div className="border-t border-line">
+                                  {vehicles.map((vehicle) => (
+                                    <label
+                                      key={vehicle.id}
+                                      className="flex items-center gap-3 border-b border-line py-3"
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        name={`reserve_${vehicle.id}`}
+                                        defaultChecked={reservedVehicleIds.has(vehicle.id)}
+                                      />
+                                      <span className="font-mono text-sm">{vehicle.name}</span>
+                                      {vehicle.type && (
+                                        <span className="font-mono text-xs text-muted">
+                                          {vehicle.type}
+                                        </span>
+                                      )}
+                                    </label>
+                                  ))}
+                                </div>
+                                </div>
+                            )}
+                </div>
+              ),
+            },
+            {
+              id: "resumen",
+              label: "Resumen del día",
+              content: (
+                <div className="grid gap-6 sm:grid-cols-2">
+                          <div className="border border-line p-5">
+                            <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                              Localizaciones ({summary.locations.length})
+                            </p>
+                            <p className="mt-2 font-mono text-sm">
+                              {summary.locations.map((l) => l.name).join(", ") || "—"}
+                            </p>
+                          </div>
+                          <div className="border border-line p-5">
+                            <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                              Personajes ({summary.characters.length})
+                            </p>
+                            <p className="mt-2 font-mono text-sm">
+                              {summary.characters.map((c) => c.name).join(", ") || "—"}
+                            </p>
+                          </div>
+                          <div className="border border-line p-5">
+                            <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                              Equipo técnico ({summary.crewMembers.length})
+                            </p>
+                            <p className="mt-2 font-mono text-sm">
+                              {summary.crewMembers.map((c) => c.name).join(", ") || "—"}
+                            </p>
+                          </div>
+                          <div className="border border-line p-5">
+                            <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                              Desglose ({summary.breakdownElements.length})
+                            </p>
+                            <p className="mt-2 font-mono text-sm">
+                              {summary.breakdownElements.map((b) => b.name).join(", ") || "—"}
+                            </p>
+                          </div>
+                </div>
+              ),
+            },
+          ]}
+        />
 
-      <section className="mt-10 grid gap-8 sm:grid-cols-2">
-        <div>
-          <h2 className="font-mono text-xs tracking-widest text-accent uppercase">
-            Material reservado
-          </h2>
-          {inventoryItems.length === 0 ? (
-            <p className="mt-4 font-mono text-sm text-muted">
-              No hay material en{" "}
-              <Link href="/app/inventario" className="text-fg hover:text-accent">
-                Inventario
-              </Link>
-              .
-            </p>
-          ) : (
-            <div className="mt-4">
-              <div className="border-t border-line">
-                {inventoryItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="grid grid-cols-[auto_1fr_auto] items-center gap-3 border-b border-line py-3"
-                  >
-                    <input
-                      type="checkbox"
-                      name={`reserve_${item.id}`}
-                      aria-label={`Reservar ${item.name}`}
-                      defaultChecked={reservedItemQty.has(item.id)}
-                    />
-                    <div>
-                      <span className="font-mono text-sm">{item.name}</span>
-                      <span className="ml-2 font-mono text-xs text-muted">
-                        {INVENTORY_CATEGORY_LABELS[item.category]} · disponible{" "}
-                        {item.quantity}
-                      </span>
-                    </div>
-                    <input
-                      name={`qty_${item.id}`}
-                      type="number"
-                      min={1}
-                      aria-label={`Unidades reservadas de ${item.name}`}
-                      placeholder="Uds."
-                      defaultValue={reservedItemQty.get(item.id) ?? 1}
-                      className="w-16 border border-line bg-transparent px-2 py-1 text-xs outline-none transition-colors focus:border-accent"
-                    />
-                  </div>
-                ))}
-              </div>
-              </div>
-          )}
+        {/* Barra de guardado siempre a mano: guarda a la vez escenas, material y
+            vehículos, esté la pestaña que esté a la vista. */}
+        <div className="sticky bottom-24 z-20 mt-8 flex flex-wrap items-center gap-4 border border-line bg-bg-raised/95 p-3 backdrop-blur-md sm:bottom-4 sm:p-4 print:hidden">
+          <SubmitButton pendingLabel="Guardando…" savedLabel="✓ Plan guardado" className="btn btn-primary">
+            Guardar plan del día
+          </SubmitButton>
+          <p className="hidden font-mono text-[11px] text-muted sm:block">
+            Guarda a la vez las escenas (con hora y orden), el material y los vehículos.
+          </p>
         </div>
-
-        <div>
-          <h2 className="font-mono text-xs tracking-widest text-accent uppercase">
-            Vehículos reservados
-          </h2>
-          {vehicles.length === 0 ? (
-            <p className="mt-4 font-mono text-sm text-muted">
-              No hay vehículos en{" "}
-              <Link href="/app/vehiculos" className="text-fg hover:text-accent">
-                Vehículos
-              </Link>
-              .
-            </p>
-          ) : (
-            <div className="mt-4">
-              <div className="border-t border-line">
-                {vehicles.map((vehicle) => (
-                  <label
-                    key={vehicle.id}
-                    className="flex items-center gap-3 border-b border-line py-3"
-                  >
-                    <input
-                      type="checkbox"
-                      name={`reserve_${vehicle.id}`}
-                      defaultChecked={reservedVehicleIds.has(vehicle.id)}
-                    />
-                    <span className="font-mono text-sm">{vehicle.name}</span>
-                    {vehicle.type && (
-                      <span className="font-mono text-xs text-muted">
-                        {vehicle.type}
-                      </span>
-                    )}
-                  </label>
-                ))}
-              </div>
-              </div>
-          )}
-        </div>
-      </section>
-
-      <div className="mt-8 flex flex-wrap items-center gap-4 border-t border-line pt-6 print:hidden">
-        <SubmitButton pendingLabel="Guardando…" savedLabel="✓ Plan guardado" className="btn btn-primary">
-          Guardar plan del día
-        </SubmitButton>
-        <p className="font-mono text-[11px] text-muted">
-          Guarda a la vez las escenas (con hora y orden), el material y los vehículos.
-        </p>
-      </div>
       </form>
 
-      <section className="mt-14 grid gap-6 sm:grid-cols-2">
-        <div className="border border-line p-5">
-          <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
-            Localizaciones ({summary.locations.length})
-          </p>
-          <p className="mt-2 font-mono text-sm">
-            {summary.locations.map((l) => l.name).join(", ") || "—"}
-          </p>
-        </div>
-        <div className="border border-line p-5">
-          <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
-            Personajes ({summary.characters.length})
-          </p>
-          <p className="mt-2 font-mono text-sm">
-            {summary.characters.map((c) => c.name).join(", ") || "—"}
-          </p>
-        </div>
-        <div className="border border-line p-5">
-          <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
-            Equipo técnico ({summary.crewMembers.length})
-          </p>
-          <p className="mt-2 font-mono text-sm">
-            {summary.crewMembers.map((c) => c.name).join(", ") || "—"}
-          </p>
-        </div>
-        <div className="border border-line p-5">
-          <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
-            Desglose ({summary.breakdownElements.length})
-          </p>
-          <p className="mt-2 font-mono text-sm">
-            {summary.breakdownElements.map((b) => b.name).join(", ") || "—"}
-          </p>
-        </div>
-      </section>
-
-      <div className="mt-10 flex items-center gap-6">
-        {summary.shootingDay.callSheet ? (
-          <Link href={`/app/${projectId}/call-sheets/${dayId}`} className="btn btn-primary">
-            Ver call sheet
-          </Link>
-        ) : (
-          <form action={generateAction}>
-            <SubmitButton pendingLabel="Generando…" className="btn btn-primary">
-              Generar call sheet
-            </SubmitButton>
-          </form>
-        )}
+      <div className="mt-10 border-t border-line pt-6">
         <form action={deleteShootingDay.bind(null, projectId, dayId)}>
           <DeleteButton
             confirmMessage="¿Eliminar este día de rodaje?"
