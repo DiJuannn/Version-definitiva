@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { isProjectOwnerPro } from "@/lib/project-plan";
-import { BackLink } from "@/components/BackLink";
+import { PageHeader } from "@/components/PageHeader";
 
 const inputClass =
   "w-full border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent";
@@ -27,11 +27,12 @@ export default async function CesionImagenPage({
 
   return (
     <div>
-      <BackLink href={`/app/${projectId}/documentos-legales`}>← Plantilla de documentos</BackLink>
-      <h1 className="mt-3 font-display text-2xl font-bold uppercase">
-        Cesión de derechos de imagen
-      </h1>
-      <p className="mt-2 font-mono text-xs text-muted">
+      <PageHeader
+        backHref={`/app/${projectId}/documentos-legales`}
+        backLabel="← Plantilla de documentos"
+        title="Cesión de derechos de imagen"
+      />
+      <p className="mt-3 max-w-2xl font-sans text-sm text-muted">
         El nombre del proyecto y la productora se rellenan solos. Completa lo
         demás — al generar el PDF se abre listo para imprimir y firmar.
       </p>
@@ -70,7 +71,7 @@ export default async function CesionImagenPage({
         <div>
           <button
             type="submit"
-            className="rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+            className="btn btn-secondary"
           >
             Generar PDF
           </button>

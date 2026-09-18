@@ -8,6 +8,8 @@ import { getCurrentProfile } from "@/lib/current-user";
 import { optionalString } from "@/lib/form-utils";
 import { logActivity } from "@/lib/activity-log";
 import { notifyCallSheetChange } from "@/lib/call-sheet-change-alert";
+import { updateDayItemReservations } from "@/lib/actions/inventory";
+import { updateDayVehicleReservations } from "@/lib/actions/vehicles";
 import {
   createShootingDayCore,
   deleteShootingDayCore,
@@ -70,12 +72,12 @@ export async function assignSceneToDay(
   projectId: string,
   sceneId: string,
   shootingDayId: string | null,
-) {
+): Promise<boolean> {
   const project = await getProjectForCurrentUser(projectId);
-  if (!project) return;
+  if (!project) return false;
 
   const scene = await prisma.scene.findFirst({ where: { id: sceneId, projectId } });
-  if (!scene) return;
+  if (!scene) return false;
 
   await prisma.shootingDayScene.deleteMany({ where: { sceneId } });
 
@@ -83,7 +85,7 @@ export async function assignSceneToDay(
     const day = await prisma.shootingDay.findFirst({
       where: { id: shootingDayId, projectId },
     });
-    if (!day) return;
+    if (!day) return false;
 
     const count = await prisma.shootingDayScene.count({
       where: { shootingDayId },
@@ -98,6 +100,7 @@ export async function assignSceneToDay(
   if (shootingDayId) {
     revalidatePath(`/app/${projectId}/plan-de-rodaje/${shootingDayId}`);
   }
+  return true;
 }
 
 export async function updateDaySceneAssignments(
@@ -137,4 +140,17 @@ export async function updateDaySceneAssignments(
   revalidatePath(`/app/${projectId}/plan-de-rodaje/${shootingDayId}`);
   revalidatePath(`/app/${projectId}/call-sheets/${shootingDayId}`);
   revalidatePath(`/app/${projectId}/call-sheets`);
+}
+
+// Un solo "Guardar" para todo lo que se edita en la página del día: escenas
+// (con hora y orden), material y vehículos. Antes eran tres formularios con
+// tres botones, y guardar uno descartaba lo editado en los otros.
+export async function saveDayPlan(
+  projectId: string,
+  shootingDayId: string,
+  formData: FormData,
+) {
+  await updateDaySceneAssignments(projectId, shootingDayId, formData);
+  await updateDayItemReservations(projectId, shootingDayId, formData);
+  await updateDayVehicleReservations(projectId, shootingDayId, formData);
 }

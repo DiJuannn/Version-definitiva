@@ -12,7 +12,7 @@ import { BreakdownCategory, DayPart, IntExt } from "@/lib/generated/prisma";
 import { HelpTip } from "@/components/HelpTip";
 import { DeleteButton } from "@/components/DeleteButton";
 import { ChipOption } from "@/components/ChipOption";
-import { BackLink } from "@/components/BackLink";
+import { PageHeader } from "@/components/PageHeader";
 import { SubmitButton } from "@/components/SubmitButton";
 
 export default async function SceneDetailPage({
@@ -71,10 +71,11 @@ export default async function SceneDetailPage({
 
   return (
     <div>
-      <BackLink href={`/app/${projectId}/guion`}>← Guion</BackLink>
-      <h1 className="mt-3 font-display text-2xl font-bold uppercase">
-        Escena {scene.number}
-      </h1>
+      <PageHeader
+        backHref={`/app/${projectId}/guion`}
+        backLabel="← Guion"
+        title={`Escena ${scene.number}`}
+      />
 
       <form action={updateAction} className="mt-8 space-y-8">
         <div className="grid gap-4 border border-line p-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -341,7 +342,7 @@ export default async function SceneDetailPage({
         <SubmitButton
           pendingLabel="Guardando…"
           savedLabel="✓ Guardado"
-          className="rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+          className="btn btn-secondary"
         >
           Guardar
         </SubmitButton>
@@ -350,7 +351,7 @@ export default async function SceneDetailPage({
       <form action={deleteScene.bind(null, projectId, sceneId)} className="mt-6">
         <DeleteButton
           confirmMessage="¿Eliminar esta escena? No se puede deshacer."
-          className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
+          className="link-action"
         >
           Eliminar escena
         </DeleteButton>

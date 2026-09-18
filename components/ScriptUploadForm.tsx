@@ -37,7 +37,7 @@ export function ScriptUploadForm({
         action={formAction}
         className="flex flex-wrap items-center gap-3"
       >
-        <label className="cursor-pointer rounded-full bg-fg px-4 py-1.5 font-mono text-xs tracking-widest text-bg uppercase transition hover:opacity-90 active:scale-[0.97]">
+        <label className="btn btn-secondary btn-sm cursor-pointer">
           {existingFileName ? "Reemplazar guion" : "Subir guion"}
           <input
             type="file"
@@ -58,7 +58,7 @@ export function ScriptUploadForm({
         </label>
         <UploadStatus />
         {state?.error && (
-          <p className="w-full font-mono text-xs text-accent">{state.error}</p>
+          <p className="w-full font-mono text-xs text-danger">{state.error}</p>
         )}
       </form>
 
@@ -71,7 +71,7 @@ export function ScriptUploadForm({
             className="w-full max-w-sm border border-accent bg-bg p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <p className="font-display text-lg font-bold uppercase">
+            <p className="font-display text-lg font-bold">
               ¿Reemplazar el guion?
             </p>
             <p className="mt-2 font-sans text-sm text-muted">
@@ -82,7 +82,7 @@ export function ScriptUploadForm({
               <button
                 type="button"
                 onClick={() => setPendingFileName(null)}
-                className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
+                className="link-action"
               >
                 Cancelar
               </button>
@@ -92,7 +92,7 @@ export function ScriptUploadForm({
                   setPendingFileName(null);
                   formRef.current?.requestSubmit();
                 }}
-                className="rounded-full bg-accent px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+                className="btn btn-primary"
               >
                 Sí, reemplazar
               </button>

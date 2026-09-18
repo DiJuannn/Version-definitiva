@@ -27,13 +27,12 @@ export function DeleteButton({
 
   useEffect(() => {
     if (!confirming) return;
-    const timer = setTimeout(() => setConfirming(false), 3000);
+    const timer = setTimeout(() => setConfirming(false), 4000);
     return () => clearTimeout(timer);
   }, [confirming]);
 
-  const baseClassName =
-    className ??
-    "font-mono text-[11px] tracking-widest text-muted uppercase transition hover:text-accent active:scale-[0.97]";
+  // Zona táctil mínima aunque el estilo de cada sitio sea un texto pequeño.
+  const baseClassName = `${className ?? "link-action"} min-h-8`;
 
   // Borrar tarda un momento real (servidor + revalidar) — sin este aviso,
   // el botón se queda quieto y parece que el clic no hizo nada.
@@ -53,7 +52,11 @@ export function DeleteButton({
 
   if (confirming) {
     return (
-      <button type="submit" className={`${baseClassName} text-accent`} {...rest}>
+      <button
+        type="submit"
+        className={`${baseClassName} !text-danger underline underline-offset-4`}
+        {...rest}
+      >
         ¿Seguro? Confirmar
       </button>
     );
@@ -63,7 +66,7 @@ export function DeleteButton({
     <button
       type="button"
       onClick={() => setConfirming(true)}
-      className={baseClassName}
+      className={`${baseClassName} hover:!text-danger`}
       {...rest}
     >
       {children}

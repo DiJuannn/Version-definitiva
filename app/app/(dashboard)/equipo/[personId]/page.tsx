@@ -84,7 +84,7 @@ export default async function PersonDetailPage({
         <SubmitButton
           pendingLabel="Subiendo…"
           savedLabel="✓ Subida"
-          className="rounded-full bg-fg px-4 py-1.5 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+          className="btn btn-secondary btn-sm"
         >
           Subir foto
         </SubmitButton>
@@ -192,7 +192,7 @@ export default async function PersonDetailPage({
           <SubmitButton
             pendingLabel="Guardando…"
             savedLabel="✓ Guardado"
-            className="rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+            className="btn btn-secondary"
           >
             Guardar
           </SubmitButton>
@@ -260,7 +260,7 @@ export default async function PersonDetailPage({
           <SubmitButton
             pendingLabel="Guardando…"
             savedLabel="✓ Guardado"
-            className="rounded-full bg-fg px-4 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+            className="btn btn-secondary btn-sm"
           >
             Guardar día
           </SubmitButton>
@@ -289,7 +289,7 @@ export default async function PersonDetailPage({
                 >
                   <DeleteButton
                     confirmMessage="¿Eliminar esta entrada de disponibilidad?"
-                    className="font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent"
+                    className="link-action"
                   />
                 </form>
               </div>
@@ -301,7 +301,7 @@ export default async function PersonDetailPage({
       <form action={deletePerson.bind(null, personId)} className="mt-10">
         <DeleteButton
           confirmMessage="¿Eliminar a esta persona del directorio? No se puede deshacer."
-          className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
+          className="link-action"
         >
           Eliminar persona
         </DeleteButton>

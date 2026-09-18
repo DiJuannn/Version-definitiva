@@ -16,7 +16,7 @@ import { LocationCharacteristic } from "@/lib/generated/prisma";
 import { GeocodeButton } from "@/components/GeocodeButton";
 import { LocationsMapClient } from "@/components/LocationsMapClient";
 import { ChipOption } from "@/components/ChipOption";
-import { BackLink } from "@/components/BackLink";
+import { PageHeader } from "@/components/PageHeader";
 import { FileOpenLink } from "@/components/FileOpenLink";
 import { SubmitButton } from "@/components/SubmitButton";
 
@@ -56,10 +56,11 @@ export default async function LocationDetailPage({
 
   return (
     <div>
-      <BackLink href="/app/localizaciones">← Localizaciones</BackLink>
-      <h1 className="mt-3 font-display text-2xl font-bold uppercase">
-        {location.name}
-      </h1>
+      <PageHeader
+        backHref="/app/localizaciones"
+        backLabel="← Localizaciones"
+        title={`${location.name}`}
+      />
 
       {usageByProject.size > 0 && (
         <p className="mt-2 font-mono text-xs text-muted">
@@ -246,7 +247,7 @@ export default async function LocationDetailPage({
           <SubmitButton
             pendingLabel="Guardando…"
             savedLabel="✓ Guardado"
-            className="rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+            className="btn btn-secondary"
           >
             Guardar
           </SubmitButton>
@@ -268,7 +269,7 @@ export default async function LocationDetailPage({
           <SubmitButton
             pendingLabel="Subiendo…"
             savedLabel="✓ Subida"
-            className="rounded-full bg-fg px-4 py-1.5 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+            className="btn btn-secondary btn-sm"
           >
             Subir
           </SubmitButton>
@@ -308,7 +309,7 @@ export default async function LocationDetailPage({
           <SubmitButton
             pendingLabel="Añadiendo…"
             savedLabel="✓ Añadido"
-            className="shrink-0 rounded-full bg-fg px-4 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+            className="btn btn-secondary btn-sm shrink-0"
           >
             Añadir
           </SubmitButton>
@@ -329,7 +330,7 @@ export default async function LocationDetailPage({
                 <form action={removeLocationVideo.bind(null, locationId, url)}>
                   <DeleteButton
                     confirmMessage="¿Eliminar este vídeo?"
-                    className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
+                    className="link-action"
                   />
                 </form>
               </div>
@@ -341,7 +342,7 @@ export default async function LocationDetailPage({
       <form action={deleteLocation.bind(null, locationId)} className="mt-10">
         <DeleteButton
           confirmMessage="¿Eliminar esta localización? Se desvinculará de las escenas que la usen."
-          className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
+          className="link-action"
         >
           Eliminar localización
         </DeleteButton>

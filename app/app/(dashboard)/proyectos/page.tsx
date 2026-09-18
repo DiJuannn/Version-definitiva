@@ -7,7 +7,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { DeleteProjectButton } from "@/components/DeleteProjectButton";
 import { CreateProjectForm } from "@/components/CreateProjectForm";
 import { ToolPickerGrid } from "@/components/ToolPickerGrid";
-import { BackLink } from "@/components/BackLink";
+import { PageHeader } from "@/components/PageHeader";
 import { TOOL_GROUPS } from "@/lib/tool-groups";
 
 export default async function ProyectosPage() {
@@ -18,40 +18,31 @@ export default async function ProyectosPage() {
 
   return (
     <div>
-      <BackLink href="/app">← Taller</BackLink>
-      <h1 className="mt-3 font-display text-2xl font-bold uppercase">
-        Herramientas
-      </h1>
-      <p className="mt-2 font-mono text-xs text-muted">
-        Elige una herramienta — si tienes varios proyectos, te preguntamos
-        cuál antes de entrar.
-      </p>
+      <PageHeader
+        backHref="/app"
+        backLabel="← Inicio"
+        title="Proyectos"
+        description="Todos tus proyectos. Entra en uno para ver su hoja de ruta y sus herramientas, o salta directo a una herramienta más abajo."
+      />
 
-      <div className="mt-8">
-        <ToolPickerGrid groups={TOOL_GROUPS} projects={projectOptions} />
+      <div className="mt-8 max-w-md">
+        <CreateProjectForm
+          action={createProject}
+          formClassName="flex gap-2"
+          inputClassName="w-full border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+          buttonClassName="btn btn-primary shrink-0"
+          buttonLabel="Nuevo proyecto"
+        />
       </div>
 
-      <div className="mt-14 border-t border-line pt-8">
-        <p className="font-mono text-[10px] tracking-widest text-accent uppercase">
-          Tus proyectos
-        </p>
-        <div className="mt-4 max-w-md">
-          <CreateProjectForm
-            action={createProject}
-            formClassName="flex gap-2"
-            inputClassName="w-full border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
-            buttonClassName="shrink-0 rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90 disabled:opacity-70"
-          />
-        </div>
-
-        {projects.length === 0 ? (
-          <EmptyState
-            title="Todavía no hay proyectos"
-            description="Crea el primero con el formulario de arriba."
-          />
-        ) : (
-          <div className="mt-10 border-t border-line">
-            {projects.map((project) => {
+      {projects.length === 0 ? (
+        <EmptyState
+          title="Todavía no hay proyectos"
+          description="Ponle nombre al primero y entra: te guiaremos paso a paso desde el guion hasta el rodaje."
+        />
+      ) : (
+        <div className="mt-8 border-t border-line">
+          {projects.map((project) => {
             const isOwnProject = project.organizationId === profile?.organizationId;
             const ownerLabel =
               project.createdBy?.fullName ??
@@ -67,18 +58,18 @@ export default async function ProyectosPage() {
                   className="flex min-w-0 flex-1 items-center justify-between gap-4"
                 >
                   <span className="min-w-0">
-                    <span className="block font-display text-lg font-bold uppercase transition-colors group-hover:text-accent">
+                    <span className="block font-display text-lg font-bold transition-colors group-hover:text-accent">
                       {project.name}
                     </span>
                     {!isOwnProject && (
-                      <span className="block font-mono text-[10px] text-muted">
+                      <span className="block font-mono text-[11px] text-muted">
                         Propietario: {ownerLabel}
                       </span>
                     )}
                   </span>
                   <span className="flex shrink-0 items-center gap-4">
                     <StatusPill status={project.status} />
-                    <span className="font-mono text-xs text-muted">
+                    <span className="hidden font-mono text-xs text-muted sm:inline">
                       {project.createdAt.toLocaleDateString("es-ES")}
                     </span>
                   </span>
@@ -91,9 +82,21 @@ export default async function ProyectosPage() {
                 )}
               </div>
             );
-            })}
-          </div>
-        )}
+          })}
+        </div>
+      )}
+
+      <div className="mt-14 border-t border-line pt-8">
+        <p className="font-mono text-[11px] tracking-widest text-accent uppercase">
+          Ir directo a una herramienta
+        </p>
+        <p className="mt-2 max-w-xl font-sans text-sm text-muted">
+          Elige la herramienta y, si tienes varios proyectos, te preguntamos
+          cuál antes de entrar.
+        </p>
+        <div className="mt-6">
+          <ToolPickerGrid groups={TOOL_GROUPS} projects={projectOptions} />
+        </div>
       </div>
     </div>
   );

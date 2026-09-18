@@ -66,7 +66,7 @@ export default async function CallSheetsPage({
                 </p>
               </div>
               <div className="min-w-0 flex-1">
-                <p className="font-display text-base font-bold uppercase transition-colors group-hover:text-accent">
+                <p className="font-display text-base font-bold transition-colors group-hover:text-accent">
                   {day.date.toLocaleDateString("es-ES", { weekday: "long" })}
                 </p>
                 <p className="mt-1 font-mono text-[11px] text-muted">

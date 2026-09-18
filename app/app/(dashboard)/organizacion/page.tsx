@@ -126,7 +126,7 @@ export default async function OrganizacionPage() {
                       profile.organizationId,
                       profile.email,
                     )}
-                    className="mt-4 inline-block rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+                    className="btn btn-secondary mt-4 inline-block"
                   >
                     Pasarme a PRO
                   </a>
@@ -147,7 +147,7 @@ export default async function OrganizacionPage() {
                       profile.organizationId,
                       profile.email,
                     )}
-                    className="mt-3 inline-block rounded-full bg-accent px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+                    className="btn btn-primary mt-3 inline-block"
                   >
                     Pasarme a PRO
                   </a>
@@ -170,7 +170,7 @@ export default async function OrganizacionPage() {
                         profile.organizationId,
                         profile.email,
                       )}
-                      className="mt-3 inline-block rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+                      className="btn btn-secondary mt-3 inline-block"
                     >
                       Pasarme a PRO
                     </a>
@@ -220,7 +220,7 @@ export default async function OrganizacionPage() {
                 <SubmitButton
                   pendingLabel="Guardando…"
                   savedLabel="✓ Guardado"
-                  className="font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent"
+                  className="link-action"
                 >
                   Guardar
                 </SubmitButton>
@@ -259,7 +259,7 @@ export default async function OrganizacionPage() {
                   <form action={revokeInvite.bind(null, invite.id)}>
                     <DeleteButton
                       confirmMessage="¿Revocar esta invitación? El enlace dejará de funcionar."
-                      className="font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent"
+                      className="link-action"
                     >
                       Revocar
                     </DeleteButton>

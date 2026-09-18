@@ -66,16 +66,23 @@ export async function GET(
         unitPrice,
         taxRate,
         total,
+        actualAmount: item.actualAmount !== null ? Number(item.actualAmount) : null,
         linked,
       };
     });
     const categoryTotal = items.reduce((sum, item) => sum + item.total, 0);
-    return { id: category.id, name: category.name, items, categoryTotal };
+    const categoryActual = items.reduce((sum, item) => sum + (item.actualAmount ?? 0), 0);
+    return { id: category.id, name: category.name, items, categoryTotal, categoryActual };
   });
 
   const grandTotal = categoriesWithTotals.reduce((sum, c) => sum + c.categoryTotal, 0);
+  const grandActual = categoriesWithTotals.reduce((sum, c) => sum + c.categoryActual, 0);
+  const budgetTarget = project.budgetTarget !== null ? Number(project.budgetTarget) : null;
 
-  return NextResponse.json({ categories: categoriesWithTotals, grandTotal }, { headers: CORS_HEADERS });
+  return NextResponse.json(
+    { categories: categoriesWithTotals, grandTotal, grandActual, budgetTarget },
+    { headers: CORS_HEADERS },
+  );
 }
 
 export async function POST(

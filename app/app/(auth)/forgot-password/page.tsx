@@ -54,13 +54,13 @@ function ForgotPasswordForm() {
         <AuthField label="Email" name="email" type="email" required autoComplete="email" />
 
         {state?.error && (
-          <p className="font-mono text-xs text-accent">{state.error}</p>
+          <p className="font-mono text-xs text-danger">{state.error}</p>
         )}
 
         <button
           type="submit"
           disabled={pending}
-          className="w-full rounded-full bg-fg py-2.5 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="btn btn-secondary w-full"
         >
           {pending ? "Enviando…" : "Enviar enlace"}
         </button>

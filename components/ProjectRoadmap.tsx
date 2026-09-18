@@ -15,163 +15,173 @@ const PHASE_LABELS: Record<RoadmapPhase, string> = {
 
 const PHASE_ORDER: RoadmapPhase[] = ["base", "tecnica", "rodaje"];
 
-function PhaseCard({
-  phase,
-  steps,
-  isCurrentPhase,
-}: {
-  phase: RoadmapPhase;
-  steps: RoadmapStep[];
-  isCurrentPhase: boolean;
-}) {
-  const done = steps.filter((s) => s.isDone).length;
-  const total = steps.length;
-  const allDone = done === total;
-
+function StepMarker({ step, isCurrent }: { step: RoadmapStep; isCurrent: boolean }) {
+  if (step.isDone) {
+    return (
+      <span
+        aria-hidden
+        className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-success/15 text-[9px] text-success"
+      >
+        ✓
+      </span>
+    );
+  }
+  if (isCurrent) {
+    return (
+      <span
+        aria-hidden
+        className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-accent"
+      >
+        <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+      </span>
+    );
+  }
   return (
-    <details
-      open={isCurrentPhase}
-      className={
-        "group border p-4 transition-colors " +
-        (isCurrentPhase ? "border-accent" : "border-line hover:border-muted")
-      }
-    >
-      <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
-        <div className="flex items-center justify-between">
-          <span
-            className={
-              "flex items-center gap-1.5 font-mono text-[10px] tracking-widest uppercase " +
-              (isCurrentPhase ? "text-accent" : "text-fg")
-            }
-          >
-            {PHASE_LABELS[phase]}
-            {allDone && <span className="text-accent">✓</span>}
-          </span>
-          <span className="text-muted transition-transform group-open:rotate-90">
-            →
-          </span>
-        </div>
-        <div className="mt-3 flex gap-1">
-          {steps.map((step) => (
-            <span
-              key={step.key}
-              className={
-                "h-1.5 flex-1 rounded-full " + (step.isDone ? "bg-accent" : "bg-line")
-              }
-            />
-          ))}
-        </div>
-        <p className="mt-2 font-mono text-[10px] text-muted">
-          {done}/{total} completado{done === 1 ? "" : "s"}
-        </p>
-      </summary>
-
-      <div className="mt-4 space-y-3 border-t border-line pt-4">
-        {steps.map((step) => (
-          <div key={step.key} className="flex items-start justify-between gap-3">
-            <div>
-              <p
-                className={
-                  "font-mono text-xs " + (step.isDone ? "text-muted" : "text-fg")
-                }
-              >
-                {step.isDone ? "✓ " : ""}
-                {step.title}
-              </p>
-              <p className="mt-0.5 font-mono text-[11px] text-muted">{step.detail}</p>
-            </div>
-            {!step.isDone && (
-              <Link
-                href={step.href}
-                className="shrink-0 font-mono text-[10px] tracking-widest text-accent uppercase hover:opacity-80"
-              >
-                {step.ctaLabel} →
-              </Link>
-            )}
-          </div>
-        ))}
-      </div>
-    </details>
+    <span
+      aria-hidden
+      className={`h-4 w-4 shrink-0 rounded-full border ${
+        step.required ? "border-muted/60" : "border-dashed border-muted/40"
+      }`}
+    />
   );
 }
 
 export function ProjectRoadmap({ steps }: { steps: RoadmapStep[] }) {
-  const currentIndex = steps.findIndex((s) => !s.isDone);
-  const allDone = currentIndex === -1;
-  const current = allDone ? null : steps[currentIndex];
+  const required = steps.filter((s) => s.required);
+  const requiredDone = required.filter((s) => s.isDone).length;
+  const doneTotal = steps.filter((s) => s.isDone).length;
+  const currentRequired = steps.find((s) => s.required && !s.isDone) ?? null;
+  const currentOptional = currentRequired ? null : (steps.find((s) => !s.isDone) ?? null);
+  const focusKey = currentRequired?.key ?? currentOptional?.key ?? null;
+  const ready = currentRequired === null;
 
   return (
     <motion.section
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      className="mt-8 border border-line p-6"
+      className="mt-6 border border-line bg-bg-raised/30 p-6"
     >
-      <div className="flex items-center gap-1.5">
-        <p className="font-mono text-[10px] tracking-widest text-accent uppercase">
-          Hoja de ruta
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5">
+          <p className="font-mono text-[11px] tracking-widest text-accent uppercase">
+            Hoja de ruta
+          </p>
+          <HelpTip text="El camino recomendado para dejar el rodaje listo. Los pasos marcados como opcionales mejoran el proyecto pero no bloquean nada: «listo para rodar» depende solo de los requeridos." />
+        </div>
+        <p className="font-mono text-[11px] text-muted">
+          Requeridos {requiredDone}/{required.length} · Total {doneTotal}/{steps.length}
         </p>
-        <HelpTip text="El camino recomendado para dejar el rodaje listo, paso a paso. Se actualiza sola según vayas completando cada parte — no hace falta seguir el orden a rajatabla, es solo una guía." />
       </div>
 
-      <FeatureIntro featureId="project-roadmap">
-        Te guiamos paso a paso: siempre verás qué toca hacer ahora. Pulsa el
-        botón grande para continuar, o cualquier punto de abajo para saltar
-        directo a esa parte.
+      <FeatureIntro featureId="project-roadmap-v2">
+        Siempre verás qué toca ahora. Pulsa el botón principal para continuar, o
+        cualquier paso de abajo para saltar directo. Los pasos opcionales no
+        bloquean nada.
       </FeatureIntro>
 
-      <div className="mt-6 flex items-start gap-4">
+      <div className="mt-6 flex items-start gap-5">
         <motion.div
-          animate={{ y: [0, -4, 0] }}
-          transition={{ duration: 3.2, repeat: Infinity, ease: "easeInOut" }}
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           className="hidden sm:block"
         >
           <AjoloteLogo className="h-14 w-auto shrink-0" />
         </motion.div>
 
-        {allDone ? (
-          <div>
-            <p className="font-display text-xl font-bold uppercase">
-              Todo listo para rodar
-            </p>
+        {ready ? (
+          <div className="min-w-0 flex-1">
+            <p className="font-display text-xl font-bold text-success">Listo para rodar</p>
             <p className="mt-2 font-sans text-sm text-muted">
-              Has completado los pasos clave de preproducción. Revisa los
-              detalles cuando quieras desde el mapa de abajo.
+              Has completado los {required.length} pasos requeridos.
+              {currentOptional
+                ? " Aún puedes mejorar el proyecto con un paso opcional:"
+                : " Y también todos los opcionales."}
             </p>
+            {currentOptional && (
+              <Link href={currentOptional.href} className="btn btn-outline mt-4">
+                {currentOptional.title} →
+              </Link>
+            )}
           </div>
         ) : (
-          <div className="flex-1">
-            <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
-              Paso {currentIndex + 1} de {steps.length}
+          <div className="min-w-0 flex-1">
+            <p className="font-mono text-[11px] tracking-widest text-muted uppercase">
+              Siguiente paso · {requiredDone + 1} de {required.length} requeridos
             </p>
-            <p className="mt-1 font-display text-xl font-bold uppercase">
-              {current!.title}
-            </p>
-            <p className="mt-2 font-sans text-sm text-muted">
-              {current!.instruction}
-            </p>
-            <p className="mt-1 font-mono text-xs text-muted">{current!.detail}</p>
-            <Link
-              href={current!.href}
-              className="mt-4 inline-block rounded-full bg-accent px-6 py-2.5 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
-            >
-              {current!.ctaLabel} →
+            <p className="mt-1 font-display text-xl font-bold">{currentRequired.title}</p>
+            <p className="mt-2 font-sans text-sm text-muted">{currentRequired.instruction}</p>
+            <p className="mt-1 font-mono text-xs text-muted">{currentRequired.detail}</p>
+            <Link href={currentRequired.href} className="btn btn-primary mt-4">
+              {currentRequired.ctaLabel} →
             </Link>
           </div>
         )}
       </div>
 
-      <div className="mt-8 grid gap-3 border-t border-line pt-6 sm:grid-cols-3">
+      <div className="mt-8 grid gap-6 border-t border-line pt-6 md:grid-cols-3">
         {PHASE_ORDER.map((phase) => {
           const phaseSteps = steps.filter((s) => s.phase === phase);
-          const isCurrentPhase = current ? current.phase === phase : false;
+          const done = phaseSteps.filter((s) => s.isDone).length;
           return (
-            <PhaseCard
-              key={phase}
-              phase={phase}
-              steps={phaseSteps}
-              isCurrentPhase={isCurrentPhase}
-            />
+            <div key={phase}>
+              <div className="flex items-center justify-between">
+                <p className="font-mono text-[11px] tracking-widest text-fg uppercase">
+                  {PHASE_LABELS[phase]}
+                </p>
+                <p className="font-mono text-[11px] text-muted">
+                  {done}/{phaseSteps.length}
+                </p>
+              </div>
+              <div className="mt-2 flex gap-1">
+                {phaseSteps.map((step) => (
+                  <span
+                    key={step.key}
+                    className={`h-1 flex-1 rounded-full ${step.isDone ? "bg-success" : "bg-line"}`}
+                  />
+                ))}
+              </div>
+              <ul className="mt-3 space-y-1">
+                {phaseSteps.map((step) => (
+                  <li key={step.key}>
+                    <Link
+                      href={step.href}
+                      className={`group flex items-start gap-2.5 border-l-2 py-2 pr-2 pl-2.5 transition-colors hover:bg-accent/5 ${
+                        step.key === focusKey ? "border-accent" : "border-transparent"
+                      }`}
+                    >
+                      <span className="mt-0.5">
+                        <StepMarker step={step} isCurrent={step.key === focusKey} />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span
+                          className={`flex items-center gap-2 font-mono text-xs ${
+                            step.isDone ? "text-muted" : "text-fg"
+                          }`}
+                        >
+                          {step.title}
+                          {!step.required && (
+                            <span className="border border-line px-1.5 py-px text-[9px] tracking-widest text-muted uppercase">
+                              Opcional
+                            </span>
+                          )}
+                        </span>
+                        <span className="mt-0.5 block font-mono text-[11px] text-muted">
+                          {step.detail}
+                        </span>
+                      </span>
+                      <span
+                        aria-hidden
+                        className="mt-0.5 font-mono text-xs text-accent opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
+                      >
+                        →
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
           );
         })}
       </div>

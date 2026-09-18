@@ -48,7 +48,7 @@ export function AcceptInviteForm({
         />
 
         {state?.error && (
-          <p className="font-mono text-xs text-accent">{state.error}</p>
+          <p className="font-mono text-xs text-danger">{state.error}</p>
         )}
 
         <label className="flex items-start gap-2 font-mono text-xs text-muted">
@@ -77,7 +77,7 @@ export function AcceptInviteForm({
         <button
           type="submit"
           disabled={pending}
-          className="w-full rounded-full bg-fg py-2.5 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="btn btn-secondary w-full"
         >
           {pending ? "Creando…" : "Unirme"}
         </button>

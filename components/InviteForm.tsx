@@ -36,12 +36,12 @@ export function InviteForm() {
       <SubmitButton
         pendingLabel="Invitando…"
         savedLabel={state && "success" in state ? "✓ Invitación creada" : undefined}
-        className="rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+        className="btn btn-secondary"
       >
         Invitar
       </SubmitButton>
       {state && "error" in state && (
-        <p className="w-full font-mono text-xs text-accent">{state.error}</p>
+        <p className="w-full font-mono text-xs text-danger">{state.error}</p>
       )}
     </form>
   );

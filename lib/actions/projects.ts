@@ -27,7 +27,9 @@ export async function createProject(
 
   revalidatePath("/app");
   revalidatePath("/app/proyectos");
-  return undefined;
+  // Entrar directo al proyecto nuevo, igual que createProjectAndOpenTool: si
+  // no, el usuario se queda en el listado y tiene que buscarlo.
+  redirect(`/app/${result.id}`);
 }
 
 // Compartido por createProjectAndOpenClaqueta y createProjectAndOpenTool

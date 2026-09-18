@@ -59,12 +59,12 @@ export default async function ContinuityCheckPage({
                   <p className="font-mono text-[10px] tracking-widest text-accent uppercase">
                     {TYPE_LABELS[issue.type] ?? issue.type}
                   </p>
-                  <p className="mt-1 font-display text-base font-bold uppercase">
+                  <p className="mt-1 font-display text-base font-bold">
                     {issue.title}
                   </p>
                 </div>
                 {issue.status === "CONFIRMED" && (
-                  <span className="shrink-0 font-mono text-[10px] tracking-widest text-accent uppercase">
+                  <span className="shrink-0 font-mono text-[10px] tracking-widest text-success uppercase">
                     ✓ Confirmada
                   </span>
                 )}
@@ -105,7 +105,7 @@ export default async function ContinuityCheckPage({
                   >
                     <button
                       type="submit"
-                      className="rounded-full border border-accent px-4 py-1.5 font-mono text-[11px] tracking-widest text-accent uppercase transition-colors hover:bg-accent hover:text-bg"
+                      className="btn btn-outline btn-sm"
                     >
                       Confirmar
                     </button>
@@ -121,7 +121,7 @@ export default async function ContinuityCheckPage({
                   >
                     <button
                       type="submit"
-                      className="font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent"
+                      className="link-action"
                     >
                       Descartar
                     </button>

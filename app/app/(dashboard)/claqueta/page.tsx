@@ -3,7 +3,7 @@ import Link from "next/link";
 import { getCurrentProfile } from "@/lib/current-user";
 import { listProjectsForProfile } from "@/lib/project-access";
 import { createProjectAndOpenClaqueta } from "@/lib/actions/projects";
-import { BackLink } from "@/components/BackLink";
+import { PageHeader } from "@/components/PageHeader";
 import { CreateProjectForm } from "@/components/CreateProjectForm";
 import { LinkPendingHint } from "@/components/LinkPendingHint";
 import { ClaquetaIcon } from "@/components/ToolIcons";
@@ -24,10 +24,11 @@ export default async function ClaquetaEntryPage() {
 
   return (
     <div>
-      <BackLink href="/app">← Taller</BackLink>
-      <h1 className="mt-3 font-display text-2xl font-bold uppercase">
-        Claqueta digital
-      </h1>
+      <PageHeader
+        backHref="/app"
+        backLabel="← Taller"
+        title="Claqueta digital"
+      />
 
       {projects.length === 0 ? (
         <>
@@ -59,7 +60,7 @@ export default async function ClaquetaEntryPage() {
                 className="group flex items-center gap-3 border-b border-line py-4 transition-colors hover:border-accent"
               >
                 <ClaquetaIcon className="h-5 w-5 shrink-0 text-accent" />
-                <span className="font-display text-base font-bold uppercase transition-colors group-hover:text-accent">
+                <span className="font-display text-base font-bold transition-colors group-hover:text-accent">
                   {project.name}
                 </span>
                 <LinkPendingHint />

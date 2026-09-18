@@ -1,9 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useFormStatus } from "react-dom";
 import { ProjectStatus } from "@/lib/generated/prisma";
 import { PROJECT_STATUS_LABELS as STATUS_LABELS } from "@/lib/labels";
 import { ChipOption } from "@/components/ChipOption";
+import { useToast } from "@/components/Toast";
+
+// Cierra el formulario y avisa cuando el guardado termina de verdad (antes se
+// cerraba al enviar, sin pending ni confirmación).
+function SaveRow({ onDone }: { onDone: () => void }) {
+  const { pending } = useFormStatus();
+  const wasPending = useRef(false);
+  useEffect(() => {
+    if (wasPending.current && !pending) onDone();
+    wasPending.current = pending;
+  }, [pending, onDone]);
+  return (
+    <button type="submit" disabled={pending} className="btn btn-secondary btn-sm">
+      {pending && <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current" />}
+      {pending ? "Guardando…" : "Guardar"}
+    </button>
+  );
+}
 
 function toDateInputValue(date: Date | null): string {
   if (!date) return "";
@@ -41,6 +60,7 @@ export function ProjectSummaryCard({
   updateAction: (formData: FormData) => void | Promise<void>;
 }) {
   const [editing, setEditing] = useState(false);
+  const { toast } = useToast();
 
   if (!editing) {
     const fields = [
@@ -66,10 +86,10 @@ export function ProjectSummaryCard({
     ].filter((field) => field.value);
 
     return (
-      <div className="mt-8 border border-line p-5">
+      <div className="border border-line p-5">
         <div className="flex items-center justify-between">
           <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
-            Resumen
+            Datos del proyecto
           </p>
           <button
             type="button"
@@ -109,12 +129,11 @@ export function ProjectSummaryCard({
   return (
     <form
       action={updateAction}
-      onSubmit={() => setEditing(false)}
-      className="mt-8 grid gap-4 border border-line p-5 sm:grid-cols-2 lg:grid-cols-3"
+      className="grid gap-4 border border-line p-5 sm:grid-cols-2 lg:grid-cols-3"
     >
       <div className="flex items-center justify-between sm:col-span-2 lg:col-span-3">
         <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
-          Resumen
+          Datos del proyecto
         </p>
         <button
           type="button"
@@ -252,12 +271,12 @@ export function ProjectSummaryCard({
       </label>
 
       <div>
-        <button
-          type="submit"
-          className="rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
-        >
-          Guardar
-        </button>
+        <SaveRow
+          onDone={() => {
+            setEditing(false);
+            toast("success", "Datos del proyecto guardados");
+          }}
+        />
       </div>
     </form>
   );

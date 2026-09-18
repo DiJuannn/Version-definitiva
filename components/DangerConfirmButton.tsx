@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useFormStatus } from "react-dom";
+import { Modal } from "@/components/Modal";
 
 // Cierra el modal cuando pending pasa de true a false (la acción ya
 // terminó de verdad) — cerrarlo en el propio manejador de la acción, en
@@ -25,11 +26,7 @@ function ConfirmSubmit({
   }, [pending, onDone]);
 
   return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="inline-flex items-center gap-1.5 rounded-full bg-accent px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90 disabled:opacity-70"
-    >
+    <button type="submit" disabled={pending} className="btn btn-danger">
       {pending && <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current" />}
       {pending ? pendingLabel : confirmLabel}
     </button>
@@ -59,45 +56,36 @@ export function DangerConfirmButton({
 }) {
   const [open, setOpen] = useState(false);
 
-  useEffect(() => {
-    if (!open) return;
-    function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
-    }
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [open]);
-
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className={triggerClassName}>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className={triggerClassName ?? "link-action"}
+      >
         {trigger}
       </button>
 
-      {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-          <div className="w-full max-w-sm border border-accent bg-bg p-6">
-            <p className="font-display text-lg font-bold uppercase">{title}</p>
-            <p className="mt-2 font-sans text-sm text-muted">{description}</p>
-            <div className="mt-6 flex justify-end gap-4">
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
-              >
-                Cancelar
-              </button>
-              <form action={action}>
-                <ConfirmSubmit
-                  confirmLabel={confirmLabel}
-                  pendingLabel={pendingLabel}
-                  onDone={() => setOpen(false)}
-                />
-              </form>
-            </div>
-          </div>
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        tone="danger"
+        title={title}
+        description={description}
+      >
+        <div className="mt-6 flex justify-end gap-4">
+          <button type="button" onClick={() => setOpen(false)} className="link-action">
+            Cancelar
+          </button>
+          <form action={action}>
+            <ConfirmSubmit
+              confirmLabel={confirmLabel}
+              pendingLabel={pendingLabel}
+              onDone={() => setOpen(false)}
+            />
+          </form>
         </div>
-      )}
+      </Modal>
     </>
   );
 }

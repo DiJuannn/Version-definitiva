@@ -16,7 +16,7 @@ export function DossierEmailButton({ projectId }: { projectId: string }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 rounded-full border border-line px-5 py-2 font-mono text-xs tracking-widest uppercase transition-colors hover:border-accent hover:text-accent print:hidden"
+        className="btn btn-outline inline-flex items-center gap-1.5 print:hidden"
       >
         Enviar por email
       </button>
@@ -35,7 +35,7 @@ export function DossierEmailButton({ projectId }: { projectId: string }) {
         />
         <SubmitButton
           pendingLabel="Enviando…"
-          className="rounded-full bg-fg px-4 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+          className="btn btn-secondary btn-sm"
         >
           Enviar
         </SubmitButton>
@@ -48,10 +48,10 @@ export function DossierEmailButton({ projectId }: { projectId: string }) {
         </button>
       </form>
       {state && "error" in state && (
-        <p className="mt-1 font-mono text-xs text-accent">{state.error}</p>
+        <p className="mt-1 font-mono text-xs text-danger">{state.error}</p>
       )}
       {state && "success" in state && (
-        <p className="mt-1 font-mono text-xs text-muted">✓ Enviado.</p>
+        <p className="mt-1 font-mono text-xs text-success">✓ Enviado.</p>
       )}
     </div>
   );

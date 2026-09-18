@@ -16,7 +16,7 @@ export function ChipOption({
   defaultChecked?: boolean;
 }) {
   return (
-    <label className="cursor-pointer border border-line px-3 py-1.5 font-mono text-xs uppercase text-muted transition has-[:checked]:border-accent has-[:checked]:bg-accent/10 has-[:checked]:text-accent">
+    <label className="cursor-pointer border border-line px-3 py-1.5 font-mono text-xs uppercase text-muted transition has-[:checked]:border-accent has-[:checked]:bg-accent/10 has-[:checked]:text-accent has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent">
       <input
         type={type}
         name={name}

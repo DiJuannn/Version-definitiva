@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { AjoloteLogo } from "@/components/AjoloteLogo";
-import { DashboardNav } from "@/components/DashboardNav";
+import { DashboardNav, type NavItem } from "@/components/DashboardNav";
+import { MainContainer } from "@/components/MainContainer";
 import { signOut } from "@/lib/actions/auth";
 import { getCurrentProfile } from "@/lib/current-user";
 import { isPro } from "@/lib/plan";
@@ -11,15 +12,21 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-const NAV = [
-  { href: "/app", label: "Taller" },
-  { href: "/app/proyectos", label: "Herramientas" },
-  { href: "/app/calendario", label: "Calendario" },
-  { href: "/app/tareas", label: "Tareas" },
-  { href: "/app/equipo", label: "Equipo" },
-  { href: "/app/localizaciones", label: "Localizaciones" },
-  { href: "/app/inventario", label: "Inventario" },
-  { href: "/app/vehiculos", label: "Vehículos" },
+const NAV: NavItem[] = [
+  { href: "/app", label: "Inicio", icon: "home" },
+  { href: "/app/proyectos", label: "Proyectos", icon: "projects" },
+  { href: "/app/calendario", label: "Calendario", icon: "calendar" },
+  { href: "/app/tareas", label: "Tareas", icon: "tasks" },
+  {
+    label: "Recursos",
+    icon: "people",
+    children: [
+      { href: "/app/equipo", label: "Equipo", icon: "people" },
+      { href: "/app/localizaciones", label: "Localizaciones", icon: "location" },
+      { href: "/app/inventario", label: "Inventario", icon: "box" },
+      { href: "/app/vehiculos", label: "Vehículos", icon: "vehicle" },
+    ],
+  },
 ];
 
 export default async function DashboardLayout({
@@ -28,14 +35,14 @@ export default async function DashboardLayout({
   children: ReactNode;
 }) {
   const profile = await getCurrentProfile();
-  const nav = [...NAV];
+  const nav: NavItem[] = [...NAV];
   if (profile?.role === "ADMIN") {
-    nav.push({ href: "/app/organizacion", label: "Organización" });
+    nav.push({ href: "/app/organizacion", label: "Organización", icon: "org" });
     // "Editor web" solo es relevante para la organización dueña de la
     // plataforma (Versión definitiva) — el resto de organizaciones usan
     // Taller pero no tienen web pública propia que editar.
     if (profile.organization.isPlatformOwner) {
-      nav.push({ href: "/admin", label: "Editor web" });
+      nav.push({ href: "/admin", label: "Editor web", icon: "web" });
     }
   }
 
@@ -46,7 +53,7 @@ export default async function DashboardLayout({
           la vista en cuanto haces scroll dentro de un proyecto, y el único
           camino de vuelta es recargar o usar "atrás" del navegador. */}
       <header className="sticky top-0 z-30 border-b border-line bg-bg/85 px-4 pt-4 pb-4 backdrop-blur-md sm:px-6 lg:pb-0">
-        <div className="mx-auto max-w-6xl">
+        <MainContainer>
           <div className="flex items-center justify-between gap-3">
             <Link href="/app" className="flex min-w-0 items-center gap-2.5">
               <AjoloteLogo className="h-6 w-auto shrink-0 text-fg" />
@@ -82,10 +89,10 @@ export default async function DashboardLayout({
             </div>
           </div>
           <DashboardNav items={nav} />
-        </div>
+        </MainContainer>
       </header>
-      <main className="flex-1 px-4 py-8 sm:px-6 sm:py-12">
-        <div className="mx-auto max-w-6xl">{children}</div>
+      <main className="flex-1 px-4 pt-8 pb-28 sm:px-6 sm:pt-12 sm:pb-24">
+        <MainContainer>{children}</MainContainer>
       </main>
     </div>
   );

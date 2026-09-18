@@ -3,8 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentProfile } from "@/lib/current-user";
 import { createPerson } from "@/lib/actions/people";
 import { EmptyState } from "@/components/EmptyState";
-import { BackLink } from "@/components/BackLink";
+import { PageHeader } from "@/components/PageHeader";
 import { SubmitButton } from "@/components/SubmitButton";
+import { FormField } from "@/components/FormField";
 
 export default async function EquipoPage() {
   const profile = await getCurrentProfile();
@@ -20,9 +21,12 @@ export default async function EquipoPage() {
 
   return (
     <div>
-      <BackLink href="/app">← Taller</BackLink>
-      <h1 className="mt-3 font-display text-2xl font-bold uppercase">Equipo</h1>
-      <p className="mt-2 font-mono text-xs text-muted">
+      <PageHeader
+        backHref="/app"
+        backLabel="← Taller"
+        title="Equipo"
+      />
+      <p className="mt-3 max-w-2xl font-sans text-sm text-muted">
         Directorio de personas de la organización — se enlazan a Personajes
         (Actor) y Desglose (Equipo técnico) de cualquier proyecto.
       </p>
@@ -31,44 +35,38 @@ export default async function EquipoPage() {
         action={createPerson}
         className="mt-8 grid gap-3 border border-line p-5 sm:grid-cols-2 lg:grid-cols-3"
       >
-        <input
-          name="firstName"
-          placeholder="Nombre"
+        <FormField label="Nombre">
+            <input name="firstName"
           required
-          className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
-        />
-        <input
-          name="lastName"
-          placeholder="Apellidos"
-          className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
-        />
-        <input
-          name="primaryRole"
-          placeholder="Rol principal"
-          className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
-        />
-        <input
-          name="email"
-          placeholder="Email"
-          className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
-        />
-        <input
-          name="phone"
-          placeholder="Teléfono"
-          className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
-        />
-        <input
-          name="rate"
+          className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
+          </FormField>
+        <FormField label="Apellidos">
+            <input name="lastName"
+          className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
+          </FormField>
+        <FormField label="Rol principal">
+            <input name="primaryRole"
+          className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
+          </FormField>
+        <FormField label="Email">
+            <input name="email"
+          className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
+          </FormField>
+        <FormField label="Teléfono">
+            <input name="phone"
+          className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
+          </FormField>
+        <FormField label="Tarifa">
+            <input name="rate"
           type="number"
           step="0.01"
-          placeholder="Tarifa"
-          className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
-        />
+          className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
+          </FormField>
         <div>
           <SubmitButton
             pendingLabel="Añadiendo…"
             savedLabel="✓ Añadida"
-            className="rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+            className="btn btn-secondary"
           >
             Añadir persona
           </SubmitButton>
@@ -89,7 +87,7 @@ export default async function EquipoPage() {
               className="group flex items-center justify-between gap-4 border-b border-line py-4 transition-colors hover:border-accent"
             >
               <div>
-                <span className="font-display text-lg font-bold uppercase transition-colors group-hover:text-accent">
+                <span className="font-display text-lg font-bold transition-colors group-hover:text-accent">
                   {person.firstName} {person.lastName ?? ""}
                 </span>
                 <p className="font-mono text-xs text-muted">

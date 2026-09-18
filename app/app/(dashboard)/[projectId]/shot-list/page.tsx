@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { PdfLink } from "@/components/PdfLink";
 import { PageHeader } from "@/components/PageHeader";
 import { SubmitButton } from "@/components/SubmitButton";
+import { FormField } from "@/components/FormField";
 
 const FIELD =
   "border border-line bg-transparent px-3 py-1.5 text-xs outline-none transition-colors focus:border-accent";
@@ -71,7 +72,7 @@ export default async function ShotListPage({
             return (
               <section key={scene.id} className="border border-line bg-bg-raised/40">
                 <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-5 py-4">
-                  <h2 className="font-display text-lg font-bold uppercase">
+                  <h2 className="font-display text-lg font-bold">
                     Escena {scene.number}
                   </h2>
                   <p className="font-mono text-[11px] tracking-widest text-muted uppercase">
@@ -119,33 +120,32 @@ export default async function ShotListPage({
                 )}
 
                 <details className="group border-t border-line print:hidden">
-                  <summary className="cursor-pointer list-none px-5 py-3 font-mono text-[11px] tracking-widest text-muted uppercase transition-colors hover:text-accent [&::-webkit-details-marker]:hidden">
+                  <summary className="link-action cursor-pointer list-none [&::-webkit-details-marker]:hidden">
                     <span className="mr-1.5 inline-block transition-transform group-open:rotate-45">
                       +
                     </span>
                     Añadir plano
                   </summary>
                   <form action={createAction} className="flex flex-wrap gap-2 px-5 pb-5">
-                    <input
-                      name="number"
-                      placeholder="Nº plano"
+                    <FormField label="Nº plano">
+            <input name="number"
                       required
-                      className={`${FIELD} w-28`}
-                    />
-                    <input
-                      name="shotSize"
-                      placeholder="Tamaño (PG, PM, PP...)"
+                      className={`${FIELD} w-28`} />
+          </FormField>
+                    <FormField label="Tamaño">
+            <input name="shotSize"
                       className={`${FIELD} w-44`}
-                    />
-                    <input
-                      name="description"
-                      placeholder="Descripción"
-                      className={`${FIELD} min-w-56 flex-1`}
-                    />
+                    
+            placeholder="PG, PM, PP..." />
+          </FormField>
+                    <FormField label="Descripción">
+            <input name="description"
+                      className={`${FIELD} min-w-56 flex-1`} />
+          </FormField>
                     <SubmitButton
                       pendingLabel="Añadiendo…"
                       savedLabel="✓ Añadido"
-                      className="rounded-full bg-fg px-4 py-1.5 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+                      className="btn btn-secondary btn-sm"
                     >
                       Añadir plano
                     </SubmitButton>

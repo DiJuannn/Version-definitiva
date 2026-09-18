@@ -16,9 +16,10 @@ import { EmptyState } from "@/components/EmptyState";
 import { ScriptUploadForm } from "@/components/ScriptUploadForm";
 import { ActionButtonForm } from "@/components/ActionButtonForm";
 import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
-import { BackLink } from "@/components/BackLink";
+import { PageHeader } from "@/components/PageHeader";
 import { FileOpenLink } from "@/components/FileOpenLink";
 import { SubmitButton } from "@/components/SubmitButton";
+import { FormField } from "@/components/FormField";
 import {
   SCRIPT_ANALYSIS_FREE_DAILY_LIMIT,
   SCRIPT_ANALYSIS_FREE_LIFETIME_LIMIT,
@@ -82,10 +83,11 @@ export default async function GuionPage({
 
   return (
     <div>
-      <BackLink href={`/app/${projectId}`}>← {project.name}</BackLink>
-      <h1 className="mt-3 font-display text-2xl font-bold uppercase">
-        Guion
-      </h1>
+      <PageHeader
+        backHref={`/app/${projectId}`}
+        backLabel={`← ${project.name}`}
+        title="Guion"
+      />
 
       <section className="mt-8">
         <h2 className="font-mono text-xs tracking-widest text-muted uppercase">
@@ -113,7 +115,7 @@ export default async function GuionPage({
                     {file.fileName}
                   </FileOpenLink>
                   <form action={deleteScriptFile.bind(null, projectId, file.id)}>
-                    <DeleteButton className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent" />
+                    <DeleteButton className="link-action" />
                   </form>
                 </div>
               ))}
@@ -146,7 +148,7 @@ export default async function GuionPage({
                 <ActionButtonForm
                   action={analyzeScript.bind(null, projectId, scriptFiles[0].id)}
                   pendingLabel="Analizando…"
-                  className="rounded-full border border-accent px-5 py-2 font-mono text-xs tracking-widest text-accent uppercase transition-colors hover:bg-accent hover:text-bg disabled:opacity-50"
+                  className="btn btn-outline"
                 >
                   Analizar
                 </ActionButtonForm>
@@ -192,16 +194,17 @@ export default async function GuionPage({
           action={createSceneAction}
           className="mt-4 flex max-w-sm gap-2"
         >
-          <input
-            name="number"
-            placeholder="Número de escena (ej. 04)"
+          <FormField label="Número de escena" className="w-full">
+            <input name="number"
             required
-            className="w-full border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
-          />
+            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+          
+            placeholder="04" />
+          </FormField>
           <SubmitButton
             pendingLabel="Creando…"
             savedLabel="✓ Creada"
-            className="shrink-0 rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+            className="btn btn-secondary shrink-0"
           >
             Crear
           </SubmitButton>
@@ -223,7 +226,7 @@ export default async function GuionPage({
                   href={`/app/${projectId}/guion/${scene.id}`}
                   className="min-w-0 flex-1"
                 >
-                  <span className="font-display text-lg font-bold uppercase transition-colors group-hover:text-accent">
+                  <span className="font-display text-lg font-bold transition-colors group-hover:text-accent">
                     Escena {scene.number}
                   </span>
                   <p className="font-mono text-xs text-muted">
@@ -241,7 +244,7 @@ export default async function GuionPage({
                 >
                   <DeleteButton
                     confirmMessage="¿Eliminar esta escena?"
-                    className="font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent"
+                    className="link-action"
                   />
                 </form>
               </div>
@@ -266,14 +269,14 @@ export default async function GuionPage({
             <ActionButtonForm
               action={runContinuityAction}
               pendingLabel="Revisando…"
-              className="rounded-full border border-accent px-4 py-1.5 font-mono text-xs tracking-widest text-accent uppercase transition-colors hover:bg-accent hover:text-bg disabled:opacity-50"
+              className="btn btn-outline btn-sm"
             >
               Revisar continuidad
             </ActionButtonForm>
           ) : (
             <Link
               href="/app/organizacion"
-              className="inline-flex rounded-full border border-line px-4 py-1.5 font-mono text-xs tracking-widest uppercase text-muted transition-colors hover:border-accent hover:text-accent"
+              className="btn btn-outline btn-sm inline-flex"
             >
               Revisar continuidad — solo PRO
             </Link>

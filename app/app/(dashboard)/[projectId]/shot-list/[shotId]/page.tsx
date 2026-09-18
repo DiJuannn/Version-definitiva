@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { deleteShot, updateShot } from "@/lib/actions/shots";
 import { DeleteButton } from "@/components/DeleteButton";
-import { BackLink } from "@/components/BackLink";
+import { PageHeader } from "@/components/PageHeader";
 import { SubmitButton } from "@/components/SubmitButton";
 
 export default async function ShotDetailPage({
@@ -36,10 +36,11 @@ export default async function ShotDetailPage({
 
   return (
     <div>
-      <BackLink href={`/app/${projectId}/shot-list`}>← Shot list</BackLink>
-      <h1 className="mt-3 font-display text-2xl font-bold uppercase">
-        Plano {shot.scene.number}.{shot.number}
-      </h1>
+      <PageHeader
+        backHref={`/app/${projectId}/shot-list`}
+        backLabel="← Shot list"
+        title={`Plano ${shot.scene.number}.${shot.number}`}
+      />
 
       <form
         action={updateAction}
@@ -126,7 +127,7 @@ export default async function ShotDetailPage({
           <SubmitButton
             pendingLabel="Guardando…"
             savedLabel="✓ Guardado"
-            className="rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+            className="btn btn-secondary"
           >
             Guardar
           </SubmitButton>
@@ -136,14 +137,14 @@ export default async function ShotDetailPage({
       <div className="mt-6 flex items-center gap-6">
         <Link
           href={`/app/${projectId}/storyboard`}
-          className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
+          className="link-action"
         >
           Ver en Storyboard →
         </Link>
         <form action={deleteShot.bind(null, projectId, shotId)}>
           <DeleteButton
             confirmMessage="¿Eliminar este plano? No se puede deshacer."
-            className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
+            className="link-action"
           >
             Eliminar plano
           </DeleteButton>

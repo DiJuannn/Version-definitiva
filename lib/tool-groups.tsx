@@ -1,14 +1,17 @@
 import {
   BudgetIcon,
   CalendarIcon,
+  CallSheetIcon,
   CastIcon,
   ClaquetaIcon,
-  DocumentIcon,
-  EventIcon,
+  ContractIcon,
+  FolderIcon,
   LocationIcon,
-  ProjectsIcon,
   SceneIcon,
+  ScheduleIcon,
+  ScriptIcon,
   ShotListIcon,
+  StackIcon,
   TaskIcon,
   VehicleIcon,
 } from "@/components/ToolIcons";
@@ -31,13 +34,13 @@ export const TOOL_GROUPS: { label: string; tools: ToolDefinition[] }[] = [
     label: "Preproducción",
     tools: [
       {
-        icon: <DocumentIcon />,
+        icon: <ScriptIcon />,
         label: "Guion",
         href: "guion",
         description: "Sube el guion y gestiona las escenas.",
       },
       {
-        icon: <ProjectsIcon />,
+        icon: <StackIcon />,
         label: "Desglose",
         href: "desglose",
         description: "Catálogo de atrezzo, vestuario y equipo por escena.",
@@ -61,7 +64,7 @@ export const TOOL_GROUPS: { label: string; tools: ToolDefinition[] }[] = [
         description: "Viñetas visuales de los planos clave.",
       },
       {
-        icon: <EventIcon />,
+        icon: <CalendarIcon />,
         label: "Calendario",
         href: "/app/calendario",
         absolute: true,
@@ -73,13 +76,13 @@ export const TOOL_GROUPS: { label: string; tools: ToolDefinition[] }[] = [
     label: "Producción",
     tools: [
       {
-        icon: <CalendarIcon />,
+        icon: <ScheduleIcon />,
         label: "Plan de rodaje",
         href: "plan-de-rodaje",
         description: "Agrupa las escenas en días de rodaje concretos.",
       },
       {
-        icon: <DocumentIcon />,
+        icon: <CallSheetIcon />,
         label: "Call sheets",
         href: "call-sheets",
         description: "La hoja de convocatoria de cada día de rodaje.",
@@ -99,7 +102,7 @@ export const TOOL_GROUPS: { label: string; tools: ToolDefinition[] }[] = [
     ],
   },
   {
-    label: "Organización",
+    label: "Gestión",
     tools: [
       {
         icon: <TaskIcon />,
@@ -108,13 +111,13 @@ export const TOOL_GROUPS: { label: string; tools: ToolDefinition[] }[] = [
         description: "Pendientes del proyecto, con prioridad y fecha.",
       },
       {
-        icon: <DocumentIcon />,
+        icon: <FolderIcon />,
         label: "Biblioteca de archivos",
         href: "documentos",
         description: "Contratos, permisos y archivos del proyecto.",
       },
       {
-        icon: <DocumentIcon />,
+        icon: <ContractIcon />,
         label: "Plantilla de documentos",
         href: "documentos-legales",
         description: "Plantillas de permisos, cesiones y contratos, listas para firmar.",

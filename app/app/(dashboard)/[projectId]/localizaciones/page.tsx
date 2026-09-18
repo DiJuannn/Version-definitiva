@@ -4,86 +4,106 @@ import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { EmptyState } from "@/components/EmptyState";
 import { ListRow } from "@/components/ListRow";
-import { BackLink } from "@/components/BackLink";
+import { PageHeader } from "@/components/PageHeader";
+import { ScopeToggle } from "@/components/ScopeToggle";
+import { LocationsLibrary } from "@/components/LocationsLibrary";
 
-// Vista de solo lectura, filtrada a este proyecto — Location es una
-// biblioteca de toda la organización (se reutiliza entre proyectos, ver
-// app/app/(dashboard)/localizaciones/page.tsx), así que crear o editar
-// una localización se sigue haciendo desde ahí o desde Guion; esto es
-// solo un atajo para ver de un vistazo las que ya usa este proyecto.
+// Dos vistas de la misma herramienta sin salir del proyecto: las
+// localizaciones que ya usan sus escenas, o la biblioteca completa de la
+// organización (donde se crean y editan).
 export default async function ProjectLocationsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ projectId: string }>;
+  searchParams: Promise<{ ver?: string }>;
 }) {
   const { projectId } = await params;
+  const { ver } = await searchParams;
+  const library = ver === "biblioteca";
 
   const project = await getProjectForCurrentUser(projectId);
   if (!project) notFound();
 
-  const locations = await prisma.location.findMany({
-    where: { scenes: { some: { projectId } } },
-    orderBy: { name: "asc" },
-    select: {
-      id: true,
-      name: true,
-      address: true,
-      contactName: true,
-      latitude: true,
-      _count: { select: { scenes: { where: { projectId } } } },
-    },
-  });
+  const base = `/app/${projectId}/localizaciones`;
+
+  const locations = library
+    ? []
+    : await prisma.location.findMany({
+        where: { scenes: { some: { projectId } } },
+        orderBy: { name: "asc" },
+        select: {
+          id: true,
+          name: true,
+          address: true,
+          contactName: true,
+          latitude: true,
+          _count: { select: { scenes: { where: { projectId } } } },
+        },
+      });
 
   return (
     <div>
-      <BackLink href={`/app/${projectId}`}>← {project.name}</BackLink>
-      <h1 className="mt-3 font-display text-2xl font-bold uppercase">
-        Localizaciones
-      </h1>
-      <p className="mt-2 font-mono text-xs text-muted">
-        Las que ya usan las escenas de este proyecto. Se asignan desde{" "}
-        <Link href={`/app/${projectId}/guion`} className="text-fg hover:text-accent">
-          Guion
-        </Link>
-        , y se gestionan todas (crear, editar, borrar) desde la{" "}
-        <Link href="/app/localizaciones" className="text-fg hover:text-accent">
-          biblioteca completa
-        </Link>
-        .
-      </p>
-
-      {locations.length === 0 ? (
-        <EmptyState
-          title="Ninguna escena tiene localización todavía"
-          description="Asígnalas desde Guion, eligiendo de la biblioteca o creando una nueva."
+      <PageHeader
+        backHref={`/app/${projectId}`}
+        backLabel={`← ${project.name}`}
+        eyebrow="Gestión"
+        title="Localizaciones"
+      />
+      <div className="mt-6">
+        <ScopeToggle
+          items={[
+            { label: "Usadas en este proyecto", href: base, active: !library },
+            { label: "Toda la biblioteca", href: `${base}?ver=biblioteca`, active: library },
+          ]}
         />
+      </div>
+
+      {library ? (
+        <LocationsLibrary organizationId={project.organizationId} />
       ) : (
-        <div className="mt-8 border-t border-line">
-          {locations.map((location) => (
-            <ListRow
-              key={location.id}
-              href={`/app/localizaciones/${location.id}`}
-              title={
-                <span className="font-display text-lg font-bold uppercase transition-colors group-hover:text-accent">
-                  {location.name}
-                </span>
-              }
-              meta={
-                [location.address, location.contactName].filter(Boolean).join(" · ") ||
-                "Sin datos"
-              }
-              trailing={
-                <span className="flex items-center gap-3 font-mono text-xs text-muted">
-                  {location.latitude === null && (
-                    <span className="text-accent">Sin coordenadas</span>
-                  )}
-                  {location._count.scenes} escena
-                  {location._count.scenes === 1 ? "" : "s"}
-                </span>
-              }
+        <>
+          <p className="mt-4 max-w-2xl font-sans text-sm text-muted">
+            Las que ya usan las escenas de este proyecto. Se asignan desde{" "}
+            <Link href={`/app/${projectId}/guion`} className="text-fg hover:text-accent">
+              Guion
+            </Link>
+            ; para crear o editar, usa la pestaña «Toda la biblioteca».
+          </p>
+          {locations.length === 0 ? (
+            <EmptyState
+              title="Ninguna escena tiene localización todavía"
+              description="Asígnalas desde Guion, eligiendo de la biblioteca o creando una nueva."
             />
-          ))}
-        </div>
+          ) : (
+            <div className="mt-6 border-t border-line">
+              {locations.map((location) => (
+                <ListRow
+                  key={location.id}
+                  href={`/app/localizaciones/${location.id}`}
+                  title={
+                    <span className="font-display text-lg font-bold transition-colors group-hover:text-accent">
+                      {location.name}
+                    </span>
+                  }
+                  meta={
+                    [location.address, location.contactName].filter(Boolean).join(" · ") ||
+                    "Sin datos"
+                  }
+                  trailing={
+                    <span className="flex items-center gap-3 font-mono text-xs text-muted">
+                      {location.latitude === null && (
+                        <span className="text-warn">Sin coordenadas</span>
+                      )}
+                      {location._count.scenes} escena
+                      {location._count.scenes === 1 ? "" : "s"}
+                    </span>
+                  }
+                />
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );

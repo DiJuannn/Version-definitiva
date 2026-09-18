@@ -8,6 +8,7 @@ import { ShootingTimeline } from "@/components/ShootingTimeline";
 import { EmptyState } from "@/components/EmptyState";
 import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
 import { PageHeader } from "@/components/PageHeader";
+import { FormField } from "@/components/FormField";
 import { SubmitButton } from "@/components/SubmitButton";
 
 export default async function PlanDeRodajePage({
@@ -74,6 +75,20 @@ export default async function PlanDeRodajePage({
         }
       />
 
+      <form action={createAction} className="mt-8 flex max-w-md items-end gap-2">
+        <FormField label="Nuevo día de rodaje" className="w-full">
+          <input
+            type="date"
+            name="date"
+            required
+            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+          />
+        </FormField>
+        <SubmitButton pendingLabel="Creando…" className="btn btn-primary shrink-0">
+          Crear día
+        </SubmitButton>
+      </form>
+
       {scenes.length === 0 ? (
         <EmptyState
           title="Todavía no hay escenas"
@@ -90,20 +105,6 @@ export default async function PlanDeRodajePage({
         />
       )}
 
-      <form action={createAction} className="mt-8 flex max-w-sm gap-2">
-        <input
-          type="date"
-          name="date"
-          required
-          className="w-full border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
-        />
-        <SubmitButton
-          pendingLabel="Creando…"
-          className="shrink-0 rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
-        >
-          Crear día
-        </SubmitButton>
-      </form>
     </div>
   );
 }

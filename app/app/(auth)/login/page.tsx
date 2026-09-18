@@ -32,7 +32,7 @@ function LoginForm() {
         </p>
       )}
       {justConfirmed && (
-        <p className="mt-4 border border-accent px-3 py-2 font-mono text-xs text-accent">
+        <p className="mt-4 border border-success/60 px-3 py-2 font-mono text-xs text-success">
           ✓ Cuenta confirmada. Ya puedes entrar con tu contraseña.
         </p>
       )}
@@ -54,13 +54,13 @@ function LoginForm() {
         />
 
         {state?.error && (
-          <p className="font-mono text-xs text-accent">{state.error}</p>
+          <p className="font-mono text-xs text-danger">{state.error}</p>
         )}
 
         <button
           type="submit"
           disabled={pending}
-          className="w-full rounded-full bg-fg py-2.5 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90 disabled:opacity-50"
+          className="btn btn-secondary w-full"
         >
           {pending ? "Entrando…" : "Entrar"}
         </button>

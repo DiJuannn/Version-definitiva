@@ -4,17 +4,16 @@ import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import {
   deleteShootingDay,
-  updateDaySceneAssignments,
+  saveDayPlan,
   updateShootingDay,
 } from "@/lib/actions/shooting-days";
-import { updateDayItemReservations } from "@/lib/actions/inventory";
-import { updateDayVehicleReservations } from "@/lib/actions/vehicles";
+import { generateCallSheetAndOpen } from "@/lib/actions/call-sheets";
 import { getShootingDaySummary } from "@/lib/shooting-day-summary";
 import { getAvailabilityWarnings } from "@/lib/availability-warnings";
 import { getReservationConflicts } from "@/lib/reservation-conflicts";
 import { DAY_PART_LABELS, INT_EXT_LABELS, INVENTORY_CATEGORY_LABELS } from "@/lib/labels";
 import { SubmitButton } from "@/components/SubmitButton";
-import { BackLink } from "@/components/BackLink";
+import { PageHeader } from "@/components/PageHeader";
 import { DeleteButton } from "@/components/DeleteButton";
 import { EmptyState } from "@/components/EmptyState";
 
@@ -74,37 +73,20 @@ export default async function ShootingDayDetailPage({
   const reservedVehicleIds = new Set(dayVehicleReservations.map((r) => r.vehicleId));
 
   const updateDayAction = updateShootingDay.bind(null, projectId, dayId);
-  const updateAssignmentsAction = updateDaySceneAssignments.bind(
-    null,
-    projectId,
-    dayId,
-  );
-  const updateItemReservationsAction = updateDayItemReservations.bind(
-    null,
-    projectId,
-    dayId,
-  );
-  const updateVehicleReservationsAction = updateDayVehicleReservations.bind(
-    null,
-    projectId,
-    dayId,
-  );
+  const saveDayAction = saveDayPlan.bind(null, projectId, dayId);
+  const generateAction = generateCallSheetAndOpen.bind(null, projectId, dayId);
 
   return (
     <div>
-      <BackLink href={`/app/${projectId}/plan-de-rodaje`}>← Plan de rodaje</BackLink>
-      <h1 className="mt-3 font-display text-2xl font-bold uppercase">
-        {summary.shootingDay.date.toLocaleDateString("es-ES", {
-          weekday: "long",
-          day: "2-digit",
-          month: "long",
-          year: "numeric",
-        })}
-      </h1>
+      <PageHeader
+        backHref={`/app/${projectId}/plan-de-rodaje`}
+        backLabel="← Plan de rodaje"
+        title={`${summary.shootingDay.date.toLocaleDateString("es-ES", { weekday: "long", day: "2-digit", month: "long", year: "numeric", })}`}
+      />
 
       {availabilityWarnings.length > 0 && (
-        <div className="mt-6 border border-accent p-4">
-          <p className="font-mono text-xs tracking-widest text-accent uppercase">
+        <div className="mt-6 border border-warn/60 p-4">
+          <p className="font-mono text-xs tracking-widest text-warn uppercase">
             ⚠ Posible conflicto de disponibilidad
           </p>
           <ul className="mt-2 space-y-1">
@@ -119,8 +101,8 @@ export default async function ShootingDayDetailPage({
       )}
 
       {(itemConflicts.length > 0 || vehicleConflicts.length > 0) && (
-        <div className="mt-6 border border-accent p-4">
-          <p className="font-mono text-xs tracking-widest text-accent uppercase">
+        <div className="mt-6 border border-warn/60 p-4">
+          <p className="font-mono text-xs tracking-widest text-warn uppercase">
             ⚠ Posible conflicto de reserva
           </p>
           <ul className="mt-2 space-y-1">
@@ -170,13 +152,14 @@ export default async function ShootingDayDetailPage({
           <SubmitButton
             pendingLabel="Guardando…"
             savedLabel="✓ Guardado"
-            className="rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+            className="btn btn-secondary"
           >
             Guardar
           </SubmitButton>
         </div>
       </form>
 
+      <form action={saveDayAction}>
       <section className="mt-10">
         <h2 className="font-mono text-xs tracking-widest text-accent uppercase">
           Escenas del día
@@ -189,8 +172,17 @@ export default async function ShootingDayDetailPage({
             actionHref={`/app/${projectId}/guion`}
           />
         ) : (
-          <form action={updateAssignmentsAction} className="mt-4">
+          <div className="mt-4">
             <div className="border-t border-line">
+              <div
+                aria-hidden
+                className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 border-b border-line py-2 font-mono text-[10px] tracking-widest text-muted uppercase"
+              >
+                <span className="w-4" />
+                <span>Escena</span>
+                <span className="w-24">Hora de llamada</span>
+                <span className="w-20">Orden</span>
+              </div>
               {allScenes.map((scene) => {
                 const assignment = assignedByScene.get(scene.id);
                 return (
@@ -201,6 +193,7 @@ export default async function ShootingDayDetailPage({
                     <input
                       type="checkbox"
                       name={`assign_${scene.id}`}
+                      aria-label={`Incluir la escena ${scene.number} en este día`}
                       defaultChecked={Boolean(assignment)}
                     />
                     <div>
@@ -215,14 +208,16 @@ export default async function ShootingDayDetailPage({
                     </div>
                     <input
                       name={`callTime_${scene.id}`}
-                      placeholder="Hora"
+                      aria-label={`Hora de llamada de la escena ${scene.number}`}
+                      placeholder="08:30"
                       defaultValue={assignment?.callTime ?? ""}
                       className="w-24 border border-line bg-transparent px-2 py-1 text-xs outline-none transition-colors focus:border-accent"
                     />
                     <input
                       name={`order_${scene.id}`}
                       type="number"
-                      placeholder="Orden"
+                      aria-label={`Orden de la escena ${scene.number}`}
+                      placeholder="1"
                       defaultValue={assignment?.order ?? ""}
                       className="w-20 border border-line bg-transparent px-2 py-1 text-xs outline-none transition-colors focus:border-accent"
                     />
@@ -230,14 +225,7 @@ export default async function ShootingDayDetailPage({
                 );
               })}
             </div>
-            <SubmitButton
-              pendingLabel="Guardando…"
-              savedLabel="✓ Guardado"
-              className="mt-4 rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
-            >
-              Guardar asignación
-            </SubmitButton>
-          </form>
+            </div>
         )}
       </section>
 
@@ -255,7 +243,7 @@ export default async function ShootingDayDetailPage({
               .
             </p>
           ) : (
-            <form action={updateItemReservationsAction} className="mt-4">
+            <div className="mt-4">
               <div className="border-t border-line">
                 {inventoryItems.map((item) => (
                   <div
@@ -265,6 +253,7 @@ export default async function ShootingDayDetailPage({
                     <input
                       type="checkbox"
                       name={`reserve_${item.id}`}
+                      aria-label={`Reservar ${item.name}`}
                       defaultChecked={reservedItemQty.has(item.id)}
                     />
                     <div>
@@ -278,6 +267,7 @@ export default async function ShootingDayDetailPage({
                       name={`qty_${item.id}`}
                       type="number"
                       min={1}
+                      aria-label={`Unidades reservadas de ${item.name}`}
                       placeholder="Uds."
                       defaultValue={reservedItemQty.get(item.id) ?? 1}
                       className="w-16 border border-line bg-transparent px-2 py-1 text-xs outline-none transition-colors focus:border-accent"
@@ -285,14 +275,7 @@ export default async function ShootingDayDetailPage({
                   </div>
                 ))}
               </div>
-              <SubmitButton
-                pendingLabel="Guardando…"
-                savedLabel="✓ Guardado"
-                className="mt-4 rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
-              >
-                Guardar material
-              </SubmitButton>
-            </form>
+              </div>
           )}
         </div>
 
@@ -309,7 +292,7 @@ export default async function ShootingDayDetailPage({
               .
             </p>
           ) : (
-            <form action={updateVehicleReservationsAction} className="mt-4">
+            <div className="mt-4">
               <div className="border-t border-line">
                 {vehicles.map((vehicle) => (
                   <label
@@ -330,17 +313,20 @@ export default async function ShootingDayDetailPage({
                   </label>
                 ))}
               </div>
-              <SubmitButton
-                pendingLabel="Guardando…"
-                savedLabel="✓ Guardado"
-                className="mt-4 rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
-              >
-                Guardar vehículos
-              </SubmitButton>
-            </form>
+              </div>
           )}
         </div>
       </section>
+
+      <div className="mt-8 flex flex-wrap items-center gap-4 border-t border-line pt-6 print:hidden">
+        <SubmitButton pendingLabel="Guardando…" savedLabel="✓ Plan guardado" className="btn btn-primary">
+          Guardar plan del día
+        </SubmitButton>
+        <p className="font-mono text-[11px] text-muted">
+          Guarda a la vez las escenas (con hora y orden), el material y los vehículos.
+        </p>
+      </div>
+      </form>
 
       <section className="mt-14 grid gap-6 sm:grid-cols-2">
         <div className="border border-line p-5">
@@ -378,16 +364,21 @@ export default async function ShootingDayDetailPage({
       </section>
 
       <div className="mt-10 flex items-center gap-6">
-        <Link
-          href={`/app/${projectId}/call-sheets/${dayId}`}
-          className="rounded-full border border-accent px-5 py-2 font-mono text-xs tracking-widest text-accent uppercase transition-colors hover:bg-accent hover:text-bg"
-        >
-          {summary.shootingDay.callSheet ? "Ver call sheet" : "Generar call sheet"}
-        </Link>
+        {summary.shootingDay.callSheet ? (
+          <Link href={`/app/${projectId}/call-sheets/${dayId}`} className="btn btn-primary">
+            Ver call sheet
+          </Link>
+        ) : (
+          <form action={generateAction}>
+            <SubmitButton pendingLabel="Generando…" className="btn btn-primary">
+              Generar call sheet
+            </SubmitButton>
+          </form>
+        )}
         <form action={deleteShootingDay.bind(null, projectId, dayId)}>
           <DeleteButton
             confirmMessage="¿Eliminar este día de rodaje?"
-            className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
+            className="link-action"
           >
             Eliminar día
           </DeleteButton>

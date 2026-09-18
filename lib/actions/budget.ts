@@ -8,6 +8,7 @@ import {
   createBudgetItemCore,
   deleteBudgetCategoryCore,
   deleteBudgetItemCore,
+  setBudgetItemActualCore,
 } from "@/lib/budget-core";
 
 export async function createBudgetCategory(
@@ -64,4 +65,31 @@ export async function deleteBudgetItem(projectId: string, itemId: string) {
   await deleteBudgetItemCore(projectId, itemId);
 
   revalidatePath(`/app/${projectId}/presupuesto`);
+}
+
+export type BudgetActualState = { error: string } | { ok: true; amount: number | null } | undefined;
+
+// Gasto real de una partida: vacío = sin gastar todavía.
+export async function setBudgetItemActual(
+  projectId: string,
+  itemId: string,
+  _prev: BudgetActualState,
+  formData: FormData,
+): Promise<BudgetActualState> {
+  const project = await getProjectForCurrentUser(projectId);
+  if (!project) return { error: "No se encontró el proyecto." };
+
+  const raw = String(formData.get("actualAmount") ?? "").trim().replace(",", ".");
+  const amount = raw === "" ? null : Number(raw);
+  if (amount !== null && (!Number.isFinite(amount) || amount < 0)) {
+    return { error: "Escribe un importe válido (por ejemplo 250 o 250,50)." };
+  }
+
+  const ok = await setBudgetItemActualCore(projectId, itemId, amount);
+  if (!ok) return { error: "No se pudo guardar el gasto." };
+
+  revalidatePath(`/app/${projectId}/presupuesto`);
+  revalidatePath(`/app/${projectId}`);
+  revalidatePath("/app");
+  return { ok: true, amount };
 }

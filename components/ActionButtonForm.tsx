@@ -28,7 +28,7 @@ export function ActionButtonForm({
         {children}
       </SubmitButton>
       {state?.error && (
-        <p className="mt-2 font-mono text-xs text-accent">{state.error}</p>
+        <p className="mt-2 font-mono text-xs text-danger">{state.error}</p>
       )}
     </form>
   );

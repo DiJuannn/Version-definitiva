@@ -30,7 +30,7 @@ export function DeleteAccountCard({ soleMember }: { soleMember: boolean }) {
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="mt-4 font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
+            className="link-action mt-4"
           >
             Eliminar mi cuenta
           </button>
@@ -63,7 +63,7 @@ export function DeleteAccountCard({ soleMember }: { soleMember: boolean }) {
           />
 
           {state?.error && (
-            <p className="mt-3 font-mono text-xs text-accent">{state.error}</p>
+            <p className="mt-3 font-mono text-xs text-danger">{state.error}</p>
           )}
 
           <div className="mt-5 flex items-center gap-4">
@@ -71,7 +71,7 @@ export function DeleteAccountCard({ soleMember }: { soleMember: boolean }) {
               <button
                 type="submit"
                 disabled={!canSubmit || pending}
-                className="rounded-full bg-accent px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90 disabled:opacity-40"
+                className="btn btn-primary"
               >
                 {pending ? "Borrando…" : "Borrar definitivamente"}
               </button>
@@ -82,7 +82,7 @@ export function DeleteAccountCard({ soleMember }: { soleMember: boolean }) {
                 setOpen(false);
                 setConfirmText("");
               }}
-              className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
+              className="link-action"
             >
               Cancelar
             </button>

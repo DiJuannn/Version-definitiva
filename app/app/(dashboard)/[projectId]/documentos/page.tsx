@@ -5,7 +5,7 @@ import { getProjectForCurrentUser } from "@/lib/project-access";
 import { deleteDocument, uploadDocument } from "@/lib/actions/documents";
 import { DeleteButton } from "@/components/DeleteButton";
 import { EmptyState } from "@/components/EmptyState";
-import { BackLink } from "@/components/BackLink";
+import { PageHeader } from "@/components/PageHeader";
 import { FileOpenLink } from "@/components/FileOpenLink";
 import { SubmitButton } from "@/components/SubmitButton";
 
@@ -60,10 +60,11 @@ export default async function DocumentosPage({
 
   return (
     <div>
-      <BackLink href={`/app/${projectId}`}>← {project.name}</BackLink>
-      <h1 className="mt-3 font-display text-2xl font-bold uppercase">
-        Biblioteca de archivos
-      </h1>
+      <PageHeader
+        backHref={`/app/${projectId}`}
+        backLabel={`← ${project.name}`}
+        title="Biblioteca de archivos"
+      />
 
       <section className="mt-8">
         <h2 className="font-mono text-xs tracking-widest text-accent uppercase">
@@ -136,7 +137,7 @@ export default async function DocumentosPage({
             <Link
               key={item.href}
               href={item.href}
-              className="rounded-full border border-line px-4 py-1.5 font-mono text-xs tracking-widest uppercase transition-colors hover:border-accent hover:text-accent"
+              className="btn btn-outline btn-sm"
             >
               {item.label} →
             </Link>
@@ -189,7 +190,7 @@ export default async function DocumentosPage({
           <SubmitButton
             pendingLabel="Subiendo…"
             savedLabel="✓ Subido"
-            className="rounded-full bg-fg px-4 py-1.5 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+            className="btn btn-secondary btn-sm"
           >
             Subir
           </SubmitButton>
@@ -220,7 +221,7 @@ export default async function DocumentosPage({
                   <form action={deleteDocument.bind(null, projectId, doc.id)}>
                     <DeleteButton
                       confirmMessage="¿Eliminar este documento?"
-                      className="font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent"
+                      className="link-action"
                     />
                   </form>
                 </div>

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { isProjectOwnerPro } from "@/lib/project-plan";
-import { BackLink } from "@/components/BackLink";
+import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
 
 const TEMPLATES = [
@@ -47,11 +47,12 @@ export default async function DocumentosLegalesPage({
 
   return (
     <div>
-      <BackLink href={`/app/${projectId}`}>← {project.name}</BackLink>
-      <h1 className="mt-3 font-display text-2xl font-bold uppercase">
-        Plantilla de documentos
-      </h1>
-      <p className="mt-2 font-mono text-xs text-muted">
+      <PageHeader
+        backHref={`/app/${projectId}`}
+        backLabel={`← ${project.name}`}
+        title="Plantilla de documentos"
+      />
+      <p className="mt-3 max-w-2xl font-sans text-sm text-muted">
         Plantillas orientativas de producción, rellenas con los datos del
         proyecto y listas para imprimir y firmar. No sustituyen asesoría
         legal profesional — la validez varía según el país.
@@ -74,7 +75,7 @@ export default async function DocumentosLegalesPage({
               href={`/app/${projectId}/documentos-legales/${template.href}`}
               className="group border border-line p-5 transition-colors hover:border-accent"
             >
-              <p className="font-display text-lg font-bold uppercase transition-colors group-hover:text-accent">
+              <p className="font-display text-lg font-bold transition-colors group-hover:text-accent">
                 {template.title}
               </p>
               <p className="mt-1 font-mono text-xs text-muted">{template.description}</p>

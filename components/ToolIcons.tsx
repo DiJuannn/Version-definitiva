@@ -135,10 +135,8 @@ export function EventIcon({ className }: IconProps) {
 export function ShotListIcon({ className }: IconProps) {
   return (
     <svg {...shared} className={className}>
-      <rect x="3" y="4" width="8" height="6" rx="1" stroke="currentColor" />
-      <rect x="13" y="4" width="8" height="6" rx="1" stroke="currentColor" />
-      <rect x="3" y="14" width="8" height="6" rx="1" stroke="currentColor" />
-      <rect x="13" y="14" width="8" height="6" rx="1" stroke="currentColor" />
+      <path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M8 10.5h8M8 13.5h5" stroke="currentColor" strokeLinecap="round" />
     </svg>
   );
 }
@@ -223,6 +221,103 @@ export function EyeOffIcon({ className }: IconProps) {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+    </svg>
+  );
+}
+
+// Un icono propio por herramienta — antes cuatro compartían DocumentIcon y
+// Calendario/Plan de rodaje eran casi idénticos.
+export function ScriptIcon({ className }: IconProps) {
+  return (
+    <svg {...shared} className={className}>
+      <path d="M7 3h10a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" stroke="currentColor" strokeLinejoin="round" />
+      <path d="M9.5 8h5M9.5 11h5M9.5 14h3" stroke="currentColor" strokeLinecap="round" />
+      <path d="M3.5 6.5h2M3.5 12h2M3.5 17.5h2" stroke="currentColor" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function StackIcon({ className }: IconProps) {
+  return (
+    <svg {...shared} className={className}>
+      <path d="M12 4 3.5 8.5 12 13l8.5-4.5L12 4Z" stroke="currentColor" strokeLinejoin="round" />
+      <path d="m3.5 12.5 8.5 4.5 8.5-4.5M3.5 16.5 12 21l8.5-4.5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function CallSheetIcon({ className }: IconProps) {
+  return (
+    <svg {...shared} className={className}>
+      <path d="M6 3h9l3 3v7" stroke="currentColor" strokeLinejoin="round" />
+      <path d="M6 3a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M8.5 8h5M8.5 11.5h3" stroke="currentColor" strokeLinecap="round" />
+      <circle cx="16.5" cy="17" r="4" stroke="currentColor" />
+      <path d="M16.5 15v2l1.4 1" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function ScheduleIcon({ className }: IconProps) {
+  return (
+    <svg {...shared} className={className}>
+      <rect x="3" y="4" width="18" height="16" rx="1.5" stroke="currentColor" />
+      <path d="M7 9h6M10 13h7M7 17h5" stroke="currentColor" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function FolderIcon({ className }: IconProps) {
+  return (
+    <svg {...shared} className={className}>
+      <path d="M3.5 7a1 1 0 0 1 1-1h4.6l2 2.2H19.5a1 1 0 0 1 1 1V18a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1V7Z" stroke="currentColor" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function ContractIcon({ className }: IconProps) {
+  return (
+    <svg {...shared} className={className}>
+      <path d="M7 3h7l4 4v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" stroke="currentColor" strokeLinejoin="round" />
+      <path d="M9 9h5" stroke="currentColor" strokeLinecap="round" />
+      <path d="M8.5 16c1-2 1.7-2 2.2-.6.4 1 1 1 1.6-.4.4-.9 1-1.1 1.7-.4" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function PeopleIcon({ className }: IconProps) {
+  return (
+    <svg {...shared} className={className}>
+      <circle cx="9" cy="9" r="3" stroke="currentColor" />
+      <path d="M3.5 19c.5-3 2.6-4.8 5.5-4.8s5 1.8 5.5 4.8" stroke="currentColor" strokeLinecap="round" />
+      <circle cx="17" cy="9.5" r="2.3" stroke="currentColor" />
+      <path d="M16.5 14.4c2.2.1 3.7 1.5 4 3.8" stroke="currentColor" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+export function BoxIcon({ className }: IconProps) {
+  return (
+    <svg {...shared} className={className}>
+      <path d="M12 3 20.5 7.5v9L12 21 3.5 16.5v-9L12 3Z" stroke="currentColor" strokeLinejoin="round" />
+      <path d="M3.5 7.5 12 12l8.5-4.5M12 12v9" stroke="currentColor" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function HomeIcon({ className }: IconProps) {
+  return (
+    <svg {...shared} className={className}>
+      <path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-5H9v5H5a1 1 0 0 1-1-1v-8Z" stroke="currentColor" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function OrganizationIcon({ className }: IconProps) {
+  return (
+    <svg {...shared} className={className}>
+      <path d="M12 3.5 4.5 6v5.5c0 4.3 3 7.4 7.5 9 4.5-1.6 7.5-4.7 7.5-9V6L12 3.5Z" stroke="currentColor" strokeLinejoin="round" />
+      <path d="m9 12 2.2 2.2L15.5 10" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }

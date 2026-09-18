@@ -54,16 +54,18 @@ function currency(value: number) {
 function Section({
   title,
   teaser,
+  href,
   children,
 }: {
   title: string;
   teaser: string;
+  href: string;
   children: React.ReactNode;
 }) {
   return (
     <details className="group border border-line">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 transition-colors hover:text-accent [&::-webkit-details-marker]:hidden">
-        <span className="flex items-center gap-2 font-display text-sm font-bold uppercase">
+        <span className="flex items-center gap-2 font-display text-sm font-bold">
           <span className="text-muted transition-transform group-open:rotate-90">
             →
           </span>
@@ -71,7 +73,12 @@ function Section({
         </span>
         <span className="font-mono text-xs text-muted">{teaser}</span>
       </summary>
-      <div className="border-t border-line p-4">{children}</div>
+      <div className="border-t border-line p-4">
+        {children}
+        <Link href={href} className="link-action mt-3 !text-accent">
+          Abrir {title} →
+        </Link>
+      </div>
     </details>
   );
 }
@@ -136,7 +143,7 @@ export default async function ProjectSummaryPage({
         ) : (
           <Link
             href="/app/organizacion"
-            className="inline-flex items-center gap-1.5 rounded-full border border-line px-5 py-2 font-mono text-xs tracking-widest uppercase text-muted transition-colors hover:border-accent hover:text-accent print:hidden"
+            className="btn btn-outline inline-flex items-center gap-1.5 print:hidden"
           >
             Dossier en PDF — solo PRO
           </Link>
@@ -144,8 +151,8 @@ export default async function ProjectSummaryPage({
       </div>
       <h1 className="mt-3 font-display text-2xl font-bold uppercase">Resumen</h1>
       <p className="mt-2 font-mono text-xs text-muted">
-        Todo el proyecto de un vistazo. Pulsa cada apartado para desplegarlo —
-        nada se abre a la vez para que no se sienta pesado.
+        Todo el proyecto de un vistazo. Pulsa cada apartado para desplegarlo y usa
+        su enlace para ir a la herramienta.
       </p>
 
       <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -181,7 +188,7 @@ export default async function ProjectSummaryPage({
 
       <div className="mt-8 space-y-3">
         <Section
-          title="Escenas"
+          href={`/app/${projectId}/guion`} title="Escenas"
           teaser={`${scenesWithLocation}/${project.scenes.length} con localización`}
         >
           {project.scenes.length === 0 ? (
@@ -207,7 +214,7 @@ export default async function ProjectSummaryPage({
         </Section>
 
         <Section
-          title="Reparto"
+          href={`/app/${projectId}/personajes`} title="Reparto"
           teaser={`${charactersWithActor}/${project.characters.length} con actor`}
         >
           {project.characters.length === 0 ? (
@@ -227,7 +234,7 @@ export default async function ProjectSummaryPage({
         </Section>
 
         <Section
-          title="Equipo técnico"
+          href={`/app/${projectId}/desglose`} title="Equipo técnico"
           teaser={`${project.crewMembers.length} personas`}
         >
           {project.crewMembers.length === 0 ? (
@@ -246,7 +253,7 @@ export default async function ProjectSummaryPage({
           )}
         </Section>
 
-        <Section title="Localizaciones" teaser={`${locations.length} usadas`}>
+        <Section href={`/app/${projectId}/localizaciones`} title="Localizaciones" teaser={`${locations.length} usadas`}>
           {locations.length === 0 ? (
             <p className="font-mono text-sm text-muted">
               Ninguna escena tiene localización todavía.
@@ -266,7 +273,7 @@ export default async function ProjectSummaryPage({
         </Section>
 
         <Section
-          title="Desglose"
+          href={`/app/${projectId}/desglose`} title="Desglose"
           teaser={`${project.breakdownElements.length} elementos`}
         >
           {project.breakdownElements.length === 0 ? (
@@ -289,7 +296,7 @@ export default async function ProjectSummaryPage({
           )}
         </Section>
 
-        <Section title="Inventario" teaser={`${inventoryItems.length} elementos`}>
+        <Section href="/app/inventario" title="Inventario" teaser={`${inventoryItems.length} elementos`}>
           {inventoryItems.length === 0 ? (
             <p className="font-mono text-sm text-muted">
               Sin equipo reservado todavía — se reserva por día de rodaje.
@@ -310,7 +317,7 @@ export default async function ProjectSummaryPage({
           )}
         </Section>
 
-        <Section title="Vehículos" teaser={`${vehicles.length} usados`}>
+        <Section href={`/app/${projectId}/vehiculos`} title="Vehículos" teaser={`${vehicles.length} usados`}>
           {vehicles.length === 0 ? (
             <p className="font-mono text-sm text-muted">
               Sin vehículos reservados todavía — se reservan por día de rodaje.
@@ -332,7 +339,7 @@ export default async function ProjectSummaryPage({
         </Section>
 
         <Section
-          title="Presupuesto"
+          href={`/app/${projectId}/presupuesto`} title="Presupuesto"
           teaser={
             budgetTarget
               ? `${currency(budgetGrandTotal)} / ${currency(budgetTarget)}`
@@ -362,7 +369,7 @@ export default async function ProjectSummaryPage({
         </Section>
 
         <Section
-          title="Calendario de rodaje"
+          href={`/app/${projectId}/plan-de-rodaje`} title="Calendario de rodaje"
           teaser={`${shootingDaysWithNeeds.length} días marcados`}
         >
           {calendarMonths.length === 0 ? (
@@ -434,7 +441,7 @@ export default async function ProjectSummaryPage({
         </Section>
 
         <Section
-          title="Plan de rodaje"
+          href={`/app/${projectId}/plan-de-rodaje`} title="Plan de rodaje"
           teaser={`${project.shootingDays.length} días`}
         >
           {shootingDaysWithNeeds.length === 0 ? (
@@ -480,7 +487,7 @@ export default async function ProjectSummaryPage({
         </Section>
 
         <Section
-          title="Shot list y storyboard"
+          href={`/app/${projectId}/shot-list`} title="Shot list y storyboard"
           teaser={`${shotsTotal} planos · ${storyboardFramesCount} viñetas`}
         >
           <p className="font-mono text-sm">

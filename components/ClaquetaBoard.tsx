@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { logClap, deleteClapLog } from "@/lib/actions/clapboard";
 import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
 import { DeleteButton } from "@/components/DeleteButton";
+import { useToast } from "@/components/Toast";
 
 type SceneOption = {
   id: string;
@@ -22,6 +23,8 @@ type ClapLogEntry = {
   director: string | null;
   camera: string | null;
   createdAt: string;
+  // La toma se marcó en pantalla pero el servidor no llegó a guardarla.
+  failed?: boolean;
 };
 
 // Ruido percusivo sintetizado con Web Audio — sin depender de ningún
@@ -98,6 +101,8 @@ export function ClaquetaBoard({
   const [camera, setCamera] = useState("");
   const [clapping, setClapping] = useState(false);
   const [saving, setSaving] = useState(false);
+  const { toast } = useToast();
+  const retries = useRef(new Map<string, () => Promise<void>>());
   const [log, setLog] = useState(initialLog);
   const today = new Date().toLocaleDateString("es-ES", {
     day: "2-digit",
@@ -156,7 +161,6 @@ export function ClaquetaBoard({
     setLog((prev) => [optimisticEntry, ...prev].slice(0, 20));
     setTake(thisTake + 1);
 
-    setSaving(true);
     const fd = new FormData();
     // sceneId solo tiene sentido si la escena viene de la lista real — si se
     // escribió a mano, sceneId puede quedar apuntando a una escena distinta.
@@ -170,18 +174,42 @@ export function ClaquetaBoard({
       fd.set("intExt", selectedScene.intExt);
       fd.set("dayPart", selectedScene.dayPart);
     }
-    const result = await logClap(projectId, fd);
-    setSaving(false);
 
-    // Sin esto, la toma recién marcada se queda para siempre con el id
-    // provisional y el botón "Eliminar" nunca llega a aparecer para ella.
-    if (result && "success" in result) {
-      setLog((prev) =>
-        prev.map((entry) => (entry.id === optimisticId ? { ...entry, id: result.id } : entry)),
-      );
-    } else {
-      setLog((prev) => prev.filter((entry) => entry.id !== optimisticId));
+    async function persist() {
+      setSaving(true);
+      let ok = false;
+      try {
+        const result = await logClap(projectId, fd);
+        // Sin esto, la toma recién marcada se queda para siempre con el id
+        // provisional y el botón "Eliminar" nunca llega a aparecer para ella.
+        if (result && "success" in result) {
+          ok = true;
+          retries.current.delete(optimisticId);
+          setLog((prev) =>
+            prev.map((entry) =>
+              entry.id === optimisticId ? { ...entry, id: result.id, failed: false } : entry,
+            ),
+          );
+        }
+      } catch {
+        ok = false;
+      }
+      setSaving(false);
+      if (!ok) {
+        // En rodaje no se puede perder una toma en silencio: se queda en el
+        // historial marcada como "sin guardar" y con reintento.
+        retries.current.set(optimisticId, persist);
+        setLog((prev) =>
+          prev.map((entry) => (entry.id === optimisticId ? { ...entry, failed: true } : entry)),
+        );
+        toast("error", `No se guardó la toma ${thisTake} de la escena ${sceneNumber}. Reintenta cuando haya conexión.`);
+      }
     }
+    await persist();
+  }
+
+  async function retryLog(id: string) {
+    await retries.current.get(id)?.();
   }
 
   async function handleDeleteLog(id: string) {
@@ -248,7 +276,7 @@ export function ClaquetaBoard({
                 <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
                   Producción
                 </p>
-                <p className="mt-0.5 truncate font-display text-sm font-bold uppercase text-fg sm:text-base">
+                <p className="mt-0.5 truncate font-display text-sm font-bold text-fg sm:text-base">
                   {projectName}
                 </p>
               </div>
@@ -497,6 +525,11 @@ export function ClaquetaBoard({
                           <p className="font-mono text-sm">
                             {entry.shotNumber ? `Plano ${entry.shotNumber} · ` : ""}
                             Toma {entry.take}
+                            {entry.failed && (
+                              <span className="ml-2 text-[10px] tracking-widest text-warn uppercase">
+                                Sin guardar
+                              </span>
+                            )}
                           </p>
                           <p className="font-mono text-[10px] text-muted">
                             {[entry.director, entry.camera].filter(Boolean).join(" · ") || "—"}
@@ -508,10 +541,20 @@ export function ClaquetaBoard({
                             })}
                           </p>
                         </div>
-                        {!entry.id.startsWith("pending-") && (
-                          <form action={() => handleDeleteLog(entry.id)}>
-                            <DeleteButton className="font-mono text-[10px] tracking-widest text-muted uppercase hover:text-accent" />
-                          </form>
+                        {entry.failed ? (
+                          <button
+                            type="button"
+                            onClick={() => retryLog(entry.id)}
+                            className="link-action !text-warn"
+                          >
+                            Reintentar
+                          </button>
+                        ) : (
+                          !entry.id.startsWith("pending-") && (
+                            <form action={() => handleDeleteLog(entry.id)}>
+                              <DeleteButton />
+                            </form>
+                          )
                         )}
                       </div>
                     ))}

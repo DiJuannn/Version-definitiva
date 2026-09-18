@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
-import { BackLink } from "@/components/BackLink";
+import { PageHeader } from "@/components/PageHeader";
 import { ClaquetaBoard } from "@/components/ClaquetaBoard";
 
 export default async function ClaquetaPage({
@@ -66,11 +66,12 @@ export default async function ClaquetaPage({
 
   return (
     <div>
-      <BackLink href={`/app/${projectId}`}>← {project.name}</BackLink>
-      <h1 className="mt-3 font-display text-2xl font-bold uppercase">
-        Claqueta digital
-      </h1>
-      <p className="mt-2 font-mono text-xs text-muted">
+      <PageHeader
+        backHref={`/app/${projectId}`}
+        backLabel={`← ${project.name}`}
+        title="Claqueta digital"
+      />
+      <p className="mt-3 max-w-2xl font-sans text-sm text-muted">
         {scenes.length > 0
           ? "Elige la escena de la lista o escríbela a mano, ajusta la toma y toca el tablero para marcar."
           : "Este proyecto todavía no tiene escenas — escribe el número a mano."}

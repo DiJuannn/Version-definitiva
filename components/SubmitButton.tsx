@@ -39,7 +39,7 @@ export function SubmitButton({
       disabled={pending}
       className={`${
         className ??
-        "rounded-full bg-fg px-4 py-1.5 font-mono text-xs tracking-widest text-bg uppercase transition hover:opacity-90 disabled:opacity-50 active:scale-[0.97]"
+        "btn btn-secondary btn-sm"
       } ${pending ? "inline-flex items-center gap-1.5" : ""}`}
     >
       {pending && (

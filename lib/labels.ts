@@ -46,7 +46,7 @@ export const BREAKDOWN_CATEGORY_LABELS: Record<BreakdownCategory, string> = {
   SOUND: "Sonido",
   VFX: "Efectos especiales",
   LIGHTING: "Iluminación",
-  EQUIPMENT: "Equipo técnico",
+  EQUIPMENT: "Material técnico",
 };
 
 export const INVENTORY_CATEGORY_LABELS: Record<InventoryItemCategory, string> = {

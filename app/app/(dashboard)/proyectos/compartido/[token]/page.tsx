@@ -81,7 +81,7 @@ export default async function AcceptProjectSharePage({
       <form action={acceptProjectShare.bind(null, token)} className="mt-6">
         <SubmitButton
           pendingLabel="Entrando…"
-          className="rounded-full bg-accent px-6 py-2.5 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+          className="btn btn-primary"
         >
           Entrar al proyecto
         </SubmitButton>

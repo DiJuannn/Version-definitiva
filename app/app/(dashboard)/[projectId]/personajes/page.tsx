@@ -9,8 +9,9 @@ import {
   updateCharacterActor,
 } from "@/lib/actions/characters";
 import { EmptyState } from "@/components/EmptyState";
-import { BackLink } from "@/components/BackLink";
+import { PageHeader } from "@/components/PageHeader";
 import { SubmitButton } from "@/components/SubmitButton";
+import { FormField } from "@/components/FormField";
 import { ActorAssignmentField } from "@/components/ActorAssignmentField";
 
 export default async function PersonajesPage({
@@ -48,10 +49,11 @@ export default async function PersonajesPage({
 
   return (
     <div>
-      <BackLink href={`/app/${projectId}`}>← {project.name}</BackLink>
-      <h1 className="mt-3 font-display text-2xl font-bold uppercase">
-        Personajes
-      </h1>
+      <PageHeader
+        backHref={`/app/${projectId}`}
+        backLabel={`← ${project.name}`}
+        title="Personajes"
+      />
 
       <section className="mt-10">
         <h2 className="font-mono text-xs tracking-widest text-muted uppercase">
@@ -62,13 +64,14 @@ export default async function PersonajesPage({
           action={createActorAction}
           className="mt-4 grid gap-3 border border-line p-5 sm:grid-cols-2 lg:grid-cols-3"
         >
-          <select
+          <FormField label="Persona del directorio Equipo">
+            <select
             name="personId"
             defaultValue=""
             className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
           >
             <option value="" className="bg-bg">
-              Crear nuevo (sin vincular a Equipo)
+              Persona nueva (sin usar el directorio)
             </option>
             {people.map((person) => (
               <option key={person.id} value={person.id} className="bg-bg">
@@ -76,43 +79,40 @@ export default async function PersonajesPage({
               </option>
             ))}
           </select>
-          <input
-            name="name"
-            placeholder="Nombre (si no usas Equipo)"
+          </FormField>
+          <FormField label="Nombre">
+            <input name="name"
             className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
-          />
-          <input
-            name="email"
-            placeholder="Email de contacto"
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
-          />
-          <input
-            name="phone"
-            placeholder="Teléfono"
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
-          />
-          <input
-            name="rate"
+          
+            placeholder="si no usas Equipo" />
+          </FormField>
+          <FormField label="Email de contacto">
+            <input name="email"
+            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
+          </FormField>
+          <FormField label="Teléfono">
+            <input name="phone"
+            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
+          </FormField>
+          <FormField label="Caché">
+            <input name="rate"
             type="number"
             step="0.01"
-            placeholder="Caché"
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
-          />
-          <input
-            name="availability"
-            placeholder="Disponibilidad"
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
-          />
-          <input
-            name="notes"
-            placeholder="Notas"
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
-          />
+            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
+          </FormField>
+          <FormField label="Disponibilidad">
+            <input name="availability"
+            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
+          </FormField>
+          <FormField label="Notas">
+            <input name="notes"
+            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
+          </FormField>
           <div>
             <SubmitButton
               pendingLabel="Añadiendo…"
               savedLabel="✓ Añadido"
-              className="rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+              className="btn btn-secondary"
             >
               Añadir actor
             </SubmitButton>
@@ -132,7 +132,7 @@ export default async function PersonajesPage({
                 className="flex items-center justify-between gap-4 border-b border-line py-4"
               >
                 <div>
-                  <p className="font-display text-lg font-bold uppercase">
+                  <p className="font-display text-lg font-bold">
                     {actor.name}
                   </p>
                   <p className="font-mono text-xs text-muted">
@@ -144,7 +144,7 @@ export default async function PersonajesPage({
                 <form action={deleteActor.bind(null, projectId, actor.id)}>
                   <DeleteButton
                     confirmMessage="¿Eliminar este actor? Se desvinculará de sus personajes."
-                    className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
+                    className="link-action"
                   />
                 </form>
               </div>
@@ -162,13 +162,13 @@ export default async function PersonajesPage({
           action={createCharacterAction}
           className="mt-4 grid gap-3 border border-line p-5 sm:grid-cols-2 lg:grid-cols-3"
         >
-          <input
-            name="name"
-            placeholder="Nombre del personaje"
+          <FormField label="Nombre del personaje">
+            <input name="name"
             required
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
-          />
-          <select
+            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
+          </FormField>
+          <FormField label="Actor">
+            <select
             name="actorId"
             defaultValue=""
             className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
@@ -182,16 +182,16 @@ export default async function PersonajesPage({
               </option>
             ))}
           </select>
-          <input
-            name="notes"
-            placeholder="Notas"
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
-          />
+          </FormField>
+          <FormField label="Notas">
+            <input name="notes"
+            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
+          </FormField>
           <div>
             <SubmitButton
               pendingLabel="Añadiendo…"
               savedLabel="✓ Añadido"
-              className="rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+              className="btn btn-secondary"
             >
               Añadir personaje
             </SubmitButton>
@@ -211,7 +211,7 @@ export default async function PersonajesPage({
                 className="flex flex-wrap items-center justify-between gap-4 border-b border-line py-4"
               >
                 <div>
-                  <p className="font-display text-lg font-bold uppercase">
+                  <p className="font-display text-lg font-bold">
                     {character.name}
                   </p>
                   {character.notes && (
@@ -245,7 +245,7 @@ export default async function PersonajesPage({
                   >
                     <DeleteButton
                       confirmMessage="¿Eliminar este personaje?"
-                      className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
+                      className="link-action"
                     />
                   </form>
                 </div>

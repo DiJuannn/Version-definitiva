@@ -9,7 +9,7 @@ export function BackLink({ href, children }: { href: string; children: ReactNode
   return (
     <Link
       href={href}
-      className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
+      className="link-action"
     >
       {children}
       <LinkPendingHint />

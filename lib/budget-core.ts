@@ -72,3 +72,18 @@ export async function createBudgetItemCore(
 export async function deleteBudgetItemCore(projectId: string, itemId: string) {
   await prisma.budgetItem.deleteMany({ where: { id: itemId, category: { projectId } } });
 }
+
+// Marca el gasto real de una partida (IVA incluido). null la deja como "sin
+// gastar todavía". El previsto no cambia nunca por esto.
+export async function setBudgetItemActualCore(
+  projectId: string,
+  itemId: string,
+  amount: number | null,
+): Promise<boolean> {
+  if (amount !== null && (!Number.isFinite(amount) || amount < 0)) return false;
+  const result = await prisma.budgetItem.updateMany({
+    where: { id: itemId, category: { projectId } },
+    data: { actualAmount: amount },
+  });
+  return result.count > 0;
+}

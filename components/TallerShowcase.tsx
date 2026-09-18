@@ -11,7 +11,7 @@ const STAGES = [
   {
     num: "01",
     title: "Organiza",
-    text: "Tareas, calendario, localizaciones y vehículos de toda la productora en un solo sitio, con el siguiente paso de cada proyecto siempre a la vista.",
+    text: "El Inicio te dice cuándo es el próximo rodaje, qué requiere atención y cuál es el siguiente paso de cada proyecto. Tareas, calendario y recursos de la productora, en un solo sitio.",
     tools: ["Tareas", "Calendario", "Localizaciones", "Vehículos"],
     image: "/images/taller/organiza.jpg" as string | null,
     frameLabel: "Taller",
@@ -38,7 +38,7 @@ const STAGES = [
   {
     num: "04",
     title: "Controla",
-    text: "Presupuesto por categorías con IVA, enlazado a actores, equipo y localizaciones. Los totales se calculan solos.",
+    text: "Presupuesto por categorías con IVA, enlazado a actores, equipo y localizaciones. Lo previsto se calcula solo y anotas el gasto real de cada partida para ver cuánto te queda.",
     tools: ["Presupuesto", "Biblioteca de archivos", "Plantilla de documentos"],
     image: "/images/taller/controla.jpg" as string | null,
     frameLabel: "Taller / Presupuesto",

@@ -5,7 +5,8 @@ import { createCalendarEvent, deleteCalendarEvent } from "@/lib/actions/calendar
 import { DeleteButton } from "@/components/DeleteButton";
 import { ChipOption } from "@/components/ChipOption";
 import { SubmitButton } from "@/components/SubmitButton";
-import { BackLink } from "@/components/BackLink";
+import { PageHeader } from "@/components/PageHeader";
+import { FormField } from "@/components/FormField";
 import { LinkPendingHint } from "@/components/LinkPendingHint";
 import { CalendarEventType } from "@/lib/generated/prisma";
 
@@ -172,32 +173,90 @@ export default async function CalendarioPage({
     weeks.push(days.slice(i, i + 7));
   }
 
+  const today = new Date();
+  const agendaDays = weeks
+    .flat()
+    .filter((day) => day.getMonth() === monthStart.getMonth())
+    .map((day) => ({ day, entries: dayEntries.filter((entry) => sameDay(entry.date, day)) }))
+    .filter((d) => d.entries.length > 0);
+
   return (
     <div>
-      <BackLink href="/app">← Taller</BackLink>
-      <div className="mt-3 flex items-center justify-between">
-        <h1 className="font-display text-2xl font-bold uppercase">
-          {monthStart.toLocaleDateString("es-ES", { month: "long", year: "numeric" })}
-        </h1>
-        <div className="flex gap-4 font-mono text-xs tracking-widest uppercase">
-          <Link
-            href={`/app/calendario?month=${toMonthParam(prevMonth)}`}
-            className="text-muted hover:text-accent"
-          >
-            ← Anterior
-            <LinkPendingHint />
-          </Link>
-          <Link
-            href={`/app/calendario?month=${toMonthParam(nextMonth)}`}
-            className="text-muted hover:text-accent"
-          >
-            Siguiente →
-            <LinkPendingHint />
-          </Link>
-        </div>
+      <PageHeader
+        backHref="/app"
+        backLabel="← Inicio"
+        eyebrow="Organización"
+        title={monthStart.toLocaleDateString("es-ES", { month: "long", year: "numeric" })}
+        description="Rodajes de todos tus proyectos y los eventos de la productora."
+        actions={
+          <div className="flex items-center gap-1">
+            <Link
+              href={`/app/calendario?month=${toMonthParam(prevMonth)}`}
+              aria-label="Mes anterior"
+              className="btn btn-outline btn-sm"
+            >
+              ←
+            </Link>
+            <Link href="/app/calendario" className="btn btn-outline btn-sm">
+              Hoy
+            </Link>
+            <Link
+              href={`/app/calendario?month=${toMonthParam(nextMonth)}`}
+              aria-label="Mes siguiente"
+              className="btn btn-outline btn-sm"
+            >
+              →
+            </Link>
+          </div>
+        }
+      />
+
+      {/* Móvil: agenda por días (la rejilla de 7 columnas no cabe). */}
+      <div className="mt-6 md:hidden">
+        {agendaDays.length === 0 ? (
+          <p className="font-sans text-sm text-muted">Nada este mes. Añade un evento abajo.</p>
+        ) : (
+          <div className="border-t border-line">
+            {agendaDays.map(({ day, entries }) => (
+              <div key={day.toISOString()} className="flex gap-4 border-b border-line py-3">
+                <div className="w-12 shrink-0 text-center">
+                  <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                    {day.toLocaleDateString("es-ES", { weekday: "short" })}
+                  </p>
+                  <p
+                    className={`font-display text-2xl leading-none font-black ${
+                      sameDay(day, today) ? "text-accent" : ""
+                    }`}
+                  >
+                    {day.getDate()}
+                  </p>
+                </div>
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  {entries.map((entry) =>
+                    entry.href ? (
+                      <Link
+                        key={entry.id}
+                        href={entry.href}
+                        className="flex items-center gap-2 font-mono text-xs hover:text-accent"
+                      >
+                        <entry.Icon className="h-3.5 w-3.5 shrink-0 text-accent" />
+                        {entry.label}
+                      </Link>
+                    ) : (
+                      <p key={entry.id} className="flex items-center gap-2 font-mono text-xs">
+                        <entry.Icon className="h-3.5 w-3.5 shrink-0 text-muted" />
+                        {entry.label}
+                      </p>
+                    ),
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
-      <div className="mt-6 grid grid-cols-7 border-l border-t border-line">
+      <div className="mt-6 hidden grid-cols-7 border-l border-t border-line md:grid">
         {WEEKDAYS.map((day) => (
           <div
             key={day}
@@ -212,11 +271,11 @@ export default async function CalendarioPage({
           return (
             <div
               key={day.toISOString()}
-              className={`min-h-24 border-b border-r border-line p-1.5 ${
+              className={`min-h-28 border-b border-r border-line p-1.5 ${
                 isCurrentMonth ? "" : "opacity-30"
-              }`}
+              } ${sameDay(day, today) ? "bg-accent/10" : ""}`}
             >
-              <p className="font-mono text-[10px] text-muted">{day.getDate()}</p>
+              <p className={`font-mono text-[11px] ${sameDay(day, today) ? "font-bold text-accent" : "text-muted"}`}>{day.getDate()}</p>
               <div className="mt-1 space-y-1">
                 {entriesForDay.map((entry) =>
                   entry.href ? (
@@ -249,22 +308,26 @@ export default async function CalendarioPage({
           action={createCalendarEvent}
           className="mt-4 grid gap-2 border border-line p-4 sm:grid-cols-2 lg:grid-cols-5"
         >
-          <input
-            name="title"
-            placeholder="Título"
-            required
-            className="border border-line bg-transparent px-2 py-1.5 text-xs outline-none transition-colors focus:border-accent sm:col-span-2"
-          />
-          <input
-            type="date"
-            name="date"
-            required
-            className="border border-line bg-transparent px-2 py-1.5 text-xs outline-none transition-colors focus:border-accent"
-          />
+          <FormField label="Título" className="sm:col-span-2">
+            <input
+              name="title"
+              required
+              className="border border-line bg-transparent px-2 py-1.5 text-sm outline-none transition-colors focus:border-accent"
+            />
+          </FormField>
+          <FormField label="Fecha">
+            <input
+              type="date"
+              name="date"
+              required
+              className="border border-line bg-transparent px-2 py-1.5 text-sm outline-none transition-colors focus:border-accent"
+            />
+          </FormField>
+          <FormField label="Proyecto">
           <select
             name="projectId"
             defaultValue=""
-            className="border border-line bg-transparent px-2 py-1.5 text-xs outline-none transition-colors focus:border-accent"
+            className="border border-line bg-transparent px-2 py-1.5 text-sm outline-none transition-colors focus:border-accent"
           >
             <option value="" className="bg-bg">
               Sin proyecto
@@ -275,6 +338,7 @@ export default async function CalendarioPage({
               </option>
             ))}
           </select>
+          </FormField>
 
           <div className="sm:col-span-2 lg:col-span-5">
             <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
@@ -297,7 +361,7 @@ export default async function CalendarioPage({
           <div className="sm:col-span-2 lg:col-span-5">
             <SubmitButton
               pendingLabel="Añadiendo…"
-              className="rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90 disabled:opacity-70"
+              className="btn btn-secondary"
             >
               Añadir
             </SubmitButton>
@@ -323,7 +387,7 @@ export default async function CalendarioPage({
                 <form action={deleteCalendarEvent.bind(null, event.id)}>
                   <DeleteButton
                     confirmMessage="¿Eliminar este evento del calendario?"
-                    className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
+                    className="link-action"
                   />
                 </form>
               </div>

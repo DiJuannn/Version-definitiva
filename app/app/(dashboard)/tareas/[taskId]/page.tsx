@@ -153,7 +153,7 @@ export default async function TaskDetailPage({
           <SubmitButton
             pendingLabel="Guardando…"
             savedLabel="✓ Guardado"
-            className="rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+            className="btn btn-secondary"
           >
             Guardar
           </SubmitButton>
@@ -186,7 +186,7 @@ export default async function TaskDetailPage({
           <SubmitButton
             pendingLabel="Enviando…"
             savedLabel="✓ Enviado"
-            className="shrink-0 rounded-full bg-fg px-4 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+            className="btn btn-secondary btn-sm shrink-0"
           >
             Enviar
           </SubmitButton>
@@ -196,7 +196,7 @@ export default async function TaskDetailPage({
       <form action={deleteTask.bind(null, taskId)} className="mt-8">
         <DeleteButton
           confirmMessage="¿Eliminar esta tarea? No se puede deshacer."
-          className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
+          className="link-action"
         >
           Eliminar tarea
         </DeleteButton>

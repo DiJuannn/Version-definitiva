@@ -817,6 +817,10 @@ model BudgetItem {
   quantity           Decimal  @default(1)
   unitPrice          Decimal  @default(0)
   taxRate            Decimal  @default(0)
+  // Gasto real de la partida (IVA incluido). Null = todavía no se ha
+  // gastado/pagado; el previsto se sigue calculando siempre de
+  // cantidad × precio × IVA.
+  actualAmount       Decimal?
   notes              String?
   actorId            String?
   locationId         String?

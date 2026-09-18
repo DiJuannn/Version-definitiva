@@ -6,7 +6,7 @@ import { SubmitButton } from "@/components/SubmitButton";
 import type { ScriptAnalysisProposal } from "@/lib/mistral";
 import { BREAKDOWN_CATEGORY_LABELS, DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
 import { BreakdownCategory, DayPart, IntExt } from "@/lib/generated/prisma";
-import { BackLink } from "@/components/BackLink";
+import { PageHeader } from "@/components/PageHeader";
 
 export default async function ScriptAnalysisReviewPage({
   params,
@@ -43,11 +43,12 @@ export default async function ScriptAnalysisReviewPage({
 
   return (
     <div>
-      <BackLink href={`/app/${projectId}/guion`}>← Guion</BackLink>
-      <h1 className="mt-3 font-display text-2xl font-bold uppercase">
-        Revisar análisis de IA
-      </h1>
-      <p className="mt-2 font-mono text-xs text-muted">
+      <PageHeader
+        backHref={`/app/${projectId}/guion`}
+        backLabel="← Guion"
+        title="Revisar análisis de IA"
+      />
+      <p className="mt-3 max-w-2xl font-sans text-sm text-muted">
         Nada de esto se guarda todavía. Desmarca lo que no quieras importar y
         pulsa &ldquo;Importar seleccionados&rdquo; al final.
       </p>
@@ -161,7 +162,7 @@ export default async function ScriptAnalysisReviewPage({
                     className="mt-1"
                   />
                   <div className="flex-1">
-                    <p className="font-display text-sm font-bold uppercase">
+                    <p className="font-display text-sm font-bold">
                       Escena {scene.number}
                       {scene.intExt && (Object.values(IntExt) as string[]).includes(scene.intExt)
                         ? ` — ${INT_EXT_LABELS[scene.intExt as IntExt]}`
@@ -206,7 +207,7 @@ export default async function ScriptAnalysisReviewPage({
         <div className="mt-10">
           <SubmitButton
             pendingLabel="Importando…"
-            className="rounded-full bg-fg px-6 py-2.5 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90 disabled:opacity-50"
+            className="btn btn-secondary"
           >
             Importar seleccionados
           </SubmitButton>

@@ -6,6 +6,7 @@ import type { RealtimeChannel } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { assignSceneToDay } from "@/lib/actions/shooting-days";
 import { FeatureIntro } from "@/components/FeatureIntro";
+import { useToast } from "@/components/Toast";
 
 export type TimelineScene = {
   id: string;
@@ -35,6 +36,10 @@ type DragState = {
 
 function SceneCard({
   scene,
+  projectId,
+  columns,
+  currentColumn,
+  onMove,
   isPressing,
   isDragging,
   onPointerDown,
@@ -42,6 +47,10 @@ function SceneCard({
   onPointerUp,
 }: {
   scene: TimelineScene;
+  projectId: string;
+  columns: { id: string; label: string }[];
+  currentColumn: string;
+  onMove: (columnId: string) => void;
   isPressing: boolean;
   isDragging: boolean;
   onPointerDown: (e: React.PointerEvent<HTMLDivElement>) => void;
@@ -61,11 +70,39 @@ function SceneCard({
         (isPressing ? " scale-95 border-accent" : "")
       }
     >
-      <p className="font-display text-sm font-bold uppercase">Escena {scene.number}</p>
+      <p className="font-display text-sm font-bold">Escena {scene.number}</p>
       <p className="mt-1 font-mono text-[10px] leading-relaxed text-muted">
         {scene.intExtLabel} · {scene.dayPartLabel}
         {scene.locationName ? ` · ${scene.locationName}` : ""}
       </p>
+      {/* Alternativa al arrastre: sirve con teclado y en táctil sin pulsación larga. */}
+      <div
+        className="mt-2 flex items-center gap-2"
+        onPointerDown={(e) => e.stopPropagation()}
+      >
+        <label className="sr-only" htmlFor={`move-${scene.id}`}>
+          Mover la escena {scene.number} a otro día
+        </label>
+        <select
+          id={`move-${scene.id}`}
+          value={currentColumn}
+          onChange={(e) => onMove(e.target.value)}
+          className="min-w-0 flex-1 border border-line bg-transparent px-1.5 py-1 font-mono text-[10px] text-muted outline-none focus:border-accent"
+        >
+          {columns.map((column) => (
+            <option key={column.id} value={column.id} className="bg-bg">
+              {column.label}
+            </option>
+          ))}
+        </select>
+        <Link
+          href={`/app/${projectId}/guion/${scene.id}`}
+          aria-label={`Abrir la escena ${scene.number}`}
+          className="shrink-0 px-1 font-mono text-[11px] text-muted hover:text-accent"
+        >
+          →
+        </Link>
+      </div>
     </div>
   );
 }
@@ -87,6 +124,7 @@ export function ShootingTimeline({
   const [ghostPos, setGhostPos] = useState<{ x: number; y: number } | null>(null);
   const [pressingSceneId, setPressingSceneId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+  const { toast } = useToast();
   const [otherViewers, setOtherViewers] = useState<string[]>([]);
   const channelRef = useRef<RealtimeChannel | null>(null);
   const senderIdRef = useRef<string | null>(null);
@@ -144,7 +182,18 @@ export function ShootingTimeline({
     return map;
   }, [scenes, days]);
 
+  const columns = useMemo(
+    () => [
+      { id: UNASSIGNED, label: "Sin asignar" },
+      ...days.map((day) => ({ id: day.id, label: day.label })),
+    ],
+    [days],
+  );
+
   function commitMove(sceneId: string, targetDayId: string | null) {
+    const previous = scenes.find((s) => s.id === sceneId)?.dayId ?? null;
+    if (previous === targetDayId) return;
+    const scene = scenes.find((s) => s.id === sceneId);
     setScenes((prev) =>
       prev.map((s) => (s.id === sceneId ? { ...s, dayId: targetDayId } : s)),
     );
@@ -153,8 +202,30 @@ export function ShootingTimeline({
       event: "scene-moved",
       payload: { sceneId, dayId: targetDayId, senderId: senderIdRef.current },
     });
-    startTransition(() => {
-      assignSceneToDay(projectId, sceneId, targetDayId);
+    startTransition(async () => {
+      let ok = false;
+      try {
+        ok = await assignSceneToDay(projectId, sceneId, targetDayId);
+      } catch {
+        ok = false;
+      }
+      if (ok) {
+        const label = targetDayId
+          ? (days.find((d) => d.id === targetDayId)?.label ?? "el día")
+          : "Sin asignar";
+        toast("success", `Escena ${scene?.number ?? ""} movida a ${label}`);
+      } else {
+        // Vuelve a su sitio para que la pantalla no mienta sobre lo guardado.
+        setScenes((prev) =>
+          prev.map((s) => (s.id === sceneId ? { ...s, dayId: previous } : s)),
+        );
+        channelRef.current?.send({
+          type: "broadcast",
+          event: "scene-moved",
+          payload: { sceneId, dayId: previous, senderId: senderIdRef.current },
+        });
+        toast("error", "No se pudo mover la escena. Se ha dejado donde estaba.");
+      }
     });
   }
 
@@ -266,7 +337,8 @@ export function ShootingTimeline({
     <div className="mt-8">
       <FeatureIntro featureId="shooting-timeline">
         Mantén pulsada una escena (o arrástrala con el ratón) para cambiarla
-        de día de rodaje — se guarda sola, sin formularios. La columna
+        de día de rodaje — se guarda sola, sin formularios. También puedes
+        usar el selector de cada tarjeta, que funciona con teclado. La columna
         &ldquo;Sin asignar&rdquo; son las escenas que todavía no tienen día.
         Si alguien más tiene esta pantalla abierta a la vez, los cambios se
         ven al instante en las dos pantallas.
@@ -300,6 +372,10 @@ export function ShootingTimeline({
                 onPointerDown={(e) => handlePointerDown(e, scene.id)}
                 onPointerMove={(e) => handlePointerMove(e, scene.id)}
                 onPointerUp={(e) => handlePointerUp(e, scene.id)}
+                projectId={projectId}
+                columns={columns}
+                currentColumn={scene.dayId ?? UNASSIGNED}
+                onMove={(columnId) => commitMove(scene.id, columnId === UNASSIGNED ? null : columnId)}
               />
             ))}
             {(byColumn.get(UNASSIGNED) ?? []).length === 0 && (
@@ -320,7 +396,7 @@ export function ShootingTimeline({
             <div className="flex items-center justify-between border-b border-line pb-3">
               <Link
                 href={`/app/${projectId}/plan-de-rodaje/${day.id}`}
-                className="font-display text-sm font-bold uppercase transition-colors hover:text-accent"
+                className="font-display text-sm font-bold transition-colors hover:text-accent"
               >
                 {day.label}
               </Link>
@@ -330,9 +406,9 @@ export function ShootingTimeline({
             </div>
 
             {day.conflicts.length > 0 && (
-              <div className="border border-accent p-2">
+              <div className="border border-warn/60 p-2">
                 {day.conflicts.map((c, i) => (
-                  <p key={i} className="font-mono text-[10px] text-accent">
+                  <p key={i} className="font-mono text-[10px] text-warn">
                     ⚠ {c.personName} — {c.reason}
                   </p>
                 ))}
@@ -349,6 +425,10 @@ export function ShootingTimeline({
                   onPointerDown={(e) => handlePointerDown(e, scene.id)}
                   onPointerMove={(e) => handlePointerMove(e, scene.id)}
                   onPointerUp={(e) => handlePointerUp(e, scene.id)}
+                  projectId={projectId}
+                  columns={columns}
+                  currentColumn={scene.dayId ?? UNASSIGNED}
+                  onMove={(columnId) => commitMove(scene.id, columnId === UNASSIGNED ? null : columnId)}
                 />
               ))}
               {(byColumn.get(day.id) ?? []).length === 0 && (

@@ -69,7 +69,7 @@ export function ProjectShareButton({
             proyecto — no el resto de tu organización.
           </p>
           {shareState?.error && (
-            <p className="mt-2 font-mono text-[11px] text-accent">{shareState.error}</p>
+            <p className="mt-2 font-mono text-[11px] text-danger">{shareState.error}</p>
           )}
 
           {shares.length > 0 && (

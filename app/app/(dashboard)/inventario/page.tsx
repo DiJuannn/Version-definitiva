@@ -8,7 +8,7 @@ import { FormField } from "@/components/FormField";
 import { EmptyState } from "@/components/EmptyState";
 import { ListRow } from "@/components/ListRow";
 import { SubmitButton } from "@/components/SubmitButton";
-import { BackLink } from "@/components/BackLink";
+import { PageHeader } from "@/components/PageHeader";
 
 export default async function InventarioPage() {
   const profile = await getCurrentProfile();
@@ -22,11 +22,12 @@ export default async function InventarioPage() {
 
   return (
     <div>
-      <BackLink href="/app">← Taller</BackLink>
-      <h1 className="mt-3 font-display text-2xl font-bold uppercase">
-        Inventario
-      </h1>
-      <p className="mt-2 font-mono text-xs text-muted">
+      <PageHeader
+        backHref="/app"
+        backLabel="← Taller"
+        title="Inventario"
+      />
+      <p className="mt-3 max-w-2xl font-sans text-sm text-muted">
         Material de la organización — se reserva por día de rodaje desde
         cualquier proyecto, sin recrearlo.
       </p>
@@ -88,7 +89,7 @@ export default async function InventarioPage() {
             <ListRow
               key={item.id}
               title={
-                <span className="font-display text-lg font-bold uppercase">
+                <span className="font-display text-lg font-bold">
                   {item.name}
                 </span>
               }

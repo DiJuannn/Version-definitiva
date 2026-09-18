@@ -53,7 +53,7 @@ export default async function StoryboardPage({
         <div className="mt-10 space-y-12">
           {scenesWithShots.map((scene) => (
             <section key={scene.id}>
-              <h2 className="font-display text-lg font-bold uppercase">
+              <h2 className="font-display text-lg font-bold">
                 Escena {scene.number}
               </h2>
               <div className="mt-4 space-y-8">
@@ -99,7 +99,7 @@ export default async function StoryboardPage({
                                 projectId,
                                 frame.id,
                               )}
-                              className="absolute right-1 top-1 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100 print:hidden"
+                              className="absolute right-1 top-1 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:transition-opacity group-hover:opacity-100 focus-within:opacity-100 print:hidden"
                             >
                               <DeleteButton
                                 confirmMessage="¿Eliminar esta viñeta del storyboard?"
@@ -127,7 +127,7 @@ export default async function StoryboardPage({
                           <SubmitButton
                             pendingLabel="Añadiendo…"
                             savedLabel="✓ Añadida"
-                            className="rounded-full bg-fg px-3 py-1.5 font-mono text-[11px] tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+                            className="btn btn-secondary btn-sm"
                           >
                             Añadir viñeta
                           </SubmitButton>

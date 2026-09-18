@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { PdfLink } from "@/components/PdfLink";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { getShootingDaySummary } from "@/lib/shooting-day-summary";
-import { upsertCallSheet } from "@/lib/actions/call-sheets";
+import { generateCallSheet, upsertCallSheet } from "@/lib/actions/call-sheets";
 import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
 import { BackLink } from "@/components/BackLink";
 import { SubmitButton } from "@/components/SubmitButton";
@@ -22,6 +22,7 @@ export default async function CallSheetDetailPage({
 
   const callSheet = summary.shootingDay.callSheet;
   const updateAction = upsertCallSheet.bind(null, projectId, dayId);
+  const generateAction = generateCallSheet.bind(null, projectId, dayId);
 
   return (
     <div>
@@ -29,6 +30,20 @@ export default async function CallSheetDetailPage({
         <BackLink href={`/app/${projectId}/call-sheets`}>← Call sheets</BackLink>
         <PdfLink href={`/api/pdf/call-sheet/${dayId}`} />
       </div>
+
+      {!callSheet && (
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border border-warn/50 p-4 print:hidden">
+          <p className="font-mono text-xs text-warn">
+            Este call sheet todavía no está generado: lo que ves se calcula del plan de rodaje, pero
+            no consta como creado.
+          </p>
+          <form action={generateAction}>
+            <SubmitButton pendingLabel="Generando…" className="btn btn-primary btn-sm">
+              Generar call sheet
+            </SubmitButton>
+          </form>
+        </div>
+      )}
 
       <div className="mt-6 border border-line bg-bg-raised/40 p-6 sm:p-10">
         <div className="flex items-baseline justify-between gap-4 border-b border-accent/40 pb-5">
@@ -213,11 +228,15 @@ export default async function CallSheetDetailPage({
           <SubmitButton
             pendingLabel="Guardando…"
             savedLabel="✓ Guardado"
-            className="rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+            className="btn btn-secondary"
           >
             Guardar
           </SubmitButton>
         </div>
+        <p className="font-mono text-[11px] text-muted sm:col-span-2">
+          Con el plan PRO, si el equipo técnico ya recibió el recordatorio de este rodaje, guardar
+          cambios les avisa por email de que algo ha cambiado.
+        </p>
       </form>
     </div>
   );

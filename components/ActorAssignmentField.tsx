@@ -59,7 +59,7 @@ export function ActorAssignmentField({
             setConfirming(false);
             setEditing(true);
           }}
-          className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
+          className="link-action"
         >
           Editar
         </button>
@@ -93,7 +93,7 @@ export function ActorAssignmentField({
           <button
             type="button"
             onClick={() => setConfirming(true)}
-            className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
+            className="link-action"
           >
             Guardar
           </button>
@@ -101,7 +101,7 @@ export function ActorAssignmentField({
           <button
             type="submit"
             className={`font-mono text-xs tracking-widest uppercase ${
-              conflictName ? "text-accent" : "text-muted hover:text-accent"
+              conflictName ? "text-warn" : "text-muted hover:text-fg"
             }`}
           >
             {conflictName ? "¿Seguro? Confirmar" : "Guardar"}
@@ -110,13 +110,13 @@ export function ActorAssignmentField({
         <button
           type="button"
           onClick={() => setEditing(false)}
-          className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
+          className="link-action"
         >
           Cancelar
         </button>
       </div>
       {conflictName && (
-        <p className="font-mono text-[10px] text-accent">
+        <p className="font-mono text-[10px] text-warn">
           Ya interpreta a {conflictName} — pulsa Guardar dos veces si quieres
           que interprete a los dos.
         </p>

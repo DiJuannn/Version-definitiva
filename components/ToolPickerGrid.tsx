@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ToolCard } from "@/components/ToolCard";
 import { CreateProjectForm } from "@/components/CreateProjectForm";
+import { Modal } from "@/components/Modal";
 import { createProjectAndOpenTool } from "@/lib/actions/projects";
 import type { ToolDefinition } from "@/lib/tool-groups";
 
@@ -42,7 +43,7 @@ export function ToolPickerGrid({
           <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
             {group.label}
           </p>
-          <div className="mt-3 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
+          <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
             {group.tools.map((tool) => (
               <ToolCard
                 key={tool.label}
@@ -57,64 +58,45 @@ export function ToolPickerGrid({
         </div>
       ))}
 
-      {pickerTool && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-bg/90 p-4"
-          onClick={() => setPickerTool(null)}
-        >
-          <div
-            className="w-full max-w-sm border border-line bg-bg p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <p className="font-mono text-[10px] tracking-widest text-accent uppercase">
-              {pickerTool.label}
-            </p>
-
-            {projects.length === 0 ? (
-              <>
-                <h2 className="mt-2 font-display text-lg font-bold uppercase">
-                  Crea tu primer proyecto
-                </h2>
-                <div className="mt-4">
-                  <CreateProjectForm
-                    action={createProjectAndOpenTool.bind(null, pickerTool.href)}
-                    formClassName="flex flex-col gap-3"
-                    inputClassName="w-full border border-line bg-transparent px-3 py-2 text-sm outline-none focus:border-accent"
-                    buttonClassName="rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
-                    autoFocus
-                  />
-                </div>
-              </>
-            ) : (
-              <>
-                <h2 className="mt-2 font-display text-lg font-bold uppercase">
-                  Elige un proyecto
-                </h2>
-                <div className="mt-4 max-h-72 divide-y divide-line overflow-y-auto border-t border-line">
-                  {projects.map((project) => (
-                    <button
-                      key={project.id}
-                      type="button"
-                      onClick={() => router.push(`/app/${project.id}/${pickerTool.href}`)}
-                      className="block w-full py-3 text-left font-mono text-sm transition-colors hover:text-accent"
-                    >
-                      {project.name}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-
-            <button
-              type="button"
-              onClick={() => setPickerTool(null)}
-              className="mt-4 font-mono text-[10px] tracking-widest text-muted uppercase transition-colors hover:text-accent"
-            >
-              Cancelar
-            </button>
+      <Modal
+        open={pickerTool !== null}
+        onClose={() => setPickerTool(null)}
+        title={projects.length === 0 ? "Crea tu primer proyecto" : "Elige un proyecto"}
+        description={pickerTool ? `Para abrir ${pickerTool.label}.` : undefined}
+      >
+        {pickerTool && projects.length === 0 && (
+          <div className="mt-4">
+            <CreateProjectForm
+              action={createProjectAndOpenTool.bind(null, pickerTool.href)}
+              formClassName="flex flex-col gap-3"
+              inputClassName="w-full border border-line bg-transparent px-3 py-2 text-sm outline-none focus:border-accent"
+              buttonClassName="btn btn-secondary"
+              autoFocus
+            />
           </div>
-        </div>
-      )}
+        )}
+        {pickerTool && projects.length > 0 && (
+          <div className="mt-4 max-h-72 divide-y divide-line overflow-y-auto border-t border-line">
+            {projects.map((project) => (
+              <button
+                key={project.id}
+                type="button"
+                onClick={() => router.push(`/app/${project.id}/${pickerTool.href}`)}
+                className="block min-h-11 w-full py-3 text-left font-mono text-sm transition-colors hover:text-accent"
+              >
+                {project.name}
+              </button>
+            ))}
+          </div>
+        )}
+        <button
+          type="button"
+          onClick={() => setPickerTool(null)}
+          className="link-action mt-4"
+        >
+          Cancelar
+        </button>
+      </Modal>
     </>
   );
 }
