@@ -29,6 +29,7 @@ export async function GET(request: Request) {
     {
       activeProjectsCount: data.activeProjectsCount,
       budgetTotal: data.budgetTotal,
+      budgetActual: data.budgetActual,
       isPro: isPro(profile.organization.plan),
       freeActiveProjectsLimit: FREE_ACTIVE_PROJECTS_LIMIT,
       nextShootingDay: data.nextShootingDay
@@ -37,6 +38,8 @@ export async function GET(request: Request) {
             date: data.nextShootingDay.date,
             projectId: data.nextShootingDay.projectId,
             projectName: data.nextShootingDay.project.name,
+            scenesCount: data.nextShootingDay._count.scenes,
+            hasCallSheet: Boolean(data.nextShootingDay.callSheet),
           }
         : null,
       hero: data.heroProject

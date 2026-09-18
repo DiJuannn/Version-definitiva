@@ -11,7 +11,8 @@ import type { Profile } from "@/lib/current-user";
 // mismas fórmulas sin copiarlas a mano.
 export async function getDashboardHero(profile: Profile) {
   const organizationId = profile.organizationId;
-  const now = new Date();
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
 
   const [recentProjects, lastVisitedProject, activeProjectsCount, nextShootingDay, budgetCategories] =
     await Promise.all([
@@ -57,32 +58,33 @@ export async function getDashboardHero(profile: Profile) {
         where: { organizationId, status: { not: ProjectStatus.FINISHED } },
       }),
       prisma.shootingDay.findFirst({
-        where: { project: { organizationId }, date: { gte: now } },
+        where: { project: { organizationId }, date: { gte: startOfToday } },
         orderBy: { date: "asc" },
         select: {
           id: true,
           date: true,
           projectId: true,
           project: { select: { name: true } },
+          callSheet: { select: { id: true } },
+          _count: { select: { scenes: true } },
         },
       }),
       prisma.budgetCategory.findMany({
         where: { project: { organizationId } },
         select: {
-          items: { select: { quantity: true, unitPrice: true, taxRate: true } },
+          items: { select: { quantity: true, unitPrice: true, taxRate: true, actualAmount: true } },
         },
       }),
     ]);
 
-  const budgetTotal = budgetCategories.reduce((sum, category) => {
-    const categoryTotal = category.items.reduce((itemSum, item) => {
-      const quantity = Number(item.quantity);
-      const unitPrice = Number(item.unitPrice);
-      const taxRate = Number(item.taxRate);
-      return itemSum + quantity * unitPrice * (1 + taxRate / 100);
-    }, 0);
-    return sum + categoryTotal;
-  }, 0);
+  let budgetTotal = 0;
+  let budgetActual = 0;
+  for (const category of budgetCategories) {
+    for (const item of category.items) {
+      budgetTotal += Number(item.quantity) * Number(item.unitPrice) * (1 + Number(item.taxRate) / 100);
+      if (item.actualAmount !== null) budgetActual += Number(item.actualAmount);
+    }
+  }
 
   const heroProject = lastVisitedProject ?? recentProjects[0] ?? null;
   const heroOverview = heroProject
@@ -91,15 +93,19 @@ export async function getDashboardHero(profile: Profile) {
         heroProject.budgetTarget !== null ? Number(heroProject.budgetTarget) : null,
       )
     : null;
-  const heroDone = heroOverview?.steps.filter((s) => s.isDone).length ?? 0;
-  const heroTotal = heroOverview?.steps.length ?? 0;
-  const heroCurrent = heroOverview?.steps.find((s) => !s.isDone) ?? null;
+  // El progreso cuenta solo los pasos requeridos (los opcionales no bloquean
+  // "listo para rodar"), igual que en la web.
+  const heroRequired = heroOverview?.steps.filter((s) => s.required) ?? [];
+  const heroDone = heroRequired.filter((s) => s.isDone).length;
+  const heroTotal = heroRequired.length;
+  const heroCurrent = heroRequired.find((s) => !s.isDone) ?? null;
 
   return {
     recentProjects,
     activeProjectsCount,
     nextShootingDay,
     budgetTotal,
+    budgetActual,
     heroProject,
     heroDone,
     heroTotal,
