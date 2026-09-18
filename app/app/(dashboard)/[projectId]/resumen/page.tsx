@@ -13,7 +13,7 @@ import {
   PROJECT_STATUS_LABELS,
 } from "@/lib/labels";
 import { BreakdownCategory } from "@/lib/generated/prisma";
-import { BackLink } from "@/components/BackLink";
+import { PageHeader } from "@/components/PageHeader";
 
 const WEEKDAYS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
@@ -102,6 +102,8 @@ export default async function ProjectSummaryPage({
     storyboardFramesCount,
     budgetCategoriesWithTotals,
     budgetGrandTotal,
+    budgetGrandActual,
+    hasBudgetActual,
     inventoryItems,
     vehicles,
     shootingDaysWithNeeds,
@@ -133,27 +135,28 @@ export default async function ProjectSummaryPage({
 
   return (
     <div>
-      <div className="flex items-center justify-between">
-        <BackLink href={`/app/${projectId}`}>← {project.name}</BackLink>
-        {isPro ? (
-          <div className="flex items-center gap-3">
-            <PdfLink href={`/api/pdf/dossier/${projectId}`} label="Descargar dossier" />
-            <DossierEmailButton projectId={projectId} />
-          </div>
-        ) : (
-          <Link
-            href="/app/organizacion"
-            className="btn btn-outline inline-flex items-center gap-1.5 print:hidden"
-          >
-            Dossier en PDF — solo PRO
-          </Link>
-        )}
-      </div>
-      <h1 className="mt-3 font-display text-2xl font-bold uppercase">Resumen</h1>
-      <p className="mt-2 font-mono text-xs text-muted">
-        Todo el proyecto de un vistazo. Pulsa cada apartado para desplegarlo y usa
-        su enlace para ir a la herramienta.
-      </p>
+      <PageHeader
+        backHref={`/app/${projectId}`}
+        backLabel={`← ${project.name}`}
+        eyebrow="Proyecto"
+        title="Resumen"
+        description="Todo el proyecto de un vistazo. Pulsa cada apartado para desplegarlo y usa su enlace para ir a la herramienta."
+        actions={
+          isPro ? (
+            <div className="flex items-center gap-3">
+              <PdfLink href={`/api/pdf/dossier/${projectId}`} label="Descargar dossier" />
+              <DossierEmailButton projectId={projectId} />
+            </div>
+          ) : (
+            <Link
+              href="/app/organizacion"
+              className="btn btn-outline inline-flex items-center gap-1.5 print:hidden"
+            >
+              Dossier en PDF — solo PRO
+            </Link>
+          )
+        }
+      />
 
       <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <div className="border border-line p-4">
@@ -183,6 +186,11 @@ export default async function ProjectSummaryPage({
               ? `${currency(budgetGrandTotal)} / ${currency(budgetTarget)}`
               : currency(budgetGrandTotal)}
           </p>
+          {hasBudgetActual && (
+            <p className="mt-1 font-mono text-[11px] text-muted">
+              Gastado {currency(budgetGrandActual)}
+            </p>
+          )}
         </div>
       </div>
 
@@ -341,9 +349,10 @@ export default async function ProjectSummaryPage({
         <Section
           href={`/app/${projectId}/presupuesto`} title="Presupuesto"
           teaser={
-            budgetTarget
+            (budgetTarget
               ? `${currency(budgetGrandTotal)} / ${currency(budgetTarget)}`
-              : currency(budgetGrandTotal)
+              : currency(budgetGrandTotal)) +
+            (hasBudgetActual ? ` · gastado ${currency(budgetGrandActual)}` : "")
           }
         >
           {budgetCategoriesWithTotals.length === 0 ? (
@@ -355,6 +364,9 @@ export default async function ProjectSummaryPage({
                   <span className="font-mono text-sm">{category.name}</span>
                   <span className="font-mono text-xs text-muted">
                     {currency(category.total)}
+                    {hasBudgetActual && category.actual > 0
+                      ? ` · gastado ${currency(category.actual)}`
+                      : ""}
                   </span>
                 </div>
               ))}

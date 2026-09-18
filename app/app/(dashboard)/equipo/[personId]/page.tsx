@@ -9,7 +9,7 @@ import {
   setPersonAvailability,
 } from "@/lib/actions/person-availability";
 import { PersonAvailabilityStatus } from "@/lib/generated/prisma";
-import { BackLink } from "@/components/BackLink";
+import { PageHeader } from "@/components/PageHeader";
 import { SubmitButton } from "@/components/SubmitButton";
 
 const STATUS_LABELS: Record<PersonAvailabilityStatus, string> = {
@@ -53,8 +53,17 @@ export default async function PersonDetailPage({
 
   return (
     <div>
-      <BackLink href="/app/equipo">← Equipo</BackLink>
-      <div className="mt-3 flex items-center gap-4">
+      <PageHeader
+        backHref="/app/equipo"
+        backLabel="← Equipo"
+        eyebrow="Recursos"
+        title={`${person.firstName} ${person.lastName ?? ""}`.trim()}
+      />
+
+      <form
+        action={uploadPhotoAction}
+        className="mt-6 flex flex-wrap items-center gap-4"
+      >
         {person.photoUrl && (
           <Image
             src={person.photoUrl}
@@ -65,15 +74,6 @@ export default async function PersonDetailPage({
             className="h-16 w-16 rounded-full object-cover"
           />
         )}
-        <h1 className="font-display text-2xl font-bold uppercase">
-          {person.firstName} {person.lastName ?? ""}
-        </h1>
-      </div>
-
-      <form
-        action={uploadPhotoAction}
-        className="mt-4 flex flex-wrap items-center gap-3"
-      >
         <input
           type="file"
           name="photo"

@@ -4,7 +4,7 @@ import { getCurrentProfile } from "@/lib/current-user";
 import { addTaskComment, deleteTask, updateTask, updateTaskStatus } from "@/lib/actions/tasks";
 import { DeleteButton } from "@/components/DeleteButton";
 import { TaskPriority, TaskStatus } from "@/lib/generated/prisma";
-import { BackLink } from "@/components/BackLink";
+import { PageHeader } from "@/components/PageHeader";
 import { SubmitButton } from "@/components/SubmitButton";
 
 const PRIORITY_LABELS: Record<TaskPriority, string> = {
@@ -47,16 +47,21 @@ export default async function TaskDetailPage({
 
   return (
     <div>
-      <BackLink href={backHref}>← Tareas</BackLink>
-      <h1 className="mt-3 font-display text-2xl font-bold uppercase">{task.title}</h1>
-      {(task.project || task.shootingDay) && (
-        <p className="mt-1 font-mono text-xs text-muted">
-          {task.project?.name}
-          {task.shootingDay
-            ? ` · Día ${task.shootingDay.date.toLocaleDateString("es-ES")}`
-            : ""}
-        </p>
-      )}
+      <PageHeader
+        backHref={backHref}
+        backLabel="← Tareas"
+        eyebrow="Tarea"
+        title={task.title}
+        description={
+          task.project || task.shootingDay
+            ? `${task.project?.name ?? ""}${
+                task.shootingDay
+                  ? ` · Día ${task.shootingDay.date.toLocaleDateString("es-ES")}`
+                  : ""
+              }`
+            : undefined
+        }
+      />
 
       <form action={statusAction} className="mt-6 flex flex-wrap items-center gap-2">
         {Object.values(TaskStatus).map((value) => (

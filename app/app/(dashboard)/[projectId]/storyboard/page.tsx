@@ -6,7 +6,7 @@ import { addStoryboardFrame, deleteStoryboardFrame } from "@/lib/actions/storybo
 import { DeleteButton } from "@/components/DeleteButton";
 import { EmptyState } from "@/components/EmptyState";
 import { PrintButton } from "@/components/PrintButton";
-import { BackLink } from "@/components/BackLink";
+import { PageHeader } from "@/components/PageHeader";
 import { SubmitButton } from "@/components/SubmitButton";
 
 export default async function StoryboardPage({
@@ -34,13 +34,14 @@ export default async function StoryboardPage({
 
   return (
     <div>
-      <div className="flex items-center justify-between print:hidden">
-        <BackLink href={`/app/${projectId}`}>← {project.name}</BackLink>
-        <PrintButton />
-      </div>
-      <h1 className="mt-3 font-display text-2xl font-bold uppercase">
-        Storyboard
-      </h1>
+      <PageHeader
+        backHref={`/app/${projectId}`}
+        backLabel={`← ${project.name}`}
+        eyebrow="Preproducción"
+        title="Storyboard"
+        description="Viñetas de los planos clave, escena por escena."
+        actions={<PrintButton />}
+      />
 
       {scenesWithShots.length === 0 ? (
         <EmptyState

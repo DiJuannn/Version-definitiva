@@ -5,7 +5,7 @@ import { updateContinuityIssueStatus } from "@/lib/actions/continuity";
 import { FeatureIntro } from "@/components/FeatureIntro";
 import { HelpTip } from "@/components/HelpTip";
 import { ContinuityIssueStatus } from "@/lib/generated/prisma";
-import { BackLink } from "@/components/BackLink";
+import { PageHeader } from "@/components/PageHeader";
 
 const TYPE_LABELS: Record<string, string> = {
   wardrobe: "Vestuario",
@@ -31,13 +31,18 @@ export default async function ContinuityCheckPage({
 
   return (
     <div>
-      <BackLink href={`/app/${projectId}/guion`}>← Guion</BackLink>
-      <div className="mt-3 flex items-center gap-1.5">
-        <h1 className="font-display text-2xl font-bold uppercase">
-          Revisión de continuidad
-        </h1>
-        <HelpTip text="La IA compara los personajes, atrezzo y vestuario de cada escena en el orden en que ocurre la historia, y señala posibles inconsistencias. Nunca cambia nada por su cuenta — cada alerta la confirmas o descartas tú." />
-      </div>
+      <PageHeader
+        backHref={`/app/${projectId}/guion`}
+        backLabel="← Guion"
+        eyebrow="Preproducción"
+        title="Revisión de continuidad"
+        description={
+          <span className="inline-flex items-center gap-1.5">
+            Posibles inconsistencias entre escenas, señaladas por la IA.
+            <HelpTip text="La IA compara los personajes, atrezzo y vestuario de cada escena en el orden en que ocurre la historia, y señala posibles inconsistencias. Nunca cambia nada por su cuenta — cada alerta la confirmas o descartas tú." />
+          </span>
+        }
+      />
 
       <FeatureIntro featureId="continuity-check">
         Esto son posibles inconsistencias, no errores confirmados. Revisa cada

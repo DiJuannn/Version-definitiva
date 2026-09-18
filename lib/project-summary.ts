@@ -68,11 +68,22 @@ export async function getProjectSummary(projectId: string) {
       const subtotal = Number(item.quantity) * Number(item.unitPrice);
       return sum + subtotal * (1 + Number(item.taxRate) / 100);
     }, 0);
-    return { ...category, total };
+    // Gasto real anotado por partida (BudgetItem.actualAmount); las partidas
+    // sin anotar no cuentan como 0 gastado, simplemente no suman.
+    const actual = category.items.reduce(
+      (sum, item) => sum + (item.actualAmount !== null ? Number(item.actualAmount) : 0),
+      0,
+    );
+    return { ...category, total, actual };
   });
   const budgetGrandTotal = budgetCategoriesWithTotals.reduce(
     (sum, c) => sum + c.total,
     0,
+  );
+
+  const budgetGrandActual = budgetCategoriesWithTotals.reduce((sum, c) => sum + c.actual, 0);
+  const hasBudgetActual = project.budgetCategories.some((c) =>
+    c.items.some((item) => item.actualAmount !== null),
   );
 
   // Agregados de toda la producción: mismo objeto (por id) sumando la
@@ -152,6 +163,8 @@ export async function getProjectSummary(projectId: string) {
     storyboardFramesCount,
     budgetCategoriesWithTotals,
     budgetGrandTotal,
+    budgetGrandActual,
+    hasBudgetActual,
     inventoryItems: [...itemsMap.values()],
     vehicles: [...vehiclesMap.values()],
     shootingDaysWithNeeds,

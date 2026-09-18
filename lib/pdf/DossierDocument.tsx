@@ -37,6 +37,8 @@ export function DossierDocument({ summary }: { summary: ProjectSummaryData }) {
     storyboardFramesCount,
     budgetCategoriesWithTotals,
     budgetGrandTotal,
+    budgetGrandActual,
+    hasBudgetActual,
     inventoryItems,
     vehicles,
     shootingDaysWithNeeds,
@@ -392,7 +394,12 @@ export function DossierDocument({ summary }: { summary: ProjectSummaryData }) {
             {budgetCategoriesWithTotals.map((category, i) => (
               <View key={category.id} style={rowStyle(i)}>
                 <Text style={[pdfStyles.td, { flex: 1 }]}>{category.name}</Text>
-                <Text style={pdfStyles.td}>{currency(category.total)}</Text>
+                <Text style={pdfStyles.td}>
+                  {currency(category.total)}
+                  {hasBudgetActual && category.actual > 0
+                    ? `  ·  gastado ${currency(category.actual)}`
+                    : ""}
+                </Text>
               </View>
             ))}
             <View
@@ -421,6 +428,11 @@ export function DossierDocument({ summary }: { summary: ProjectSummaryData }) {
                 {currency(budgetGrandTotal)}
               </Text>
             </View>
+            {hasBudgetActual && (
+              <Text style={[pdfStyles.td, { marginTop: 8, textAlign: "right" }]}>
+                Gasto real anotado: {currency(budgetGrandActual)}
+              </Text>
+            )}
           </>
         )}
         <PdfFooter projectName={project.name} />
