@@ -286,53 +286,6 @@ export default async function PublicHomePage() {
         </div>
       </section>
 
-      {testimonials.length > 0 && (
-        <section className="border-t border-line px-6 py-28">
-          <div className="mx-auto max-w-6xl">
-            <Reveal>
-              <span className="font-mono text-xs tracking-widest text-accent-purple-soft uppercase">
-                Lo que dicen
-              </span>
-            </Reveal>
-            <div className="mt-8 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-              {testimonials.map((item, i) => (
-                <Reveal key={item.id} delay={i * 0.06}>
-                  <div className="flex h-full flex-col border border-line p-6">
-                    <p className="flex-1 font-mono text-sm leading-relaxed text-fg">
-                      &ldquo;{item.quote}&rdquo;
-                    </p>
-                    <div className="mt-5 flex items-center gap-3">
-                      {item.photoUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={item.photoUrl}
-                          alt={item.author}
-                          className="h-10 w-10 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-line font-display text-sm font-bold text-accent">
-                          {item.author.charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                      <div>
-                        <p className="font-mono text-xs font-bold text-fg">
-                          {item.author}
-                        </p>
-                        {item.role && (
-                          <p className="font-mono text-[11px] text-muted">
-                            {item.role}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </Reveal>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
       <section className="border-t border-line px-6 py-16">
         <div className="mx-auto max-w-4xl">
           <Reveal>
@@ -438,6 +391,53 @@ export default async function PublicHomePage() {
           </div>
         </div>
       </section>
+
+      {testimonials.length > 0 && (
+        <section className="border-t border-line px-6 py-28">
+          <div className="mx-auto max-w-6xl">
+            <Reveal>
+              <span className="font-mono text-xs tracking-widest text-accent-purple-soft uppercase">
+                Lo que dicen
+              </span>
+            </Reveal>
+            <div className="mt-8 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+              {testimonials.map((item, i) => (
+                <Reveal key={item.id} delay={i * 0.06}>
+                  <div className="flex h-full flex-col border border-line p-6">
+                    <p className="flex-1 font-mono text-sm leading-relaxed text-fg">
+                      &ldquo;{item.quote}&rdquo;
+                    </p>
+                    <div className="mt-5 flex items-center gap-3">
+                      {item.photoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={item.photoUrl}
+                          alt={item.author}
+                          className="h-10 w-10 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-line font-display text-sm font-bold text-accent">
+                          {item.author.charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div>
+                        <p className="font-mono text-xs font-bold text-fg">
+                          {item.author}
+                        </p>
+                        {item.role && (
+                          <p className="font-mono text-[11px] text-muted">
+                            {item.role}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       <section
         id="contacto"
