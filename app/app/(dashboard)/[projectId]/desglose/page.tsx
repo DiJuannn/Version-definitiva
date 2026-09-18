@@ -11,19 +11,38 @@ import {
   updateBreakdownElementCategory,
 } from "@/lib/actions/breakdown";
 import { BREAKDOWN_CATEGORY_LABELS } from "@/lib/labels";
-import { EmptyState } from "@/components/EmptyState";
 import { BreakdownCategory } from "@/lib/generated/prisma";
 import { PageHeader } from "@/components/PageHeader";
 import { SubmitButton } from "@/components/SubmitButton";
 import { FormField } from "@/components/FormField";
 import { BreakdownCategorySelect } from "@/components/BreakdownCategorySelect";
+import { SectionTabs, type SectionTab } from "@/components/SectionTabs";
+
+// Nombres cortos para la lista lateral; el nombre completo sigue siendo
+// BREAKDOWN_CATEGORY_LABELS (aparece en el selector "mover a").
+const SHORT_LABELS: Record<BreakdownCategory, string> = {
+  PROP: "Atrezzo",
+  WARDROBE: "Vestuario",
+  MAKEUP_HAIR: "Maquillaje",
+  VEHICLE: "Vehículos",
+  SOUND: "Sonido",
+  VFX: "Efectos",
+  LIGHTING: "Iluminación",
+  EQUIPMENT: "Material técnico",
+};
+
+const inputClass =
+  "border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent";
 
 export default async function DesglosePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ projectId: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }) {
   const { projectId } = await params;
+  const { tab } = await searchParams;
 
   const project = await getProjectForCurrentUser(projectId);
   if (!project) notFound();
@@ -56,63 +75,30 @@ export default async function DesglosePage({
     }),
   ]);
 
-  const elementsByCategory = Object.values(BreakdownCategory).map(
-    (category) => ({
-      category,
-      items: elements.filter((el) => el.category === category),
-    }),
-  );
-
   const createElementAction = createBreakdownElement.bind(null, projectId);
   const createCrewAction = createCrewMember.bind(null, projectId);
 
-  return (
-    <div>
-      <PageHeader
-        backHref={`/app/${projectId}`}
-        backLabel={`← ${project.name}`}
-        title="Desglose"
-      />
-      <p className="mt-3 max-w-2xl font-sans text-sm text-muted">
-        Catálogo de atrezzo, vestuario y equipo del proyecto. Se asigna a cada
-        escena desde{" "}
-        <Link href={`/app/${projectId}/guion`} className="text-fg hover:text-accent">
-          Guion
-        </Link>
-        .
-      </p>
-
-      <section className="mt-8">
-        <h2 className="font-mono text-xs tracking-widest text-accent uppercase">
-          Elementos
-        </h2>
-        <form
-          action={createElementAction}
-          className="mt-4 grid gap-3 border border-line p-5 sm:grid-cols-3"
-        >
-          <FormField label="Categoría">
-            <select
-            name="category"
-            required
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+  const categoryTabs: SectionTab[] = Object.values(BreakdownCategory).map((category) => {
+    const items = elements.filter((el) => el.category === category);
+    const label = SHORT_LABELS[category];
+    return {
+      id: category.toLowerCase(),
+      label,
+      count: items.length,
+      group: "Elementos",
+      content: (
+        <div>
+          <form
+            action={createElementAction}
+            className="grid gap-3 border border-line p-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
           >
-            {Object.values(BreakdownCategory).map((value) => (
-              <option key={value} value={value} className="bg-bg">
-                {BREAKDOWN_CATEGORY_LABELS[value]}
-              </option>
-            ))}
-          </select>
-          </FormField>
-          <FormField label="Nombre">
-            <input name="name"
-            required
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
-          </FormField>
-          <FormField label="Notas">
-            <input name="notes"
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
-          </FormField>
-          <div>
+            <input type="hidden" name="category" value={category} />
+            <FormField label={`Añadir a ${BREAKDOWN_CATEGORY_LABELS[category].toLowerCase()}`}>
+              <input name="name" required placeholder="Nombre del elemento" className={inputClass} />
+            </FormField>
+            <FormField label="Notas (opcional)">
+              <input name="notes" className={inputClass} />
+            </FormField>
             <SubmitButton
               pendingLabel="Añadiendo…"
               savedLabel="✓ Añadido"
@@ -120,109 +106,85 @@ export default async function DesglosePage({
             >
               Añadir
             </SubmitButton>
-          </div>
-        </form>
+          </form>
 
-        <div className="mt-8 grid gap-6 sm:grid-cols-2">
-          {elementsByCategory
-            .filter((group) => group.items.length > 0)
-            .map((group) => (
-              <div key={group.category}>
-                <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
-                  {BREAKDOWN_CATEGORY_LABELS[group.category]}
-                </p>
-                <div className="mt-2 border-t border-line">
-                  {group.items.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-center justify-between gap-3 border-b border-line py-2.5"
-                    >
-                      <span className="font-mono text-sm">{item.name}</span>
-                      <div className="flex items-center gap-3">
-                        <span className="font-mono text-[11px] text-muted">
-                          {item._count.scenes} escena
-                          {item._count.scenes === 1 ? "" : "s"}
-                        </span>
-                        <BreakdownCategorySelect
-                          category={item.category}
-                          action={updateBreakdownElementCategory.bind(
-                            null,
-                            projectId,
-                            item.id,
-                          )}
-                        />
-                        <form
-                          action={deleteBreakdownElement.bind(
-                            null,
-                            projectId,
-                            item.id,
-                          )}
-                        >
-                          <DeleteButton
-                            confirmMessage="¿Eliminar este elemento del desglose?"
-                            className="link-action"
-                          />
-                        </form>
-                      </div>
-                    </div>
-                  ))}
+          {items.length === 0 ? (
+            <p className="mt-6 font-mono text-sm text-muted">
+              Aún no hay elementos de {BREAKDOWN_CATEGORY_LABELS[category].toLowerCase()}.
+              Añade el primero arriba, o asígnalos a cada escena desde{" "}
+              <Link href={`/app/${projectId}/guion`} className="text-fg hover:text-accent">
+                Guion
+              </Link>
+              .
+            </p>
+          ) : (
+            <div className="mt-4 border-t border-line">
+              {items.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-line py-3"
+                >
+                  <span className="min-w-0 font-mono text-sm">{item.name}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono text-[11px] text-muted">
+                      {item._count.scenes} escena{item._count.scenes === 1 ? "" : "s"}
+                    </span>
+                    <BreakdownCategorySelect
+                      category={item.category}
+                      action={updateBreakdownElementCategory.bind(null, projectId, item.id)}
+                    />
+                    <form action={deleteBreakdownElement.bind(null, projectId, item.id)}>
+                      <DeleteButton
+                        confirmMessage="¿Eliminar este elemento del desglose?"
+                        className="link-action"
+                      />
+                    </form>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+          )}
         </div>
-        {elements.length === 0 && (
-          <EmptyState
-            title="Todavía no hay elementos de desglose"
-            description="Añade el primero con el formulario de arriba."
-          />
-        )}
-      </section>
+      ),
+    };
+  });
 
-      <section className="mt-14">
-        <h2 className="font-mono text-xs tracking-widest text-accent uppercase">
-          Equipo técnico
-        </h2>
+  const crewTab: SectionTab = {
+    id: "equipo",
+    label: "Equipo técnico",
+    count: crewMembers.length,
+    group: "Personas",
+    content: (
+      <div>
         <form
           action={createCrewAction}
-          className="mt-4 grid gap-3 border border-line p-5 sm:grid-cols-2 lg:grid-cols-5"
+          className="grid gap-3 border border-line p-4 sm:grid-cols-2 xl:grid-cols-3"
         >
-          <FormField label="Persona del directorio Equipo">
-            <select
-            name="personId"
-            defaultValue=""
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
-          >
-            <option value="" className="bg-bg">
-              Persona nueva (sin usar el directorio)
-            </option>
-            {people.map((person) => (
-              <option key={person.id} value={person.id} className="bg-bg">
-                {person.firstName} {person.lastName ?? ""}
+          <FormField label="Persona del directorio Equipo" className="sm:col-span-2 xl:col-span-3">
+            <select name="personId" defaultValue="" className={inputClass}>
+              <option value="" className="bg-bg">
+                Persona nueva (sin usar el directorio)
               </option>
-            ))}
-          </select>
+              {people.map((person) => (
+                <option key={person.id} value={person.id} className="bg-bg">
+                  {person.firstName} {person.lastName ?? ""}
+                </option>
+              ))}
+            </select>
           </FormField>
           <FormField label="Nombre">
-            <input name="name"
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
-          
-            placeholder="si no usas Equipo" />
+            <input name="name" placeholder="si no usas Equipo" className={inputClass} />
           </FormField>
           <FormField label="Rol">
-            <input name="role"
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
-          
-            placeholder="Director de fotografía" />
+            <input name="role" placeholder="Director de fotografía" className={inputClass} />
           </FormField>
           <FormField label="Email">
-            <input name="email"
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
+            <input name="email" className={inputClass} />
           </FormField>
           <FormField label="Teléfono">
-            <input name="phone"
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
+            <input name="phone" className={inputClass} />
           </FormField>
-          <div>
+          <div className="sm:col-span-2 xl:col-span-3">
             <SubmitButton
               pendingLabel="Añadiendo…"
               savedLabel="✓ Añadido"
@@ -234,29 +196,25 @@ export default async function DesglosePage({
         </form>
 
         {crewMembers.length === 0 ? (
-          <EmptyState
-            title="Todavía no hay equipo técnico"
-            description="Añade el primer miembro con el formulario de arriba."
-          />
+          <p className="mt-6 font-mono text-sm text-muted">
+            Aún no hay equipo técnico. Añade el primer miembro arriba.
+          </p>
         ) : (
-          <div className="mt-6 border-t border-line">
+          <div className="mt-4 border-t border-line">
             {crewMembers.map((member) => (
               <div
                 key={member.id}
-                className="flex items-center justify-between gap-3 border-b border-line py-3"
+                className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-line py-3"
               >
-                <div>
+                <div className="min-w-0">
                   <span className="font-mono text-sm">{member.name}</span>
                   {member.role && (
-                    <span className="ml-2 font-mono text-xs text-muted">
-                      {member.role}
-                    </span>
+                    <span className="ml-2 font-mono text-xs text-muted">{member.role}</span>
                   )}
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="font-mono text-[11px] text-muted">
-                    {member._count.scenes} escena
-                    {member._count.scenes === 1 ? "" : "s"}
+                    {member._count.scenes} escena{member._count.scenes === 1 ? "" : "s"}
                   </span>
                   <form action={deleteCrewMember.bind(null, projectId, member.id)}>
                     <DeleteButton
@@ -269,7 +227,41 @@ export default async function DesglosePage({
             ))}
           </div>
         )}
-      </section>
+      </div>
+    ),
+  };
+
+  const tabs = [...categoryTabs, crewTab];
+  // Si no se pide ninguna, se abre la primera categoría que ya tenga algo.
+  const firstFilled = tabs.find((t) => (t.count ?? 0) > 0)?.id;
+
+  return (
+    <div>
+      <PageHeader
+        backHref={`/app/${projectId}`}
+        backLabel={`← ${project.name}`}
+        eyebrow="Preproducción"
+        title="Desglose"
+        description={
+          <>
+            Atrezzo, vestuario, equipo técnico y más, por categorías. Se asigna a cada escena
+            desde{" "}
+            <Link href={`/app/${projectId}/guion`} className="text-fg hover:text-accent">
+              Guion
+            </Link>
+            .
+          </>
+        }
+      />
+
+      <div className="mt-8">
+        <SectionTabs
+          tabs={tabs}
+          initial={tab ?? firstFilled}
+          layout="side"
+          ariaLabel="Categorías del desglose"
+        />
+      </div>
     </div>
   );
 }
