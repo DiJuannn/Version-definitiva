@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { EmptyState } from "@/components/EmptyState";
-import { BackLink } from "@/components/BackLink";
+import { PageHeader } from "@/components/PageHeader";
 
 export default async function CallSheetsPage({
   params,
@@ -18,22 +18,29 @@ export default async function CallSheetsPage({
   const days = await prisma.shootingDay.findMany({
     where: { projectId },
     orderBy: { date: "asc" },
-    include: { callSheet: { select: { id: true } }, _count: { select: { scenes: true } } },
+    include: { callSheet: { select: { id: true, generalCallTime: true } }, _count: { select: { scenes: true } } },
   });
 
   return (
     <div>
-      <BackLink href={`/app/${projectId}`}>← {project.name}</BackLink>
-      <h1 className="mt-3 font-display text-2xl font-bold uppercase">
-        Call sheets
-      </h1>
-      <p className="mt-2 font-mono text-xs text-muted">
-        Un call sheet por día de rodaje, generado a partir de{" "}
-        <Link href={`/app/${projectId}/plan-de-rodaje`} className="text-fg hover:text-accent">
-          Plan de rodaje
-        </Link>
-        .
-      </p>
+      <PageHeader
+        backHref={`/app/${projectId}`}
+        backLabel={`← ${project.name}`}
+        eyebrow="Producción"
+        title="Call sheets"
+        description={
+          <>
+            Un call sheet por día de rodaje, generado a partir del{" "}
+            <Link
+              href={`/app/${projectId}/plan-de-rodaje`}
+              className="text-fg underline decoration-accent/50 underline-offset-4 hover:decoration-accent"
+            >
+              Plan de rodaje
+            </Link>
+            .
+          </>
+        }
+      />
 
       {days.length === 0 ? (
         <EmptyState
@@ -43,24 +50,40 @@ export default async function CallSheetsPage({
           actionHref={`/app/${projectId}/plan-de-rodaje`}
         />
       ) : (
-        <div className="mt-10 border-t border-line">
+        <div className="mt-8 grid gap-3 sm:grid-cols-2">
           {days.map((day) => (
             <Link
               key={day.id}
               href={`/app/${projectId}/call-sheets/${day.id}`}
-              className="group flex items-center justify-between gap-4 border-b border-line py-4 transition-colors hover:border-accent"
+              className="group flex items-center gap-5 border border-line bg-bg-raised/40 p-5 transition-colors hover:border-accent/60 hover:bg-accent/5"
             >
-              <span className="font-display text-lg font-bold uppercase transition-colors group-hover:text-accent">
-                {day.date.toLocaleDateString("es-ES", {
-                  weekday: "long",
-                  day: "2-digit",
-                  month: "long",
-                  year: "numeric",
-                })}
-              </span>
-              <span className="font-mono text-xs text-muted">
-                {day.callSheet ? "Generado" : "Sin generar"} · {day._count.scenes}{" "}
-                escena{day._count.scenes === 1 ? "" : "s"}
+              <div className="w-16 shrink-0 border-r border-line pr-5 text-center">
+                <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                  {day.date.toLocaleDateString("es-ES", { month: "short" })}
+                </p>
+                <p className="font-display text-3xl leading-none font-black tabular-nums">
+                  {day.date.toLocaleDateString("es-ES", { day: "2-digit" })}
+                </p>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="font-display text-base font-bold uppercase transition-colors group-hover:text-accent">
+                  {day.date.toLocaleDateString("es-ES", { weekday: "long" })}
+                </p>
+                <p className="mt-1 font-mono text-[11px] text-muted">
+                  {day._count.scenes} escena{day._count.scenes === 1 ? "" : "s"}
+                  {day.callSheet?.generalCallTime
+                    ? ` · Llamada ${day.callSheet.generalCallTime}`
+                    : ""}
+                </p>
+              </div>
+              <span
+                className={`shrink-0 border px-2 py-1 font-mono text-[10px] tracking-widest uppercase ${
+                  day.callSheet
+                    ? "border-accent/50 text-accent"
+                    : "border-line text-muted"
+                }`}
+              >
+                {day.callSheet ? "Generado" : "Sin generar"}
               </span>
             </Link>
           ))}

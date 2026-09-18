@@ -45,42 +45,47 @@ export default async function DashboardLayout({
           toda la organización, no de un proyecto — sin esto quedan fuera de
           la vista en cuanto haces scroll dentro de un proyecto, y el único
           camino de vuelta es recargar o usar "atrás" del navegador. */}
-      <header className="sticky top-0 z-30 border-b border-line bg-bg px-4 py-4 sm:px-6">
-        <div className="flex items-center justify-between gap-3">
-          <Link href="/app" className="flex min-w-0 items-center gap-2.5">
-            <AjoloteLogo className="h-6 w-auto shrink-0 text-fg" />
-            <span className="truncate font-mono text-xs tracking-[0.2em] uppercase">
-              {profile?.organization.name ?? "Versión definitiva"}
-            </span>
-          </Link>
-          <div className="flex shrink-0 items-center gap-4 font-mono text-xs text-muted sm:gap-6">
-            {profile && (
-              <Link
-                href="/app/organizacion"
-                className={
-                  isPro(profile.organization.plan)
-                    ? "shrink-0 rounded-full bg-accent px-2.5 py-1 font-mono text-[10px] tracking-widest text-bg uppercase"
-                    : "shrink-0 rounded-full border border-accent px-2.5 py-1 font-mono text-[10px] tracking-widest text-accent uppercase transition-colors hover:bg-accent hover:text-bg"
-                }
-              >
-                {isPro(profile.organization.plan) ? "PRO" : "Hazte PRO"}
-              </Link>
-            )}
-            <span className="hidden sm:inline">{profile?.email}</span>
-            <form action={signOut}>
-              <button
-                type="submit"
-                className="tracking-widest uppercase transition-colors hover:text-accent"
-              >
-                Salir
-              </button>
-            </form>
+      <header className="sticky top-0 z-30 border-b border-line bg-bg/85 px-4 pt-4 pb-4 backdrop-blur-md sm:px-6 lg:pb-0">
+        <div className="mx-auto max-w-6xl">
+          <div className="flex items-center justify-between gap-3">
+            <Link href="/app" className="flex min-w-0 items-center gap-2.5">
+              <AjoloteLogo className="h-6 w-auto shrink-0 text-fg" />
+              <span className="truncate font-mono text-xs tracking-[0.2em] uppercase">
+                {profile?.organization.name ?? "Versión definitiva"}
+              </span>
+              <span className="hidden border-l border-line pl-2.5 font-mono text-[10px] tracking-[0.25em] text-accent uppercase sm:inline">
+                Taller
+              </span>
+            </Link>
+            <div className="flex shrink-0 items-center gap-4 font-mono text-xs text-muted sm:gap-6">
+              {profile && (
+                <Link
+                  href="/app/organizacion"
+                  className={
+                    isPro(profile.organization.plan)
+                      ? "shrink-0 rounded-full bg-accent px-2.5 py-1 font-mono text-[10px] tracking-widest text-bg uppercase"
+                      : "shrink-0 rounded-full border border-accent/60 px-2.5 py-1 font-mono text-[10px] tracking-widest text-accent uppercase transition-colors hover:bg-accent hover:text-bg"
+                  }
+                >
+                  {isPro(profile.organization.plan) ? "PRO" : "Hazte PRO"}
+                </Link>
+              )}
+              <span className="hidden sm:inline">{profile?.email}</span>
+              <form action={signOut}>
+                <button
+                  type="submit"
+                  className="tracking-widest uppercase transition-colors hover:text-fg"
+                >
+                  Salir
+                </button>
+              </form>
+            </div>
           </div>
+          <DashboardNav items={nav} />
         </div>
-        <DashboardNav items={nav} />
       </header>
-      <main className="flex-1 px-4 py-8 sm:px-6 sm:py-10">
-        <div className="mx-auto max-w-5xl">{children}</div>
+      <main className="flex-1 px-4 py-8 sm:px-6 sm:py-12">
+        <div className="mx-auto max-w-6xl">{children}</div>
       </main>
     </div>
   );

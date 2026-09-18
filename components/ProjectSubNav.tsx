@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, type MouseEvent } from "react";
 
 // Solo herramientas que existen de verdad por proyecto — nada inventado.
@@ -47,8 +48,19 @@ function closeOnClick(e: MouseEvent<HTMLAnchorElement>) {
   e.currentTarget.closest("details")?.removeAttribute("open");
 }
 
+const CHIP =
+  "rounded-full border px-3.5 py-1.5 font-mono text-[11px] tracking-widest uppercase transition active:scale-[0.97]";
+const CHIP_IDLE = "border-line text-muted hover:border-accent/60 hover:text-fg";
+const CHIP_ACTIVE = "border-accent/50 bg-accent/10 text-accent";
+
 export function ProjectSubNav({ projectId }: { projectId: string }) {
   const navRef = useRef<HTMLElement>(null);
+  const pathname = usePathname();
+  const base = `/app/${projectId}`;
+
+  const toolHref = (tool: { href: string; absolute?: boolean }) =>
+    tool.absolute ? tool.href : `${base}/${tool.href}`;
+  const isOn = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
 
   // Sin esto, un desplegable abierto se queda tapando la página al hacer
   // clic fuera — el atributo `name` en cada <details> ya hace que abrir
@@ -65,42 +77,52 @@ export function ProjectSubNav({ projectId }: { projectId: string }) {
   }, []);
 
   return (
-    <nav ref={navRef} className="flex flex-wrap items-center gap-2 border-b border-line pb-4 print:hidden">
+    <nav ref={navRef} className="flex flex-wrap items-center gap-2 print:hidden">
       <Link
-        href={`/app/${projectId}`}
-        className="border border-line px-3 py-1.5 font-mono text-[10px] tracking-widest text-muted uppercase transition hover:border-accent hover:text-accent active:scale-[0.97]"
+        href={base}
+        className={`${CHIP} ${pathname === base ? CHIP_ACTIVE : CHIP_IDLE}`}
       >
         Panel
       </Link>
       <Link
-        href={`/app/${projectId}/resumen`}
-        className="border border-line px-3 py-1.5 font-mono text-[10px] tracking-widest text-muted uppercase transition hover:border-accent hover:text-accent active:scale-[0.97]"
+        href={`${base}/resumen`}
+        className={`${CHIP} ${isOn(`${base}/resumen`) ? CHIP_ACTIVE : CHIP_IDLE}`}
       >
         Resumen
       </Link>
-      {CATEGORIES.map((category) => (
-        <details key={category.label} name="project-subnav" className="group relative">
-          <summary className="cursor-pointer list-none border border-line px-3 py-1.5 font-mono text-[10px] tracking-widest text-muted uppercase transition [&::-webkit-details-marker]:hidden hover:border-accent hover:text-accent group-open:border-accent group-open:text-accent active:scale-[0.97]">
-            {category.label} ▾
-          </summary>
-          <div className="absolute left-0 z-20 mt-2 w-48 border border-line bg-bg py-1 shadow-lg">
-            {category.tools.map((tool) => (
-              <Link
-                key={tool.href}
-                href={
-                  "absolute" in tool && tool.absolute
-                    ? tool.href
-                    : `/app/${projectId}/${tool.href}`
-                }
-                onClick={closeOnClick}
-                className="block px-3 py-2 font-mono text-xs text-muted transition hover:bg-bg-raised hover:text-accent active:bg-bg-raised"
-              >
-                {tool.label}
-              </Link>
-            ))}
-          </div>
-        </details>
-      ))}
+      {CATEGORIES.map((category) => {
+        const active = category.tools.some((tool) => isOn(toolHref(tool)));
+        return (
+          <details key={category.label} name="project-subnav" className="group relative">
+            <summary
+              className={`${CHIP} cursor-pointer list-none [&::-webkit-details-marker]:hidden group-open:border-accent/50 group-open:text-accent ${
+                active ? CHIP_ACTIVE : CHIP_IDLE
+              }`}
+            >
+              {category.label} <span className="text-[9px] opacity-70">▾</span>
+            </summary>
+            <div className="absolute left-0 z-20 mt-2 w-56 border border-line bg-bg-raised py-1.5 shadow-2xl shadow-black/60">
+              {category.tools.map((tool) => {
+                const toolActive = isOn(toolHref(tool));
+                return (
+                  <Link
+                    key={tool.href}
+                    href={toolHref(tool)}
+                    onClick={closeOnClick}
+                    className={`block border-l-2 px-3.5 py-2 font-mono text-xs transition ${
+                      toolActive
+                        ? "border-accent text-accent"
+                        : "border-transparent text-muted hover:border-accent/60 hover:text-fg"
+                    }`}
+                  >
+                    {tool.label}
+                  </Link>
+                );
+              })}
+            </div>
+          </details>
+        );
+      })}
     </nav>
   );
 }

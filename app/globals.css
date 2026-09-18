@@ -12,13 +12,21 @@
   --accent-purple-soft: #9b87c4;
 }
 
-/* Paleta de la web de la productora (home, equipo, legal, cabecera) —
-   deliberadamente NO se aplica dentro de /taller, que conserva la paleta
-   original de siempre (ver app/(public)/taller/layout.tsx, que revierte
-   estas variables para su propio subárbol). */
+/* Paleta de la web de la productora (home, equipo, legal, cabecera). */
 .palette-productora {
   --accent: #ffa500;
   --bg-raised: #140f1e;
+}
+
+/* Paleta de Taller (la plataforma en /app, la página /taller y la sección
+   de Taller de la home): el morado suave sustituye al naranja como acento.
+   Va después de .palette-productora a propósito, para que gane dentro de
+   ella (misma especificidad, el último gana en el subárbol interior). */
+.palette-taller {
+  --accent: #a08fd0;
+  --accent-purple: #4c1d95;
+  --bg-raised: #120e1c;
+  --line: #2a2536;
 }
 
 @theme inline {

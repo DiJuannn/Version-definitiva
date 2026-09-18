@@ -5,44 +5,80 @@ import { MediaFrame } from "@/components/MediaFrame";
 
 // Las 5 etapas y sus herramientas están sacadas directamente de
 // lib/tool-groups.tsx (la fuente única que usa la propia app de Taller) —
-// nada aquí es una función inventada para la demo.
+// nada aquí es una función inventada para la demo. Las capturas son de la
+// app real con un proyecto de ejemplo (no de un proyecto de cliente).
 const STAGES = [
   {
     num: "01",
     title: "Organiza",
+    text: "Tareas, calendario, localizaciones y vehículos de toda la productora en un solo sitio, con el siguiente paso de cada proyecto siempre a la vista.",
     tools: ["Tareas", "Calendario", "Localizaciones", "Vehículos"],
     image: "/images/taller/organiza.jpg" as string | null,
+    frameLabel: "Taller",
     imageLabel: "Captura — organización del proyecto",
   },
   {
     num: "02",
     title: "Prepara",
+    text: "Del guion al desglose: escenas, personajes, planos y storyboard enlazados entre sí, sin escribir dos veces el mismo dato.",
     tools: ["Guion", "Desglose", "Personajes", "Shot list", "Storyboard"],
     image: "/images/taller/prepara.jpg" as string | null,
+    frameLabel: "Taller / Shot list",
     imageLabel: "Captura — guion, desglose y shot list",
   },
   {
     num: "03",
     title: "Planifica",
+    text: "Arrastra las escenas a los días de rodaje. Taller avisa si un actor o una localización se solapan.",
     tools: ["Plan de rodaje"],
     image: "/images/taller/planifica.jpg" as string | null,
+    frameLabel: "Taller / Plan de rodaje",
     imageLabel: "Captura — plan de rodaje",
   },
   {
     num: "04",
     title: "Controla",
+    text: "Presupuesto por categorías con IVA, enlazado a actores, equipo y localizaciones. Los totales se calculan solos.",
     tools: ["Presupuesto", "Biblioteca de archivos", "Plantilla de documentos"],
     image: "/images/taller/controla.jpg" as string | null,
+    frameLabel: "Taller / Presupuesto",
     imageLabel: "Captura — presupuesto y documentación",
   },
   {
     num: "05",
     title: "Rueda",
+    text: "El call sheet de cada día se genera desde el plan de rodaje y se exporta a PDF. Y la claqueta digital, en el propio set.",
     tools: ["Call sheets", "Claqueta"],
     image: "/images/taller/rueda.jpg" as string | null,
+    frameLabel: "Taller / Call sheet",
     imageLabel: "Captura — call sheet y claqueta",
   },
 ];
+
+// Marco de ventana sobrio (sin sombras flotantes ni inclinaciones): la
+// captura va encajada en la columna, con una barra mínima que dice qué
+// herramienta se está viendo.
+function AppFrame({ stage }: { stage: (typeof STAGES)[number] }) {
+  return (
+    <div className="overflow-hidden border border-line bg-bg">
+      <div className="flex items-center gap-1.5 border-b border-line bg-bg-raised px-3 py-2">
+        <span className="h-2 w-2 rounded-full bg-line" />
+        <span className="h-2 w-2 rounded-full bg-line" />
+        <span className="h-2 w-2 rounded-full bg-line" />
+        <span className="ml-3 truncate font-mono text-[10px] tracking-widest text-muted uppercase">
+          {stage.frameLabel}
+        </span>
+      </div>
+      <MediaFrame
+        src={stage.image}
+        alt={stage.imageLabel}
+        label={stage.imageLabel}
+        className="aspect-[16/10] w-full"
+        sizes="(min-width: 1024px) 800px, 100vw"
+      />
+    </div>
+  );
+}
 
 export function TallerShowcase() {
   const [active, setActive] = useState(0);
@@ -64,7 +100,7 @@ export function TallerShowcase() {
   }, []);
 
   return (
-    <div className="grid gap-10 lg:grid-cols-2 lg:items-start lg:gap-16">
+    <div className="grid gap-10 lg:grid-cols-[0.6fr_1.4fr] lg:items-start lg:gap-12">
       <div>
         {STAGES.map((stage, i) => (
           <div
@@ -72,7 +108,7 @@ export function TallerShowcase() {
             ref={(el) => {
               refs.current[i] = el;
             }}
-            className="flex min-h-[60vh] flex-col justify-center border-t border-line py-10 first:border-t-0 lg:min-h-[85vh] lg:border-t-0 lg:py-0"
+            className="flex min-h-[60vh] flex-col justify-center border-t border-line py-10 first:border-t-0 lg:min-h-[75vh] lg:border-t-0 lg:py-0"
           >
             <span
               className={`font-mono text-xs tracking-widest uppercase transition-colors duration-300 ${
@@ -81,9 +117,16 @@ export function TallerShowcase() {
             >
               {stage.num}
             </span>
-            <h3 className="mt-2 font-display text-3xl font-black uppercase sm:text-4xl">
+            <h3
+              className={`mt-2 font-display text-3xl font-black uppercase transition-opacity duration-300 sm:text-4xl ${
+                active === i ? "lg:opacity-100" : "lg:opacity-40"
+              }`}
+            >
               {stage.title}
             </h3>
+            <p className="mt-3 max-w-md font-mono text-sm leading-relaxed text-muted">
+              {stage.text}
+            </p>
             <div className="mt-4 flex flex-wrap gap-2">
               {stage.tools.map((tool) => (
                 <span
@@ -95,19 +138,17 @@ export function TallerShowcase() {
               ))}
             </div>
             <div className="mt-6 lg:hidden">
-              <MediaFrame
-                src={stage.image}
-                alt={stage.title}
-                label={stage.imageLabel}
-                className="aspect-video"
-              />
+              <AppFrame stage={stage} />
             </div>
           </div>
         ))}
       </div>
 
-      <div className="hidden lg:sticky lg:top-24 lg:block lg:h-[80vh]">
-        <div className="relative h-full w-full overflow-hidden">
+      <div className="hidden lg:sticky lg:top-24 lg:block">
+        <div className="relative">
+          <div className="invisible">
+            <AppFrame stage={STAGES[0]} />
+          </div>
           {STAGES.map((stage, i) => (
             <div
               key={stage.num}
@@ -115,15 +156,13 @@ export function TallerShowcase() {
                 active === i ? "opacity-100" : "opacity-0"
               }`}
             >
-              <MediaFrame
-                src={stage.image}
-                alt={stage.title}
-                label={stage.imageLabel}
-                className="h-full w-full"
-              />
+              <AppFrame stage={stage} />
             </div>
           ))}
         </div>
+        <p className="mt-3 font-mono text-[10px] tracking-widest text-muted uppercase">
+          Capturas de la app real, con un proyecto de ejemplo.
+        </p>
       </div>
     </div>
   );

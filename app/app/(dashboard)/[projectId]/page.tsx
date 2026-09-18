@@ -11,7 +11,7 @@ import { ActivityFeed } from "@/components/ActivityFeed";
 import { DashboardStagger } from "@/components/DashboardMotion";
 import { ToolGroupCarousel } from "@/components/ToolGroupCarousel";
 import { PdfLink } from "@/components/PdfLink";
-import { BackLink } from "@/components/BackLink";
+import { PageHeader } from "@/components/PageHeader";
 import { getProjectOverview } from "@/lib/project-roadmap";
 import { getCurrentProfile } from "@/lib/current-user";
 import { SummaryIcon } from "@/components/ToolIcons";
@@ -84,31 +84,27 @@ export default async function ProjectTallerPage({
 
   return (
     <div>
-      <BackLink href="/app">← Proyectos</BackLink>
-      <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="font-display text-2xl font-bold uppercase">
-            {project.name}
-          </h1>
-          {!isOwnerOrg && ownerLabel && (
-            <p className="mt-1 font-mono text-xs text-muted">
-              Propietario: {ownerLabel}
-            </p>
-          )}
-        </div>
-        {isOwnerOrg && (
-          <ProjectShareButton
-            projectId={project.id}
-            origin={origin}
-            shares={shares.map((s) => ({
-              id: s.id,
-              token: s.token,
-              acceptedAt: s.acceptedAt ? s.acceptedAt.toISOString() : null,
-              userEmail: s.user?.email ?? null,
-            }))}
-          />
-        )}
-      </div>
+      <PageHeader
+        backHref="/app"
+        backLabel="← Proyectos"
+        eyebrow="Proyecto"
+        title={project.name}
+        description={!isOwnerOrg && ownerLabel ? `Propietario: ${ownerLabel}` : undefined}
+        actions={
+          isOwnerOrg ? (
+            <ProjectShareButton
+              projectId={project.id}
+              origin={origin}
+              shares={shares.map((s) => ({
+                id: s.id,
+                token: s.token,
+                acceptedAt: s.acceptedAt ? s.acceptedAt.toISOString() : null,
+                userEmail: s.user?.email ?? null,
+              }))}
+            />
+          ) : undefined
+        }
+      />
 
       <ProjectSummaryCard
         project={{ ...project, budgetTarget }}

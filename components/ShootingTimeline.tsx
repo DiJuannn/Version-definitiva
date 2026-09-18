@@ -56,13 +56,13 @@ function SceneCard({
       onPointerCancel={onPointerUp}
       style={{ touchAction: isDragging ? "none" : "auto" }}
       className={
-        "cursor-grab border border-line bg-bg p-2.5 transition-[transform,opacity,border-color] duration-150 select-none active:cursor-grabbing " +
+        "cursor-grab border border-l-2 border-line border-l-accent/70 bg-bg p-3 transition-[transform,opacity,border-color] duration-150 select-none hover:border-accent/40 hover:border-l-accent active:cursor-grabbing " +
         (isDragging ? "opacity-30" : "") +
         (isPressing ? " scale-95 border-accent" : "")
       }
     >
-      <p className="font-mono text-xs font-bold">Escena {scene.number}</p>
-      <p className="mt-0.5 font-mono text-[10px] text-muted">
+      <p className="font-display text-sm font-bold uppercase">Escena {scene.number}</p>
+      <p className="mt-1 font-mono text-[10px] leading-relaxed text-muted">
         {scene.intExtLabel} · {scene.dayPartLabel}
         {scene.locationName ? ` · ${scene.locationName}` : ""}
       </p>
@@ -283,7 +283,7 @@ export function ShootingTimeline({
         <div
           data-column-id={UNASSIGNED}
           className={
-            "flex w-56 shrink-0 flex-col gap-2 border p-3 transition-colors " +
+            "flex w-64 shrink-0 flex-col gap-3 border border-dashed bg-bg-raised/20 p-4 transition-colors " +
             (dragOverId === UNASSIGNED ? "border-accent" : "border-line")
           }
         >
@@ -313,18 +313,18 @@ export function ShootingTimeline({
             key={day.id}
             data-column-id={day.id}
             className={
-              "flex w-56 shrink-0 flex-col gap-2 border p-3 transition-colors " +
+              "flex w-64 shrink-0 flex-col gap-3 border bg-bg-raised/50 p-4 transition-colors " +
               (dragOverId === day.id ? "border-accent" : "border-line")
             }
           >
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between border-b border-line pb-3">
               <Link
                 href={`/app/${projectId}/plan-de-rodaje/${day.id}`}
-                className="font-mono text-[10px] tracking-widest text-fg uppercase hover:text-accent"
+                className="font-display text-sm font-bold uppercase transition-colors hover:text-accent"
               >
                 {day.label}
               </Link>
-              <span className="font-mono text-[10px] text-muted">
+              <span className="rounded-full border border-line px-2 py-0.5 font-mono text-[10px] text-muted">
                 {byColumn.get(day.id)?.length ?? 0}
               </span>
             </div>

@@ -7,7 +7,7 @@ import { getProjectScheduleConflicts } from "@/lib/schedule-conflicts";
 import { ShootingTimeline } from "@/components/ShootingTimeline";
 import { EmptyState } from "@/components/EmptyState";
 import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
-import { BackLink } from "@/components/BackLink";
+import { PageHeader } from "@/components/PageHeader";
 import { SubmitButton } from "@/components/SubmitButton";
 
 export default async function PlanDeRodajePage({
@@ -60,10 +60,19 @@ export default async function PlanDeRodajePage({
 
   return (
     <div>
-      <BackLink href={`/app/${projectId}`}>← {project.name}</BackLink>
-      <h1 className="mt-3 font-display text-2xl font-bold uppercase">
-        Plan de rodaje
-      </h1>
+      <PageHeader
+        backHref={`/app/${projectId}`}
+        backLabel={`← ${project.name}`}
+        eyebrow="Producción"
+        title="Plan de rodaje"
+        description={
+          days.length > 0
+            ? `${scenes.length} escena${scenes.length === 1 ? "" : "s"} repartidas en ${days.length} día${
+                days.length === 1 ? "" : "s"
+              } de rodaje.`
+            : undefined
+        }
+      />
 
       {scenes.length === 0 ? (
         <EmptyState

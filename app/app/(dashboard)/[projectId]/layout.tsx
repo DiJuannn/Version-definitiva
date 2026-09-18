@@ -21,7 +21,7 @@ export default async function ProjectLayout({
   return (
     <div>
       <ProjectSubNav projectId={projectId} />
-      <div className="mt-6">
+      <div className="mt-8">
         {profile && (
           <ProjectPresence
             projectId={projectId}

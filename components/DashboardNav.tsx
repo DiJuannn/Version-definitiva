@@ -61,21 +61,25 @@ export function DashboardNav({
         ))}
       </nav>
 
-      {/* Escritorio (lg+): chips con la página actual resaltada. */}
-      <nav className="mt-4 hidden flex-wrap gap-2 lg:flex">
+      {/* Escritorio (lg+): pestañas con subrayado en la página actual; el
+          margen negativo hace que el subrayado apoye sobre el borde de la
+          cabecera. */}
+      <nav className="-mb-px mt-3 hidden gap-1 lg:flex">
         {items.map((item) => {
           const active = isActive(pathname, item.href);
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`border px-3 py-1.5 font-mono text-[10px] tracking-widest uppercase transition active:scale-[0.97] ${
-                active
-                  ? "border-accent bg-accent text-bg"
-                  : "border-line text-muted hover:border-accent hover:text-accent"
+              aria-current={active ? "page" : undefined}
+              className={`relative px-3 pt-2.5 pb-3.5 font-mono text-[11px] tracking-widest uppercase transition-colors ${
+                active ? "text-fg" : "text-muted hover:text-fg"
               }`}
             >
               {item.label}
+              {active && (
+                <span className="absolute inset-x-3 bottom-0 h-0.5 bg-accent" />
+              )}
             </Link>
           );
         })}

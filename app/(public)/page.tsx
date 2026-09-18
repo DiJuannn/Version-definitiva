@@ -376,7 +376,7 @@ export default async function PublicHomePage() {
         </div>
       </section>
 
-      <section className="border-t border-line bg-bg-raised px-6 py-20">
+      <section className="palette-taller border-t border-line bg-bg-raised px-6 py-20">
         <div className="mx-auto max-w-6xl">
           <Reveal>
             <span className="font-mono text-xs tracking-widest text-accent uppercase">

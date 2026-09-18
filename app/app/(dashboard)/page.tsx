@@ -225,7 +225,7 @@ export default async function DashboardPage() {
           </div>
         </DashboardReveal>
       ) : (
-        <DashboardReveal className="mt-8 border border-accent p-6 sm:p-8">
+        <DashboardReveal className="mt-8 border border-accent/40 bg-gradient-to-br from-accent-purple/40 via-bg-raised to-bg p-6 sm:p-8">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0">
               <p className="font-mono text-xs tracking-widest text-accent uppercase">
@@ -263,7 +263,7 @@ export default async function DashboardPage() {
           también tiene que poder entrar a la Claqueta, y de ahí se le
           ofrece crear su primer proyecto (ver /app/claqueta). */}
       <DashboardReveal delay={0.05}>
-        <div className="group relative mt-3 flex items-center gap-3 border border-line px-5 py-3.5 transition-colors hover:border-accent">
+        <div className="group relative mt-3 flex items-center gap-3 border border-line bg-bg-raised/40 px-5 py-3.5 transition-colors hover:border-accent/60">
             <Link
               href={heroProject ? `/app/${heroProject.id}/claqueta` : "/app/claqueta"}
               className="flex min-w-0 flex-1 items-center gap-3"
@@ -374,7 +374,7 @@ export default async function DashboardPage() {
               return (
                 <div
                   key={project.id}
-                  className="group relative border border-line p-4 transition-colors hover:border-accent"
+                  className="group relative border border-line bg-bg-raised/40 p-4 transition-colors hover:border-accent/60"
                 >
                   <Link href={`/app/${project.id}`} className="block pr-12">
                     <p className="font-display text-sm font-bold uppercase transition-colors group-hover:text-accent">
@@ -414,7 +414,7 @@ export default async function DashboardPage() {
         )}
       </DashboardReveal>
 
-      <DashboardReveal className="mt-8 border border-line p-4 sm:mt-10 sm:p-5" delay={0.18}>
+      <DashboardReveal className="mt-8 border border-line bg-bg-raised/40 p-4 sm:mt-10 sm:p-5" delay={0.18}>
         <p className="font-mono text-[10px] tracking-widest text-accent uppercase">
           Agenda
         </p>

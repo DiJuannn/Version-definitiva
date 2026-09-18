@@ -30,13 +30,13 @@ export default async function CallSheetDetailPage({
         <PdfLink href={`/api/pdf/call-sheet/${dayId}`} />
       </div>
 
-      <div className="mt-6 border border-line p-6 sm:p-8">
-        <div className="flex items-baseline justify-between border-b border-line pb-4">
+      <div className="mt-6 border border-line bg-bg-raised/40 p-6 sm:p-10">
+        <div className="flex items-baseline justify-between gap-4 border-b border-accent/40 pb-5">
           <div>
             <p className="font-mono text-xs tracking-widest text-accent uppercase">
               Call sheet
             </p>
-            <h1 className="mt-1 font-display text-2xl font-bold uppercase">
+            <h1 className="mt-1.5 font-display text-3xl font-black tracking-tight uppercase sm:text-4xl">
               {project.name}
             </h1>
           </div>

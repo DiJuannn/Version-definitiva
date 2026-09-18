@@ -3,10 +3,16 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { createShot } from "@/lib/actions/shots";
+import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
 import { EmptyState } from "@/components/EmptyState";
 import { PdfLink } from "@/components/PdfLink";
-import { BackLink } from "@/components/BackLink";
+import { PageHeader } from "@/components/PageHeader";
 import { SubmitButton } from "@/components/SubmitButton";
+
+const FIELD =
+  "border border-line bg-transparent px-3 py-1.5 text-xs outline-none transition-colors focus:border-accent";
+const ROW =
+  "grid grid-cols-[4rem_1fr] items-baseline gap-x-4 gap-y-1 px-5 py-3 sm:grid-cols-[4.5rem_5rem_9rem_9rem_1fr]";
 
 export default async function ShotListPage({
   params,
@@ -21,18 +27,28 @@ export default async function ShotListPage({
   const scenes = await prisma.scene.findMany({
     where: { projectId },
     orderBy: [{ order: "asc" }, { number: "asc" }],
-    include: { shots: { orderBy: [{ order: "asc" }, { number: "asc" }] } },
+    include: {
+      location: { select: { name: true } },
+      shots: { orderBy: [{ order: "asc" }, { number: "asc" }] },
+    },
   });
+  const shotCount = scenes.reduce((n, s) => n + s.shots.length, 0);
+  const scenesWithShots = scenes.filter((s) => s.shots.length > 0).length;
 
   return (
     <div>
-      <div className="flex items-center justify-between print:hidden">
-        <BackLink href={`/app/${projectId}`}>← {project.name}</BackLink>
-        <PdfLink href={`/api/pdf/shot-list/${projectId}`} />
-      </div>
-      <h1 className="mt-3 font-display text-2xl font-bold uppercase">
-        Shot list
-      </h1>
+      <PageHeader
+        backHref={`/app/${projectId}`}
+        backLabel={`← ${project.name}`}
+        eyebrow="Preproducción"
+        title="Shot list"
+        description={
+          scenes.length > 0
+            ? `${shotCount} plano${shotCount === 1 ? "" : "s"} definido${shotCount === 1 ? "" : "s"} · ${scenesWithShots} de ${scenes.length} escenas con plano. Cada uno con su tamaño, ángulo y movimiento de cámara.`
+            : undefined
+        }
+        actions={<PdfLink href={`/api/pdf/shot-list/${projectId}`} />}
+      />
 
       {scenes.length === 0 ? (
         <EmptyState
@@ -42,63 +58,99 @@ export default async function ShotListPage({
           actionHref={`/app/${projectId}/guion`}
         />
       ) : (
-        <div className="mt-10 space-y-10">
+        <div className="mt-8 space-y-5">
           {scenes.map((scene) => {
             const createAction = createShot.bind(null, projectId, scene.id);
+            const context = [
+              INT_EXT_LABELS[scene.intExt],
+              DAY_PART_LABELS[scene.dayPart],
+              scene.location?.name,
+            ]
+              .filter(Boolean)
+              .join(" · ");
             return (
-              <section key={scene.id}>
-                <h2 className="font-display text-lg font-bold uppercase">
-                  Escena {scene.number}
-                </h2>
+              <section key={scene.id} className="border border-line bg-bg-raised/40">
+                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-5 py-4">
+                  <h2 className="font-display text-lg font-bold uppercase">
+                    Escena {scene.number}
+                  </h2>
+                  <p className="font-mono text-[11px] tracking-widest text-muted uppercase">
+                    {context}
+                  </p>
+                </div>
 
                 {scene.shots.length > 0 && (
-                  <div className="mt-3 border-t border-line">
-                    {scene.shots.map((shot) => (
-                      <Link
-                        key={shot.id}
-                        href={`/app/${projectId}/shot-list/${shot.id}`}
-                        className="group flex items-center justify-between gap-4 border-b border-line py-3 transition-colors hover:border-accent"
-                      >
-                        <span className="font-mono text-sm transition-colors group-hover:text-accent">
-                          {scene.number}.{shot.number}
-                          {shot.shotSize ? ` — ${shot.shotSize}` : ""}
-                        </span>
-                        <span className="font-mono text-xs text-muted">
-                          {shot.description ?? ""}
-                        </span>
-                      </Link>
-                    ))}
+                  <div className="border-t border-line">
+                    <div
+                      className={`${ROW} hidden border-b border-line py-2 font-mono text-[10px] tracking-widest text-muted uppercase sm:grid`}
+                    >
+                      <span>Plano</span>
+                      <span>Tamaño</span>
+                      <span>Ángulo</span>
+                      <span>Movimiento</span>
+                      <span>Descripción</span>
+                    </div>
+                    <div className="divide-y divide-line">
+                      {scene.shots.map((shot) => (
+                        <Link
+                          key={shot.id}
+                          href={`/app/${projectId}/shot-list/${shot.id}`}
+                          className={`group ${ROW} transition-colors hover:bg-accent/5`}
+                        >
+                          <span className="font-mono text-sm text-accent">
+                            {scene.number}.{shot.number}
+                          </span>
+                          <span className="font-mono text-xs uppercase sm:text-sm">
+                            {shot.shotSize ?? "—"}
+                          </span>
+                          <span className="hidden font-mono text-xs text-muted sm:block">
+                            {shot.angle ?? "—"}
+                          </span>
+                          <span className="hidden font-mono text-xs text-muted sm:block">
+                            {shot.movement ?? "—"}
+                          </span>
+                          <span className="col-span-2 font-mono text-xs text-muted transition-colors group-hover:text-fg sm:col-span-1">
+                            {shot.description ?? ""}
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
                   </div>
                 )}
 
-                <form
-                  action={createAction}
-                  className="mt-3 flex flex-wrap gap-2 print:hidden"
-                >
-                  <input
-                    name="number"
-                    placeholder="Nº plano"
-                    required
-                    className="w-28 border border-line bg-transparent px-3 py-1.5 text-xs outline-none transition-colors focus:border-accent"
-                  />
-                  <input
-                    name="shotSize"
-                    placeholder="Tamaño (PG, PM, PP...)"
-                    className="w-44 border border-line bg-transparent px-3 py-1.5 text-xs outline-none transition-colors focus:border-accent"
-                  />
-                  <input
-                    name="description"
-                    placeholder="Descripción"
-                    className="min-w-56 flex-1 border border-line bg-transparent px-3 py-1.5 text-xs outline-none transition-colors focus:border-accent"
-                  />
-                  <SubmitButton
-                    pendingLabel="Añadiendo…"
-                    savedLabel="✓ Añadido"
-                    className="rounded-full bg-fg px-4 py-1.5 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
-                  >
+                <details className="group border-t border-line print:hidden">
+                  <summary className="cursor-pointer list-none px-5 py-3 font-mono text-[11px] tracking-widest text-muted uppercase transition-colors hover:text-accent [&::-webkit-details-marker]:hidden">
+                    <span className="mr-1.5 inline-block transition-transform group-open:rotate-45">
+                      +
+                    </span>
                     Añadir plano
-                  </SubmitButton>
-                </form>
+                  </summary>
+                  <form action={createAction} className="flex flex-wrap gap-2 px-5 pb-5">
+                    <input
+                      name="number"
+                      placeholder="Nº plano"
+                      required
+                      className={`${FIELD} w-28`}
+                    />
+                    <input
+                      name="shotSize"
+                      placeholder="Tamaño (PG, PM, PP...)"
+                      className={`${FIELD} w-44`}
+                    />
+                    <input
+                      name="description"
+                      placeholder="Descripción"
+                      className={`${FIELD} min-w-56 flex-1`}
+                    />
+                    <SubmitButton
+                      pendingLabel="Añadiendo…"
+                      savedLabel="✓ Añadido"
+                      className="rounded-full bg-fg px-4 py-1.5 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+                    >
+                      Añadir plano
+                    </SubmitButton>
+                  </form>
+                </details>
               </section>
             );
           })}
