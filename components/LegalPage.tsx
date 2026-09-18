@@ -6,6 +6,7 @@ const LEGAL_NAV = [
   { href: "/legal/privacidad", label: "Privacidad" },
   { href: "/legal/cookies", label: "Cookies" },
   { href: "/legal/terminos", label: "Términos de uso" },
+  { href: "/legal/eliminar-cuenta", label: "Eliminar cuenta" },
 ];
 
 export function LegalPage({

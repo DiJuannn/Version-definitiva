@@ -15,7 +15,7 @@ export default async function PrivacidadPage() {
   const missing = !legalName || !legalTaxId || !legalAddress;
 
   return (
-    <LegalPage title="Política de privacidad" updatedAt="30 de agosto de 2026">
+    <LegalPage title="Política de privacidad" updatedAt="19 de septiembre de 2026">
       {missing && (
         <PendingNotice what="nombre legal, NIF/CIF y domicilio del responsable del tratamiento" />
       )}
@@ -73,6 +73,14 @@ export default async function PrivacidadPage() {
         </li>
       </ul>
 
+      <p>
+        Si contratas un <strong className="text-fg">plan PRO</strong>, el pago
+        lo gestiona un proveedor externo (ver más abajo): nosotros no
+        recibimos ni guardamos los datos de tu tarjeta ni de tu cuenta de
+        pago, solo la confirmación de que el plan está activo, su tipo y su
+        fecha de renovación o fin.
+      </p>
+
       <LegalHeading>Finalidad y legitimación</LegalHeading>
       <p>
         Tratamos tus datos para: (a) gestionar tu cuenta y prestarte el
@@ -120,6 +128,26 @@ export default async function PrivacidadPage() {
           Taller) — recibe la dirección de correo del destinatario y el
           contenido del envío en cada caso.
         </li>
+        <li>
+          <strong className="text-fg">Lemon Squeezy</strong> (cobro de los
+          planes PRO contratados en la web) — actúa como vendedor (
+          <em>Merchant of Record</em>) y trata los datos de pago como
+          responsable propio; a nosotros nos comunica la confirmación de la
+          compra y el correo asociado.
+        </li>
+        <li>
+          <strong className="text-fg">Google Play</strong> (cobro de los
+          planes PRO contratados dentro de la app de Android) — Google
+          gestiona el pago y la facturación; nosotros no vemos tus datos de
+          pago.
+        </li>
+        <li>
+          <strong className="text-fg">RevenueCat</strong> (verificación y
+          gestión de las suscripciones y compras hechas en la app móvil) —
+          recibe un identificador de tu organización y los datos de la
+          compra (producto, fechas y estado) para confirmar que tu plan PRO
+          está activo; no recibe el contenido de tus proyectos.
+        </li>
       </ul>
       <p>No vendemos ni cedemos tus datos a terceros con fines comerciales.</p>
 
@@ -129,7 +157,16 @@ export default async function PrivacidadPage() {
         borrarla tú mismo en cualquier momento, sin esperar a nadie, desde
         Organización (en la web) o Perfil (en la app) — la eliminación es
         inmediata y definitiva. Si prefieres pedirlo por email en vez de
-        hacerlo tú, también puedes escribirnos a {contactEmail}.
+        hacerlo tú, también puedes escribirnos a {contactEmail}. Los pasos
+        detallados están en{" "}
+        <a
+          href="/legal/eliminar-cuenta"
+          className="text-fg underline hover:text-accent"
+        >
+          Eliminar tu cuenta y tus datos
+        </a>
+        . Ten en cuenta que borrar la cuenta no cancela una suscripción de
+        pago activa: cancélala antes en Google Play o en Lemon Squeezy.
       </p>
 
       <LegalHeading>Tus derechos</LegalHeading>
