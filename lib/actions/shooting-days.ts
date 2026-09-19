@@ -11,8 +11,11 @@ import { notifyCallSheetChange } from "@/lib/call-sheet-change-alert";
 import { updateDayItemReservations } from "@/lib/actions/inventory";
 import { updateDayVehicleReservations } from "@/lib/actions/vehicles";
 import {
+  assignShotToDayCore,
   createShootingDayCore,
   deleteShootingDayCore,
+  moveSceneChunkCore,
+  setShotDoneCore,
   updateDaySceneAssignmentsCore,
   updateShootingDayCore,
 } from "@/lib/plan-de-rodaje-core";
@@ -68,39 +71,60 @@ export async function deleteShootingDay(
   redirect(`/app/${projectId}/plan-de-rodaje`);
 }
 
+// Mueve un trozo de escena entre columnas del tablero: todos los planos de la
+// escena que estaban en `fromDayId` (null = sin asignar) pasan a `shootingDayId`.
 export async function assignSceneToDay(
   projectId: string,
   sceneId: string,
+  shootingDayId: string | null,
+  fromDayId: string | null = null,
+): Promise<boolean> {
+  const project = await getProjectForCurrentUser(projectId);
+  if (!project) return false;
+
+  const ok = await moveSceneChunkCore(projectId, sceneId, fromDayId, shootingDayId);
+  if (!ok) return false;
+
+  revalidatePath(`/app/${projectId}/plan-de-rodaje`);
+  revalidatePath(`/app/${projectId}`);
+  if (shootingDayId) revalidatePath(`/app/${projectId}/plan-de-rodaje/${shootingDayId}`);
+  if (fromDayId) revalidatePath(`/app/${projectId}/plan-de-rodaje/${fromDayId}`);
+  return true;
+}
+
+// Un plano suelto a otro día (selector del tablero).
+export async function assignShotToDay(
+  projectId: string,
+  shotId: string,
   shootingDayId: string | null,
 ): Promise<boolean> {
   const project = await getProjectForCurrentUser(projectId);
   if (!project) return false;
 
-  const scene = await prisma.scene.findFirst({ where: { id: sceneId, projectId } });
-  if (!scene) return false;
-
-  await prisma.shootingDayScene.deleteMany({ where: { sceneId } });
-
-  if (shootingDayId) {
-    const day = await prisma.shootingDay.findFirst({
-      where: { id: shootingDayId, projectId },
-    });
-    if (!day) return false;
-
-    const count = await prisma.shootingDayScene.count({
-      where: { shootingDayId },
-    });
-    await prisma.shootingDayScene.create({
-      data: { shootingDayId, sceneId, order: count },
-    });
-  }
+  const before = await prisma.shot.findFirst({
+    where: { id: shotId, scene: { projectId } },
+    select: { shootingDayId: true },
+  });
+  const result = await assignShotToDayCore(projectId, shotId, shootingDayId);
+  if (!result) return false;
 
   revalidatePath(`/app/${projectId}/plan-de-rodaje`);
   revalidatePath(`/app/${projectId}`);
-  if (shootingDayId) {
-    revalidatePath(`/app/${projectId}/plan-de-rodaje/${shootingDayId}`);
-  }
+  if (shootingDayId) revalidatePath(`/app/${projectId}/plan-de-rodaje/${shootingDayId}`);
+  if (before?.shootingDayId) revalidatePath(`/app/${projectId}/plan-de-rodaje/${before.shootingDayId}`);
   return true;
+}
+
+export async function setShotDone(projectId: string, shotId: string, done: boolean): Promise<boolean> {
+  const project = await getProjectForCurrentUser(projectId);
+  if (!project) return false;
+
+  const ok = await setShotDoneCore(projectId, shotId, done);
+  if (ok) {
+    revalidatePath(`/app/${projectId}/plan-de-rodaje`);
+    revalidatePath(`/app/${projectId}`);
+  }
+  return ok;
 }
 
 export async function updateDaySceneAssignments(
@@ -131,12 +155,26 @@ export async function updateDaySceneAssignments(
     })
     .filter((a): a is NonNullable<typeof a> => a !== null);
 
-  await updateDaySceneAssignmentsCore(projectId, shootingDayId, assignments);
+  // El planificador del día manda una marca `planner` y un `shot_<id>` por plano
+  // seleccionado (y `done_<id>` si ya está rodado). Sin la marca, los planos no se tocan.
+  let shotIds: string[] | undefined;
+  let doneShotIds: string[] | undefined;
+  if (formData.get("planner")) {
+    const shots = await prisma.shot.findMany({
+      where: { scene: { projectId } },
+      select: { id: true },
+    });
+    shotIds = shots.filter((sh) => formData.get(`shot_${sh.id}`)).map((sh) => sh.id);
+    doneShotIds = shots.filter((sh) => formData.get(`done_${sh.id}`)).map((sh) => sh.id);
+  }
+
+  await updateDaySceneAssignmentsCore(projectId, shootingDayId, { assignments, shotIds, doneShotIds });
 
   const profile = await getCurrentProfile();
-  await logActivity(projectId, profile?.id, `actualizó las escenas del plan de rodaje`);
+  await logActivity(projectId, profile?.id, `actualizó las escenas y planos del plan de rodaje`);
   await notifyCallSheetChange(projectId, shootingDayId);
 
+  revalidatePath(`/app/${projectId}/plan-de-rodaje`);
   revalidatePath(`/app/${projectId}/plan-de-rodaje/${shootingDayId}`);
   revalidatePath(`/app/${projectId}/call-sheets/${shootingDayId}`);
   revalidatePath(`/app/${projectId}/call-sheets`);

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getMobileProfile } from "@/lib/mobile-auth";
 import { getProjectForProfile } from "@/lib/project-access";
-import { getProjectSummary } from "@/lib/project-summary";
+import { buildProjectHighlights, getProjectSummary } from "@/lib/project-summary";
 import {
   DAY_PART_LABELS,
   INT_EXT_LABELS,
@@ -44,6 +44,7 @@ export async function GET(
     );
   }
 
+  const data = await getProjectSummary(projectId);
   const {
     project: full,
     locations,
@@ -51,7 +52,12 @@ export async function GET(
     storyboardFramesCount,
     budgetCategoriesWithTotals,
     budgetGrandTotal,
-  } = await getProjectSummary(projectId);
+  } = data;
+  const highlights = buildProjectHighlights(data);
+  const dateLong = (date: Date) =>
+    date.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
+  const dateShort = (date: Date) =>
+    date.toLocaleDateString("es-ES", { day: "numeric", month: "short", timeZone: "UTC" });
 
   const budgetTarget = project.budgetTarget !== null ? Number(project.budgetTarget) : null;
   const charactersWithActor = full.characters.filter((c) => c.actorId).length;
@@ -118,12 +124,42 @@ export async function GET(
         })),
         grandTotalLabel: currency(budgetGrandTotal),
       },
-      shootingDays: full.shootingDays.map((day) => ({
+      shootingDays: data.shootingDaysWithNeeds.map((day) => ({
         id: day.id,
         dateLabel: day.date.toLocaleDateString("es-ES"),
         scenesCount: day.scenes.length,
+        shotsCount: day.shots.length,
+        shotsDone: day.shots.filter((sh) => sh.done).length,
         hasCallSheet: !!day.callSheet,
       })),
+      // Lo importante ya digerido (mismo cálculo que el Resumen de la web).
+      highlights: {
+        nextShoot: highlights.nextShoot
+          ? {
+              dayId: highlights.nextShoot.dayId,
+              dateLabel: dateLong(highlights.nextShoot.date),
+              daysUntil: highlights.nextShoot.daysUntil,
+              scenes: highlights.nextShoot.scenes,
+              shots: highlights.nextShoot.shots,
+              locationNames: highlights.nextShoot.locationNames,
+              callTime: highlights.nextShoot.callTime,
+              hasCallSheet: highlights.nextShoot.hasCallSheet,
+            }
+          : null,
+        span: highlights.span
+          ? {
+              firstLabel: dateShort(highlights.span.first),
+              lastLabel: dateShort(highlights.span.last),
+              lastLongLabel: dateLong(highlights.span.last),
+              total: highlights.span.total,
+              past: highlights.span.past,
+            }
+          : null,
+        shots: highlights.shots,
+        budget: highlights.budget,
+        progress: highlights.progress,
+        pending: highlights.pending,
+      },
       shotsTotal,
       storyboardFramesCount,
     },

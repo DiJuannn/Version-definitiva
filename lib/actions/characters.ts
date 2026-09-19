@@ -11,6 +11,7 @@ import {
   createCharacterCore,
   deleteCharacterCore,
   updateCharacterActorCore,
+  updateCharacterCore,
 } from "@/lib/personajes-core";
 
 export async function createCharacter(projectId: string, formData: FormData) {
@@ -33,6 +34,22 @@ export async function createCharacter(projectId: string, formData: FormData) {
 
   const profile = await getCurrentProfile();
   await logActivity(projectId, profile?.id, `añadió el personaje ${name}`);
+
+  revalidatePath(`/app/${projectId}/personajes`);
+}
+
+export async function updateCharacter(
+  projectId: string,
+  characterId: string,
+  formData: FormData,
+) {
+  const project = await getProjectForCurrentUser(projectId);
+  if (!project) return;
+
+  await updateCharacterCore(projectId, characterId, {
+    name: String(formData.get("name") ?? ""),
+    notes: optionalString(formData.get("notes")),
+  });
 
   revalidatePath(`/app/${projectId}/personajes`);
 }

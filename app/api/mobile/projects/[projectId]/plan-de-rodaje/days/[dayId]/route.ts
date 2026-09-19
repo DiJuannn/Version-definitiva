@@ -36,14 +36,26 @@ export async function GET(
     );
   }
 
-  const [summary, allScenes] = await Promise.all([
+  const [summary, allScenes, projectDays] = await Promise.all([
     getShootingDaySummary(dayId),
     prisma.scene.findMany({
       where: { projectId },
       orderBy: [{ order: "asc" }, { number: "asc" }],
-      select: { id: true, number: true, location: { select: { name: true } } },
+      select: {
+        id: true,
+        number: true,
+        location: { select: { name: true } },
+        shots: {
+          orderBy: [{ order: "asc" }, { number: "asc" }],
+          select: { id: true, number: true, shotSize: true, description: true, shootingDayId: true, done: true },
+        },
+      },
     }),
+    prisma.shootingDay.findMany({ where: { projectId }, select: { id: true, date: true } }),
   ]);
+  const dayLabels = new Map(
+    projectDays.map((d) => [d.id, d.date.toLocaleDateString("es-ES", { day: "2-digit", month: "short" })]),
+  );
 
   if (!summary || summary.shootingDay.projectId !== projectId) {
     return NextResponse.json(
@@ -67,6 +79,19 @@ export async function GET(
         locationName: scene.location?.name ?? null,
         assigned: assignedByScene.has(scene.id),
         callTime: assignedByScene.get(scene.id)?.callTime ?? null,
+        // Planos de la escena: con su día actual (si es otro día, con su etiqueta corta).
+        shots: scene.shots.map((shot) => ({
+          id: shot.id,
+          label: `${scene.number}.${shot.number}`,
+          size: shot.shotSize,
+          description: shot.description,
+          dayId: shot.shootingDayId,
+          otherDayLabel:
+            shot.shootingDayId && shot.shootingDayId !== dayId
+              ? (dayLabels.get(shot.shootingDayId) ?? "otro día")
+              : null,
+          done: shot.done,
+        })),
       })),
       summary: {
         locations: summary.locations.map((l) => l.name),

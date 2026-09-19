@@ -13,6 +13,11 @@ export async function getShootingDaySummary(shootingDayId: string) {
               characters: { include: { character: { include: { actor: true } } } },
               breakdownElements: { include: { breakdownElement: true } },
               crewMembers: { include: { crewMember: true } },
+              // Solo los planos que se ruedan este día (una escena puede repartirse en varios).
+              shots: {
+                where: { shootingDayId },
+                orderBy: [{ order: "asc" }, { number: "asc" }],
+              },
             },
           },
         },

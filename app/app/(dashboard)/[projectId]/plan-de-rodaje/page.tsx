@@ -33,6 +33,10 @@ export default async function PlanDeRodajePage({
       include: {
         location: true,
         shootingDayScenes: { select: { shootingDayId: true } },
+        shots: {
+          orderBy: [{ order: "asc" }, { number: "asc" }],
+          select: { id: true, number: true, shotSize: true, description: true, shootingDayId: true, done: true },
+        },
       },
     }),
     getProjectScheduleConflicts(projectId),
@@ -57,7 +61,19 @@ export default async function PlanDeRodajePage({
     dayPartLabel: DAY_PART_LABELS[scene.dayPart],
     locationName: scene.location?.name ?? null,
     dayId: scene.shootingDayScenes[0]?.shootingDayId ?? null,
+    shots: scene.shots.map((shot) => ({
+      id: shot.id,
+      label: `${scene.number}.${shot.number}`,
+      size: shot.shotSize,
+      description: shot.description,
+      dayId: shot.shootingDayId,
+      done: shot.done,
+    })),
   }));
+
+  const shotsTotal = scenes.reduce((n, scene) => n + scene.shots.length, 0);
+  const shotsPlanned = scenes.reduce((n, scene) => n + scene.shots.filter((sh) => sh.shootingDayId).length, 0);
+  const shotsDone = scenes.reduce((n, scene) => n + scene.shots.filter((sh) => sh.done).length, 0);
 
   return (
     <div>
@@ -68,9 +84,13 @@ export default async function PlanDeRodajePage({
         title="Plan de rodaje"
         description={
           days.length > 0
-            ? `${scenes.length} escena${scenes.length === 1 ? "" : "s"} repartidas en ${days.length} día${
+            ? `${scenes.length} escena${scenes.length === 1 ? "" : "s"} en ${days.length} día${
                 days.length === 1 ? "" : "s"
-              } de rodaje.`
+              } de rodaje${
+                shotsTotal > 0
+                  ? ` · ${shotsPlanned} de ${shotsTotal} planos con día${shotsDone > 0 ? ` · ${shotsDone} rodados` : ""}`
+                  : ""
+              }.`
             : undefined
         }
       />

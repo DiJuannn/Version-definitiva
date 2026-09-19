@@ -41,6 +41,7 @@ export async function POST(
     name: body.name,
     email: typeof body.email === "string" ? body.email : null,
     phone: typeof body.phone === "string" ? body.phone : null,
+    rate: typeof body.rate === "number" && Number.isFinite(body.rate) ? body.rate : null,
     availability: typeof body.availability === "string" ? body.availability : null,
     notes: typeof body.notes === "string" ? body.notes : null,
   });

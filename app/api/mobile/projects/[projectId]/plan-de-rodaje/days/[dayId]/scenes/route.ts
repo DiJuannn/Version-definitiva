@@ -8,10 +8,11 @@ export function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
 }
 
-// PATCH body: { sceneIds: string[] } — reemplaza por completo qué
-// escenas están asignadas a este día (mismo enfoque "todo o nada" que
-// updateDaySceneAssignments en la web); el orden es el de llegada del
-// array y no se manda hora de citación desde el móvil por ahora.
+// PATCH body: { sceneIds: string[], shotIds?: string[], doneShotIds?: string[] }
+// — reemplaza por completo qué escenas y qué planos se ruedan este día (mismo
+// enfoque "todo o nada" que updateDaySceneAssignments en la web); el orden es
+// el de llegada del array y no se manda hora de citación desde el móvil por
+// ahora. Sin shotIds, los planos no se tocan (salvo los de escenas que salen).
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ projectId: string; dayId: string }> },
@@ -49,7 +50,14 @@ export async function PATCH(
       order: index,
     }));
 
-  const ok = await updateDaySceneAssignmentsCore(projectId, dayId, assignments);
+  const strings = (value: unknown) =>
+    Array.isArray(value) ? value.filter((id: unknown): id is string => typeof id === "string") : undefined;
+
+  const ok = await updateDaySceneAssignmentsCore(projectId, dayId, {
+    assignments,
+    shotIds: strings(body.shotIds),
+    doneShotIds: strings(body.doneShotIds),
+  });
   if (!ok) {
     return NextResponse.json(
       { error: "Día no encontrado." },

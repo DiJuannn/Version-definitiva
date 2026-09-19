@@ -36,7 +36,7 @@ export async function GET(
   const days = await prisma.shootingDay.findMany({
     where: { projectId },
     orderBy: { date: "asc" },
-    select: { id: true, date: true, notes: true, _count: { select: { scenes: true } } },
+    select: { id: true, date: true, notes: true, _count: { select: { scenes: true, shots: true } } },
   });
 
   return NextResponse.json(
@@ -46,6 +46,7 @@ export async function GET(
         date: d.date,
         notes: d.notes,
         scenesCount: d._count.scenes,
+        shotsCount: d._count.shots,
       })),
     },
     { headers: CORS_HEADERS },

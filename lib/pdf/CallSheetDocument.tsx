@@ -59,22 +59,36 @@ export function CallSheetDocument({
             </Text>
           ) : (
             sceneAssignments.map((assignment, i) => (
-              <View key={assignment.id} style={rowStyle(i)}>
-                <Text style={[pdfStyles.td, { width: 50 }]}>
-                  {assignment.callTime ?? "—"}
-                </Text>
-                <Text style={[pdfStyles.td, { flex: 1 }]}>
-                  Escena {assignment.scene.number} —{" "}
-                  {INT_EXT_LABELS[assignment.scene.intExt]}{" "}
-                  {DAY_PART_LABELS[assignment.scene.dayPart]}
-                  {assignment.scene.location
-                    ? ` · ${assignment.scene.location.name}`
-                    : ""}
-                </Text>
-                <Text style={[pdfStyles.td, { flex: 1 }]}>
-                  {assignment.scene.characters.map((c) => c.character.name).join(", ") ||
-                    "—"}
-                </Text>
+              <View key={assignment.id} wrap={false}>
+                <View style={rowStyle(i)}>
+                  <Text style={[pdfStyles.td, { width: 50 }]}>
+                    {assignment.callTime ?? "—"}
+                  </Text>
+                  <Text style={[pdfStyles.td, { flex: 1 }]}>
+                    Escena {assignment.scene.number} —{" "}
+                    {INT_EXT_LABELS[assignment.scene.intExt]}{" "}
+                    {DAY_PART_LABELS[assignment.scene.dayPart]}
+                    {assignment.scene.location
+                      ? ` · ${assignment.scene.location.name}`
+                      : ""}
+                  </Text>
+                  <Text style={[pdfStyles.td, { flex: 1 }]}>
+                    {assignment.scene.characters.map((c) => c.character.name).join(", ") ||
+                      "—"}
+                  </Text>
+                </View>
+                {/* Planos que se ruedan este día (si la escena tiene shot list). */}
+                {assignment.scene.shots.map((shot) => (
+                  <View key={shot.id} style={{ flexDirection: "row", paddingLeft: 50, paddingVertical: 1.5 }}>
+                    <Text style={[pdfStyles.td, { width: 34 }]}>
+                      {assignment.scene.number}.{shot.number}
+                    </Text>
+                    <Text style={[pdfStyles.td, { width: 40 }]}>{shot.shotSize ?? ""}</Text>
+                    <Text style={[pdfStyles.td, { flex: 1 }]}>
+                      {[shot.description, shot.movement].filter(Boolean).join(" · ")}
+                    </Text>
+                  </View>
+                ))}
               </View>
             ))
           )}

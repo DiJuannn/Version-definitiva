@@ -63,6 +63,12 @@ export async function GET(
         dayPartLabel: DAY_PART_LABELS[a.scene.dayPart],
         locationName: a.scene.location?.name ?? null,
         characterNames: a.scene.characters.map((c) => c.character.name),
+        // Planos de la escena que se ruedan este día.
+        shots: a.scene.shots.map((shot) => ({
+          label: `${a.scene.number}.${shot.number}`,
+          size: shot.shotSize,
+          description: [shot.description, shot.movement].filter(Boolean).join(" · ") || null,
+        })),
       })),
       cast: summary.characters.map((c) => ({ name: c.name, actorName: c.actor?.name ?? null })),
       crewMembers: summary.crewMembers.map((c) => c.name),

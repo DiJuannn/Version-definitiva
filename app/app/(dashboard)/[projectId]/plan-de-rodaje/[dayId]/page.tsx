@@ -17,6 +17,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { DeleteButton } from "@/components/DeleteButton";
 import { EmptyState } from "@/components/EmptyState";
 import { SectionTabs } from "@/components/SectionTabs";
+import { DayPlanner, type PlannerScene } from "@/components/DayPlanner";
 
 function toDateInputValue(date: Date): string {
   return date.toISOString().slice(0, 10);
@@ -35,7 +36,7 @@ export default async function ShootingDayDetailPage({
   const project = await getProjectForCurrentUser(projectId);
   if (!project) notFound();
 
-  const [summary, allScenes, inventoryItems, vehicles, dayItemReservations, dayVehicleReservations] =
+  const [summary, allScenes, projectDays, inventoryItems, vehicles, dayItemReservations, dayVehicleReservations] =
     await Promise.all([
       getShootingDaySummary(dayId),
       prisma.scene.findMany({
@@ -47,7 +48,16 @@ export default async function ShootingDayDetailPage({
           intExt: true,
           dayPart: true,
           location: { select: { name: true } },
+          shots: {
+            orderBy: [{ order: "asc" }, { number: "asc" }],
+            select: { id: true, number: true, shotSize: true, description: true, shootingDayId: true, done: true },
+          },
         },
+      }),
+      prisma.shootingDay.findMany({
+        where: { projectId },
+        orderBy: { date: "asc" },
+        select: { id: true, date: true },
       }),
       prisma.inventoryItem.findMany({
         where: { organizationId: project.organizationId },
@@ -75,6 +85,42 @@ export default async function ShootingDayDetailPage({
     dayItemReservations.map((r) => [r.inventoryItemId, r.quantity]),
   );
   const reservedVehicleIds = new Set(dayVehicleReservations.map((r) => r.vehicleId));
+
+  const dayLabels = new Map(
+    projectDays.map((d) => [
+      d.id,
+      d.date.toLocaleDateString("es-ES", { day: "2-digit", month: "short" }),
+    ]),
+  );
+  const plannerScenes: PlannerScene[] = allScenes.map((scene) => {
+    const assignment = assignedByScene.get(scene.id);
+    return {
+      id: scene.id,
+      number: scene.number,
+      context: `${INT_EXT_LABELS[scene.intExt]} · ${DAY_PART_LABELS[scene.dayPart]}${
+        scene.location ? ` · ${scene.location.name}` : ""
+      }`,
+      callTime: assignment?.callTime ?? "",
+      order: assignment ? String(assignment.order) : "",
+      assigned: Boolean(assignment),
+      shots: scene.shots.map((shot) => ({
+        id: shot.id,
+        label: `${scene.number}.${shot.number}`,
+        size: shot.shotSize,
+        description: shot.description,
+        currentDayId: shot.shootingDayId,
+        otherDayLabel:
+          shot.shootingDayId && shot.shootingDayId !== dayId
+            ? (dayLabels.get(shot.shootingDayId) ?? "otro día")
+            : null,
+        done: shot.done,
+      })),
+    };
+  });
+  const dayShotCount = allScenes.reduce(
+    (n, scene) => n + scene.shots.filter((shot) => shot.shootingDayId === dayId).length,
+    0,
+  );
 
   const updateDayAction = updateShootingDay.bind(null, projectId, dayId);
   const saveDayAction = saveDayPlan.bind(null, projectId, dayId);
@@ -184,73 +230,20 @@ export default async function ShootingDayDetailPage({
           tabs={[
             {
               id: "escenas",
-              label: "Escenas",
-              count: summary.sceneAssignments.length,
+              label: "Escenas y planos",
+              count: dayShotCount > 0 ? `${summary.sceneAssignments.length} · ${dayShotCount} pl.` : summary.sceneAssignments.length,
               content: (
                 <div>
-                          {allScenes.length === 0 ? (
-                            <EmptyState
-                              title="No hay escenas creadas todavía"
-                              description="Créalas en Guion para poder asignarlas a este día."
-                              actionLabel="Ir a Guion"
-                              actionHref={`/app/${projectId}/guion`}
-                            />
-                          ) : (
-                            <div className="mt-4">
-                              <div className="border-t border-line">
-                                <div
-                                  aria-hidden
-                                  className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 border-b border-line py-2 font-mono text-[10px] tracking-widest text-muted uppercase"
-                                >
-                                  <span className="w-4" />
-                                  <span>Escena</span>
-                                  <span className="w-24">Hora de llamada</span>
-                                  <span className="w-20">Orden</span>
-                                </div>
-                                {allScenes.map((scene) => {
-                                  const assignment = assignedByScene.get(scene.id);
-                                  return (
-                                    <div
-                                      key={scene.id}
-                                      className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 border-b border-line py-3"
-                                    >
-                                      <input
-                                        type="checkbox"
-                                        name={`assign_${scene.id}`}
-                                        aria-label={`Incluir la escena ${scene.number} en este día`}
-                                        defaultChecked={Boolean(assignment)}
-                                      />
-                                      <div>
-                                        <span className="font-mono text-sm">
-                                          Escena {scene.number}
-                                        </span>
-                                        <span className="ml-2 font-mono text-xs text-muted">
-                                          {INT_EXT_LABELS[scene.intExt]} ·{" "}
-                                          {DAY_PART_LABELS[scene.dayPart]}
-                                          {scene.location ? ` · ${scene.location.name}` : ""}
-                                        </span>
-                                      </div>
-                                      <input
-                                        name={`callTime_${scene.id}`}
-                                        aria-label={`Hora de llamada de la escena ${scene.number}`}
-                                        placeholder="08:30"
-                                        defaultValue={assignment?.callTime ?? ""}
-                                        className="w-24 border border-line bg-transparent px-2 py-1 text-xs outline-none transition-colors focus:border-accent"
-                                      />
-                                      <input
-                                        name={`order_${scene.id}`}
-                                        type="number"
-                                        aria-label={`Orden de la escena ${scene.number}`}
-                                        placeholder="1"
-                                        defaultValue={assignment?.order ?? ""}
-                                        className="w-20 border border-line bg-transparent px-2 py-1 text-xs outline-none transition-colors focus:border-accent"
-                                      />
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                              </div>
-                          )}
+                  {allScenes.length === 0 ? (
+                    <EmptyState
+                      title="No hay escenas creadas todavía"
+                      description="Créalas en Guion para poder asignarlas a este día."
+                      actionLabel="Ir a Guion"
+                      actionHref={`/app/${projectId}/guion`}
+                    />
+                  ) : (
+                    <DayPlanner dayId={dayId} scenes={plannerScenes} />
+                  )}
                 </div>
               ),
             },
@@ -397,7 +390,7 @@ export default async function ShootingDayDetailPage({
             Guardar plan del día
           </SubmitButton>
           <p className="hidden font-mono text-[11px] text-muted sm:block">
-            Guarda a la vez las escenas (con hora y orden), el material y los vehículos.
+            Guarda a la vez escenas, planos (con hora y orden), material y vehículos.
           </p>
         </div>
       </form>

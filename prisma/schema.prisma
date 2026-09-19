@@ -106,11 +106,11 @@ model SiteContent {
 }
 
 model EquipmentItem {
-  id            String  @id @default(cuid())
+  id            String @id @default(cuid())
   siteContentId String
   category      String
   detail        String
-  order         Int     @default(0)
+  order         Int    @default(0)
 
   siteContent SiteContent @relation(fields: [siteContentId], references: [id], onDelete: Cascade)
 
@@ -132,11 +132,11 @@ model Testimonial {
 }
 
 model ProcessStep {
-  id            String  @id @default(cuid())
+  id            String @id @default(cuid())
   siteContentId String
   title         String
   description   String
-  order         Int     @default(0)
+  order         Int    @default(0)
 
   siteContent SiteContent @relation(fields: [siteContentId], references: [id], onDelete: Cascade)
 
@@ -144,11 +144,11 @@ model ProcessStep {
 }
 
 model FaqItem {
-  id            String  @id @default(cuid())
+  id            String @id @default(cuid())
   siteContentId String
   question      String
   answer        String
-  order         Int     @default(0)
+  order         Int    @default(0)
 
   siteContent SiteContent @relation(fields: [siteContentId], references: [id], onDelete: Cascade)
 
@@ -230,18 +230,18 @@ model PortfolioItem {
   usesTaller   Boolean @default(false)
   tallerNote   String?
 
-  siteContent SiteContent   @relation(fields: [siteContentId], references: [id], onDelete: Cascade)
+  siteContent SiteContent    @relation(fields: [siteContentId], references: [id], onDelete: Cascade)
   images      ProjectImage[]
 
   @@index([siteContentId])
 }
 
 model ProjectImage {
-  id              String  @id @default(cuid())
+  id              String @id @default(cuid())
   portfolioItemId String
   url             String
   kind            String // "FRAME" | "BTS"
-  order           Int     @default(0)
+  order           Int    @default(0)
 
   portfolioItem PortfolioItem @relation(fields: [portfolioItemId], references: [id], onDelete: Cascade)
 
@@ -264,11 +264,11 @@ model User {
   // resolverse y el dashboard cae de vuelta al más reciente por fecha.
   lastVisitedProjectId String?
 
-  organization     Organization     @relation(fields: [organizationId], references: [id])
-  scriptAnalyses   ScriptAnalysis[]
-  createdProjects  Project[]
-  projectShares    ProjectShare[]
-  activityLogs     ActivityLog[]
+  organization    Organization     @relation(fields: [organizationId], references: [id])
+  scriptAnalyses  ScriptAnalysis[]
+  createdProjects Project[]
+  projectShares   ProjectShare[]
+  activityLogs    ActivityLog[]
 
   @@index([organizationId])
 }
@@ -654,6 +654,7 @@ model ShootingDay {
 
   project             Project              @relation(fields: [projectId], references: [id])
   scenes              ShootingDayScene[]
+  shots               Shot[]
   callSheet           CallSheet?
   tasks               Task[]
   itemReservations    ItemReservation[]
@@ -758,28 +759,35 @@ model CallSheet {
 }
 
 model Shot {
-  id          String   @id @default(cuid())
-  sceneId     String
-  number      String
-  shotType    String?
-  shotSize    String?
-  angle       String?
-  movement    String?
-  camera      String?
-  lens        String?
-  fps         Int?
-  durationSec Int?
-  description String?
-  audio       String?
-  notes       String?
-  order       Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(cuid())
+  sceneId       String
+  number        String
+  shotType      String?
+  shotSize      String?
+  angle         String?
+  movement      String?
+  camera        String?
+  lens          String?
+  fps           Int?
+  durationSec   Int?
+  description   String?
+  audio         String?
+  notes         String?
+  order         Int      @default(0)
+  // Plan de rodaje por planos: el día en que se rueda este plano (null = sin
+  // planificar) y si ya está rodado. Una escena puede repartir sus planos en
+  // varios días; ShootingDayScene sigue diciendo qué escenas tiene cada día.
+  shootingDayId String?
+  done          Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  scene      Scene             @relation(fields: [sceneId], references: [id], onDelete: Cascade)
-  storyboard StoryboardFrame[]
+  scene       Scene             @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+  shootingDay ShootingDay?      @relation(fields: [shootingDayId], references: [id], onDelete: SetNull)
+  storyboard  StoryboardFrame[]
 
   @@index([sceneId])
+  @@index([shootingDayId])
 }
 
 model StoryboardFrame {

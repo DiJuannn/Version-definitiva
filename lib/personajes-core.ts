@@ -38,6 +38,40 @@ export async function createActorCore(
   return actor.id;
 }
 
+export type UpdateActorInput = {
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  rate?: number | null;
+  availability?: string | null;
+  notes?: string | null;
+};
+
+// Los datos de contacto se guardan tal cual en el actor: si venía de una ficha
+// de Equipo, la copia del actor se edita por separado (es la que sale en el
+// call sheet y en el presupuesto de este proyecto).
+export async function updateActorCore(
+  projectId: string,
+  actorId: string,
+  input: UpdateActorInput,
+): Promise<boolean> {
+  const name = input.name.trim();
+  if (!name) return false;
+
+  const result = await prisma.actor.updateMany({
+    where: { id: actorId, projectId },
+    data: {
+      name,
+      email: input.email ?? null,
+      phone: input.phone ?? null,
+      rate: input.rate ?? null,
+      availability: input.availability ?? null,
+      notes: input.notes ?? null,
+    },
+  });
+  return result.count > 0;
+}
+
 export async function deleteActorCore(projectId: string, actorId: string) {
   await prisma.actor.deleteMany({ where: { id: actorId, projectId } });
 }
@@ -69,6 +103,21 @@ export async function updateCharacterActorCore(
     where: { id: characterId, projectId },
     data: { actorId },
   });
+}
+
+export async function updateCharacterCore(
+  projectId: string,
+  characterId: string,
+  input: { name: string; notes?: string | null },
+): Promise<boolean> {
+  const name = input.name.trim();
+  if (!name) return false;
+
+  const result = await prisma.character.updateMany({
+    where: { id: characterId, projectId },
+    data: { name, notes: input.notes ?? null },
+  });
+  return result.count > 0;
 }
 
 export async function deleteCharacterCore(projectId: string, characterId: string) {

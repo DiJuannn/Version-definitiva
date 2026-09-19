@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getMobileProfile } from "@/lib/mobile-auth";
 import { getProjectForProfile } from "@/lib/project-access";
 import { createBudgetCategoryCore } from "@/lib/budget-core";
+import { isProjectOwnerPro } from "@/lib/project-plan";
 import { CORS_HEADERS } from "@/lib/mobile-cors";
 
 export function OPTIONS() {
@@ -79,8 +80,10 @@ export async function GET(
   const grandActual = categoriesWithTotals.reduce((sum, c) => sum + c.categoryActual, 0);
   const budgetTarget = project.budgetTarget !== null ? Number(project.budgetTarget) : null;
 
+  const isPro = await isProjectOwnerPro(project.organizationId);
+
   return NextResponse.json(
-    { categories: categoriesWithTotals, grandTotal, grandActual, budgetTarget },
+    { categories: categoriesWithTotals, grandTotal, grandActual, budgetTarget, isPro },
     { headers: CORS_HEADERS },
   );
 }

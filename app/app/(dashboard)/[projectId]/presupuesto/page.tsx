@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { isProjectOwnerPro } from "@/lib/project-plan";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import {
   createBudgetCategory,
@@ -72,6 +74,7 @@ export default async function PresupuestoPage({
     ]);
 
   const createCategoryAction = createBudgetCategory.bind(null, projectId);
+  const isPro = await isProjectOwnerPro(project.organizationId);
 
   const categoriesWithTotals = categories.map((category) => {
     const items = category.items.map((item) => {
@@ -131,7 +134,27 @@ export default async function PresupuestoPage({
         eyebrow="Producción"
         title="Presupuesto"
         description="Lo previsto (cantidad × precio + IVA) se calcula solo. Anota el gasto real de cada partida a medida que se paga para ver cómo vas."
-        actions={<PdfLink href={`/api/pdf/presupuesto/${projectId}`} />}
+        actions={
+          <div className="flex flex-wrap items-center gap-3">
+            <PdfLink href={`/api/pdf/presupuesto/${projectId}`} />
+            {isPro ? (
+              <a
+                href={`/api/xlsx/presupuesto/${projectId}`}
+                download
+                className="btn btn-outline inline-flex items-center gap-1.5 print:hidden"
+              >
+                Abrir en Excel
+              </a>
+            ) : (
+              <Link
+                href="/app/organizacion"
+                className="btn btn-outline inline-flex items-center gap-1.5 print:hidden"
+              >
+                Excel — solo PRO
+              </Link>
+            )}
+          </div>
+        }
       />
 
       <div className="mt-8 grid gap-px overflow-hidden border border-line bg-line sm:grid-cols-3">

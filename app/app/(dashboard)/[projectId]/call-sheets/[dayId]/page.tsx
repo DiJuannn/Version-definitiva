@@ -95,24 +95,38 @@ export default async function CallSheetDetailPage({
               </p>
             ) : (
               summary.sceneAssignments.map((assignment) => (
-                <div
-                  key={assignment.id}
-                  className="grid grid-cols-[auto_1fr_auto] items-baseline gap-4 border-b border-line py-3"
-                >
-                  <span className="font-mono text-sm">
-                    {assignment.callTime ?? "—"}
-                  </span>
-                  <span className="font-mono text-sm">
-                    Escena {assignment.scene.number} —{" "}
-                    {INT_EXT_LABELS[assignment.scene.intExt]}{" "}
-                    {DAY_PART_LABELS[assignment.scene.dayPart]}
-                    {assignment.scene.location
-                      ? ` · ${assignment.scene.location.name}`
-                      : ""}
-                  </span>
-                  <span className="font-mono text-xs text-muted">
-                    {assignment.scene.characters.map((c) => c.character.name).join(", ")}
-                  </span>
+                <div key={assignment.id} className="border-b border-line py-3">
+                  <div className="grid grid-cols-[auto_1fr_auto] items-baseline gap-4">
+                    <span className="font-mono text-sm">
+                      {assignment.callTime ?? "—"}
+                    </span>
+                    <span className="font-mono text-sm">
+                      Escena {assignment.scene.number} —{" "}
+                      {INT_EXT_LABELS[assignment.scene.intExt]}{" "}
+                      {DAY_PART_LABELS[assignment.scene.dayPart]}
+                      {assignment.scene.location
+                        ? ` · ${assignment.scene.location.name}`
+                        : ""}
+                    </span>
+                    <span className="font-mono text-xs text-muted">
+                      {assignment.scene.characters.map((c) => c.character.name).join(", ")}
+                    </span>
+                  </div>
+                  {assignment.scene.shots.length > 0 && (
+                    <ul className="mt-2 space-y-1 pl-4">
+                      {assignment.scene.shots.map((shot) => (
+                        <li key={shot.id} className="grid grid-cols-[3.5rem_3rem_1fr] gap-3 font-mono text-xs">
+                          <span className="text-accent">
+                            {assignment.scene.number}.{shot.number}
+                          </span>
+                          <span className="uppercase">{shot.shotSize ?? "—"}</span>
+                          <span className="text-muted">
+                            {[shot.description, shot.movement].filter(Boolean).join(" · ")}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               ))
             )}

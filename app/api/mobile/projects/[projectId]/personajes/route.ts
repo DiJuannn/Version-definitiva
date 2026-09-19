@@ -37,7 +37,15 @@ export async function GET(
     prisma.actor.findMany({
       where: { projectId },
       orderBy: { createdAt: "desc" },
-      select: { id: true, name: true, email: true, phone: true, availability: true },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        rate: true,
+        availability: true,
+        notes: true,
+      },
     }),
     prisma.character.findMany({
       where: { projectId },
@@ -46,5 +54,11 @@ export async function GET(
     }),
   ]);
 
-  return NextResponse.json({ actors, characters }, { headers: CORS_HEADERS });
+  return NextResponse.json(
+    {
+      actors: actors.map((a) => ({ ...a, rate: a.rate == null ? null : Number(a.rate) })),
+      characters,
+    },
+    { headers: CORS_HEADERS },
+  );
 }
