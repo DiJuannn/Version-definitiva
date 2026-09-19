@@ -1,6 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { getProjectForCurrentUser } from "@/lib/project-access";
-import { isProjectOwnerPro } from "@/lib/project-plan";
 import {
   budgetXlsxFilename,
   buildBudgetWorkbook,
@@ -10,7 +9,7 @@ import {
 
 export const runtime = "nodejs";
 
-// Excel del presupuesto: función PRO (igual que el dossier en PDF).
+// Excel del presupuesto: disponible para todos los planes.
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ projectId: string }> },
@@ -20,13 +19,6 @@ export async function GET(
   const project = await getProjectForCurrentUser(projectId);
   if (!project) {
     return NextResponse.json({ error: "No encontrado" }, { status: 404 });
-  }
-
-  if (!(await isProjectOwnerPro(project.organizationId))) {
-    return NextResponse.json(
-      { error: "Exportar el presupuesto a Excel es una función de PRO." },
-      { status: 403 },
-    );
   }
 
   const categories = await loadBudgetForExport(projectId);

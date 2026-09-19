@@ -1,7 +1,7 @@
 import ExcelJS from "exceljs";
 import { prisma } from "@/lib/prisma";
 
-// Excel del presupuesto (función PRO). Las columnas de subtotal, total con IVA
+// Excel del presupuesto (todos los planes). Las columnas de subtotal, total con IVA
 // y desvío son FÓRMULAS de Excel, no números fijos: quien lo abre puede cambiar
 // una cantidad o un precio y todos los totales se recalculan solos. Cada
 // fórmula lleva además su resultado ya calculado para que lo vean bien

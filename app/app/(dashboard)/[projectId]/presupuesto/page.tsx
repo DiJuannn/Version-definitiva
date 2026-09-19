@@ -1,7 +1,5 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { isProjectOwnerPro } from "@/lib/project-plan";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import {
   createBudgetCategory,
@@ -75,7 +73,6 @@ export default async function PresupuestoPage({
     ]);
 
   const createCategoryAction = createBudgetCategory.bind(null, projectId);
-  const isPro = await isProjectOwnerPro(project.organizationId);
 
   const categoriesWithTotals = categories.map((category) => {
     const items = category.items.map((item) => {
@@ -138,16 +135,7 @@ export default async function PresupuestoPage({
         actions={
           <div className="flex flex-wrap items-center gap-3">
             <PdfLink href={`/api/pdf/presupuesto/${projectId}`} />
-            {isPro ? (
-              <ExcelExport href={`/api/xlsx/presupuesto/${projectId}`} />
-            ) : (
-              <Link
-                href="/app/organizacion"
-                className="btn btn-outline inline-flex items-center gap-1.5 print:hidden"
-              >
-                Excel — solo PRO
-              </Link>
-            )}
+            <ExcelExport href={`/api/xlsx/presupuesto/${projectId}`} />
           </div>
         }
       />
