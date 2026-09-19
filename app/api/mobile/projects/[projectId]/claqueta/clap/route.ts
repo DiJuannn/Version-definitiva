@@ -40,7 +40,12 @@ export async function POST(
     );
   }
 
-  const result = await logClapCore(projectId, body);
+  const result = await logClapCore(projectId, {
+    ...body,
+    // La app no manda fechas: la toma queda con la hora del servidor.
+    createdAt: null,
+    good: body.good === true,
+  });
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: 400, headers: CORS_HEADERS });
   }

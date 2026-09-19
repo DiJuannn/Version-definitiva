@@ -12,6 +12,7 @@ import {
   ScriptIcon,
   ShotListIcon,
   StackIcon,
+  TakeReportIcon,
   TaskIcon,
   VehicleIcon,
 } from "@/components/ToolIcons";
@@ -98,6 +99,12 @@ export const TOOL_GROUPS: { label: string; tools: ToolDefinition[] }[] = [
         label: "Claqueta",
         href: "claqueta",
         description: "Claqueta digital: marca tomas con sonido y animación.",
+      },
+      {
+        icon: <TakeReportIcon />,
+        label: "Script",
+        href: "script",
+        description: "El parte de script: las tomas del rodaje, cuáles son buenas y sus notas.",
       },
     ],
   },

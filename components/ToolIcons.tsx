@@ -321,3 +321,16 @@ export function OrganizationIcon({ className }: IconProps) {
     </svg>
   );
 }
+
+
+// Parte de script: tablilla con tomas marcadas como buenas.
+export function TakeReportIcon({ className }: IconProps) {
+  return (
+    <svg {...shared} className={className}>
+      <rect x="5" y="4" width="14" height="17" rx="1" stroke="currentColor" />
+      <path d="M9 4V3h6v1" stroke="currentColor" strokeLinejoin="round" />
+      <path d="m8.5 10 1.2 1.2L12 9M8.5 15l1.2 1.2L12 14" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M14 10.2h2.5M14 15.2h2.5" stroke="currentColor" strokeLinecap="round" />
+    </svg>
+  );
+}

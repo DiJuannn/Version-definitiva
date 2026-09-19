@@ -55,6 +55,8 @@ export async function GET(
         take: true,
         director: true,
         camera: true,
+        good: true,
+        notes: true,
         createdAt: true,
       },
     }),

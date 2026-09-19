@@ -37,6 +37,8 @@ export default async function ClaquetaPage({
         take: true,
         director: true,
         camera: true,
+        good: true,
+        notes: true,
         createdAt: true,
       },
     }),

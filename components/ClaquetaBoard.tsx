@@ -2,7 +2,8 @@
 
 import { useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { logClap, deleteClapLog } from "@/lib/actions/clapboard";
+import Link from "next/link";
+import { logClap, deleteClapLog, updateClapLog } from "@/lib/actions/clapboard";
 import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
 import { DeleteButton } from "@/components/DeleteButton";
 import { useToast } from "@/components/Toast";
@@ -22,6 +23,9 @@ type ClapLogEntry = {
   take: number;
   director: string | null;
   camera: string | null;
+  // Parte de script: toma buena y nota.
+  good?: boolean;
+  notes?: string | null;
   createdAt: string;
   // La toma se marcó en pantalla pero el servidor no llegó a guardarla.
   failed?: boolean;
@@ -210,6 +214,30 @@ export function ClaquetaBoard({
 
   async function retryLog(id: string) {
     await retries.current.get(id)?.();
+  }
+
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+
+  async function setGood(entry: ClapLogEntry) {
+    const next = !entry.good;
+    setLog((prev) => prev.map((l) => (l.id === entry.id ? { ...l, good: next } : l)));
+    const ok = await updateClapLog(projectId, entry.id, { good: next }).catch(() => false);
+    if (!ok) {
+      setLog((prev) => prev.map((l) => (l.id === entry.id ? { ...l, good: entry.good } : l)));
+      toast("error", "No se pudo marcar la toma.");
+    }
+  }
+
+  async function saveNote(entry: ClapLogEntry, value: string) {
+    setEditingNoteId(null);
+    const notes = value.trim() || null;
+    if (notes === (entry.notes ?? null)) return;
+    setLog((prev) => prev.map((l) => (l.id === entry.id ? { ...l, notes } : l)));
+    const ok = await updateClapLog(projectId, entry.id, { notes }).catch(() => false);
+    if (!ok) {
+      setLog((prev) => prev.map((l) => (l.id === entry.id ? { ...l, notes: entry.notes ?? null } : l)));
+      toast("error", "No se pudo guardar la nota.");
+    }
   }
 
   async function handleDeleteLog(id: string) {
@@ -490,9 +518,14 @@ export function ClaquetaBoard({
       </div>
 
       <div>
-        <p className="font-mono text-[10px] tracking-widest text-accent uppercase">
-          Últimas tomas
-        </p>
+        <div className="flex items-baseline justify-between gap-3">
+          <p className="font-mono text-[10px] tracking-widest text-accent uppercase">
+            Últimas tomas
+          </p>
+          <Link href={`/app/${projectId}/script`} className="link-action !text-muted hover:!text-accent">
+            Ver script →
+          </Link>
+        </div>
         {log.length === 0 ? (
           <p className="mt-3 font-mono text-xs text-muted">
             Todavía no se ha marcado ninguna toma.
@@ -519,9 +552,26 @@ export function ClaquetaBoard({
                     {group.entries.map((entry) => (
                       <div
                         key={entry.id}
-                        className="flex items-center justify-between gap-3 px-3 py-2.5"
+                        className={`flex items-center justify-between gap-3 border-l-2 px-3 py-2.5 ${
+                          entry.good ? "border-success bg-success/5" : "border-transparent"
+                        }`}
                       >
-                        <div>
+                        {!entry.failed && !entry.id.startsWith("pending-") && (
+                          <button
+                            type="button"
+                            onClick={() => setGood(entry)}
+                            aria-pressed={Boolean(entry.good)}
+                            aria-label={`Toma ${entry.take}: ${entry.good ? "quitar de buenas" : "marcar como buena"}`}
+                            className={`flex h-6 w-6 shrink-0 items-center justify-center border text-xs transition-colors ${
+                              entry.good
+                                ? "border-success bg-success text-bg"
+                                : "border-line text-transparent hover:border-success hover:text-success"
+                            }`}
+                          >
+                            ✓
+                          </button>
+                        )}
+                        <div className="min-w-0 flex-1">
                           <p className="font-mono text-sm">
                             {entry.shotNumber ? `Plano ${entry.shotNumber} · ` : ""}
                             Toma {entry.take}
@@ -540,6 +590,30 @@ export function ClaquetaBoard({
                               second: "2-digit",
                             })}
                           </p>
+                          {!entry.failed && !entry.id.startsWith("pending-") &&
+                            (editingNoteId === entry.id ? (
+                              <input
+                                autoFocus
+                                defaultValue={entry.notes ?? ""}
+                                placeholder="Nota (ej. se ve el micro)"
+                                onBlur={(e) => saveNote(entry, e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") e.currentTarget.blur();
+                                  if (e.key === "Escape") setEditingNoteId(null);
+                                }}
+                                className="mt-1 w-full border border-accent bg-transparent px-2 py-1 font-mono text-[11px] outline-none"
+                              />
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => setEditingNoteId(entry.id)}
+                                className={`mt-0.5 block max-w-full truncate text-left font-mono text-[10px] hover:text-accent ${
+                                  entry.notes ? "text-fg" : "text-muted/70"
+                                }`}
+                              >
+                                {entry.notes ?? "+ nota"}
+                              </button>
+                            ))}
                         </div>
                         {entry.failed ? (
                           <button

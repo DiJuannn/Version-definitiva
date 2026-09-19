@@ -1033,6 +1033,9 @@ model ClapLog {
   camera      String?
   intExt      IntExt?
   dayPart     DayPart?
+  // Parte de script: la toma buena (la "rodeada") y una observación breve.
+  good        Boolean  @default(false)
+  notes       String?
   createdAt   DateTime @default(now())
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
