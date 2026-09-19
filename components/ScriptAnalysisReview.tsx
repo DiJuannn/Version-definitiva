@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import Link from "next/link";
 import { importReviewedScriptAnalysis } from "@/lib/actions/script-analysis";
+import { Modal } from "@/components/Modal";
+import type { ReplaceImpact } from "@/lib/script-analysis-core";
 import { SectionTabs } from "@/components/SectionTabs";
 import { useToast } from "@/components/Toast";
 import { BREAKDOWN_CATEGORY_LABELS, DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
@@ -122,18 +125,26 @@ export function ScriptAnalysisReview({
   analysisId,
   proposal,
   existing,
+  replace = false,
+  impact = null,
 }: {
   projectId: string;
   analysisId: string;
   proposal: Proposal;
   existing: Existing;
+  // El guion nuevo sustituye al anterior: se borra lo que sale del guion antes de importar.
+  replace?: boolean;
+  // Lo que ya hay en el proyecto (null si no hay nada del guion anterior).
+  impact?: ReplaceImpact | null;
 }) {
   const original = useMemo(() => initialState(proposal, existing), [proposal, existing]);
   const [state, setState] = useState<State>(original);
   const [pending, startTransition] = useTransition();
   const [restored, setRestored] = useState(false);
   const { toast } = useToast();
-  const storageKey = `analysis-draft:${analysisId}`;
+  const [confirmReplace, setConfirmReplace] = useState(false);
+  // El borrador depende del modo: cambia qué cuenta como "ya existe".
+  const storageKey = `analysis-draft:${analysisId}:${replace ? "reemplazar" : "anadir"}`;
   const loaded = useRef(false);
 
   // Borrador: la revisión de un guion largo lleva rato, así que las
@@ -255,7 +266,7 @@ export function ScriptAnalysisReview({
       })),
     };
     startTransition(async () => {
-      const result = await importReviewedScriptAnalysis(projectId, analysisId, payload);
+      const result = await importReviewedScriptAnalysis(projectId, analysisId, payload, replace);
       if (result?.error) {
         toast("error", result.error);
         return;
@@ -315,6 +326,88 @@ export function ScriptAnalysisReview({
           </li>
         ))}
       </ol>
+
+      {impact && (
+        <section
+          aria-label="Guion anterior"
+          className={`mt-6 border p-5 ${replace ? "border-warn/70" : "border-line"}`}
+        >
+          <p className="font-mono text-xs tracking-widest uppercase">Ya hay un guion en este proyecto</p>
+          <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Qué hacer con el guion anterior">
+            <Link
+              href="?modo=reemplazar"
+              replace
+              aria-current={replace ? "true" : undefined}
+              className={`border px-3 py-2 font-mono text-[11px] tracking-widest uppercase transition-colors ${
+                replace ? "border-warn bg-warn/10 text-warn" : "border-line text-muted hover:text-fg"
+              }`}
+            >
+              Reemplazar el guion anterior
+            </Link>
+            <Link
+              href="?modo=anadir"
+              replace
+              aria-current={!replace ? "true" : undefined}
+              className={`border px-3 py-2 font-mono text-[11px] tracking-widest uppercase transition-colors ${
+                !replace ? "border-accent bg-accent/10 text-accent" : "border-line text-muted hover:text-fg"
+              }`}
+            >
+              Añadir a lo que ya hay
+            </Link>
+          </div>
+
+          {replace ? (
+            <div className="mt-4 space-y-3 font-sans text-sm">
+              <p className="text-warn">
+                ⚠ Todo lo del guion anterior se borrará y se reemplazará con este guion. No se puede deshacer.
+              </p>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <p className="font-mono text-[10px] tracking-widest text-danger uppercase">Se borra</p>
+                  <ul className="mt-1.5 space-y-1 text-muted">
+                    <li>
+                      {impact.scenes} escena{impact.scenes === 1 ? "" : "s"}
+                      {impact.shots > 0 ? `, con ${impact.shots} plano${impact.shots === 1 ? "" : "s"} de la shot list` : ""}
+                      {impact.storyboardFrames > 0
+                        ? ` y ${impact.storyboardFrames} viñeta${impact.storyboardFrames === 1 ? "" : "s"} de storyboard`
+                        : ""}
+                    </li>
+                    <li>
+                      {impact.characters} personaje{impact.characters === 1 ? "" : "s"}
+                    </li>
+                    <li>
+                      {impact.breakdownElements} elemento{impact.breakdownElements === 1 ? "" : "s"} de desglose
+                    </li>
+                    <li>Las revisiones de continuidad</li>
+                  </ul>
+                </div>
+                <div>
+                  <p className="font-mono text-[10px] tracking-widest text-success uppercase">Se conserva</p>
+                  <ul className="mt-1.5 space-y-1 text-muted">
+                    <li>
+                      Los actores
+                      {impact.charactersWithActor > 0 ? " (los personajes que sigan con el mismo nombre recuperan a su actor)" : ""}
+                    </li>
+                    <li>El equipo técnico, el presupuesto, las tareas y los documentos</li>
+                    <li>
+                      Los {impact.shootingDays} día{impact.shootingDays === 1 ? "" : "s"} de rodaje y sus call sheets (se
+                      quedan sin escenas)
+                    </li>
+                    <li>
+                      Las tomas de la claqueta{impact.takes > 0 ? ` (${impact.takes})` : ""} y las localizaciones
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p className="mt-3 font-sans text-sm text-muted">
+              El guion nuevo se suma a lo que ya hay: las escenas con el mismo número se actualizan y lo que ya existe
+              se omite. Si es otro guion distinto, elige &ldquo;Reemplazar&rdquo; para no mezclar los dos.
+            </p>
+          )}
+        </section>
+      )}
 
       {restored && (
         <p className="mt-4 flex flex-wrap items-center gap-3 border border-line px-4 py-2.5 font-mono text-xs text-muted">
@@ -429,14 +522,43 @@ export function ScriptAnalysisReview({
           )}
           <button
             type="button"
-            onClick={submit}
+            onClick={() => (replace ? setConfirmReplace(true) : submit())}
             disabled={pending || totalToImport === 0}
-            className="btn btn-primary disabled:opacity-50"
+            className={`btn disabled:opacity-50 ${replace ? "btn-danger" : "btn-primary"}`}
           >
-            {pending ? "Importando…" : "Importar"}
+            {pending ? "Importando…" : replace ? "Reemplazar el guion" : "Importar"}
           </button>
         </div>
       </div>
+      <Modal
+        open={confirmReplace}
+        onClose={() => setConfirmReplace(false)}
+        tone="danger"
+        title="¿Reemplazar el guion anterior?"
+        description={
+          impact
+            ? `Se borrarán ${impact.scenes} escena${impact.scenes === 1 ? "" : "s"}, ${impact.characters} personaje${
+                impact.characters === 1 ? "" : "s"
+              } y ${impact.breakdownElements} elemento${impact.breakdownElements === 1 ? "" : "s"} de desglose del guion anterior, y se reemplazarán con este guion. Actores, equipo, presupuesto, días de rodaje, tareas, documentos y tomas de la claqueta se conservan. No se puede deshacer.`
+            : undefined
+        }
+      >
+        <div className="mt-6 flex justify-end gap-4">
+          <button type="button" onClick={() => setConfirmReplace(false)} className="link-action">
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setConfirmReplace(false);
+              submit();
+            }}
+            className="btn btn-danger"
+          >
+            Sí, borrar y reemplazar
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }

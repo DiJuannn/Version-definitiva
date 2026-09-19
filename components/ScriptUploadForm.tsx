@@ -76,7 +76,12 @@ export function ScriptUploadForm({
             </p>
             <p className="mt-2 font-sans text-sm text-muted">
               Ya hay un guion subido ({existingFileName}). Si subes «
-              {pendingFileName}», lo sustituirá — no se puede deshacer.
+              {pendingFileName}», lo sustituirá.
+            </p>
+            <p className="mt-3 border border-warn/60 p-3 font-sans text-sm text-warn">
+              ⚠ Al analizarlo, podrás reemplazar todo lo del guion anterior (escenas, planos, personajes y desglose):
+              se borrará y se sustituirá con el nuevo. Actores, equipo, presupuesto, días de rodaje, tareas y
+              documentos no se tocan. Antes de borrar nada te pediremos confirmación.
             </p>
             <div className="mt-6 flex justify-end gap-4">
               <button

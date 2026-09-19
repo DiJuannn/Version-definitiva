@@ -50,6 +50,8 @@ export async function importReviewedScriptAnalysis(
   projectId: string,
   analysisId: string,
   reviewed: unknown,
+  // true = el guion nuevo sustituye al anterior (borra lo que sale del guion).
+  replace = false,
 ): Promise<ImportReviewedState> {
   const project = await getProjectForCurrentUser(projectId);
   if (!project) return { error: "No tienes acceso a este proyecto." };
@@ -59,12 +61,16 @@ export async function importReviewedScriptAnalysis(
     project.organizationId,
     analysisId,
     reviewed,
+    replace,
   );
   if (!ok) return { error: "No se encontró el análisis. Recarga la página." };
 
   revalidatePath(`/app/${projectId}/guion`);
   revalidatePath(`/app/${projectId}/desglose`);
   revalidatePath(`/app/${projectId}/personajes`);
+  revalidatePath(`/app/${projectId}/plan-de-rodaje`);
+  revalidatePath(`/app/${projectId}/shot-list`);
+  revalidatePath(`/app/${projectId}`);
   revalidatePath("/app/localizaciones");
   redirect(`/app/${projectId}/guion`);
 }

@@ -1,8 +1,16 @@
 import { prisma } from "@/lib/prisma";
 
 export async function getProjectSummary(projectId: string) {
-  const [project, storyboardFramesCount, shotsWithFrames, itemReservations, vehicleReservations] =
-    await Promise.all([
+  const [
+    project,
+    storyboardFramesCount,
+    shotsWithFrames,
+    takesTotal,
+    goodTakes,
+    shotList,
+    itemReservations,
+    vehicleReservations,
+  ] = await Promise.all([
       prisma.project.findUniqueOrThrow({
         where: { id: projectId },
         include: {
@@ -36,6 +44,16 @@ export async function getProjectSummary(projectId: string) {
       }),
       prisma.storyboardFrame.count({ where: { shot: { scene: { projectId } } } }),
       prisma.shot.count({ where: { scene: { projectId }, storyboard: { some: {} } } }),
+      // Parte de script: tomas apuntadas, las buenas y qué planos de la shot list tienen alguna buena.
+      prisma.clapLog.count({ where: { projectId } }),
+      prisma.clapLog.findMany({
+        where: { projectId, good: true },
+        select: { sceneNumber: true, shotNumber: true },
+      }),
+      prisma.shot.findMany({
+        where: { scene: { projectId } },
+        select: { number: true, scene: { select: { number: true } } },
+      }),
       // Reservas por día de rodaje — Inventario y Vehículos son flotas de
       // toda la organización (ver app/app/(dashboard)/inventario y
       // vehiculos), esto solo trae las reservas de ESTE proyecto, para
@@ -64,6 +82,13 @@ export async function getProjectSummary(projectId: string) {
   }
 
   const shotsTotal = project.scenes.reduce((sum, scene) => sum + scene._count.shots, 0);
+
+  const goodKeys = new Set(
+    goodTakes.filter((t) => t.shotNumber).map((t) => `${t.sceneNumber.trim().toLowerCase()}|${(t.shotNumber ?? "").trim().toLowerCase()}`),
+  );
+  const shotsWithGoodTake = shotList.filter((sh) =>
+    goodKeys.has(`${sh.scene.number.trim().toLowerCase()}|${sh.number.trim().toLowerCase()}`),
+  ).length;
 
   const budgetCategoriesWithTotals = project.budgetCategories.map((category) => {
     const total = category.items.reduce((sum, item) => {
@@ -164,6 +189,9 @@ export async function getProjectSummary(projectId: string) {
     shotsTotal,
     storyboardFramesCount,
     shotsWithFrames,
+    takesTotal,
+    takesGood: goodTakes.length,
+    shotsWithGoodTake,
     budgetCategoriesWithTotals,
     budgetGrandTotal,
     budgetGrandActual,
@@ -191,7 +219,8 @@ export type SummaryTool =
   | "storyboard"
   | "plan-de-rodaje"
   | "call-sheets"
-  | "presupuesto";
+  | "presupuesto"
+  | "script";
 
 export type SummaryProgress = {
   key: string;
@@ -216,7 +245,22 @@ export type NextShoot = {
   hasCallSheet: boolean;
 };
 
+export type TimelineDay = {
+  dayId: string;
+  date: Date;
+  // pasado | hoy | próximo
+  when: "past" | "today" | "upcoming";
+  scenes: number;
+  shots: number;
+  shotsDone: number;
+  hasCallSheet: boolean;
+};
+
 export type ProjectHighlights = {
+  // Frase que resume dónde está el proyecto y el % de preparación.
+  headline: { percent: number; phase: "sin-guion" | "preparacion" | "rodando" | "terminado"; sentence: string };
+  timeline: TimelineDay[];
+  script: { takes: number; good: number; shotsWithGood: number };
   nextShoot: NextShoot | null;
   // Todos los días de rodaje: primero, último, cuántos ya pasaron.
   span: { first: Date; last: Date; total: number; past: number } | null;
@@ -225,6 +269,11 @@ export type ProjectHighlights = {
   progress: SummaryProgress[];
   pending: SummaryPending[];
 };
+
+function untilShort(daysUntil: number): string {
+  if (daysUntil === 1) return "mañana";
+  return `en ${daysUntil} días`;
+}
 
 // Fecha de hoy en España como "AAAA-MM-DD" (el servidor va en UTC).
 function madridToday(now: Date): string {
@@ -345,6 +394,16 @@ export function buildProjectHighlights(
           tool: "plan-de-rodaje",
         },
   );
+  if (data.takesTotal > 0 && shotsTotal > 0) {
+    progress.push({
+      key: "script",
+      label: "Script",
+      done: data.shotsWithGoodTake,
+      total: shotsTotal,
+      hint: "planos con toma buena",
+      tool: "script",
+    });
+  }
   if (days.length > 0) {
     progress.push({
       key: "call-sheets",
@@ -407,7 +466,60 @@ export function buildProjectHighlights(
     });
   }
 
+  // % de preparación: media de las barras que ya aplican (las de total 0 no cuentan hasta que haya algo que medir).
+  // El script mide el rodaje, no la preparación, así que se queda fuera de la media.
+  const measured = progress.filter((p) => p.total > 0 && p.key !== "script");
+  const percent =
+    measured.length > 0
+      ? Math.round((measured.reduce((sum, p) => sum + p.done / p.total, 0) / measured.length) * 100)
+      : 0;
+
+  const timeline: TimelineDay[] = days.map((d) => {
+    const diff = dayOf(d.date) - today;
+    return {
+      dayId: d.id,
+      date: d.date,
+      when: diff < 0 ? "past" : diff === 0 ? "today" : "upcoming",
+      scenes: d.scenes.length,
+      shots: d.shots.length,
+      shotsDone: d.shots.filter((sh) => sh.done).length,
+      hasCallSheet: Boolean(d.callSheet),
+    };
+  });
+
+  const toResolve = pending.length;
+  const tail = toResolve > 0 ? ` · ${plural(toResolve, "cosa por resolver", "cosas por resolver")}` : "";
+  let phase: ProjectHighlights["headline"]["phase"];
+  let sentence: string;
+  if (scenesTotal === 0) {
+    phase = "sin-guion";
+    sentence = "Empieza subiendo el guion: de él salen las escenas, los personajes y el desglose.";
+  } else if (span && !nextShoot) {
+    phase = "terminado";
+    sentence =
+      shotsTotal > 0
+        ? `Rodaje terminado · ${shotsDone} de ${shotsTotal} planos rodados${tail}`
+        : `Rodaje terminado${tail}`;
+  } else if (span && span.past > 0) {
+    phase = "rodando";
+    sentence = `Rodando: ${span.past} de ${span.total} días hechos${
+      nextShoot ? (nextShoot.daysUntil === 0 ? " · hoy hay rodaje" : ` · próximo rodaje ${untilShort(nextShoot.daysUntil)}`) : ""
+    }${tail}`;
+  } else if (nextShoot) {
+    phase = "preparacion";
+    sentence =
+      nextShoot.daysUntil === 0
+        ? `Hoy es el primer día de rodaje${tail}`
+        : `Primer rodaje ${untilShort(nextShoot.daysUntil)}${tail}`;
+  } else {
+    phase = "preparacion";
+    sentence = `Ya tienes el guion: planifica los días de rodaje${tail}`;
+  }
+
   return {
+    headline: { percent, phase, sentence },
+    timeline,
+    script: { takes: data.takesTotal, good: data.takesGood, shotsWithGood: data.shotsWithGoodTake },
     nextShoot,
     span,
     shots: { total: shotsTotal, planned: shotsPlanned, done: shotsDone },

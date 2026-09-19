@@ -42,7 +42,13 @@ export async function POST(
   // Con `proposal` llega la propuesta ya revisada y editada (lo que envía la
   // pantalla actual de la app); sin ella, el formato antiguo por índices.
   const ok = body.proposal
-    ? await importReviewedProposalCore(projectId, project.organizationId, analysisId, body.proposal)
+    ? await importReviewedProposalCore(
+        projectId,
+        project.organizationId,
+        analysisId,
+        body.proposal,
+        body.replace === true,
+      )
     : await importScriptAnalysisCore(projectId, project.organizationId, analysisId, {
         characterIndices: Array.isArray(body.characterIndices) ? body.characterIndices : [],
         locationIndices: Array.isArray(body.locationIndices) ? body.locationIndices : [],

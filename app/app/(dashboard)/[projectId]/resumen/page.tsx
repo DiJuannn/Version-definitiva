@@ -130,7 +130,7 @@ export default async function ProjectSummaryPage({
     shootingDaysWithNeeds,
   } = data;
   const highlights = buildProjectHighlights(data);
-  const { nextShoot, span, budget, progress, pending } = highlights;
+  const { nextShoot, span, budget, progress, pending, headline, timeline, script } = highlights;
 
   const toolHref = (tool: SummaryTool) => `/app/${projectId}/${tool}`;
   const dateLong = (date: Date) =>
@@ -195,8 +195,28 @@ export default async function ProjectSummaryPage({
         }
       />
 
+      {/* Dónde está el proyecto, en una frase */}
+      <section
+        aria-label="Estado del proyecto"
+        className="mt-8 flex flex-col gap-4 border border-accent/40 bg-accent/5 p-5 sm:flex-row sm:items-center sm:gap-8 sm:p-6"
+      >
+        <div className="shrink-0">
+          <p className="font-display text-5xl leading-none font-black tabular-nums">
+            {headline.percent}
+            <span className="text-2xl text-muted">%</span>
+          </p>
+          <p className={`${LABEL} mt-1`}>Preparación</p>
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="font-display text-lg leading-snug font-bold sm:text-xl">{headline.sentence}</p>
+          <div className="mt-3">
+            <Bar value={headline.percent / 100} tone={headline.percent >= 100 ? "success" : "accent"} />
+          </div>
+        </div>
+      </section>
+
       {/* Lo más importante, de un vistazo */}
-      <div className="mt-8 grid gap-3 lg:grid-cols-3">
+      <div className="mt-3 grid gap-3 lg:grid-cols-3">
         <section className={CARD} aria-label="Próximo rodaje">
           <p className={LABEL}>Próximo rodaje</p>
           {nextShoot ? (
@@ -276,6 +296,14 @@ export default async function ProjectSummaryPage({
               <p className="mt-3 font-mono text-[11px] text-muted">
                 {plural(span.total, "día", "días")} · del {dateShort(span.first)} al {dateShort(span.last)}
               </p>
+              {script.takes > 0 && (
+                <Link
+                  href={`/app/${projectId}/script`}
+                  className="mt-1 block font-mono text-[11px] text-muted transition-colors hover:text-accent"
+                >
+                  Script: {plural(script.takes, "toma", "tomas")} · {script.good} buena{script.good === 1 ? "" : "s"} →
+                </Link>
+              )}
             </>
           ) : (
             <>
@@ -312,6 +340,49 @@ export default async function ProjectSummaryPage({
           )}
         </section>
       </div>
+
+      {/* Días de rodaje de un vistazo */}
+      {timeline.length > 0 && (
+        <section aria-label="Días de rodaje" className="mt-3 border border-line p-4">
+          <p className={LABEL}>Días de rodaje</p>
+          <ol className="mt-3 flex gap-2 overflow-x-auto pb-1">
+            {timeline.map((day) => {
+              const done = day.shots > 0 && day.shotsDone === day.shots;
+              return (
+                <li key={day.dayId} className="shrink-0">
+                  <Link
+                    href={`/app/${projectId}/plan-de-rodaje/${day.dayId}`}
+                    className={`block w-32 border p-3 transition-colors hover:border-accent ${
+                      day.when === "today"
+                        ? "border-accent bg-accent/10"
+                        : day.when === "past"
+                          ? "border-line opacity-80"
+                          : "border-line"
+                    }`}
+                  >
+                    <p className="flex items-center justify-between font-mono text-[10px] tracking-widest uppercase">
+                      <span className={day.when === "today" ? "text-accent" : "text-muted"}>
+                        {day.when === "today" ? "Hoy" : day.when === "past" ? "Hecho" : "Próximo"}
+                      </span>
+                      {done && <span className="text-success">✓</span>}
+                    </p>
+                    <p className="mt-1 font-display text-sm font-bold">
+                      {day.date.toLocaleDateString("es-ES", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" })}
+                    </p>
+                    <p className="mt-1 font-mono text-[10px] text-muted">
+                      {plural(day.scenes, "escena", "escenas")}
+                      {day.shots > 0 ? ` · ${day.shotsDone}/${day.shots} pl.` : ""}
+                    </p>
+                    <p className={`mt-0.5 font-mono text-[10px] ${day.hasCallSheet ? "text-success" : "text-warn"}`}>
+                      {day.hasCallSheet ? "call sheet ✓" : "sin call sheet"}
+                    </p>
+                  </Link>
+                </li>
+              );
+            })}
+          </ol>
+        </section>
+      )}
 
       {/* Números clave */}
       <div className="mt-3 grid grid-cols-2 gap-px overflow-hidden border border-line bg-line sm:grid-cols-3 lg:grid-cols-6">

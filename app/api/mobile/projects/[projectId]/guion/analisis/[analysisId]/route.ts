@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getMobileProfile } from "@/lib/mobile-auth";
 import { getProjectForProfile } from "@/lib/project-access";
 import type { ScriptAnalysisProposal } from "@/lib/mistral";
+import { getScriptReplaceImpact } from "@/lib/script-analysis-core";
 import { CORS_HEADERS } from "@/lib/mobile-cors";
 
 export function OPTIONS() {
@@ -56,6 +57,7 @@ export async function GET(
     prisma.scene.findMany({ where: { projectId }, select: { number: true } }),
   ]);
 
+  const replaceImpact = await getScriptReplaceImpact(projectId, analysisId);
   const existingCharacterNames = new Set(existingCharacters.map((c) => c.name.toLowerCase()));
   const existingLocationNames = new Set(existingLocations.map((l) => l.name.toLowerCase()));
   const existingPropNames = new Set(existingProps.map((p) => p.name.toLowerCase()));
@@ -76,6 +78,8 @@ export async function GET(
         exists: existingPropNames.has(p.name.toLowerCase()),
       })),
       scenes: proposal.scenes,
+      // Qué se borraría si el guion nuevo sustituye al anterior, y si se recomienda hacerlo.
+      replaceImpact,
       // Números de escena que ya existen: importar una con el mismo número la
       // actualiza en vez de crear otra.
       existingSceneNumbers: existingScenes.map((s) => s.number),

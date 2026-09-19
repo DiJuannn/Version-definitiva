@@ -12,6 +12,7 @@ import {
 import { DeleteButton } from "@/components/DeleteButton";
 import { EmptyState } from "@/components/EmptyState";
 import { PdfLink } from "@/components/PdfLink";
+import { ExcelExport } from "@/components/ExcelExport";
 import { PageHeader } from "@/components/PageHeader";
 import { FormField } from "@/components/FormField";
 import { SubmitButton } from "@/components/SubmitButton";
@@ -138,13 +139,7 @@ export default async function PresupuestoPage({
           <div className="flex flex-wrap items-center gap-3">
             <PdfLink href={`/api/pdf/presupuesto/${projectId}`} />
             {isPro ? (
-              <a
-                href={`/api/xlsx/presupuesto/${projectId}`}
-                download
-                className="btn btn-outline inline-flex items-center gap-1.5 print:hidden"
-              >
-                Abrir en Excel
-              </a>
+              <ExcelExport href={`/api/xlsx/presupuesto/${projectId}`} />
             ) : (
               <Link
                 href="/app/organizacion"

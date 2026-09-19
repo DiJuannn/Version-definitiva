@@ -1,3 +1,4 @@
+import type { Prisma } from "@/lib/generated/prisma";
 import { prisma } from "@/lib/prisma";
 import { analyzeScriptPdf, type ScriptAnalysisProposal } from "@/lib/mistral";
 import { BreakdownCategory, DayPart, IntExt } from "@/lib/generated/prisma";
@@ -171,6 +172,7 @@ export async function importReviewedProposalCore(
   organizationId: string,
   analysisId: string,
   reviewed: unknown,
+  replace = false,
 ): Promise<boolean> {
   const proposal = sanitizeProposal(reviewed);
 
@@ -212,6 +214,7 @@ export async function importReviewedProposalCore(
       sceneIndices: proposal.scenes.map((_, i) => i),
     },
     proposal,
+    replace,
   );
 }
 
@@ -222,25 +225,46 @@ export type ImportSelections = {
   sceneIndices: number[];
 };
 
-export async function importScriptAnalysisCore(
+async function runImport(
+  db: Prisma.TransactionClient,
   projectId: string,
   organizationId: string,
   analysisId: string,
   selections: ImportSelections,
-  // Propuesta editada; si no se pasa, se usa la que guardó la IA.
-  overrideProposal?: ScriptAnalysisProposal,
+  overrideProposal: ScriptAnalysisProposal | undefined,
+  replace: boolean,
 ): Promise<boolean> {
-  const analysis = await prisma.scriptAnalysis.findFirst({
+  const analysis = await db.scriptAnalysis.findFirst({
     where: { id: analysisId, projectId },
   });
   if (!analysis) return false;
 
   const proposal = overrideProposal ?? (analysis.proposedData as unknown as ScriptAnalysisProposal);
 
+  // Guion nuevo que sustituye al anterior: se borra lo que sale del guion
+  // (escenas con sus planos, storyboard y vínculos; personajes; elementos de
+  // desglose; revisiones de continuidad). Todo lo demás se queda: actores,
+  // equipo, presupuesto, días de rodaje, tareas, documentos, tomas de la
+  // claqueta y las localizaciones de la organización. Los personajes que
+  // vuelvan a salir con el mismo nombre recuperan a su actor.
+  const actorByCharacter = new Map<string, string>();
+  if (replace) {
+    const previous = await db.character.findMany({
+      where: { projectId, actorId: { not: null } },
+      select: { name: true, actorId: true },
+    });
+    for (const c of previous) if (c.actorId) actorByCharacter.set(c.name.trim().toLowerCase(), c.actorId);
+
+    await db.continuityCheck.deleteMany({ where: { projectId } });
+    await db.scene.deleteMany({ where: { projectId } });
+    await db.character.deleteMany({ where: { projectId } });
+    await db.breakdownElement.deleteMany({ where: { projectId } });
+  }
+
   const [existingCharacters, existingLocations, existingProps] = await Promise.all([
-    prisma.character.findMany({ where: { projectId } }),
-    prisma.location.findMany({ where: { organizationId } }),
-    prisma.breakdownElement.findMany({ where: { projectId } }),
+    db.character.findMany({ where: { projectId } }),
+    db.location.findMany({ where: { organizationId } }),
+    db.breakdownElement.findMany({ where: { projectId } }),
   ]);
 
   const characterIdByName = new Map(
@@ -257,8 +281,13 @@ export async function importScriptAnalysisCore(
     const character = proposal.characters[i];
     const key = character.name.toLowerCase();
     if (characterIdByName.has(key)) continue;
-    const created = await prisma.character.create({
-      data: { projectId, name: character.name, notes: cleanText(character.notes) },
+    const created = await db.character.create({
+      data: {
+        projectId,
+        name: character.name,
+        notes: cleanText(character.notes),
+        actorId: actorByCharacter.get(key) ?? null,
+      },
     });
     characterIdByName.set(key, created.id);
   }
@@ -269,7 +298,7 @@ export async function importScriptAnalysisCore(
     const location = proposal.locations[i];
     const key = location.name.toLowerCase();
     if (locationIdByName.has(key)) continue;
-    const created = await prisma.location.create({
+    const created = await db.location.create({
       data: {
         organizationId,
         name: location.name,
@@ -295,7 +324,7 @@ export async function importScriptAnalysisCore(
         ? (prop.category as BreakdownCategory)
         : BreakdownCategory.PROP;
 
-    const created = await prisma.breakdownElement.create({
+    const created = await db.breakdownElement.create({
       data: { projectId, category, name: prop.name },
     });
     propIdByName.set(key, created.id);
@@ -307,7 +336,7 @@ export async function importScriptAnalysisCore(
   // "number" (el mismo criterio que ya usa la web para pedirlo al crear
   // una escena a mano): si ya existe una escena con ese número en el
   // proyecto, se actualiza en vez de crear otra.
-  const existingScenes = await prisma.scene.findMany({
+  const existingScenes = await db.scene.findMany({
     where: { projectId },
     select: { id: true, number: true },
   });
@@ -350,9 +379,9 @@ export async function importScriptAnalysisCore(
 
     const existingSceneId = existingSceneIdByNumber.get(scene.number);
     const sceneId = existingSceneId
-      ? (await prisma.scene.update({ where: { id: existingSceneId }, data: sceneData })).id
+      ? (await db.scene.update({ where: { id: existingSceneId }, data: sceneData })).id
       : (
-          await prisma.scene.create({
+          await db.scene.create({
             data: { projectId, number: scene.number, ...sceneData, order: order++ },
           })
         ).id;
@@ -361,24 +390,97 @@ export async function importScriptAnalysisCore(
     // Igual que al editar una escena a mano: se borran los vínculos
     // anteriores y se vuelven a crear con la propuesta nueva, en vez de
     // acumularlos.
-    await prisma.sceneCharacter.deleteMany({ where: { sceneId } });
+    await db.sceneCharacter.deleteMany({ where: { sceneId } });
     if (characterIds.length > 0) {
-      await prisma.sceneCharacter.createMany({
+      await db.sceneCharacter.createMany({
         data: characterIds.map((characterId) => ({ sceneId, characterId })),
       });
     }
-    await prisma.sceneBreakdownElement.deleteMany({ where: { sceneId } });
+    await db.sceneBreakdownElement.deleteMany({ where: { sceneId } });
     if (propIds.length > 0) {
-      await prisma.sceneBreakdownElement.createMany({
+      await db.sceneBreakdownElement.createMany({
         data: propIds.map((breakdownElementId) => ({ sceneId, breakdownElementId })),
       });
     }
   }
 
-  await prisma.scriptAnalysis.update({
+  await db.scriptAnalysis.update({
     where: { id: analysisId },
     data: { status: "REVIEWED", reviewedAt: new Date() },
   });
 
   return true;
+}
+
+export async function importScriptAnalysisCore(
+  projectId: string,
+  organizationId: string,
+  analysisId: string,
+  selections: ImportSelections,
+  // Propuesta editada; si no se pasa, se usa la que guardó la IA.
+  overrideProposal?: ScriptAnalysisProposal,
+  // true = el guion nuevo sustituye al anterior (ver runImport).
+  replace = false,
+): Promise<boolean> {
+  if (!replace) return runImport(prisma, projectId, organizationId, analysisId, selections, overrideProposal, false);
+
+  // Borrar e importar van juntos: o se hace todo o no cambia nada.
+  return prisma.$transaction(
+    (tx) => runImport(tx, projectId, organizationId, analysisId, selections, overrideProposal, true),
+    { timeout: 120_000, maxWait: 15_000 },
+  );
+}
+
+export type ReplaceImpact = {
+  // ¿Hay algo del guion anterior en el proyecto?
+  hasContent: boolean;
+  // Lo que se borraría al reemplazar.
+  scenes: number;
+  shots: number;
+  storyboardFrames: number;
+  characters: number;
+  breakdownElements: number;
+  // Lo que se conserva y conviene recordar.
+  charactersWithActor: number;
+  shootingDays: number;
+  takes: number;
+  // Si esta propuesta parece un guion nuevo (no un reanálisis del mismo archivo): se recomienda reemplazar.
+  suggestReplace: boolean;
+};
+
+export async function getScriptReplaceImpact(projectId: string, analysisId: string): Promise<ReplaceImpact> {
+  const [scenes, shots, storyboardFrames, characters, breakdownElements, charactersWithActor, shootingDays, takes, analysis, reviewed] =
+    await Promise.all([
+      prisma.scene.count({ where: { projectId } }),
+      prisma.shot.count({ where: { scene: { projectId } } }),
+      prisma.storyboardFrame.count({ where: { shot: { scene: { projectId } } } }),
+      prisma.character.count({ where: { projectId } }),
+      prisma.breakdownElement.count({ where: { projectId } }),
+      prisma.character.count({ where: { projectId, actorId: { not: null } } }),
+      prisma.shootingDay.count({ where: { projectId } }),
+      prisma.clapLog.count({ where: { projectId } }),
+      prisma.scriptAnalysis.findFirst({ where: { id: analysisId, projectId }, select: { scriptFileId: true } }),
+      prisma.scriptAnalysis.findMany({
+        where: { projectId, status: "REVIEWED", id: { not: analysisId } },
+        select: { scriptFileId: true },
+      }),
+    ]);
+
+  const hasContent = scenes + characters + breakdownElements > 0;
+  // Al subir un guion nuevo se borra el archivo anterior y sus análisis quedan sin archivo (null);
+  // un reanálisis del mismo archivo comparte scriptFileId con la importación previa.
+  const sameFileImportedBefore =
+    analysis?.scriptFileId != null && reviewed.some((r) => r.scriptFileId === analysis.scriptFileId);
+  return {
+    hasContent,
+    scenes,
+    shots,
+    storyboardFrames,
+    characters,
+    breakdownElements,
+    charactersWithActor,
+    shootingDays,
+    takes,
+    suggestReplace: hasContent && !sameFileImportedBefore,
+  };
 }

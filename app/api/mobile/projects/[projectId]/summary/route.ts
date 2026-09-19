@@ -134,6 +134,17 @@ export async function GET(
       })),
       // Lo importante ya digerido (mismo cálculo que el Resumen de la web).
       highlights: {
+        headline: highlights.headline,
+        timeline: highlights.timeline.map((d) => ({
+          dayId: d.dayId,
+          dateLabel: d.date.toLocaleDateString("es-ES", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }),
+          when: d.when,
+          scenes: d.scenes,
+          shots: d.shots,
+          shotsDone: d.shotsDone,
+          hasCallSheet: d.hasCallSheet,
+        })),
+        script: highlights.script,
         nextShoot: highlights.nextShoot
           ? {
               dayId: highlights.nextShoot.dayId,
