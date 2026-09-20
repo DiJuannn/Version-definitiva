@@ -43,3 +43,11 @@ export const MISTRAL_MAX_CONCURRENT_CALLS = 2;
 // de PRO a gratis — solo se bloquea crear uno más por encima del tope.
 export const FREE_ACTIVE_PROJECTS_LIMIT = 2;
 export const FREE_PROJECT_COLLABORATORS_LIMIT = 2;
+
+// Moodboard (tablero libre del proyecto): el plan gratuito puede tener hasta
+// este número de tarjetas; PRO no tiene tope práctico, salvo MOODBOARD_MAX_CARDS,
+// que protege el rendimiento del tablero en el navegador. Las sugerencias de
+// referencias con IA son solo PRO, con un tope diario por proyecto.
+export const MOODBOARD_FREE_CARD_LIMIT = 30;
+export const MOODBOARD_MAX_CARDS = 300;
+export const MOODBOARD_AI_PRO_DAILY_LIMIT = 10;

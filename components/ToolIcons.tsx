@@ -32,6 +32,17 @@ export function SceneIcon({ className }: IconProps) {
   );
 }
 
+export function MoodboardIcon({ className }: IconProps) {
+  return (
+    <svg {...shared} className={className}>
+      <rect x="3" y="4" width="8" height="9" rx="1" stroke="currentColor" />
+      <rect x="13" y="4" width="8" height="5" rx="1" stroke="currentColor" />
+      <rect x="13" y="11" width="8" height="9" rx="1" stroke="currentColor" />
+      <rect x="3" y="15" width="8" height="5" rx="1" stroke="currentColor" />
+    </svg>
+  );
+}
+
 export function CastIcon({ className }: IconProps) {
   return (
     <svg {...shared} className={className}>

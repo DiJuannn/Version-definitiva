@@ -11,6 +11,11 @@ function getClient() {
   return client;
 }
 
+// Para otros usos de Mistral fuera del guion (p. ej. las referencias del moodboard).
+export function getMistralClient() {
+  return getClient();
+}
+
 export type ScriptAnalysisProposal = {
   characters: { name: string; notes?: string }[];
   locations: { name: string; notes?: string }[];

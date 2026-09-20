@@ -317,8 +317,26 @@ model Project {
   shares            ProjectShare[]
   activityLogs      ActivityLog[]
   backups           ProjectBackup[]
+  moodboard         Moodboard?
 
   @@index([organizationId])
+}
+
+// Moodboard del proyecto: un tablero libre (v1: uno por proyecto) con
+// tarjetas — notas, imágenes, paletas, referencias y tarjetas vivas del
+// proyecto. `data` es el JSON de tarjetas (ver lib/moodboard-core.ts).
+// aiDay/aiCount cuentan las sugerencias de IA del día para el tope PRO.
+model Moodboard {
+  id        String   @id @default(cuid())
+  projectId String   @unique
+  data      Json
+  cardCount Int      @default(0)
+  aiDay     String?
+  aiCount   Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
 
 // Copia automática de lo que sale del guion (escenas, planos, personajes,

@@ -7,6 +7,7 @@ import {
   ContractIcon,
   FolderIcon,
   LocationIcon,
+  MoodboardIcon,
   SceneIcon,
   ScheduleIcon,
   ScriptIcon,
@@ -63,6 +64,12 @@ export const TOOL_GROUPS: { label: string; tools: ToolDefinition[] }[] = [
         label: "Storyboard",
         href: "storyboard",
         description: "Viñetas visuales de los planos clave.",
+      },
+      {
+        icon: <MoodboardIcon />,
+        label: "Moodboard",
+        href: "moodboard",
+        description: "Un tablero libre de referencias, con tarjetas de tu proyecto y sugerencias de IA.",
       },
       {
         icon: <CalendarIcon />,
