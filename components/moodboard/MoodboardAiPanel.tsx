@@ -5,8 +5,9 @@ import Link from "next/link";
 import { Modal } from "@/components/Modal";
 import { suggestReferences } from "@/lib/actions/moodboard";
 import type { MoodboardProposal } from "@/lib/moodboard-ai";
+import { MOODBOARD_AI_PRO_DAILY_LIMIT } from "@/lib/limits";
 
-// Referencias con IA (PRO): la IA lee el resumen del proyecto y propone tono,
+// Referencias con IA (1 gratis por proyecto, 10 al día con PRO): la IA lee el resumen del proyecto y propone tono,
 // paleta, referencias e ideas. Nada entra al tablero hasta que se elige.
 export function MoodboardAiPanel({
   open,
@@ -14,6 +15,7 @@ export function MoodboardAiPanel({
   projectId,
   isPro,
   usesLeft,
+  aiLimit,
   onUsed,
   onBoardVersion,
   onAdd,
@@ -23,6 +25,7 @@ export function MoodboardAiPanel({
   projectId: string;
   isPro: boolean;
   usesLeft: number;
+  aiLimit: number;
   onUsed: () => void;
   onBoardVersion: (updatedAt: string | null) => void;
   onAdd: (proposal: MoodboardProposal, keys: Set<string>) => void;
@@ -79,11 +82,12 @@ export function MoodboardAiPanel({
       title="Referencias con IA"
       description="La IA lee el resumen de tu proyecto (sinopsis, personajes y escenas) y sugiere referencias para el moodboard."
     >
-      {!isPro ? (
+      {!isPro && usesLeft <= 0 && !proposal ? (
         <div className="mt-5">
           <p className="font-sans text-sm text-muted">
-            Es una función de PRO: tono, paleta de colores, películas y series de referencia e ideas de
-            fotografía, vestuario y sonido, pensadas para tu proyecto.
+            Ya has usado la sugerencia gratuita de este proyecto. Con PRO tienes hasta{" "}
+            {MOODBOARD_AI_PRO_DAILY_LIMIT} al día en cada proyecto: tono, paleta, películas y series de
+            referencia e ideas de fotografía, vestuario y sonido.
           </p>
           <div className="mt-5 flex justify-end gap-4">
             <button type="button" onClick={onClose} className="link-action">
@@ -98,7 +102,10 @@ export function MoodboardAiPanel({
         <div className="mt-5">
           <p className="font-sans text-xs text-muted">
             Consejo: cuanto más completa esté la sinopsis y las descripciones de escena, mejores serán las
-            sugerencias. Te quedan {usesLeft} hoy en este proyecto.
+            sugerencias.{" "}
+            {isPro
+              ? `Te quedan ${usesLeft} de ${aiLimit} hoy en este proyecto.`
+              : "Tienes 1 sugerencia gratuita en este proyecto: úsala cuando la sinopsis y las escenas estén bien descritas."}
           </p>
           {error && (
             <p className="mt-3 font-mono text-xs text-danger" role="alert">

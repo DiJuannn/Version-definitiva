@@ -1,6 +1,7 @@
 import {
   FREE_ACTIVE_PROJECTS_LIMIT,
   FREE_PROJECT_COLLABORATORS_LIMIT,
+  MOODBOARD_AI_PRO_DAILY_LIMIT,
   MOODBOARD_FREE_CARD_LIMIT,
   SCRIPT_ANALYSIS_FREE_DAILY_LIMIT,
   SCRIPT_ANALYSIS_FREE_LIFETIME_LIMIT,
@@ -17,7 +18,7 @@ export const FREE_FEATURES = [
   `Hasta ${FREE_PROJECT_COLLABORATORS_LIMIT} colaboradores por proyecto`,
   `Guiones de hasta ${SCRIPT_PAGE_LIMIT_FREE} páginas`,
   `${SCRIPT_ANALYSIS_FREE_DAILY_LIMIT} análisis de IA al día, ${SCRIPT_ANALYSIS_FREE_LIFETIME_LIMIT} en total`,
-  `Moodboard con hasta ${MOODBOARD_FREE_CARD_LIMIT} tarjetas`,
+  `Moodboard con hasta ${MOODBOARD_FREE_CARD_LIMIT} tarjetas y 1 sugerencia de referencias con IA por proyecto`,
 ];
 
 export const PRO_FEATURES = [
@@ -26,6 +27,6 @@ export const PRO_FEATURES = [
   `Hasta ${SCRIPT_ANALYSIS_PRO_DAILY_LIMIT} análisis de IA al día`,
   "Dossier completo del proyecto en PDF",
   "Detector de continuidad con IA",
-  "Moodboard sin tope de tarjetas y con referencias sugeridas por IA",
+  `Moodboard sin tope de tarjetas y hasta ${MOODBOARD_AI_PRO_DAILY_LIMIT} sugerencias de referencias con IA al día por proyecto`,
   "Plantilla de documentos lista para firmar (permiso de rodaje, cesión de imagen, contrato de colaboración, autorización de menor, NDA)",
 ];

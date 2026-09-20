@@ -7,6 +7,7 @@ import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
 import { PageHeader } from "@/components/PageHeader";
 import { MoodboardLoader } from "@/components/moodboard/MoodboardLoader";
 import {
+  MOODBOARD_AI_FREE_PER_PROJECT,
   MOODBOARD_AI_PRO_DAILY_LIMIT,
   MOODBOARD_FREE_CARD_LIMIT,
   MOODBOARD_MAX_CARDS,
@@ -23,9 +24,9 @@ export default async function MoodboardPage({
   const project = await getProjectForCurrentUser(projectId);
   if (!project) notFound();
 
-  const [isPro, board, scenes, characters] = await Promise.all([
-    isProjectOwnerPro(project.organizationId),
-    getMoodboard(projectId),
+  const isPro = await isProjectOwnerPro(project.organizationId);
+  const [board, scenes, characters] = await Promise.all([
+    getMoodboard(projectId, isPro),
     prisma.scene.findMany({
       where: { projectId },
       orderBy: [{ order: "asc" }, { number: "asc" }],
@@ -77,8 +78,8 @@ export default async function MoodboardPage({
           isPro={isPro}
           freeLimit={MOODBOARD_FREE_CARD_LIMIT}
           maxCards={MOODBOARD_MAX_CARDS}
-          aiLimit={MOODBOARD_AI_PRO_DAILY_LIMIT}
-          aiUsedToday={board.aiUsedToday}
+          aiLimit={isPro ? MOODBOARD_AI_PRO_DAILY_LIMIT : MOODBOARD_AI_FREE_PER_PROJECT}
+          aiUsed={board.aiUsed}
           lookup={lookup}
         />
       </div>

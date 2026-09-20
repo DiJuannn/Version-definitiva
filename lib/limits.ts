@@ -47,7 +47,9 @@ export const FREE_PROJECT_COLLABORATORS_LIMIT = 2;
 // Moodboard (tablero libre del proyecto): el plan gratuito puede tener hasta
 // este número de tarjetas; PRO no tiene tope práctico, salvo MOODBOARD_MAX_CARDS,
 // que protege el rendimiento del tablero en el navegador. Las sugerencias de
-// referencias con IA son solo PRO, con un tope diario por proyecto.
+// referencias con IA: el plan gratuito tiene UNA sugerencia por proyecto (en total)
+// y PRO hasta MOODBOARD_AI_PRO_DAILY_LIMIT al día por proyecto.
 export const MOODBOARD_FREE_CARD_LIMIT = 30;
 export const MOODBOARD_MAX_CARDS = 300;
+export const MOODBOARD_AI_FREE_PER_PROJECT = 1;
 export const MOODBOARD_AI_PRO_DAILY_LIMIT = 10;

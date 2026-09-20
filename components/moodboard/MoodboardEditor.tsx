@@ -31,7 +31,7 @@ type Props = {
   freeLimit: number;
   maxCards: number;
   aiLimit: number;
-  aiUsedToday: number;
+  aiUsed: number;
   lookup: MoodboardLookup;
 };
 
@@ -139,7 +139,7 @@ function Board(props: Props) {
   const [notice, setNotice] = useState<string | null>(null);
   const [uploading, setUploading] = useState(0);
   const [aiOpen, setAiOpen] = useState(false);
-  const [aiUsed, setAiUsed] = useState(props.aiUsedToday);
+  const [aiUsed, setAiUsed] = useState(props.aiUsed);
 
   const atFreeLimit = !isPro && nodes.length >= freeLimit;
 
@@ -530,7 +530,7 @@ function Board(props: Props) {
                 )}
               </div>
               <button type="button" className={`${btn} border-accent/60 text-accent`} onClick={() => setAiOpen(true)}>
-                ✦ Referencias con IA{isPro ? "" : " · PRO"}
+                ✦ Referencias con IA{isPro ? "" : ` · ${Math.max(0, aiLimit - aiUsed)} gratis`}
               </button>
               <input
                 ref={fileRef}
@@ -609,6 +609,7 @@ function Board(props: Props) {
         projectId={projectId}
         isPro={isPro}
         usesLeft={Math.max(0, aiLimit - aiUsed)}
+        aiLimit={aiLimit}
         onUsed={() => setAiUsed((n) => n + 1)}
         onBoardVersion={(v) => {
           if (updatedAtRef.current === null && v) updatedAtRef.current = v;

@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/lib/generated/prisma";
 import {
+  MOODBOARD_AI_FREE_PER_PROJECT,
   MOODBOARD_AI_PRO_DAILY_LIMIT,
   MOODBOARD_FREE_CARD_LIMIT,
   MOODBOARD_MAX_CARDS,
@@ -97,14 +98,26 @@ export function todayKey(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-export async function getMoodboard(projectId: string) {
+// Contador de sugerencias de IA sin columnas nuevas: en el plan gratuito aiDay vale
+// FREE_AI_KEY y aiCount cuenta las usadas en total; en PRO aiDay es la fecha y
+// aiCount las de ese día. Quien baja de PRO a gratis con alguna sugerencia ya
+// hecha cuenta como que gastó la gratuita.
+const FREE_AI_KEY = "free";
+
+function aiUsage(board: { aiDay: string | null; aiCount: number } | null, isPro: boolean): number {
+  if (!board || !board.aiDay) return 0;
+  if (isPro) return board.aiDay === todayKey() ? board.aiCount : 0;
+  return board.aiDay === FREE_AI_KEY ? board.aiCount : MOODBOARD_AI_FREE_PER_PROJECT;
+}
+
+export async function getMoodboard(projectId: string, isPro = false) {
   const board = await prisma.moodboard.findUnique({ where: { projectId } });
-  if (!board) return { cards: [] as MoodboardCard[], updatedAt: null as string | null, aiUsedToday: 0 };
+  if (!board) return { cards: [] as MoodboardCard[], updatedAt: null as string | null, aiUsed: 0 };
   const data = board.data as unknown as MoodboardData;
   return {
     cards: sanitizeCards(data?.cards),
     updatedAt: board.updatedAt.toISOString(),
-    aiUsedToday: board.aiDay === todayKey() ? board.aiCount : 0,
+    aiUsed: aiUsage(board, isPro),
   };
 }
 
@@ -166,21 +179,31 @@ export async function saveMoodboardCore(
   return { ok: true, updatedAt: (fresh?.updatedAt ?? new Date()).toISOString() };
 }
 
-// Cuenta una sugerencia de IA del día. Devuelve false si ya se llegó al tope.
-export async function claimMoodboardAiUse(projectId: string): Promise<boolean> {
-  const today = todayKey();
-  const board = await prisma.moodboard.findUnique({ where: { projectId } });
+export type AiClaim = { ok: true } | { ok: false; reason: "free" | "daily" };
 
+// Cuenta una sugerencia de IA. Gratis: 1 por proyecto en total. PRO: hasta el
+// tope diario por proyecto.
+export async function claimMoodboardAiUse(projectId: string, isPro: boolean): Promise<AiClaim> {
+  const board = await prisma.moodboard.findUnique({ where: { projectId } });
+  const used = aiUsage(board, isPro);
+  const limit = isPro ? MOODBOARD_AI_PRO_DAILY_LIMIT : MOODBOARD_AI_FREE_PER_PROJECT;
+  if (used >= limit) return { ok: false, reason: isPro ? "daily" : "free" };
+
+  const key = isPro ? todayKey() : FREE_AI_KEY;
   if (!board) {
     await prisma.moodboard.create({
-      data: { projectId, data: { v: 1, cards: [] } as unknown as Prisma.InputJsonValue, aiDay: today, aiCount: 1 },
+      data: { projectId, data: { v: 1, cards: [] } as unknown as Prisma.InputJsonValue, aiDay: key, aiCount: 1 },
     });
-    return true;
+    return { ok: true };
   }
-  const used = board.aiDay === today ? board.aiCount : 0;
-  if (used >= MOODBOARD_AI_PRO_DAILY_LIMIT) return false;
 
   // Se cuenta sin tocar updatedAt de las tarjetas para no provocar conflictos falsos.
-  await prisma.$executeRaw`UPDATE "Moodboard" SET "aiDay" = ${today}, "aiCount" = ${used + 1} WHERE "id" = ${board.id}`;
-  return true;
+  await prisma.$executeRaw`UPDATE "Moodboard" SET "aiDay" = ${key}, "aiCount" = ${used + 1} WHERE "id" = ${board.id}`;
+  return { ok: true };
+}
+
+// Devuelve el uso si la IA falló o no dio nada: que un error no gaste la única
+// sugerencia gratuita ni una de las diarias.
+export async function refundMoodboardAiUse(projectId: string): Promise<void> {
+  await prisma.$executeRaw`UPDATE "Moodboard" SET "aiCount" = GREATEST("aiCount" - 1, 0) WHERE "projectId" = ${projectId}`;
 }
