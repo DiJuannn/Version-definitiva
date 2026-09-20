@@ -3,9 +3,9 @@ import { createProject, deleteProject } from "@/lib/actions/projects";
 import { getCurrentProfile } from "@/lib/current-user";
 import { listProjectsForProfile } from "@/lib/project-access";
 import { StatusPill } from "@/components/StatusPill";
-import { EmptyState } from "@/components/EmptyState";
 import { DeleteProjectButton } from "@/components/DeleteProjectButton";
 import { CreateProjectForm } from "@/components/CreateProjectForm";
+import { NewProjectWizard } from "@/components/NewProjectWizard";
 import { ToolPickerGrid } from "@/components/ToolPickerGrid";
 import { PageHeader } from "@/components/PageHeader";
 import { TOOL_GROUPS } from "@/lib/tool-groups";
@@ -25,22 +25,28 @@ export default async function ProyectosPage() {
         description="Todos tus proyectos. Entra en uno para ver su hoja de ruta y sus herramientas, o salta directo a una herramienta más abajo."
       />
 
-      <div className="mt-8 max-w-md">
-        <CreateProjectForm
-          action={createProject}
-          formClassName="flex gap-2"
-          inputClassName="w-full border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
-          buttonClassName="btn btn-primary shrink-0"
-          buttonLabel="Nuevo proyecto"
-        />
-      </div>
-
       {projects.length === 0 ? (
-        <EmptyState
-          title="Todavía no hay proyectos"
-          description="Ponle nombre al primero y entra: te guiaremos paso a paso desde el guion hasta el rodaje."
-        />
+        <div className="mx-auto mt-10 max-w-md border border-line p-6 sm:p-8">
+          <p className="text-center font-mono text-xs tracking-widest text-accent uppercase">
+            Tu primer proyecto
+          </p>
+          <div className="mt-4">
+            <NewProjectWizard />
+          </div>
+        </div>
       ) : (
+        <div className="mt-8 max-w-md">
+          <CreateProjectForm
+            action={createProject}
+            formClassName="flex gap-2"
+            inputClassName="w-full border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            buttonClassName="btn btn-primary shrink-0"
+            buttonLabel="Nuevo proyecto"
+          />
+        </div>
+      )}
+
+      {projects.length > 0 && (
         <div className="mt-8 border-t border-line">
           {projects.map((project) => {
             const isOwnProject = project.organizationId === profile?.organizationId;

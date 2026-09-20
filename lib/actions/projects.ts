@@ -32,6 +32,30 @@ export async function createProject(
   redirect(`/app/${result.id}`);
 }
 
+// Pantalla guiada del primer proyecto: nombre, tipo y punto de partida. Si ya
+// tiene el guion, lo dejamos directo en la subida del guion.
+export async function createProjectGuided(
+  _prevState: CreateProjectState,
+  formData: FormData,
+): Promise<CreateProjectState> {
+  const profile = await getCurrentProfile();
+  if (!profile) return { error: "No se pudo crear el proyecto." };
+
+  const stage = String(formData.get("stage") ?? "");
+  const result = await createProjectCore(
+    profile.organizationId,
+    profile.id,
+    String(formData.get("name") ?? ""),
+    isPro(profile.organization.plan),
+    { type: String(formData.get("type") ?? "") || null, stage },
+  );
+  if ("error" in result) return result;
+
+  revalidatePath("/app");
+  revalidatePath("/app/proyectos");
+  redirect(stage === "guion" ? `/app/${result.id}/guion?tab=archivo` : `/app/${result.id}`);
+}
+
 // Compartido por createProjectAndOpenClaqueta y createProjectAndOpenTool
 // (el selector de herramientas de /app/proyectos): crea el proyecto y
 // entra directo a la herramienta elegida, en vez de dejar al usuario en

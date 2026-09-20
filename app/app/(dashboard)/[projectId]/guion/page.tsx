@@ -6,7 +6,8 @@ import { getCurrentProfile } from "@/lib/current-user";
 import { createScene, deleteAllScenes, deleteScene } from "@/lib/actions/scenes";
 import { DangerConfirmButton } from "@/components/DangerConfirmButton";
 import { deleteScriptFile, uploadScript } from "@/lib/actions/script";
-import { analyzeScript } from "@/lib/actions/script-analysis";
+import { analyzeScript, restoreScriptBackup } from "@/lib/actions/script-analysis";
+import { BACKUP_REASON_LABELS, listScriptBackups } from "@/lib/project-backup-core";
 import { runContinuityCheck } from "@/lib/actions/continuity";
 import { isProjectOwnerPro } from "@/lib/project-plan";
 import { isPro as isProPlan } from "@/lib/plan";
@@ -51,7 +52,8 @@ export default async function GuionPage({
   const profile = await getCurrentProfile();
   if (!profile) notFound();
 
-  const [scriptFiles, scenes, pendingAnalyses, pendingContinuityChecks] = await Promise.all([
+  const [backups, scriptFiles, scenes, pendingAnalyses, pendingContinuityChecks] = await Promise.all([
+    listScriptBackups(projectId),
     prisma.scriptFile.findMany({
       where: { projectId },
       orderBy: { uploadedAt: "desc" },
@@ -130,7 +132,7 @@ export default async function GuionPage({
                                   trigger="Eliminar todas"
                                   triggerClassName="font-mono text-[10px] tracking-widest text-muted uppercase hover:text-accent"
                                   title="¿Eliminar todas las escenas?"
-                                  description={`Se borrarán las ${scenes.length} escenas de este proyecto, junto con su reparto, desglose y equipo asignados a cada una. El guion subido, los personajes, las localizaciones y el desglose en sí no se tocan. Esta acción no se puede deshacer.`}
+                                  description={`Se borrarán las ${scenes.length} escenas de este proyecto, junto con su reparto, desglose y equipo asignados a cada una. El guion subido, los personajes, las localizaciones y el desglose en sí no se tocan. Antes se guarda una copia automática que podrás restaurar desde "Copias de seguridad", más abajo.`}
                                   action={deleteAllScenes.bind(null, projectId)}
                                 />
                               )}
@@ -321,6 +323,49 @@ export default async function GuionPage({
           ]}
         />
       </div>
+
+      {backups.length > 0 && (
+        <details className="group mt-10 border border-line">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent">
+            <span>Copias de seguridad del guion ({backups.length})</span>
+            <span className="transition-transform group-open:rotate-45">+</span>
+          </summary>
+          <div className="border-t border-line px-5 py-4">
+            <p className="max-w-xl font-sans text-sm text-muted">
+              Se guarda una copia sola antes de reemplazar el guion, eliminar todas las escenas o
+              restaurar otra copia. Restaurar devuelve escenas, planos, personajes y desglose tal como
+              estaban; lo demás (actores, presupuesto, días…) no cambia. Se conservan las últimas 8.
+            </p>
+            <div className="mt-4 border-t border-line">
+              {backups.map((backup) => (
+                <div
+                  key={backup.id}
+                  className="flex flex-wrap items-center justify-between gap-3 border-b border-line py-3"
+                >
+                  <div className="min-w-0">
+                    <p className="font-sans text-sm">
+                      {BACKUP_REASON_LABELS[backup.reason] ?? "Copia automática"}
+                    </p>
+                    <p className="font-mono text-xs text-muted">
+                      {backup.createdAt.toLocaleString("es-ES")} · {backup.sceneCount} escena
+                      {backup.sceneCount === 1 ? "" : "s"} · {backup.shotCount} plano
+                      {backup.shotCount === 1 ? "" : "s"}
+                    </p>
+                  </div>
+                  <DangerConfirmButton
+                    trigger="Restaurar"
+                    title="¿Restaurar esta copia del guion?"
+                    description={`El guion actual (escenas, planos, personajes y desglose) se sustituirá por el de esta copia, del ${backup.createdAt.toLocaleString("es-ES")}. Antes se guarda otra copia de lo de ahora, así que también se puede deshacer.`}
+                    confirmLabel="Sí, restaurar"
+                    pendingLabel="Restaurando…"
+                    action={restoreScriptBackup.bind(null, projectId, backup.id)}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        </details>
+      )}
     </div>
   );
 }

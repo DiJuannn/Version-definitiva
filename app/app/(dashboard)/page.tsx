@@ -7,10 +7,10 @@ import { AjoloteLogo } from "@/components/AjoloteLogo";
 import { ClaquetaIcon } from "@/components/ToolIcons";
 import { StatusPill } from "@/components/StatusPill";
 import { DashboardReveal, DashboardStagger } from "@/components/DashboardMotion";
-import { createProject, deleteProject } from "@/lib/actions/projects";
+import { deleteProject } from "@/lib/actions/projects";
 import { DeleteProjectButton } from "@/components/DeleteProjectButton";
 import { ProjectShareButton } from "@/components/ProjectShareButton";
-import { CreateProjectForm } from "@/components/CreateProjectForm";
+import { NewProjectWizard } from "@/components/NewProjectWizard";
 import { NewProjectPanel } from "@/components/NewProjectPanel";
 import { LinkPendingHint } from "@/components/LinkPendingHint";
 import { TaskCheck } from "@/components/TaskCheck";
@@ -284,18 +284,11 @@ export default async function DashboardPage() {
             Crea tu primer proyecto
           </h2>
           <p className="mx-auto mt-3 max-w-sm font-sans text-sm text-muted">
-            Todo en Taller —guion, presupuesto, plan de rodaje— cuelga de un proyecto. Ponle
-            nombre y entra: te guiaremos paso a paso.
+            Todo en Taller —guion, presupuesto, plan de rodaje— cuelga de un proyecto. Te hacemos tres
+            preguntas rápidas y entras: te guiaremos paso a paso.
           </p>
-          <div className="mx-auto mt-6 max-w-sm">
-            <CreateProjectForm
-              action={createProject}
-              formClassName="flex flex-col gap-2 sm:flex-row"
-              inputClassName="w-full border border-line bg-transparent px-3 py-2.5 text-sm outline-none transition-colors focus:border-accent"
-              buttonClassName="btn btn-primary shrink-0"
-              buttonLabel="Crear y entrar"
-              autoFocus
-            />
+          <div className="mx-auto mt-6 max-w-md">
+            <NewProjectWizard />
           </div>
         </DashboardReveal>
       ) : (

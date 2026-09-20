@@ -1,3 +1,4 @@
+import { randomBytes } from "crypto";
 import { prisma } from "@/lib/prisma";
 
 export type CallSheetInput = {
@@ -21,4 +22,29 @@ export async function upsertCallSheetCore(
     update: data,
   });
   return true;
+}
+
+// Enlace público de solo lectura al call sheet de un día. Activarlo crea un
+// token largo e imposible de adivinar; desactivarlo lo borra y el enlace
+// antiguo deja de funcionar. Volver a activar da un enlace distinto.
+export async function setCallSheetSharingCore(
+  projectId: string,
+  shootingDayId: string,
+  enabled: boolean,
+): Promise<{ token: string | null } | null> {
+  const day = await prisma.shootingDay.findFirst({
+    where: { id: shootingDayId, projectId },
+    select: { shareToken: true },
+  });
+  if (!day) return null;
+
+  if (!enabled) {
+    await prisma.shootingDay.update({ where: { id: shootingDayId }, data: { shareToken: null } });
+    return { token: null };
+  }
+  if (day.shareToken) return { token: day.shareToken };
+
+  const token = randomBytes(18).toString("base64url");
+  await prisma.shootingDay.update({ where: { id: shootingDayId }, data: { shareToken: token } });
+  return { token };
 }

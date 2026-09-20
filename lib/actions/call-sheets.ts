@@ -8,7 +8,7 @@ import { getCurrentProfile } from "@/lib/current-user";
 import { optionalString } from "@/lib/form-utils";
 import { logActivity } from "@/lib/activity-log";
 import { notifyCallSheetChange } from "@/lib/call-sheet-change-alert";
-import { upsertCallSheetCore } from "@/lib/call-sheets-core";
+import { setCallSheetSharingCore, upsertCallSheetCore } from "@/lib/call-sheets-core";
 
 export async function upsertCallSheet(
   projectId: string,
@@ -67,4 +67,27 @@ export async function generateCallSheetAndOpen(projectId: string, shootingDayId:
   if (await ensureCallSheet(projectId, shootingDayId)) {
     redirect(`/app/${projectId}/call-sheets/${shootingDayId}`);
   }
+}
+
+// Activa o desactiva el enlace público de solo lectura del call sheet.
+export async function setCallSheetSharing(
+  projectId: string,
+  shootingDayId: string,
+  enabled: boolean,
+): Promise<{ error?: string }> {
+  const project = await getProjectForCurrentUser(projectId);
+  if (!project) return { error: "No tienes acceso a este proyecto." };
+
+  const result = await setCallSheetSharingCore(projectId, shootingDayId, enabled);
+  if (!result) return { error: "No se encontró el día." };
+
+  const profile = await getCurrentProfile();
+  await logActivity(
+    projectId,
+    profile?.id,
+    enabled ? "creó un enlace público del call sheet" : "quitó el enlace público del call sheet",
+  );
+
+  revalidatePath(`/app/${projectId}/call-sheets/${shootingDayId}`);
+  return {};
 }

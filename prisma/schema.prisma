@@ -316,8 +316,27 @@ model Project {
   clapLogs          ClapLog[]
   shares            ProjectShare[]
   activityLogs      ActivityLog[]
+  backups           ProjectBackup[]
 
   @@index([organizationId])
+}
+
+// Copia automática de lo que sale del guion (escenas, planos, personajes,
+// desglose y sus vínculos) justo antes de reemplazarlo o restaurar otra copia.
+// `data` es un JSON con ids antiguos como claves (ver lib/project-backup-core.ts).
+model ProjectBackup {
+  id         String   @id @default(cuid())
+  projectId  String
+  reason     String
+  label      String?
+  sceneCount Int      @default(0)
+  shotCount  Int      @default(0)
+  data       Json
+  createdAt  DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId, createdAt])
 }
 
 // Registro de actividad reciente del proyecto (Función 2, plan Free) —
@@ -651,6 +670,10 @@ model ShootingDay {
   // call sheet al equipo técnico — evita mandarlo dos veces si el cron
   // se ejecuta más de una vez el mismo día.
   reminderSentAt DateTime?
+
+  // Enlace público de solo lectura al call sheet de este día (para mandarlo
+  // por WhatsApp sin que el equipo tenga cuenta). Null = no compartido.
+  shareToken String? @unique
 
   project             Project              @relation(fields: [projectId], references: [id])
   scenes              ShootingDayScene[]

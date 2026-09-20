@@ -359,7 +359,7 @@ export function ScriptAnalysisReview({
           {replace ? (
             <div className="mt-4 space-y-3 font-sans text-sm">
               <p className="text-warn">
-                ⚠ Todo lo del guion anterior se borrará y se reemplazará con este guion. No se puede deshacer.
+                ⚠ Todo lo del guion anterior se borrará y se reemplazará con este guion. Antes se guarda una copia automática que podrás restaurar desde Guion.
               </p>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
@@ -539,7 +539,7 @@ export function ScriptAnalysisReview({
           impact
             ? `Se borrarán ${impact.scenes} escena${impact.scenes === 1 ? "" : "s"}, ${impact.characters} personaje${
                 impact.characters === 1 ? "" : "s"
-              } y ${impact.breakdownElements} elemento${impact.breakdownElements === 1 ? "" : "s"} de desglose del guion anterior, y se reemplazarán con este guion. Actores, equipo, presupuesto, días de rodaje, tareas, documentos y tomas de la claqueta se conservan. No se puede deshacer.`
+              } y ${impact.breakdownElements} elemento${impact.breakdownElements === 1 ? "" : "s"} de desglose del guion anterior, y se reemplazarán con este guion. Actores, equipo, presupuesto, días de rodaje, tareas, documentos y tomas de la claqueta se conservan. Antes se guarda una copia automática que podrás restaurar desde Guion.`
             : undefined
         }
       >

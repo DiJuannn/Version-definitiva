@@ -11,6 +11,7 @@ import {
   importScriptAnalysisCore,
 } from "@/lib/script-analysis-core";
 import { BreakdownCategory } from "@/lib/generated/prisma";
+import { restoreScriptBackupCore } from "@/lib/project-backup-core";
 
 export type AnalyzeScriptState = { error: string } | undefined;
 
@@ -129,4 +130,19 @@ export async function importScriptAnalysis(
   revalidatePath(`/app/${projectId}/personajes`);
   revalidatePath("/app/localizaciones");
   redirect(`/app/${projectId}/guion`);
+}
+
+// Restaura una copia automática del guion (Guion → Copias de seguridad).
+export async function restoreScriptBackup(projectId: string, backupId: string) {
+  const project = await getProjectForCurrentUser(projectId);
+  if (!project) return;
+
+  await restoreScriptBackupCore(projectId, project.organizationId, backupId);
+
+  revalidatePath(`/app/${projectId}/guion`);
+  revalidatePath(`/app/${projectId}/desglose`);
+  revalidatePath(`/app/${projectId}/personajes`);
+  revalidatePath(`/app/${projectId}/plan-de-rodaje`);
+  revalidatePath(`/app/${projectId}/shot-list`);
+  revalidatePath(`/app/${projectId}`);
 }

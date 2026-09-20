@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { FREE_ACTIVE_PROJECTS_LIMIT } from "@/lib/limits";
+import { PROJECT_TYPES } from "@/lib/project-types";
 
 // Cuenta los proyectos que ya tiene la organización (los creados por
 // ella, no los que le comparten) y bloquea crear uno más si el plan
@@ -12,6 +13,8 @@ export async function createProjectCore(
   createdById: string,
   name: string,
   isPro: boolean,
+  // Solo lo rellena la pantalla guiada del primer proyecto.
+  details?: { type?: string | null; stage?: string | null },
 ): Promise<{ id: string; name: string } | { error: string; upgrade?: boolean }> {
   const trimmed = name.trim();
   if (!trimmed) return { error: "Ponle un nombre al proyecto." };
@@ -28,8 +31,16 @@ export async function createProjectCore(
     }
   }
 
+  const type = (PROJECT_TYPES as readonly string[]).includes(details?.type ?? "") ? details!.type! : null;
   const project = await prisma.project.create({
-    data: { name: trimmed, organizationId, createdById },
+    data: {
+      name: trimmed,
+      organizationId,
+      createdById,
+      type,
+      // "Preparando el rodaje" arranca en preproducción; el resto, en desarrollo.
+      status: details?.stage === "rodaje" ? "PRE_PRODUCTION" : "DEVELOPMENT",
+    },
   });
   return { id: project.id, name: project.name };
 }

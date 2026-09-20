@@ -13,6 +13,7 @@ import { checkScriptAnalysisRateLimit, formatWait } from "@/lib/script-analysis-
 import { MistralBusyError, withMistralSlot } from "@/lib/mistral-concurrency";
 import { isPro } from "@/lib/plan";
 import * as Sentry from "@sentry/nextjs";
+import { createScriptBackup, wipeScriptContent } from "@/lib/project-backup-core";
 
 function cleanText(value: string | undefined | null): string | null {
   const trimmed = (value ?? "").trim();
@@ -241,7 +242,7 @@ async function runImport(
 
   const proposal = overrideProposal ?? (analysis.proposedData as unknown as ScriptAnalysisProposal);
 
-  // Guion nuevo que sustituye al anterior: se borra lo que sale del guion
+  // Guion nuevo que sustituye al anterior: se guarda una copia y se borra lo que sale del guion
   // (escenas con sus planos, storyboard y vínculos; personajes; elementos de
   // desglose; revisiones de continuidad). Todo lo demás se queda: actores,
   // equipo, presupuesto, días de rodaje, tareas, documentos, tomas de la
@@ -255,10 +256,9 @@ async function runImport(
     });
     for (const c of previous) if (c.actorId) actorByCharacter.set(c.name.trim().toLowerCase(), c.actorId);
 
-    await db.continuityCheck.deleteMany({ where: { projectId } });
-    await db.scene.deleteMany({ where: { projectId } });
-    await db.character.deleteMany({ where: { projectId } });
-    await db.breakdownElement.deleteMany({ where: { projectId } });
+    // Copia automática de lo que se va a borrar (se puede restaurar desde Guion).
+    await createScriptBackup(db, projectId, "script-replace");
+    await wipeScriptContent(db, projectId);
   }
 
   const [existingCharacters, existingLocations, existingProps] = await Promise.all([

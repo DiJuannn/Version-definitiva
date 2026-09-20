@@ -58,6 +58,11 @@ export async function POST(request: Request) {
     profile.id,
     String(body?.name ?? ""),
     isPro(profile.organization.plan),
+    // Pantalla guiada de la app: tipo y punto de partida (opcionales).
+    {
+      type: typeof body?.type === "string" ? body.type : null,
+      stage: typeof body?.stage === "string" ? body.stage : null,
+    },
   );
   if ("error" in result) {
     return NextResponse.json(

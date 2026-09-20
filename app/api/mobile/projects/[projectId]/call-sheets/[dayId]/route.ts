@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { getMobileProfile } from "@/lib/mobile-auth";
 import { getProjectForProfile } from "@/lib/project-access";
 import { getShootingDaySummary } from "@/lib/shooting-day-summary";
-import { upsertCallSheetCore } from "@/lib/call-sheets-core";
+import { setCallSheetSharingCore, upsertCallSheetCore } from "@/lib/call-sheets-core";
+import { originFromRequest } from "@/lib/site-origin";
 import { INT_EXT_LABELS, DAY_PART_LABELS } from "@/lib/labels";
 import { CORS_HEADERS } from "@/lib/mobile-cors";
 
@@ -47,6 +48,10 @@ export async function GET(
   return NextResponse.json(
     {
       date: summary.shootingDay.date,
+      // Enlace público de solo lectura (null = no compartido).
+      shareUrl: summary.shootingDay.shareToken
+        ? `${originFromRequest(request)}/hoja/${summary.shootingDay.shareToken}`
+        : null,
       callSheet: callSheet
         ? {
             generalCallTime: callSheet.generalCallTime,
@@ -115,4 +120,41 @@ export async function PATCH(
   }
 
   return NextResponse.json({ ok: true }, { headers: CORS_HEADERS });
+}
+
+// POST { enabled: boolean } — crea o quita el enlace público del call sheet.
+export async function POST(
+  request: Request,
+  { params }: { params: Promise<{ projectId: string; dayId: string }> },
+) {
+  const profile = await getMobileProfile(request);
+  if (!profile) {
+    return NextResponse.json(
+      { error: "No autenticado." },
+      { status: 401, headers: CORS_HEADERS },
+    );
+  }
+
+  const { projectId, dayId } = await params;
+  const project = await getProjectForProfile(profile, projectId);
+  if (!project) {
+    return NextResponse.json(
+      { error: "Proyecto no encontrado." },
+      { status: 404, headers: CORS_HEADERS },
+    );
+  }
+
+  const body = await request.json().catch(() => null);
+  const result = await setCallSheetSharingCore(projectId, dayId, body?.enabled !== false);
+  if (!result) {
+    return NextResponse.json(
+      { error: "Día no encontrado." },
+      { status: 404, headers: CORS_HEADERS },
+    );
+  }
+
+  return NextResponse.json(
+    { shareUrl: result.token ? `${originFromRequest(request)}/hoja/${result.token}` : null },
+    { headers: CORS_HEADERS },
+  );
 }

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { DayPart, IntExt } from "@/lib/generated/prisma";
+import { createScriptBackup } from "@/lib/project-backup-core";
 
 export async function createSceneCore(projectId: string, number: string) {
   const trimmed = number.trim();
@@ -111,5 +112,9 @@ export async function deleteSceneCore(projectId: string, sceneId: string) {
 }
 
 export async function deleteAllScenesCore(projectId: string) {
-  await prisma.scene.deleteMany({ where: { projectId } });
+  // Se guarda una copia antes de borrar, por si fue sin querer.
+  await prisma.$transaction(async (tx) => {
+    await createScriptBackup(tx, projectId, "delete-all-scenes");
+    await tx.scene.deleteMany({ where: { projectId } });
+  });
 }
