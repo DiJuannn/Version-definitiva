@@ -19,7 +19,13 @@ import { findFreeSpot } from "@/components/canvas/free-spot";
 import { loadImageSize, prepareImage } from "@/components/canvas/image-utils";
 import { BoardProvider, CardNodeView, type CardNode } from "@/components/moodboard/nodes";
 import { MoodboardAiPanel } from "@/components/moodboard/MoodboardAiPanel";
-import { saveMoodboard, uploadMoodboardImage } from "@/lib/actions/moodboard";
+import { RemoteCursors, type RemoteCursor } from "@/components/project-map/RemoteCursors";
+import { cleanColor, cleanName, colorFor, uniquePeers, type Peer } from "@/components/canvas/presence";
+import { fetchMoodboard, moodboardVersion, saveMoodboard, uploadMoodboardImage } from "@/lib/actions/moodboard";
+import { applyCardOps, diffCards, isEmptyCardOps, rebaseCards, type CardOps } from "@/lib/moodboard-merge";
+import { canonical } from "@/lib/project-map-merge";
+import { createClient } from "@/lib/supabase/client";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 import { NOTE_COLORS, type MoodboardCard, type MoodboardLookup } from "@/lib/moodboard-types";
 import type { MoodboardProposal } from "@/lib/moodboard-ai";
 
@@ -35,6 +41,9 @@ type Props = {
   aiLimit: number;
   aiUsed: number;
   lookup: MoodboardLookup;
+  // Quién soy (para que los demás me vean: nombre y color del cursor).
+  userId: string;
+  userName: string;
 };
 
 const newId = () => crypto.randomUUID().replace(/-/g, "").slice(0, 16);
@@ -51,7 +60,7 @@ function toNode(card: MoodboardCard): CardNode {
 }
 
 function Board(props: Props) {
-  const { projectId, initialCards, initialUpdatedAt, isPro, freeLimit, maxCards, aiLimit, lookup } = props;
+  const { projectId, initialCards, initialUpdatedAt, isPro, freeLimit, maxCards, aiLimit, lookup, userId, userName } = props;
   const { screenToFlowPosition, fitView } = useReactFlow<CardNode>();
   const wrapperRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -62,10 +71,12 @@ function Board(props: Props) {
     nodesRef.current = nodes;
   }, [nodes]);
 
-  const updatedAtRef = useRef<string | null>(initialUpdatedAt);
-  const versionRef = useRef(0);
+  // Lo último que se sabe del servidor (base para calcular qué he cambiado yo) y su versión.
+  const lastSaved = useRef<MoodboardCard[]>(initialCards);
+  const knownVersion = useRef<string | null>(initialUpdatedAt);
+  const savingRef = useRef(false);
   const [dirty, setDirty] = useState(false);
-  const [saveState, setSaveState] = useState<"idle" | "saving" | "error" | "conflict">("idle");
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "error">("idle");
   const [saveError, setSaveError] = useState<string | null>(null);
 
   const [menu, setMenu] = useState<null | "image" | "project">(null);
@@ -79,7 +90,6 @@ function Board(props: Props) {
   const atFreeLimit = !isPro && nodes.length >= freeLimit;
 
   const markDirty = useCallback(() => {
-    versionRef.current += 1;
     setDirty(true);
     setSaveState((s) => (s === "error" ? "idle" : s));
   }, []);
@@ -115,27 +125,90 @@ function Board(props: Props) {
     [markDirty],
   );
 
-  // ---- Guardado automático (con control de conflictos en el servidor)
+  // ---- Trabajo en equipo: guardado por cambios, avisos en directo, presencia y cursores
+  const currentCards = useCallback(
+    (): MoodboardCard[] =>
+      nodesRef.current.map((n) => ({
+        ...n.data.card,
+        x: Math.round(n.position.x),
+        y: Math.round(n.position.y),
+        w: Math.round(n.width ?? n.measured?.width ?? n.data.card.w),
+        h: Math.round(n.height ?? n.measured?.height ?? n.data.card.h),
+      })),
+    [],
+  );
+
+  // Recibe el tablero del servidor (tras guardar o al enterarse de que alguien cambió algo): se juntan
+  // sus cambios con los míos sin guardar.
+  const applyRemote = useCallback(
+    (remote: MoodboardCard[], version: string | null, sent?: CardOps) => {
+      const base = sent ? applyCardOps(lastSaved.current, sent) : lastSaved.current;
+      const local = currentCards();
+      const merged = rebaseCards(local, base, remote);
+      lastSaved.current = remote;
+      knownVersion.current = version;
+      if (canonical(merged) !== canonical(local)) {
+        setNodes((prev) => {
+          const old = new Map(prev.map((n) => [n.id, n]));
+          return merged.map((c) => {
+            const p = old.get(c.id);
+            if (!p) return toNode(c);
+            const same =
+              canonical(p.data.card) === canonical(c) &&
+              Math.round(p.position.x) === c.x &&
+              Math.round(p.position.y) === c.y &&
+              Math.round(p.width ?? p.measured?.width ?? c.w) === c.w &&
+              Math.round(p.height ?? p.measured?.height ?? c.h) === c.h;
+            return same ? p : { ...p, position: { x: c.x, y: c.y }, width: c.w, height: c.h, data: { card: c } };
+          });
+        });
+      }
+      setDirty(!isEmptyCardOps(diffCards(remote, merged)));
+    },
+    [currentCards],
+  );
+
+  const pulling = useRef(false);
+  // Si llega un aviso mientras yo guardo o ya estoy pidiendo el tablero, no se pierde: se repite al terminar.
+  const pullAgain = useRef(false);
+  const pullRemote = useCallback(async () => {
+    if (pulling.current || savingRef.current) {
+      pullAgain.current = true;
+      return;
+    }
+    pulling.current = true;
+    try {
+      do {
+        pullAgain.current = false;
+        const r = await fetchMoodboard(projectId);
+        if (r.ok && r.updatedAt !== knownVersion.current) applyRemote(r.cards, r.updatedAt);
+      } while (pullAgain.current && !savingRef.current);
+    } catch {
+      // Sin conexión: se reintenta en el siguiente aviso o sondeo.
+    } finally {
+      pulling.current = false;
+    }
+  }, [applyRemote, projectId]);
+
+  const channelRef = useRef<RealtimeChannel | null>(null);
+  const clientId = useRef(crypto.randomUUID());
+
   const save = useCallback(async () => {
-    const version = versionRef.current;
-    const cards: MoodboardCard[] = nodesRef.current.map((n) => ({
-      ...n.data.card,
-      x: Math.round(n.position.x),
-      y: Math.round(n.position.y),
-      w: Math.round(n.width ?? n.measured?.width ?? n.data.card.w),
-      h: Math.round(n.height ?? n.measured?.height ?? n.data.card.h),
-    }));
+    const ops = diffCards(lastSaved.current, currentCards());
+    if (isEmptyCardOps(ops)) {
+      setDirty(false);
+      return;
+    }
+    savingRef.current = true;
     setSaveState("saving");
     try {
-      const result = await saveMoodboard(projectId, cards, updatedAtRef.current);
+      const result = await saveMoodboard(projectId, ops);
       if (result.ok) {
-        updatedAtRef.current = result.updatedAt;
         setSaveError(null);
         setSaveState("idle");
-        if (versionRef.current === version) setDirty(false);
-      } else if (result.conflict) {
-        setSaveError(result.error);
-        setSaveState("conflict");
+        applyRemote(result.cards, result.updatedAt, ops);
+        // Aviso a los demás (sin datos: ellos piden el tablero al servidor, que comprueba el acceso).
+        void channelRef.current?.send({ type: "broadcast", event: "saved", payload: { v: result.updatedAt, from: clientId.current } });
       } else {
         setSaveError(result.error);
         setSaveState("error");
@@ -143,12 +216,18 @@ function Board(props: Props) {
     } catch {
       setSaveError("No se pudo guardar. Comprueba tu conexión.");
       setSaveState("error");
+    } finally {
+      savingRef.current = false;
+      if (pullAgain.current) {
+        pullAgain.current = false;
+        void pullRemote();
+      }
     }
-  }, [projectId]);
+  }, [applyRemote, currentCards, projectId, pullRemote]);
 
   useEffect(() => {
-    // Nunca dos guardados a la vez: el segundo llevaría una versión vieja y daría un falso conflicto.
-    if (!dirty || saveState === "conflict" || saveState === "saving" || saveState === "error") return;
+    // Nunca dos guardados a la vez.
+    if (!dirty || saveState === "saving" || saveState === "error") return;
     const t = setTimeout(() => void save(), 1200);
     return () => clearTimeout(t);
   }, [dirty, nodes, saveState, save]);
@@ -156,10 +235,11 @@ function Board(props: Props) {
   // Al cerrar o cambiar de pestaña con cambios sin guardar: se intenta guardar y se avisa.
   useEffect(() => {
     const onHide = () => {
-      if (document.visibilityState === "hidden" && dirty && saveState !== "conflict" && saveState !== "saving") void save();
+      if (document.visibilityState === "hidden" && dirty && saveState !== "saving") void save();
+      if (document.visibilityState === "visible") void pullRemote();
     };
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (dirty && saveState !== "conflict") e.preventDefault();
+      if (dirty) e.preventDefault();
     };
     document.addEventListener("visibilitychange", onHide);
     window.addEventListener("beforeunload", onBeforeUnload);
@@ -167,7 +247,98 @@ function Board(props: Props) {
       document.removeEventListener("visibilitychange", onHide);
       window.removeEventListener("beforeunload", onBeforeUnload);
     };
-  }, [dirty, saveState, save]);
+  }, [dirty, saveState, save, pullRemote]);
+
+  const [cursors, setCursors] = useState<Record<string, RemoteCursor>>({});
+  const [peers, setPeers] = useState<Peer[]>([]);
+  const myColor = useMemo(() => colorFor(userId), [userId]);
+  const lastCursorSent = useRef(0);
+
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase.channel(`moodboard:${projectId}`, {
+      config: { presence: { key: clientId.current }, broadcast: { self: false } },
+    });
+    channelRef.current = channel;
+
+    channel
+      .on("broadcast", { event: "saved" }, ({ payload }) => {
+        const v = typeof payload?.v === "string" ? payload.v : null;
+        if (v && v !== knownVersion.current) void pullRemote();
+      })
+      .on("broadcast", { event: "cursor" }, ({ payload }) => {
+        const id = typeof payload?.id === "string" ? payload.id : null;
+        if (!id || id === clientId.current) return;
+        if (payload.x === null) {
+          setCursors((c) => Object.fromEntries(Object.entries(c).filter(([k]) => k !== id)));
+          return;
+        }
+        if (!Number.isFinite(payload.x) || !Number.isFinite(payload.y)) return;
+        setCursors((c) => ({
+          ...c,
+          [id]: { x: payload.x, y: payload.y, name: cleanName(payload.name), color: cleanColor(payload.color), at: Date.now() },
+        }));
+      })
+      .on("presence", { event: "sync" }, () => {
+        const state = channel.presenceState<{ name: string; color: string; userId: string }>();
+        const list: Peer[] = [];
+        for (const [key, entries] of Object.entries(state)) {
+          const e = entries[0];
+          if (key === clientId.current || !e) continue;
+          list.push({ key, userId: String(e.userId ?? key), name: cleanName(e.name), color: cleanColor(e.color) });
+        }
+        setPeers(list);
+        setCursors((c) => Object.fromEntries(Object.entries(c).filter(([id]) => list.some((p) => p.key === id))));
+      })
+      .subscribe(async (status) => {
+        if (status === "SUBSCRIBED") await channel.track({ name: userName, color: myColor, userId });
+      });
+
+    return () => {
+      channelRef.current = null;
+      void supabase.removeChannel(channel);
+    };
+  }, [myColor, projectId, pullRemote, userId, userName]);
+
+  // Sondeo de respaldo: si el canal en directo falla, cada 15 s se comprueba si alguien cambió algo.
+  useEffect(() => {
+    const t = setInterval(async () => {
+      if (document.visibilityState !== "visible" || savingRef.current) return;
+      const v = await moodboardVersion(projectId).catch(() => null);
+      if (v && v !== knownVersion.current) void pullRemote();
+    }, 15_000);
+    return () => clearInterval(t);
+  }, [projectId, pullRemote]);
+
+  // Los cursores que llevan tiempo quietos, fuera.
+  useEffect(() => {
+    const t = setInterval(() => {
+      setCursors((c) => {
+        const fresh = Object.entries(c).filter(([, v]) => Date.now() - v.at < 8000);
+        return fresh.length === Object.keys(c).length ? c : Object.fromEntries(fresh);
+      });
+    }, 2500);
+    return () => clearInterval(t);
+  }, []);
+
+  const onPointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      const now = Date.now();
+      if (now - lastCursorSent.current < 60 || !channelRef.current) return;
+      lastCursorSent.current = now;
+      const p = screenToFlowPosition({ x: e.clientX, y: e.clientY });
+      void channelRef.current.send({
+        type: "broadcast",
+        event: "cursor",
+        payload: { id: clientId.current, name: userName, color: myColor, x: Math.round(p.x), y: Math.round(p.y) },
+      });
+    },
+    [myColor, screenToFlowPosition, userName],
+  );
+
+  const onPointerLeave = useCallback(() => {
+    void channelRef.current?.send({ type: "broadcast", event: "cursor", payload: { id: clientId.current, x: null } });
+  }, []);
 
   // Escape cierra el menú abierto.
   useEffect(() => {
@@ -338,15 +509,13 @@ function Board(props: Props) {
   const ctx = useMemo(() => ({ projectId, lookup, update, remove }), [projectId, lookup, update, remove]);
 
   const status =
-    saveState === "conflict"
-      ? { text: "Cambios de otra persona", tone: "text-danger" }
-      : saveState === "error"
-        ? { text: "Error al guardar", tone: "text-danger" }
-        : saveState === "saving"
-          ? { text: "Guardando…", tone: "text-muted" }
-          : dirty
-            ? { text: "Cambios sin guardar", tone: "text-muted" }
-            : { text: "✓ Guardado", tone: "text-success" };
+    saveState === "error"
+      ? { text: "Error al guardar", tone: "text-danger" }
+      : saveState === "saving"
+        ? { text: "Guardando…", tone: "text-muted" }
+        : dirty
+          ? { text: "Cambios sin guardar", tone: "text-muted" }
+          : { text: "✓ Guardado", tone: "text-success" };
 
   const btn =
     "border border-line bg-bg-raised px-2.5 py-1.5 font-mono text-[11px] tracking-wider uppercase transition-colors hover:border-accent hover:text-accent disabled:opacity-50";
@@ -363,6 +532,8 @@ function Board(props: Props) {
       <div
         ref={wrapperRef}
         className="relative h-[calc(100dvh-16rem)] min-h-[520px] border border-line"
+        onPointerMove={onPointerMove}
+        onPointerLeave={onPointerLeave}
         onDragOver={(e) => {
           if (e.dataTransfer?.types?.includes("Files")) e.preventDefault();
         }}
@@ -389,6 +560,7 @@ function Board(props: Props) {
           <Controls showInteractive={false} />
           <MiniMap pannable zoomable className="hidden! sm:block!" maskColor="rgba(0,0,0,0.6)" />
 
+          <RemoteCursors cursors={cursors} />
           <Panel position="top-left" className="m-2! max-w-[calc(100%-1rem)]">
             <div className="flex flex-wrap items-center gap-1.5">
               <button type="button" className={btn} onClick={() => addCard({ type: "note", w: 220, h: 150, color: NOTE_COLORS[0] })}>
@@ -499,6 +671,20 @@ function Board(props: Props) {
 
           <Panel position="top-right" className="m-2!">
             <div className="flex items-center gap-3 border border-line bg-bg-raised px-3 py-1.5 font-mono text-[11px]">
+              {uniquePeers(peers).length > 0 && (
+                <span className="flex items-center gap-1" aria-label={`${uniquePeers(peers).length} personas más en el moodboard`}>
+                  {uniquePeers(peers).slice(0, 5).map((p) => (
+                    <span
+                      key={p.userId}
+                      title={`${p.name} está en este moodboard`}
+                      className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-black"
+                      style={{ background: p.color }}
+                    >
+                      {p.name.slice(0, 1).toUpperCase()}
+                    </span>
+                  ))}
+                </span>
+              )}
               {!isPro && (
                 <span className={atFreeLimit ? "text-warn" : "text-muted"}>
                   {nodes.length}/{freeLimit}
@@ -531,22 +717,14 @@ function Board(props: Props) {
         {(notice || saveError) && (
           <div className="absolute bottom-3 left-1/2 z-20 flex max-w-[92%] -translate-x-1/2 items-center gap-3 border border-warn/60 bg-bg-raised px-4 py-2 font-sans text-xs shadow-xl" role="alert">
             <span>{notice ?? saveError}</span>
-            {saveState === "conflict" ? (
-              <button type="button" onClick={() => window.location.reload()} className="font-mono text-[11px] tracking-wider text-accent uppercase underline">
-                Recargar
-              </button>
-            ) : (
-              <>
-                {!isPro && (notice ?? "").includes("gratuito") && (
-                  <Link href="/app/organizacion" className="font-mono text-[11px] tracking-wider text-accent uppercase underline">
-                    Ver PRO
-                  </Link>
-                )}
-                <button type="button" aria-label="Cerrar aviso" onClick={() => setNotice(null)} className="text-muted hover:text-fg">
-                  ×
-                </button>
-              </>
+            {!isPro && (notice ?? saveError ?? "").includes("gratuito") && (
+              <Link href="/app/organizacion" className="font-mono text-[11px] tracking-wider text-accent uppercase underline">
+                Ver PRO
+              </Link>
             )}
+            <button type="button" aria-label="Cerrar aviso" onClick={() => { setNotice(null); setSaveError(null); }} className="text-muted hover:text-fg">
+              ×
+            </button>
           </div>
         )}
       </div>
@@ -560,7 +738,7 @@ function Board(props: Props) {
         aiLimit={aiLimit}
         onUsed={() => setAiUsed((n) => n + 1)}
         onBoardVersion={(v) => {
-          if (updatedAtRef.current === null && v) updatedAtRef.current = v;
+          if (knownVersion.current === null && v) knownVersion.current = v;
         }}
         onAdd={addProposal}
       />

@@ -7,24 +7,38 @@ import { uploadProjectFile } from "@/lib/storage";
 import {
   claimMoodboardAiUse,
   getMoodboard,
+  applyMoodboardOpsCore,
+  getMoodboardVersion,
   refundMoodboardAiUse,
-  saveMoodboardCore,
   type SaveResult,
 } from "@/lib/moodboard-core";
 import { buildMoodboardBrief, suggestMoodboardReferences, type MoodboardProposal } from "@/lib/moodboard-ai";
 import { MistralBusyError, withMistralSlot } from "@/lib/mistral-concurrency";
+import type { MoodboardCard } from "@/lib/moodboard-types";
 import { MOODBOARD_AI_FREE_PER_PROJECT, MOODBOARD_AI_PRO_DAILY_LIMIT } from "@/lib/limits";
 
-// Guarda las tarjetas del tablero (con control de conflictos, ver saveMoodboardCore).
-export async function saveMoodboard(
-  projectId: string,
-  cards: unknown,
-  baseUpdatedAt: string | null,
-): Promise<SaveResult> {
+// Guarda los CAMBIOS de la persona en el tablero (se juntan con los de los demás en el servidor).
+export async function saveMoodboard(projectId: string, ops: unknown): Promise<SaveResult> {
   const project = await getProjectForCurrentUser(projectId);
   if (!project) return { ok: false, error: "No tienes acceso a este proyecto." };
   const pro = await isProjectOwnerPro(project.organizationId);
-  return saveMoodboardCore(projectId, cards, baseUpdatedAt, pro);
+  return applyMoodboardOpsCore(projectId, ops, pro);
+}
+
+// El tablero tal como está ahora en el servidor (para ver lo que han hecho los demás).
+export async function fetchMoodboard(
+  projectId: string,
+): Promise<{ ok: true; cards: MoodboardCard[]; updatedAt: string | null } | { ok: false }> {
+  const project = await getProjectForCurrentUser(projectId);
+  if (!project) return { ok: false };
+  const board = await getMoodboard(projectId);
+  return { ok: true, cards: board.cards, updatedAt: board.updatedAt };
+}
+
+export async function moodboardVersion(projectId: string): Promise<string | null> {
+  const project = await getProjectForCurrentUser(projectId);
+  if (!project) return null;
+  return getMoodboardVersion(projectId);
 }
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;

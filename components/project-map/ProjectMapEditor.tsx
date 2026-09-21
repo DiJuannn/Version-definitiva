@@ -22,6 +22,7 @@ import {
 } from "@xyflow/react";
 import { findFreeSpot } from "@/components/canvas/free-spot";
 import { RemoteCursors, type RemoteCursor } from "@/components/project-map/RemoteCursors";
+import { cleanColor, cleanName, colorFor, uniquePeers, type Peer } from "@/components/canvas/presence";
 import { createClient } from "@/lib/supabase/client";
 import { applyOps, canonical, diffLayouts, isEmptyOps, rebase, subtractOps, type MapOps } from "@/lib/project-map-merge";
 import type { RealtimeChannel } from "@supabase/supabase-js";
@@ -98,17 +99,6 @@ const isEditable = (t: EventTarget | null) => {
 };
 
 const HISTORY_MAX = 60;
-
-// Color estable por persona para su cursor y su avatar.
-function colorFor(id: string): string {
-  let h = 0;
-  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) % 360;
-  return `hsl(${h}, 75%, 62%)`;
-}
-// Lo que llega de otros navegadores no es de fiar: se limpia antes de pintarlo.
-const cleanName = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim().slice(0, 30) : "Alguien");
-const cleanColor = (v: unknown) => (typeof v === "string" && /^hsl\(\d{1,3}, 75%, 62%\)$/.test(v) ? v : "hsl(0, 0%, 70%)");
-const uniquePeers = <T extends { userId: string }>(list: T[]) => [...new Map(list.map((p) => [p.userId, p])).values()];
 
 function MapBoard(props: Props) {
   const { projectId, boardId, boardName, userId, userName, entities, layout, isPro, freeLimit, maxItems, images } = props;
@@ -905,7 +895,7 @@ function MapBoard(props: Props) {
 
   // ---------------------------------------------------------------- En directo: avisos, presencia y cursores
   const [cursors, setCursors] = useState<Record<string, RemoteCursor>>({});
-  const [peers, setPeers] = useState<{ key: string; userId: string; name: string; color: string }[]>([]);
+  const [peers, setPeers] = useState<Peer[]>([]);
   const myColor = useMemo(() => colorFor(userId), [userId]);
   const lastCursorSent = useRef(0);
 
@@ -936,7 +926,7 @@ function MapBoard(props: Props) {
       })
       .on("presence", { event: "sync" }, () => {
         const state = channel.presenceState<{ name: string; color: string; userId: string }>();
-        const list: { key: string; userId: string; name: string; color: string }[] = [];
+        const list: Peer[] = [];
         for (const [key, entries] of Object.entries(state)) {
           const e = entries[0];
           if (key === clientId.current || !e) continue;

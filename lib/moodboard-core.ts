@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+import { applyCardOps, type CardOps } from "@/lib/moodboard-merge";
+import { canonical } from "@/lib/project-map-merge";
 import type { Prisma } from "@/lib/generated/prisma";
 import {
   MOODBOARD_AI_FREE_PER_PROJECT,
@@ -121,62 +123,53 @@ export async function getMoodboard(projectId: string, isPro = false) {
   };
 }
 
-export type SaveResult =
-  | { ok: true; updatedAt: string }
-  | { ok: false; error: string; conflict?: boolean };
+export type SaveResult = { ok: true; cards: MoodboardCard[]; updatedAt: string } | { ok: false; error: string };
 
-// Guarda el tablero. `baseUpdatedAt` es la versión que tenía el navegador: si
-// mientras tanto otra persona guardó, no se pisa (conflict) y se le pide
-// recargar. El plan gratuito no puede pasar del tope de tarjetas (lo que ya
-// hubiera de cuando era PRO se respeta mientras no crezca).
-export async function saveMoodboardCore(
-  projectId: string,
-  cardsInput: unknown,
-  baseUpdatedAt: string | null,
-  isPro: boolean,
-): Promise<SaveResult> {
-  const cards = sanitizeCards(cardsInput);
-  const data: MoodboardData = { v: 1, cards };
-  const json = data as unknown as Prisma.InputJsonValue;
+// Aplica los CAMBIOS de una persona (tarjetas nuevas, cambiadas o quitadas) sobre la versión más
+// reciente, con la fila bloqueada para que dos guardados a la vez se apliquen uno tras otro. Devuelve
+// el tablero resultante (con lo de los demás incluido). El plan gratuito no puede pasar del tope de
+// tarjetas (lo que ya hubiera de cuando era PRO se respeta mientras no crezca).
+export async function applyMoodboardOpsCore(projectId: string, ops: unknown, isPro: boolean): Promise<SaveResult> {
+  const safeOps = (ops && typeof ops === "object" ? ops : {}) as CardOps;
 
-  const current = await prisma.moodboard.findUnique({ where: { projectId } });
-
-  if (!isPro) {
-    const allowed = Math.max(MOODBOARD_FREE_CARD_LIMIT, current?.cardCount ?? 0);
-    if (cards.length > allowed) {
-      return {
-        ok: false,
-        error: `El plan gratuito permite hasta ${MOODBOARD_FREE_CARD_LIMIT} tarjetas. Pásate a PRO para tener más.`,
-      };
-    }
-  }
-
-  if (!current) {
-    try {
-      const created = await prisma.moodboard.create({ data: { projectId, data: json, cardCount: cards.length } });
-      return { ok: true, updatedAt: created.updatedAt.toISOString() };
-    } catch {
-      // Dos pestañas crearon a la vez: la segunda ve un conflicto.
-      return { ok: false, error: "El tablero se acaba de crear en otra pestaña. Recarga la página.", conflict: true };
-    }
-  }
-
-  // Un tablero vacío que solo creó el contador de la IA no cuenta como cambio de otra persona.
-  const justCreatedByAi = baseUpdatedAt === null && current.cardCount === 0;
-  if (!justCreatedByAi && baseUpdatedAt !== current.updatedAt.toISOString()) {
-    return { ok: false, error: "Otra persona ha modificado el tablero. Recarga para ver sus cambios.", conflict: true };
-  }
-
-  // Comparación atómica con la versión leída: si cambió entre medias, no actualiza.
-  const result = await prisma.moodboard.updateMany({
-    where: { projectId, updatedAt: current.updatedAt },
-    data: { data: json, cardCount: cards.length },
+  // La fila puede no existir aún (primer guardado): se crea de forma segura ante dos a la vez.
+  await prisma.moodboard.upsert({
+    where: { projectId },
+    create: { projectId, data: { v: 1, cards: [] } as unknown as Prisma.InputJsonValue, cardCount: 0 },
+    update: {},
   });
-  if (result.count === 0) {
-    return { ok: false, error: "Otra persona ha modificado el tablero. Recarga para ver sus cambios.", conflict: true };
-  }
-  const fresh = await prisma.moodboard.findUnique({ where: { projectId }, select: { updatedAt: true } });
-  return { ok: true, updatedAt: (fresh?.updatedAt ?? new Date()).toISOString() };
+
+  return prisma.$transaction(
+    async (tx) => {
+      await tx.$queryRaw`SELECT "id" FROM "Moodboard" WHERE "projectId" = ${projectId} FOR UPDATE`;
+      const row = await tx.moodboard.findUniqueOrThrow({ where: { projectId } });
+      const current = sanitizeCards((row.data as unknown as MoodboardData)?.cards);
+      const next = sanitizeCards(applyCardOps(current, safeOps));
+
+      if (!isPro && next.length > Math.max(MOODBOARD_FREE_CARD_LIMIT, current.length)) {
+        return {
+          ok: false as const,
+          error: `El plan gratuito permite hasta ${MOODBOARD_FREE_CARD_LIMIT} tarjetas. Pásate a PRO para tener más.`,
+        };
+      }
+      if (canonical(next) === canonical(current)) {
+        return { ok: true as const, cards: next, updatedAt: row.updatedAt.toISOString() };
+      }
+      const data: MoodboardData = { v: 1, cards: next };
+      const updated = await tx.moodboard.update({
+        where: { projectId },
+        data: { data: data as unknown as Prisma.InputJsonValue, cardCount: next.length },
+      });
+      return { ok: true as const, cards: next, updatedAt: updated.updatedAt.toISOString() };
+    },
+    { timeout: 15_000, maxWait: 10_000 },
+  );
+}
+
+// Versión actual del tablero (barata): para saber si alguien ha cambiado algo.
+export async function getMoodboardVersion(projectId: string): Promise<string | null> {
+  const row = await prisma.moodboard.findUnique({ where: { projectId }, select: { updatedAt: true } });
+  return row ? row.updatedAt.toISOString() : null;
 }
 
 export type AiClaim = { ok: true } | { ok: false; reason: "free" | "daily" };

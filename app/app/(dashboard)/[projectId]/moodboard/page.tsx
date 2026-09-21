@@ -13,6 +13,7 @@ import {
   MOODBOARD_MAX_CARDS,
 } from "@/lib/limits";
 import type { MoodboardLookup } from "@/lib/moodboard-types";
+import { getCurrentProfile } from "@/lib/current-user";
 
 export default async function MoodboardPage({
   params,
@@ -24,6 +25,7 @@ export default async function MoodboardPage({
   const project = await getProjectForCurrentUser(projectId);
   if (!project) notFound();
 
+  const me = await getCurrentProfile();
   const isPro = await isProjectOwnerPro(project.organizationId);
   const [board, scenes, characters] = await Promise.all([
     getMoodboard(projectId, isPro),
@@ -81,6 +83,8 @@ export default async function MoodboardPage({
           aiLimit={isPro ? MOODBOARD_AI_PRO_DAILY_LIMIT : MOODBOARD_AI_FREE_PER_PROJECT}
           aiUsed={board.aiUsed}
           lookup={lookup}
+          userId={me?.id ?? "anon"}
+          userName={me?.fullName ?? me?.email?.split("@")[0] ?? "Alguien"}
         />
       </div>
     </div>
