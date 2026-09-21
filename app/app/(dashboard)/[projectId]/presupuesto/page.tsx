@@ -8,10 +8,11 @@ import {
   deleteBudgetItem,
 } from "@/lib/actions/budget";
 import { DeleteButton } from "@/components/DeleteButton";
-import { EmptyState } from "@/components/EmptyState";
 import { PdfLink } from "@/components/PdfLink";
 import { ExcelExport } from "@/components/ExcelExport";
 import { PageHeader } from "@/components/PageHeader";
+import { ActionButtonForm } from "@/components/ActionButtonForm";
+import { createStarterBudget } from "@/lib/actions/budget";
 import { FormField } from "@/components/FormField";
 import { SubmitButton } from "@/components/SubmitButton";
 import { BudgetActualField } from "@/components/BudgetActualField";
@@ -190,11 +191,30 @@ export default async function PresupuestoPage({
 
       {categoriesWithTotals.length === 0 ? (
         <>
-          <EmptyState
-            title="Todavía no hay categorías de presupuesto"
-            description="Crea la primera con el formulario de abajo (por ejemplo, Localizaciones o Equipo técnico)."
-          />
-          <div className="mt-6">{newCategoryForm}</div>
+          <section className="mt-8 border border-accent/40 bg-bg-raised/40 p-6 sm:p-8">
+            <p className="font-mono text-[11px] tracking-widest text-accent uppercase">Te lo preparo yo</p>
+            <h2 className="mt-1.5 font-display text-2xl font-black tracking-tight sm:text-3xl">
+              Empieza con las categorías de siempre
+            </h2>
+            <p className="mt-3 max-w-xl font-sans text-sm text-muted">
+              Creo las categorías típicas de {project.type ? `un proyecto de tipo «${project.type}»` : "un rodaje"} (equipo,
+              reparto, localizaciones, alquiler, arte, catering, postproducción…). Solo pongo los títulos: los importes los
+              rellenas tú, y puedes borrar o añadir las que quieras.
+            </p>
+            <div className="mt-5">
+              <ActionButtonForm
+                action={createStarterBudget.bind(null, projectId)}
+                pendingLabel="Creando…"
+                className="btn btn-primary"
+              >
+                Crear las categorías
+              </ActionButtonForm>
+            </div>
+          </section>
+          <div className="mt-8">
+            <p className="mb-2 font-mono text-[10px] tracking-widest text-muted uppercase">O empieza con la tuya</p>
+            {newCategoryForm}
+          </div>
         </>
       ) : (
         <div className="mt-8 space-y-5">

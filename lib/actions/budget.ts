@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { getProjectForCurrentUser } from "@/lib/project-access";
+import { prisma } from "@/lib/prisma";
+import { starterBudgetCategories } from "@/lib/budget-templates";
 import { optionalDecimal, optionalString } from "@/lib/form-utils";
 import {
   createBudgetCategoryCore,
@@ -21,6 +23,34 @@ export async function createBudgetCategory(
   await createBudgetCategoryCore(projectId, String(formData.get("name") ?? ""));
 
   revalidatePath(`/app/${projectId}/presupuesto`);
+}
+
+export type StarterBudgetState = { error: string } | undefined;
+
+// Crea las categorías típicas según el tipo de proyecto (solo títulos, sin importes). Solo si el
+// presupuesto está vacío, para no duplicar nada.
+export async function createStarterBudget(
+  projectId: string,
+  // Firma exigida por useActionState (prevState, formData), sin usarlos.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _prevState: StarterBudgetState,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _formData: FormData,
+): Promise<StarterBudgetState> {
+  const project = await getProjectForCurrentUser(projectId);
+  if (!project) return { error: "No tienes acceso a este proyecto." };
+
+  const existing = await prisma.budgetCategory.count({ where: { projectId } });
+  if (existing > 0) return { error: "Este presupuesto ya tiene categorías." };
+
+  const names = starterBudgetCategories(project.type);
+  await prisma.budgetCategory.createMany({
+    data: names.map((name, order) => ({ projectId, name, order })),
+  });
+
+  revalidatePath(`/app/${projectId}/presupuesto`);
+  revalidatePath(`/app/${projectId}`);
+  return undefined;
 }
 
 export async function deleteBudgetCategory(

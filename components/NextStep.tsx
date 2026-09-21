@@ -8,7 +8,7 @@ const COPY: Record<string, { why: string; time: string; cta?: string }> = {
   reparto: { why: "Saber quién hace de quién te permite organizar y avisar al equipo.", time: "1 min por personaje" },
   localizaciones: { why: "Con los lugares puedes agrupar escenas y ahorrar días de rodaje.", time: "2 min" },
   desglose: { why: "Lista lo que necesita cada escena (atrezzo, vestuario…) para no olvidar nada.", time: "5 min" },
-  presupuesto: { why: "Ver cuánto cuesta el proyecto antes de empezar evita sustos.", time: "5 min" },
+  presupuesto: { why: "Ver cuánto cuesta el proyecto antes de empezar evita sustos. Te dejo preparadas las categorías típicas.", time: "5 min", cta: "Preparar mi presupuesto" },
   "plan-de-rodaje": { why: "Reparte las escenas en días de rodaje: es el calendario de tu rodaje. Yo te propongo uno y tú lo ajustas.", time: "2 min", cta: "Crear mi plan de rodaje" },
   "shot-list": { why: "Define los planos de cada escena para rodar sin dudas.", time: "10 min" },
   storyboard: { why: "Dibuja o sube viñetas de los planos clave.", time: "10 min" },
