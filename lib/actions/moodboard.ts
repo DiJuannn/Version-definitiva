@@ -1,21 +1,11 @@
 "use server";
 
-import * as Sentry from "@sentry/nextjs";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { isProjectOwnerPro } from "@/lib/project-plan";
 import { uploadProjectFile } from "@/lib/storage";
-import {
-  claimMoodboardAiUse,
-  getMoodboard,
-  applyMoodboardOpsCore,
-  getMoodboardVersion,
-  refundMoodboardAiUse,
-  type SaveResult,
-} from "@/lib/moodboard-core";
-import { buildMoodboardBrief, suggestMoodboardReferences, type MoodboardProposal } from "@/lib/moodboard-ai";
-import { MistralBusyError, withMistralSlot } from "@/lib/mistral-concurrency";
+import { getMoodboard, applyMoodboardOpsCore, getMoodboardVersion, type SaveResult } from "@/lib/moodboard-core";
+import { requestMoodboardSuggestions, type SuggestState } from "@/lib/moodboard-ai-request";
 import type { MoodboardCard } from "@/lib/moodboard-types";
-import { MOODBOARD_AI_FREE_PER_PROJECT, MOODBOARD_AI_PRO_DAILY_LIMIT } from "@/lib/limits";
 
 // Guarda los CAMBIOS de la persona en el tablero (se juntan con los de los demás en el servidor).
 export async function saveMoodboard(projectId: string, ops: unknown): Promise<SaveResult> {
@@ -61,56 +51,12 @@ export async function uploadMoodboardImage(
   return { url: uploaded.url };
 }
 
-export type SuggestState =
-  | { ok: true; proposal: MoodboardProposal; boardUpdatedAt: string | null }
-  | { ok: false; error: string; upgrade?: boolean };
+export type { SuggestState };
 
 // Pide a la IA referencias para el moodboard a partir del resumen del proyecto.
 // Gratis: 1 por proyecto; PRO: hasta 10 al día por proyecto.
 export async function suggestReferences(projectId: string): Promise<SuggestState> {
   const project = await getProjectForCurrentUser(projectId);
   if (!project) return { ok: false, error: "No tienes acceso a este proyecto." };
-
-  const pro = await isProjectOwnerPro(project.organizationId);
-
-  const built = await buildMoodboardBrief(projectId);
-  if (!built) return { ok: false, error: "No se encontró el proyecto." };
-  if (!built.hasSubstance) {
-    return {
-      ok: false,
-      error:
-        "Todavía hay poco de lo que tirar. Sube el guion o escribe una sinopsis en «Datos del proyecto» y vuelve a probar.",
-    };
-  }
-
-  const claim = await claimMoodboardAiUse(projectId, pro);
-  if (!claim.ok) {
-    return claim.reason === "free"
-      ? {
-          ok: false,
-          upgrade: true,
-          error: `Ya has usado la sugerencia gratuita de este proyecto (${MOODBOARD_AI_FREE_PER_PROJECT} por proyecto). Con PRO tienes hasta ${MOODBOARD_AI_PRO_DAILY_LIMIT} al día.`,
-        }
-      : {
-          ok: false,
-          error: `Has llegado al tope de ${MOODBOARD_AI_PRO_DAILY_LIMIT} sugerencias de hoy en este proyecto. Mañana podrás pedir más.`,
-        };
-  }
-
-  try {
-    const proposal = await withMistralSlot(() => suggestMoodboardReferences(built.brief));
-    if (proposal.references.length === 0 && proposal.ideas.length === 0) {
-      await refundMoodboardAiUse(projectId);
-      return { ok: false, error: "La IA no devolvió sugerencias esta vez. Inténtalo de nuevo." };
-    }
-    const board = await getMoodboard(projectId, pro);
-    return { ok: true, proposal, boardUpdatedAt: board.updatedAt };
-  } catch (error) {
-    await refundMoodboardAiUse(projectId).catch(() => undefined);
-    if (error instanceof MistralBusyError) {
-      return { ok: false, error: "La IA está muy ocupada ahora mismo. Prueba de nuevo en un minuto." };
-    }
-    Sentry.captureException(error);
-    return { ok: false, error: "No se pudieron generar las referencias. Inténtalo de nuevo." };
-  }
+  return requestMoodboardSuggestions(projectId, project.organizationId);
 }
