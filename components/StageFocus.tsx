@@ -135,7 +135,7 @@ export function StageFocus({
       <p className="mt-3 max-w-xl font-sans text-sm text-muted">
         {finished
           ? "Todo queda guardado para consultarlo cuando quieras, y puedes descargar el dossier otra vez."
-          : "Antes de darlo por terminado: revisa el dinero real y guarda un dossier con todo el proyecto."}
+          : "Antes de darlo por terminado: revisa el dinero real, guarda un dossier y elige dónde presentarlo."}
       </p>
       <ul className="mt-5 grid gap-3">
         <li className="flex flex-wrap items-center justify-between gap-3 border border-line p-4">
@@ -161,6 +161,18 @@ export function StageFocus({
             <p className="font-mono text-xs text-muted">Un PDF con el resumen del proyecto: escenas, días de rodaje, planos y presupuesto.</p>
           </div>
           <PdfLink href={`/api/pdf/dossier/${projectId}`} label="Descargar dossier" />
+        </li>
+        <li className="flex flex-wrap items-center justify-between gap-3 border border-line p-4">
+          <div>
+            <p className="font-display text-sm font-bold">
+              <span aria-hidden className="text-muted">○ </span>
+              Elige festivales donde presentarlo
+            </p>
+            <p className="font-mono text-xs text-muted">Los de tu zona, los online y dónde ver las convocatorias abiertas.</p>
+          </div>
+          <Link href={`/app/${projectId}/festivales`} className="btn btn-outline">
+            Ver festivales
+          </Link>
         </li>
         <li className="flex flex-wrap items-center justify-between gap-3 border border-line p-4">
           <div>

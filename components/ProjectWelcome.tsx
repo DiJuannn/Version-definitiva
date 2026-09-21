@@ -19,8 +19,8 @@ const STEPS = [
   },
   {
     label: "Entregar",
-    what: "Anotas el gasto real, descargas el dossier del proyecto y lo das por terminado.",
-    unlocks: "El presupuesto con el gasto real y el dossier en PDF.",
+    what: "Anotas el gasto real, descargas el dossier, eliges festivales donde presentarlo y lo das por terminado.",
+    unlocks: "Festivales de tu zona, el gasto real y el dossier en PDF.",
   },
 ];
 

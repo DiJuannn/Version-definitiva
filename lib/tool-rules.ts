@@ -41,6 +41,7 @@ export function computeAccess(f: ProjectFacts): Record<string, ToolAccess> {
     documentos: need(hasDays, NEEDS_DAY),
     // Solo la app nativa (en la web la pizarra vive dentro de Resumen).
     pizarra: need(hasScenes, NEEDS_SCENES),
+    festivales: need(shooting, "Se activa cuando termines de rodar."),
     "call-sheets": need(hasDays, NEEDS_DAY),
     "/app/calendario": need(hasDays, NEEDS_DAY),
     vehiculos: need(hasDays, NEEDS_DAY),
@@ -58,7 +59,7 @@ export const STAGES = [
   { id: 1, label: "Idea", hint: "Guion y personajes" },
   { id: 2, label: "Preparar", hint: "Plan, presupuesto y equipo" },
   { id: 3, label: "Rodar", hint: "Hojas de llamada y tomas" },
-  { id: 4, label: "Entregar", hint: "Gasto real y dossier" },
+  { id: 4, label: "Entregar", hint: "Dossier y festivales" },
 ] as const;
 
 // En qué etapa está el proyecto, según lo que tiene y su estado.
