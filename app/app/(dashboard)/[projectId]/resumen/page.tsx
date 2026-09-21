@@ -14,6 +14,9 @@ import {
 } from "@/lib/labels";
 import { BreakdownCategory } from "@/lib/generated/prisma";
 import { PageHeader } from "@/components/PageHeader";
+import { ResumenTabs } from "@/components/ResumenTabs";
+import { ProjectMapLoader } from "@/components/project-map/ProjectMapLoader";
+import { buildMapCards, getMapLayout } from "@/lib/project-map";
 
 const WEEKDAYS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
@@ -118,13 +121,36 @@ function Empty({ children }: { children: React.ReactNode }) {
 
 export default async function ProjectSummaryPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ projectId: string }>;
+  searchParams: Promise<{ vista?: string }>;
 }) {
   const { projectId } = await params;
+  const { vista } = await searchParams;
 
   const access = await getProjectForCurrentUser(projectId);
   if (!access) notFound();
+
+  // Mapa del proyecto: una tarjeta-resumen por herramienta, en un tablero editable.
+  if (vista === "mapa") {
+    const [cards, { layout, updatedAt }] = await Promise.all([buildMapCards(projectId), getMapLayout(projectId)]);
+    return (
+      <div>
+        <PageHeader
+          backHref={`/app/${projectId}`}
+          backLabel={`← ${access.name}`}
+          eyebrow="Proyecto"
+          title="Resumen"
+          description="El mapa del proyecto: una tarjeta por herramienta con lo importante. Muévelas, ocúltalas o añade notas; el contenido se actualiza solo con tus datos."
+        />
+        <ResumenTabs projectId={projectId} active="mapa" />
+        <div className="mt-6">
+          <ProjectMapLoader projectId={projectId} tools={cards} layout={layout} updatedAt={updatedAt} />
+        </div>
+      </div>
+    );
+  }
 
   const isPro = await isProjectOwnerPro(access.organizationId);
 
@@ -197,8 +223,10 @@ export default async function ProjectSummaryPage({
         }
       />
 
+      <ResumenTabs projectId={projectId} active="resumen" />
+
       {/* Dónde está el proyecto, en una línea */}
-      <div className="mt-8 flex items-center gap-4 border border-line px-4 py-3">
+      <div className="mt-6 flex items-center gap-4 border border-line px-4 py-3">
         <p className="shrink-0 font-display text-2xl font-black tabular-nums">
           {headline.percent}
           <span className="text-base text-muted">%</span>

@@ -15,6 +15,7 @@ import {
   useReactFlow,
   type NodeChange,
 } from "@xyflow/react";
+import { findFreeSpot } from "@/components/canvas/free-spot";
 import { BoardProvider, CardNodeView, type CardNode } from "@/components/moodboard/nodes";
 import { MoodboardAiPanel } from "@/components/moodboard/MoodboardAiPanel";
 import { saveMoodboard, uploadMoodboardImage } from "@/lib/actions/moodboard";
@@ -88,33 +89,6 @@ function loadImageSize(url: string): Promise<{ width: number; height: number }> 
   });
 }
 
-// Busca un hueco libre lo más cerca posible del centro (en espiral) para que las
-// tarjetas nuevas no se apilen encima de otras.
-function findFreeSpot(nodes: CardNode[], cx: number, cy: number, w: number, h: number) {
-  const gap = 24;
-  const hits = (x: number, y: number) =>
-    nodes.some((n) => {
-      const nw = n.width ?? n.measured?.width ?? n.data.card.w;
-      const nh = n.height ?? n.measured?.height ?? n.data.card.h;
-      return x < n.position.x + nw + gap && x + w + gap > n.position.x && y < n.position.y + nh + gap && y + h + gap > n.position.y;
-    });
-  const x0 = cx - w / 2;
-  const y0 = cy - h / 2;
-  const stepX = w + gap;
-  const stepY = h + gap;
-  for (let ring = 0; ring <= 8; ring++) {
-    for (let i = -ring; i <= ring; i++) {
-      for (let j = -ring; j <= ring; j++) {
-        if (Math.max(Math.abs(i), Math.abs(j)) !== ring) continue;
-        const x = x0 + i * stepX;
-        const y = y0 + j * stepY;
-        if (!hits(x, y)) return { x, y };
-      }
-    }
-  }
-  return { x: x0 + 22 * (nodes.length % 6), y: y0 + 22 * (nodes.length % 6) };
-}
-
 function Board(props: Props) {
   const { projectId, initialCards, initialUpdatedAt, isPro, freeLimit, maxCards, aiLimit, lookup } = props;
   const { screenToFlowPosition, fitView } = useReactFlow<CardNode>();
@@ -146,6 +120,7 @@ function Board(props: Props) {
   const markDirty = useCallback(() => {
     versionRef.current += 1;
     setDirty(true);
+    setSaveState((s) => (s === "error" ? "idle" : s));
   }, []);
 
   const update = useCallback(
@@ -211,7 +186,8 @@ function Board(props: Props) {
   }, [projectId]);
 
   useEffect(() => {
-    if (!dirty || saveState === "conflict") return;
+    // Nunca dos guardados a la vez: el segundo llevaría una versión vieja y daría un falso conflicto.
+    if (!dirty || saveState === "conflict" || saveState === "saving" || saveState === "error") return;
     const t = setTimeout(() => void save(), 1200);
     return () => clearTimeout(t);
   }, [dirty, nodes, saveState, save]);
@@ -219,7 +195,7 @@ function Board(props: Props) {
   // Al cerrar o cambiar de pestaña con cambios sin guardar: se intenta guardar y se avisa.
   useEffect(() => {
     const onHide = () => {
-      if (document.visibilityState === "hidden" && dirty && saveState !== "conflict") void save();
+      if (document.visibilityState === "hidden" && dirty && saveState !== "conflict" && saveState !== "saving") void save();
     };
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
       if (dirty && saveState !== "conflict") e.preventDefault();
@@ -270,7 +246,18 @@ function Board(props: Props) {
         ? { x: at.x - rest.w / 2, y: at.y - rest.h / 2 }
         : (() => {
             const c = centerPoint();
-            return findFreeSpot(nodesRef.current, c.x, c.y, rest.w, rest.h);
+            return findFreeSpot(
+              nodesRef.current.map((n) => ({
+                x: n.position.x,
+                y: n.position.y,
+                w: n.width ?? n.measured?.width ?? n.data.card.w,
+                h: n.height ?? n.measured?.height ?? n.data.card.h,
+              })),
+              c.x,
+              c.y,
+              rest.w,
+              rest.h,
+            );
           })();
       const card: MoodboardCard = { ...rest, id: newId(), x: Math.round(spot.x), y: Math.round(spot.y) };
       setNodes((ns) => [...ns.map((n) => (n.selected ? { ...n, selected: false } : n)), { ...toNode(card), selected: true }]);

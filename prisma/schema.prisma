@@ -318,8 +318,23 @@ model Project {
   activityLogs      ActivityLog[]
   backups           ProjectBackup[]
   moodboard         Moodboard?
+  projectMap        ProjectMap?
 
   @@index([organizationId])
+}
+
+// Mapa del proyecto (pestaña de Resumen): cómo tiene colocadas la persona las
+// tarjetas-resumen de cada herramienta y sus notas. Solo guarda la disposición
+// (posiciones, tarjetas ocultas, notas); el contenido de las tarjetas se calcula
+// en cada visita a partir de los datos reales. Ver lib/project-map.ts.
+model ProjectMap {
+  id        String   @id @default(cuid())
+  projectId String   @unique
+  data      Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
 
 // Moodboard del proyecto: un tablero libre (v1: uno por proyecto) con
