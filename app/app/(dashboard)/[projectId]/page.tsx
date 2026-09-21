@@ -1,22 +1,20 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { ToolCard } from "@/components/ToolCard";
+import { NextStep } from "@/components/NextStep";
+import { StageStepper } from "@/components/StageStepper";
+import { ProjectTools } from "@/components/ProjectTools";
 import { ProjectSummaryCard } from "@/components/ProjectSummaryCard";
 import { ProjectShareButton } from "@/components/ProjectShareButton";
-import { ProjectRoadmap } from "@/components/ProjectRoadmap";
 import { ProjectHeaderCard } from "@/components/ProjectHeaderCard";
 import { ActivityFeed } from "@/components/ActivityFeed";
-import { DashboardStagger } from "@/components/DashboardMotion";
-import { PdfLink } from "@/components/PdfLink";
 import { PageHeader } from "@/components/PageHeader";
 import { getProjectOverview } from "@/lib/project-roadmap";
 import { getCurrentProfile } from "@/lib/current-user";
-import { SummaryIcon } from "@/components/ToolIcons";
 import { getProjectForCurrentUser, getProjectOwnerLabel } from "@/lib/project-access";
 import { updateProjectDetails } from "@/lib/actions/project-details";
-import { TOOL_GROUPS } from "@/lib/tool-groups";
+import { getProjectFacts, getToolMode } from "@/lib/tool-access";
+import { computeAccess, computeStage } from "@/lib/tool-rules";
 
 export default async function ProjectTallerPage({
   params,
@@ -66,10 +64,13 @@ export default async function ProjectTallerPage({
   const updateAction = updateProjectDetails.bind(null, project.id);
   const budgetTarget =
     project.budgetTarget !== null ? Number(project.budgetTarget) : null;
-  const { steps, toolStats, nextShoot, budget } = await getProjectOverview(
-    project.id,
-    budgetTarget,
-  );
+  const [{ steps, toolStats, nextShoot, budget }, facts, mode] = await Promise.all([
+    getProjectOverview(project.id, budgetTarget),
+    getProjectFacts(project.id),
+    getToolMode(profile.organizationId),
+  ]);
+  const access = computeAccess(facts);
+  const stage = computeStage(facts);
 
   return (
     <div>
@@ -95,58 +96,21 @@ export default async function ProjectTallerPage({
         }
       />
 
-      <ProjectHeaderCard
-        projectId={project.id}
-        status={project.status}
-        steps={steps}
-        nextShoot={nextShoot}
-        budget={budget}
-      />
+      {/* Con el proyecto vacío solo repetiría «sin nada» y los pasos: se enseña cuando ya hay datos. */}
+      {(mode === "full" || facts.scenes > 0) && (
+        <ProjectHeaderCard
+          projectId={project.id}
+          status={project.status}
+          steps={steps}
+          nextShoot={nextShoot}
+          budget={budget}
+        />
+      )}
 
-      <ProjectRoadmap steps={steps} />
+      <StageStepper stage={stage} />
+      <NextStep steps={steps} />
 
-      <section className="mt-10">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <p className="font-mono text-[11px] tracking-widest text-accent uppercase">
-            Herramientas
-          </p>
-          <div className="flex flex-wrap items-center gap-2">
-            <Link
-              href={`/app/${project.id}/resumen`}
-              className="link-action gap-1.5"
-            >
-              <SummaryIcon className="h-4 w-4" />
-              Resumen completo
-            </Link>
-            <PdfLink
-              href={`/api/pdf/dossier/${project.id}`}
-              label="Descargar dossier"
-            />
-          </div>
-        </div>
-
-        {TOOL_GROUPS.map((group) => (
-          <div key={group.label} className="mt-6">
-            <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
-              {group.label}
-            </p>
-            <DashboardStagger className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {group.tools.map((tool) => (
-                <ToolCard
-                  key={tool.label}
-                  variant="row"
-                  icon={tool.icon}
-                  label={tool.label}
-                  description={tool.description}
-                  href={tool.absolute ? tool.href : `/app/${project.id}/${tool.href}`}
-                  badge={tool.pro ? "PRO" : undefined}
-                  stat={toolStats[tool.href]}
-                />
-              ))}
-            </DashboardStagger>
-          </div>
-        ))}
-      </section>
+      <ProjectTools projectId={project.id} mode={mode} access={access} toolStats={toolStats} />
 
       <div className="mt-10">
         <ProjectSummaryCard

@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, type MouseEvent } from "react";
+import { ToolModeToggle } from "@/components/ToolModeToggle";
 import { TOOL_GROUPS } from "@/lib/tool-groups";
+import { isUnlocked, type ToolAccess, type ToolMode } from "@/lib/tool-rules";
 
 // Cierra el <details> que contiene el enlace en el que se acaba de hacer
 // clic — sin esto, el desplegable se queda abierto tapando la página tras
@@ -20,7 +22,15 @@ const CHIP_ACTIVE = "border-accent/50 bg-accent/10 text-accent";
 // Mismas herramientas y mismos grupos que el resto de la app (TOOL_GROUPS):
 // una sola lista, con iconos. El chip de la fase actual dice también qué
 // herramienta estás usando.
-export function ProjectSubNav({ projectId }: { projectId: string }) {
+export function ProjectSubNav({
+  projectId,
+  access,
+  mode,
+}: {
+  projectId: string;
+  access: Record<string, ToolAccess>;
+  mode: ToolMode;
+}) {
   const navRef = useRef<HTMLElement>(null);
   const pathname = usePathname();
   const base = `/app/${projectId}`;
@@ -75,6 +85,10 @@ export function ProjectSubNav({ projectId }: { projectId: string }) {
       </Link>
       {TOOL_GROUPS.map((group) => {
         const activeTool = group.tools.find((tool) => isOn(toolHref(tool)));
+        // En modo simple solo salen las herramientas que ya sirven (y la que estás usando).
+        const tools =
+          mode === "full" ? group.tools : group.tools.filter((tool) => isUnlocked(access, tool.href) || tool === activeTool);
+        if (tools.length === 0) return null;
         return (
           <details key={group.label} name="project-subnav" className="group relative">
             <summary
@@ -93,7 +107,7 @@ export function ProjectSubNav({ projectId }: { projectId: string }) {
               </span>
             </summary>
             <div className="absolute left-0 z-20 mt-2 w-64 border border-line bg-bg-raised py-1.5 shadow-2xl shadow-black/60">
-              {group.tools.map((tool) => {
+              {tools.map((tool) => {
                 const toolActive = isOn(toolHref(tool));
                 return (
                   <Link
@@ -121,6 +135,7 @@ export function ProjectSubNav({ projectId }: { projectId: string }) {
           </details>
         );
       })}
+      {mode === "simple" && <ToolModeToggle mode={mode} className={`${CHIP} ${CHIP_IDLE} border-dashed`} label="Ver todas" />}
     </nav>
   );
 }
