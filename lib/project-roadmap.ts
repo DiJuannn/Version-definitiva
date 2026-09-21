@@ -230,10 +230,10 @@ export async function getProjectOverview(
     {
       key: "shot-list",
       phase: "rodaje",
-      title: "Shot list",
+      title: "Lista de planos",
       instruction: "Define al menos un plano en cada escena.",
       href: `/app/${projectId}/shot-list`,
-      ctaLabel: "Ir a Shot list",
+      ctaLabel: "Ir a Lista de planos",
       isDone: scenesTotal > 0 && scenesWithShots === scenesTotal,
       required: false,
       detail:
@@ -258,10 +258,10 @@ export async function getProjectOverview(
     {
       key: "call-sheets",
       phase: "rodaje",
-      title: "Call sheets",
+      title: "Hojas de llamada",
       instruction: "Genera la hoja de convocatoria de cada día de rodaje.",
       href: `/app/${projectId}/call-sheets`,
-      ctaLabel: "Ir a Call sheets",
+      ctaLabel: "Ir a Hojas de llamada",
       isDone: shootingDaysTotal > 0 && shootingDaysWithCallSheet === shootingDaysTotal,
       required: true,
       detail:

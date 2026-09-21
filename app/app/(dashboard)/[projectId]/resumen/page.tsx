@@ -567,7 +567,7 @@ export default async function ProjectSummaryPage({
         {script.takes > 0 && (
           <Section
             href={`/app/${projectId}/script`}
-            title="Script"
+            title="Parte de script"
             teaser={`${script.takes} tomas · ${script.good} buenas`}
           >
             <p className="font-mono text-sm">

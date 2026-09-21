@@ -42,7 +42,7 @@ export default async function ShotListPage({
         backHref={`/app/${projectId}`}
         backLabel={`← ${project.name}`}
         eyebrow="Preproducción"
-        title="Shot list"
+        title="Lista de planos"
         description={
           scenes.length > 0
             ? `${shotCount} plano${shotCount === 1 ? "" : "s"} definido${shotCount === 1 ? "" : "s"} · ${scenesWithShots} de ${scenes.length} escenas con plano. Cada uno con su tamaño, ángulo y movimiento de cámara.`

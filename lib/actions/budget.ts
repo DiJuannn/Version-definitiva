@@ -2,12 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { getProjectForCurrentUser } from "@/lib/project-access";
-import { prisma } from "@/lib/prisma";
-import { starterBudgetCategories } from "@/lib/budget-templates";
 import { optionalDecimal, optionalString } from "@/lib/form-utils";
 import {
   createBudgetCategoryCore,
   createBudgetItemCore,
+  createStarterBudgetCore,
   deleteBudgetCategoryCore,
   deleteBudgetItemCore,
   setBudgetItemActualCore,
@@ -40,13 +39,8 @@ export async function createStarterBudget(
   const project = await getProjectForCurrentUser(projectId);
   if (!project) return { error: "No tienes acceso a este proyecto." };
 
-  const existing = await prisma.budgetCategory.count({ where: { projectId } });
-  if (existing > 0) return { error: "Este presupuesto ya tiene categorías." };
-
-  const names = starterBudgetCategories(project.type);
-  await prisma.budgetCategory.createMany({
-    data: names.map((name, order) => ({ projectId, name, order })),
-  });
+  const created = await createStarterBudgetCore(projectId, project.type);
+  if (created === 0) return { error: "Este presupuesto ya tiene categorías." };
 
   revalidatePath(`/app/${projectId}/presupuesto`);
   revalidatePath(`/app/${projectId}`);

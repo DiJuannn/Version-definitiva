@@ -7,6 +7,7 @@ import { MainContainer } from "@/components/MainContainer";
 import { signOut } from "@/lib/actions/auth";
 import { getCurrentProfile } from "@/lib/current-user";
 import { isPro } from "@/lib/plan";
+import { getToolMode } from "@/lib/tool-access";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -35,15 +36,25 @@ export default async function DashboardLayout({
   children: ReactNode;
 }) {
   const profile = await getCurrentProfile();
-  const nav: NavItem[] = [...NAV];
-  if (profile?.role === "ADMIN") {
-    nav.push({ href: "/app/organizacion", label: "Organización", icon: "org" });
+  // Modo simple (quien empieza): lo de uso diario a la vista y lo demás recogido en «Más».
+  const simple = profile ? (await getToolMode(profile.organizationId)) === "simple" : false;
+  const admin = profile?.role === "ADMIN";
+  const platformOwner = Boolean(admin && profile?.organization.isPlatformOwner);
+
+  let nav: NavItem[];
+  if (simple) {
+    const recursos = NAV.find((item) => item.label === "Recursos")?.children ?? [];
+    const more = [...recursos];
+    if (admin) more.push({ href: "/app/organizacion", label: "Organización y plan", icon: "org" });
     // "Editor web" solo es relevante para la organización dueña de la
     // plataforma (Versión definitiva) — el resto de organizaciones usan
     // Taller pero no tienen web pública propia que editar.
-    if (profile.organization.isPlatformOwner) {
-      nav.push({ href: "/admin", label: "Editor web", icon: "web" });
-    }
+    if (platformOwner) more.push({ href: "/admin", label: "Editor web", icon: "web" });
+    nav = [...NAV.filter((item) => item.label !== "Recursos"), { label: "Más", icon: "more", children: more }];
+  } else {
+    nav = [...NAV];
+    if (admin) nav.push({ href: "/app/organizacion", label: "Organización", icon: "org" });
+    if (platformOwner) nav.push({ href: "/admin", label: "Editor web", icon: "web" });
   }
 
   return (

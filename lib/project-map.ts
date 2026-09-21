@@ -100,7 +100,7 @@ export async function buildMapCards(projectId: string): Promise<MapToolCard[]> {
     card("personajes", "Personajes", "personajes", plural(project.actors.length, "actor", "actores"), [
       `${charactersWithActor} de ${project.characters.length} personajes con actor`,
     ], progress("reparto")),
-    card("shot-list", "Shot list", "shot-list", plural(data.shotsTotal, "plano", "planos"), [
+    card("shot-list", "Lista de planos", "shot-list", plural(data.shotsTotal, "plano", "planos"), [
       `${scenesWithShots} de ${scenes} escenas con planos`,
     ], progress("shot-list")),
     card("storyboard", "Storyboard", "storyboard", plural(data.storyboardFramesCount, "viñeta", "viñetas"), [], progress("storyboard")),
@@ -109,7 +109,7 @@ export async function buildMapCards(projectId: string): Promise<MapToolCard[]> {
       ...(nextShoot ? [nextShoot] : []),
       `${hl.shots.planned} de ${hl.shots.total} planos planificados`,
     ], progress("plan")),
-    card("call-sheets", "Call sheets", "call-sheets", `${callSheets} de ${days} listos`, [], progress("call-sheets")),
+    card("call-sheets", "Hojas de llamada", "call-sheets", `${callSheets} de ${days} listos`, [], progress("call-sheets")),
     card(
       "presupuesto",
       "Presupuesto",
@@ -570,7 +570,7 @@ export async function getMapEntities(projectId: string): Promise<MapEntities> {
       title: dayLabel(d.date),
       sub: `${plural(d._count.scenes, "escena", "escenas")} · ${plural(d._count.shots, "plano", "planos")}`,
       body: clip(d.notes, 140),
-      tag: d.callSheet ? "Call sheet listo" : "Sin call sheet",
+      tag: d.callSheet ? "Hoja de llamada lista" : "Sin hoja de llamada",
       slug: `plan-de-rodaje/${d.id}`,
     })),
     budget: budget.map((c) => {

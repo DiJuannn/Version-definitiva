@@ -10,12 +10,12 @@ const STEPS = [
   {
     label: "Preparar",
     what: "Decides cuándo y dónde rodar: te propongo un plan de rodaje y las categorías del presupuesto.",
-    unlocks: "Desglose, Shot list, Storyboard, Moodboard, Localizaciones y Plan de rodaje.",
+    unlocks: "Desglose, Lista de planos, Storyboard, Moodboard, Localizaciones y Plan de rodaje.",
   },
   {
     label: "Rodar",
     what: "Preparas la hoja de llamada de cada día, la compartes con el equipo y marcas las tomas en el set.",
-    unlocks: "Call sheets, Claqueta digital y Parte de script.",
+    unlocks: "Hojas de llamada, Claqueta digital y Parte de script.",
   },
   {
     label: "Entregar",

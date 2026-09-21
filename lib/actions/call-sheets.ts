@@ -8,7 +8,7 @@ import { getCurrentProfile } from "@/lib/current-user";
 import { optionalString } from "@/lib/form-utils";
 import { logActivity } from "@/lib/activity-log";
 import { notifyCallSheetChange } from "@/lib/call-sheet-change-alert";
-import { setCallSheetSharingCore, upsertCallSheetCore } from "@/lib/call-sheets-core";
+import { generateAllCallSheetsCore, setCallSheetSharingCore, upsertCallSheetCore } from "@/lib/call-sheets-core";
 
 export async function upsertCallSheet(
   projectId: string,
@@ -69,10 +69,6 @@ export async function generateCallSheetAndOpen(projectId: string, shootingDayId:
   }
 }
 
-// Hora de llamada orientativa según la luz de la primera escena del día.
-const SUGGESTED_CALL_TIME: Record<string, string> = { DAWN: "05:30", DAY: "08:00", DUSK: "16:30", NIGHT: "19:00" };
-const LIGHT_ORDER = ["DAWN", "DAY", "DUSK", "NIGHT"];
-
 export type GenerateAllState = { error: string } | undefined;
 
 // Crea de una vez el call sheet de todos los días con escenas que aún no lo tienen, con una hora
@@ -88,26 +84,11 @@ export async function generateAllCallSheets(
   const project = await getProjectForCurrentUser(projectId);
   if (!project) return { error: "No tienes acceso a este proyecto." };
 
-  const days = await prisma.shootingDay.findMany({
-    where: { projectId, callSheet: null, scenes: { some: {} } },
-    select: { id: true, scenes: { select: { scene: { select: { dayPart: true } } } } },
-  });
-  if (days.length === 0) return { error: "No hay días con escenas que estén sin call sheet." };
-
-  for (const day of days) {
-    const earliest = day.scenes
-      .map((s) => s.scene.dayPart as string)
-      .sort((a, b) => LIGHT_ORDER.indexOf(a) - LIGHT_ORDER.indexOf(b))[0];
-    await upsertCallSheetCore(projectId, day.id, {
-      generalCallTime: SUGGESTED_CALL_TIME[earliest] ?? null,
-      transportNotes: null,
-      cateringNotes: null,
-      additionalNotes: null,
-    });
-  }
+  const created = await generateAllCallSheetsCore(projectId);
+  if (created === 0) return { error: "No hay días con escenas que estén sin call sheet." };
 
   const profile = await getCurrentProfile();
-  await logActivity(projectId, profile?.id, `generó ${days.length} call sheet${days.length === 1 ? "" : "s"} de una vez`);
+  await logActivity(projectId, profile?.id, `generó ${created} call sheet${created === 1 ? "" : "s"} de una vez`);
   revalidatePath(`/app/${projectId}/call-sheets`);
   revalidatePath(`/app/${projectId}`);
   return undefined;

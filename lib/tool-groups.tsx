@@ -46,7 +46,7 @@ export const TOOL_GROUPS: { label: string; tools: ToolDefinition[] }[] = [
         icon: <StackIcon />,
         label: "Desglose",
         href: "desglose",
-        description: "Catálogo de atrezzo, vestuario y equipo por escena.",
+        description: "Lo que necesita cada escena: atrezzo, vestuario y equipo.",
       },
       {
         icon: <CastIcon />,
@@ -56,9 +56,9 @@ export const TOOL_GROUPS: { label: string; tools: ToolDefinition[] }[] = [
       },
       {
         icon: <ShotListIcon />,
-        label: "Shot list",
+        label: "Lista de planos",
         href: "shot-list",
-        description: "Los planos definidos para cada escena.",
+        description: "Los planos (shots) que vas a rodar en cada escena.",
       },
       {
         icon: <SceneIcon />,
@@ -92,9 +92,9 @@ export const TOOL_GROUPS: { label: string; tools: ToolDefinition[] }[] = [
       },
       {
         icon: <CallSheetIcon />,
-        label: "Call sheets",
+        label: "Hojas de llamada",
         href: "call-sheets",
-        description: "La hoja de convocatoria de cada día de rodaje.",
+        description: "La hoja de convocatoria (call sheet): quién va, dónde y a qué hora, cada día.",
       },
       {
         icon: <BudgetIcon />,
@@ -110,7 +110,7 @@ export const TOOL_GROUPS: { label: string; tools: ToolDefinition[] }[] = [
       },
       {
         icon: <TakeReportIcon />,
-        label: "Script",
+        label: "Parte de script",
         href: "script",
         description: "El parte de script: las tomas del rodaje, cuáles son buenas y sus notas.",
       },

@@ -31,10 +31,10 @@ export default async function CallSheetsPage({
         backHref={`/app/${projectId}`}
         backLabel={`← ${project.name}`}
         eyebrow="Producción"
-        title="Call sheets"
+        title="Hojas de llamada"
         description={
           <>
-            Un call sheet por día de rodaje, generado a partir del{" "}
+            Una hoja de llamada (call sheet) por día de rodaje, generada a partir del{" "}
             <Link
               href={`/app/${projectId}/plan-de-rodaje`}
               className="text-fg underline decoration-accent/50 underline-offset-4 hover:decoration-accent"

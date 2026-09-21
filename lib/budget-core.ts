@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { starterBudgetCategories } from "@/lib/budget-templates";
 
 export async function createBudgetCategoryCore(projectId: string, name: string): Promise<string | null> {
   const trimmed = name.trim();
@@ -9,6 +10,16 @@ export async function createBudgetCategoryCore(projectId: string, name: string):
     data: { projectId, name: trimmed, order: count },
   });
   return category.id;
+}
+
+// Categorías típicas según el tipo de proyecto (solo títulos, sin importes). Solo si el presupuesto está
+// vacío; devuelve cuántas creó (0 = ya había categorías).
+export async function createStarterBudgetCore(projectId: string, projectType: string | null): Promise<number> {
+  const existing = await prisma.budgetCategory.count({ where: { projectId } });
+  if (existing > 0) return 0;
+  const names = starterBudgetCategories(projectType);
+  await prisma.budgetCategory.createMany({ data: names.map((name, order) => ({ projectId, name, order })) });
+  return names.length;
 }
 
 export async function deleteBudgetCategoryCore(projectId: string, categoryId: string) {

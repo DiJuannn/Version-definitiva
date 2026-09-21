@@ -27,7 +27,18 @@ type IconKey =
   | "box"
   | "vehicle"
   | "org"
-  | "web";
+  | "web"
+  | "more";
+
+function MoreIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden className={className}>
+      <circle cx="5" cy="12" r="1.8" />
+      <circle cx="12" cy="12" r="1.8" />
+      <circle cx="19" cy="12" r="1.8" />
+    </svg>
+  );
+}
 
 const ICONS: Record<IconKey, ComponentType<{ className?: string }>> = {
   home: HomeIcon,
@@ -40,6 +51,7 @@ const ICONS: Record<IconKey, ComponentType<{ className?: string }>> = {
   vehicle: VehicleIcon,
   org: OrganizationIcon,
   web: ScriptIcon,
+  more: MoreIcon,
 };
 
 export type NavItem = {
