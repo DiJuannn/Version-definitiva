@@ -3,8 +3,8 @@ import { AjoloteLogo } from "@/components/AjoloteLogo";
 import type { RoadmapStep } from "@/lib/project-roadmap";
 
 // Por qué importa cada paso y cuánto cuesta, en lenguaje llano.
-const COPY: Record<string, { why: string; time: string }> = {
-  guion: { why: "Con el guion, la IA propone escenas, personajes y desglose: es la base de todo lo demás.", time: "2 min" },
+const COPY: Record<string, { why: string; time: string; cta?: string }> = {
+  guion: { why: "Súbelo (PDF o Word) y la IA propone escenas, personajes y localizaciones: es la base de todo lo demás.", time: "2 min", cta: "Subir mi guion" },
   reparto: { why: "Saber quién hace de quién te permite organizar y avisar al equipo.", time: "1 min por personaje" },
   localizaciones: { why: "Con los lugares puedes agrupar escenas y ahorrar días de rodaje.", time: "2 min" },
   desglose: { why: "Lista lo que necesita cada escena (atrezzo, vestuario…) para no olvidar nada.", time: "5 min" },
@@ -46,7 +46,7 @@ export function NextStep({ steps }: { steps: RoadmapStep[] }) {
               <p className="mt-3 max-w-xl font-sans text-sm text-muted">{copy?.why ?? next.instruction}</p>
               <p className="mt-1 font-mono text-xs text-muted">{next.detail}</p>
               <Link href={next.href} className="btn btn-primary mt-5">
-                {next.ctaLabel} →
+                {copy?.cta ?? next.ctaLabel} →
               </Link>
             </>
           ) : (

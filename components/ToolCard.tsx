@@ -47,7 +47,7 @@ export function ToolCard({
 
   if (variant === "row") {
     const inner = (
-      <div className="flex h-full items-start gap-3.5 border border-line bg-bg-raised/40 p-4 transition duration-300 group-hover:border-accent/60 group-hover:bg-accent/5 group-active:scale-[0.99]">
+      <div className="flex h-full items-start gap-3.5 border border-line bg-bg-raised/40 p-4 transition duration-300 group-hover:border-accent/60 group-hover:bg-accent/5 group-active:scale-[0.99] max-sm:p-3">
         <div className="h-7 w-7 shrink-0 text-muted transition duration-300 group-hover:-translate-y-0.5 group-hover:text-accent">
           {icon}
         </div>
@@ -63,7 +63,7 @@ export function ToolCard({
             </p>
           )}
           {description && (
-            <p className="mt-1 font-mono text-[11px] leading-relaxed text-muted">
+            <p className="mt-1 line-clamp-1 font-mono text-[11px] leading-relaxed text-muted sm:line-clamp-none">
               {description}
             </p>
           )}

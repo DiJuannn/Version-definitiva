@@ -19,12 +19,15 @@ function UploadStatus() {
 export function ScriptUploadForm({
   action,
   existingFileName,
+  prominent = false,
 }: {
   action: (
     prevState: UploadScriptState,
     formData: FormData,
   ) => Promise<UploadScriptState>;
   existingFileName?: string | null;
+  // Botón principal (primer guion del proyecto) en vez del discreto de «Reemplazar».
+  prominent?: boolean;
 }) {
   const [state, formAction] = useActionState(action, undefined);
   const formRef = useRef<HTMLFormElement>(null);
@@ -37,8 +40,8 @@ export function ScriptUploadForm({
         action={formAction}
         className="flex flex-wrap items-center gap-3"
       >
-        <label className="btn btn-secondary btn-sm cursor-pointer">
-          {existingFileName ? "Reemplazar guion" : "Subir guion"}
+        <label className={`btn cursor-pointer ${prominent ? "btn-primary" : "btn-secondary btn-sm"}`}>
+          {existingFileName ? "Reemplazar guion" : prominent ? "Elegir mi guion (PDF o Word)" : "Subir guion"}
           <input
             type="file"
             name="file"

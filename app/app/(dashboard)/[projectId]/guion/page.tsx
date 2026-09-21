@@ -140,7 +140,7 @@ export default async function GuionPage({
                           {scenes.length === 0 ? (
                             <EmptyState
                               title="Todavía no hay escenas"
-                              description="Crea la primera con el formulario de arriba."
+                              description="Lo normal es subir tu guion en «Archivo del guion» y que se creen solas; también puedes crear la primera a mano con el formulario de arriba."
                             />
                           ) : (
                             <div className="mt-6 border-t border-line">
@@ -188,12 +188,45 @@ export default async function GuionPage({
               alert: pendingAnalyses.length > 0,
               content: (
                 <div>
-                          <div className="mt-4">
-                            <ScriptUploadForm
-                              action={uploadAction}
-                              existingFileName={scriptFiles[0]?.fileName ?? null}
-                            />
-                          </div>
+                          {scriptFiles.length === 0 && scenes.length === 0 ? (
+                            <div className="mt-2 border border-accent/40 bg-bg-raised/40 p-6 sm:p-8">
+                              <p className="font-mono text-[11px] tracking-widest text-accent uppercase">Paso 1 de 3</p>
+                              <h2 className="mt-1.5 font-display text-2xl font-black tracking-tight sm:text-3xl">
+                                Sube tu guion
+                              </h2>
+                              <p className="mt-3 max-w-xl font-sans text-sm text-muted">
+                                Súbelo en PDF o Word y la IA lo lee por ti: te propone las escenas, los personajes y las
+                                localizaciones para que no tengas que teclear nada.
+                              </p>
+                              <ol className="mt-5 grid max-w-2xl gap-3 font-sans text-sm sm:grid-cols-3">
+                                <li className="border border-line p-3">
+                                  <span className="font-mono text-[10px] tracking-widest text-accent uppercase">1 · Subes</span>
+                                  <span className="mt-1 block text-muted">Tu guion tal como lo tienes.</span>
+                                </li>
+                                <li className="border border-line p-3">
+                                  <span className="font-mono text-[10px] tracking-widest text-accent uppercase">2 · La IA lo lee</span>
+                                  <span className="mt-1 block text-muted">Tarda menos de un minuto.</span>
+                                </li>
+                                <li className="border border-line p-3">
+                                  <span className="font-mono text-[10px] tracking-widest text-accent uppercase">3 · Tú decides</span>
+                                  <span className="mt-1 block text-muted">Revisas y confirmas; no cambia nada sin tu visto bueno.</span>
+                                </li>
+                              </ol>
+                              <div className="mt-6">
+                                <ScriptUploadForm action={uploadAction} existingFileName={null} prominent />
+                              </div>
+                              <p className="mt-5 font-sans text-xs text-muted">
+                                ¿Aún no tienes guion? No pasa nada: en «Escenas» puedes crearlas a mano y subirlo más tarde.
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="mt-4">
+                              <ScriptUploadForm
+                                action={uploadAction}
+                                existingFileName={scriptFiles[0]?.fileName ?? null}
+                              />
+                            </div>
+                          )}
 
                           {scriptFiles.length > 0 && (
                             <>
@@ -219,7 +252,12 @@ export default async function GuionPage({
                               {/* Tarjeta propia para Analizar — mismo peso visual que la
                                   Claqueta digital del inicio, en vez de ir apretado junto al
                                   nombre del archivo compitiendo con "Eliminar". */}
-                              <div className="mt-6 border border-line p-5">
+                              <div className={`mt-6 border p-5 ${scenes.length === 0 ? "border-accent/40 bg-bg-raised/40" : "border-line"}`}>
+                                {scenes.length === 0 && (
+                                  <p className="mb-3 font-mono text-[11px] tracking-widest text-accent uppercase">
+                                    Paso 2 de 3 · Ahora que lo lea la IA
+                                  </p>
+                                )}
                                 <div className="flex items-start gap-3">
                                   <SparkleIcon className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
                                   <div className="min-w-0 flex-1">
@@ -243,7 +281,7 @@ export default async function GuionPage({
                                   <ActionButtonForm
                                     action={analyzeScript.bind(null, projectId, scriptFiles[0].id)}
                                     pendingLabel="Analizando…"
-                                    className="btn btn-outline"
+                                    className={scenes.length === 0 ? "btn btn-primary" : "btn btn-outline"}
                                   >
                                     Analizar
                                   </ActionButtonForm>
