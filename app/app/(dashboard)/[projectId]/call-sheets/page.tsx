@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
+import { ActionButtonForm } from "@/components/ActionButtonForm";
+import { generateAllCallSheets } from "@/lib/actions/call-sheets";
 
 export default async function CallSheetsPage({
   params,
@@ -20,6 +22,8 @@ export default async function CallSheetsPage({
     orderBy: { date: "asc" },
     include: { callSheet: { select: { id: true, generalCallTime: true } }, _count: { select: { scenes: true } } },
   });
+
+  const pendingDays = days.filter((day) => !day.callSheet && day._count.scenes > 0).length;
 
   return (
     <div>
@@ -41,6 +45,28 @@ export default async function CallSheetsPage({
           </>
         }
       />
+
+      {pendingDays > 0 && (
+        <section className="mt-8 border border-accent/40 bg-bg-raised/40 p-6">
+          <p className="font-mono text-[11px] tracking-widest text-accent uppercase">Te lo preparo yo</p>
+          <h2 className="mt-1.5 font-display text-xl font-black tracking-tight sm:text-2xl">
+            Genera las hojas de llamada de {pendingDays === 1 ? "tu día" : `tus ${pendingDays} días`} de rodaje
+          </h2>
+          <p className="mt-3 max-w-xl font-sans text-sm text-muted">
+            Creo una hoja por cada día con escenas y le pongo una hora de llamada según la luz (por ejemplo, las 8:00 para
+            escenas de día). Puedes cambiarla en cada hoja, y desde ahí compartirla con el equipo con un enlace.
+          </p>
+          <div className="mt-5">
+            <ActionButtonForm
+              action={generateAllCallSheets.bind(null, projectId)}
+              pendingLabel="Generando…"
+              className="btn btn-primary"
+            >
+              Generar {pendingDays === 1 ? "la hoja" : "todas las hojas"}
+            </ActionButtonForm>
+          </div>
+        </section>
+      )}
 
       {days.length === 0 ? (
         <EmptyState

@@ -12,7 +12,7 @@ const COPY: Record<string, { why: string; time: string; cta?: string }> = {
   "plan-de-rodaje": { why: "Reparte las escenas en días de rodaje: es el calendario de tu rodaje. Yo te propongo uno y tú lo ajustas.", time: "2 min", cta: "Crear mi plan de rodaje" },
   "shot-list": { why: "Define los planos de cada escena para rodar sin dudas.", time: "10 min" },
   storyboard: { why: "Dibuja o sube viñetas de los planos clave.", time: "10 min" },
-  "call-sheets": { why: "La hoja de llamada dice al equipo dónde y cuándo ir cada día, y se comparte con un enlace.", time: "2 min por día" },
+  "call-sheets": { why: "La hoja de llamada dice al equipo dónde y cuándo ir cada día, y se comparte con un enlace. Las creo todas de una vez.", time: "1 min", cta: "Generar mis hojas de llamada" },
 };
 
 function Marker({ step, current }: { step: RoadmapStep; current: boolean }) {
