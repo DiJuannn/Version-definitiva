@@ -8,31 +8,37 @@ import {
   Background,
   ConnectionMode,
   Controls,
-  MarkerType,
   MiniMap,
   Panel,
   ReactFlow,
   ReactFlowProvider,
   applyNodeChanges,
+  getNodesBounds,
+  getViewportForBounds,
   useReactFlow,
   type Connection,
-  type Edge,
   type EdgeChange,
   type NodeChange,
 } from "@xyflow/react";
 import { findFreeSpot } from "@/components/canvas/free-spot";
+import { buildFromLayout, itemNode, sizeOf, toRfEdge, toolNode, type AnyNode } from "@/components/project-map/board-utils";
 import { loadImageSize, prepareImage } from "@/components/canvas/image-utils";
 import { ItemNodeView, ItemProvider, type ItemNode } from "@/components/project-map/itemNodes";
-import { MapProvider, ToolNodeView, type ToolNode } from "@/components/project-map/toolNode";
+import { MapProvider } from "@/components/project-map/mapContext";
+import { ToolNodeView } from "@/components/project-map/toolNode";
 import { completeMapTask, saveProjectMap, setMapProjectStatus, uploadMapImage } from "@/lib/actions/project-map";
 import { MAP_MAX_EDGES } from "@/lib/project-map-types";
 import {
   MAP_COLORS,
+  MAP_ENTITY_KINDS,
+  MAP_ENTITY_LABELS,
   MAP_ITEM_SIZE,
-  MAP_TOOL_KEYS,
   NOTE_COLORS,
   defaultToolRect,
   type MapEdge,
+  type MapEntities,
+  type MapEntityKind,
+  type MapEntityView,
   type MapItem,
   type MapItemType,
   type MapLayout,
@@ -44,12 +50,13 @@ import {
 } from "@/lib/project-map-types";
 import type { MapProjectImage } from "@/lib/project-map";
 
-type AnyNode = ToolNode | ItemNode;
-
 const nodeTypes = { tool: ToolNodeView, item: ItemNodeView };
 
 type Props = {
   projectId: string;
+  boardId: string;
+  boardName: string;
+  entities: MapEntities;
   tools: MapToolCard[];
   layout: MapLayout;
   updatedAt: string | null;
@@ -60,52 +67,6 @@ type Props = {
 };
 
 const newId = () => crypto.randomUUID().replace(/-/g, "").slice(0, 16);
-
-const toolNode = (key: MapToolKey, r: MapRect): ToolNode => ({
-  id: `tool-${key}`,
-  type: "tool",
-  position: { x: r.x, y: r.y },
-  width: r.w,
-  height: r.h,
-  data: { key },
-});
-
-const itemNode = (it: MapItem): ItemNode => ({
-  id: it.id,
-  type: "item",
-  position: { x: it.x, y: it.y },
-  width: it.w,
-  height: it.h,
-  // Las secciones van al fondo, detrás de lo que agrupan.
-  zIndex: it.type === "section" ? -1 : undefined,
-  data: { item: it },
-});
-
-const sizeOf = (n: AnyNode) => ({
-  w: Math.round(n.width ?? n.measured?.width ?? 240),
-  h: Math.round(n.height ?? n.measured?.height ?? 140),
-});
-
-const EDGE_DEFAULT = "#8a8a84";
-
-function toRfEdge(e: MapEdge, selected: boolean): Edge {
-  const color = e.color ?? EDGE_DEFAULT;
-  return {
-    id: e.id,
-    source: e.source,
-    target: e.target,
-    sourceHandle: e.sh,
-    targetHandle: e.th,
-    label: e.label,
-    selected,
-    style: { stroke: color, strokeWidth: selected ? 3 : 2, strokeDasharray: e.dashed ? "7 5" : undefined },
-    markerEnd: e.arrow === false ? undefined : { type: MarkerType.ArrowClosed, color },
-    labelStyle: { fill: "#f2f0ea", fontSize: 12 },
-    labelBgStyle: { fill: "#0a0a0a" },
-    labelBgPadding: [6, 3],
-    labelBgBorderRadius: 2,
-  };
-}
 
 // Estado → disposición que se guarda (y que se usa como "foto" para deshacer).
 function serialize(
@@ -124,17 +85,6 @@ function serialize(
   return { v: 2, tools, hidden: [...new Set(hidden)], items, edges };
 }
 
-function buildFromLayout(layout: MapLayout) {
-  const nodes: AnyNode[] = [
-    ...MAP_TOOL_KEYS.filter((k) => !layout.hidden.includes(k)).map((k) => toolNode(k, layout.tools[k] ?? defaultToolRect(k))),
-    ...layout.items.map(itemNode),
-  ];
-  const hiddenRects: Partial<Record<MapToolKey, MapRect>> = Object.fromEntries(
-    layout.hidden.map((k) => [k, layout.tools[k] ?? defaultToolRect(k)]),
-  );
-  return { nodes, hiddenRects };
-}
-
 const isEditable = (t: EventTarget | null) => {
   const el = t as HTMLElement | null;
   return !!el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT" || el.isContentEditable);
@@ -143,7 +93,7 @@ const isEditable = (t: EventTarget | null) => {
 const HISTORY_MAX = 60;
 
 function MapBoard(props: Props) {
-  const { projectId, layout, isPro, freeLimit, maxItems, images } = props;
+  const { projectId, boardId, boardName, entities, layout, isPro, freeLimit, maxItems, images } = props;
   const router = useRouter();
   const { screenToFlowPosition, fitView } = useReactFlow<AnyNode>();
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -173,7 +123,10 @@ function MapBoard(props: Props) {
   const [saveState, setSaveState] = useState<"idle" | "saving" | "error" | "conflict">("idle");
   const [saveError, setSaveError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [menu, setMenu] = useState<null | "image" | "shape" | "more">(null);
+  const [menu, setMenu] = useState<null | "image" | "shape" | "project" | "more">(null);
+  const [projectTab, setProjectTab] = useState<MapEntityKind>("scene");
+  const [projectQuery, setProjectQuery] = useState("");
+  const [exporting, setExporting] = useState(false);
   const [imageUrl, setImageUrl] = useState("");
   const [uploading, setUploading] = useState(0);
   const [confirmReset, setConfirmReset] = useState(false);
@@ -400,6 +353,43 @@ function MapBoard(props: Props) {
       setMenu(null);
     },
     [canAdd, centre, markDirty],
+  );
+
+  // Cosas del proyecto (escenas, tareas, planos…) como tarjetas.
+  const addEntity = useCallback(
+    (kind: MapEntityKind, view: MapEntityView) => addItem("entity", { kind, refId: view.id, label: view.title }),
+    [addItem],
+  );
+
+  // Varias a la vez, en una rejilla a la derecha de todo lo que ya hay.
+  const addEntities = useCallback(
+    (kind: MapEntityKind, views: MapEntityView[]) => {
+      const chosen = views.slice(0, 30);
+      if (chosen.length === 0 || !canAdd(chosen.length)) return;
+      const existing = nodesRef.current;
+      const cols = 3;
+      const startX = existing.length ? Math.max(...existing.map((n) => n.position.x + sizeOf(n).w)) + 80 : centre().x - 400;
+      const startY = existing.length ? Math.min(...existing.map((n) => n.position.y)) : centre().y - 200;
+      const size = MAP_ITEM_SIZE.entity;
+      const created = chosen.map((v, i) =>
+        itemNode({
+          id: newId(),
+          type: "entity",
+          kind,
+          refId: v.id,
+          label: v.title,
+          x: Math.round(startX + (i % cols) * (size.w + 30)),
+          y: Math.round(startY + Math.floor(i / cols) * (size.h + 30)),
+          w: size.w,
+          h: size.h,
+        }),
+      );
+      setNodes((ns) => [...ns.map((n) => (n.selected ? { ...n, selected: false } : n)), ...created]);
+      markDirty();
+      setMenu(null);
+      setTimeout(() => void fitView({ nodes: created.map((n) => ({ id: n.id })), padding: 0.25, duration: 500 }), 80);
+    },
+    [canAdd, centre, fitView, markDirty],
   );
 
   // Copiar, pegar y duplicar (no incluye las tarjetas de herramienta: solo hay una de cada).
@@ -670,13 +660,96 @@ function MapBoard(props: Props) {
     [projectId, router],
   );
 
+  // ---------------------------------------------------------------- Exportar a imagen o PDF
+  const exportBoard = useCallback(
+    async (format: "png" | "pdf") => {
+      setMenu(null);
+      const visible = nodesRef.current;
+      if (visible.length === 0) {
+        setNotice("No hay nada que exportar.");
+        return;
+      }
+      setExporting(true);
+      try {
+        const bounds = getNodesBounds(visible);
+        const pad = 60;
+        const width = Math.min(4096, Math.max(600, Math.round(bounds.width + pad * 2)));
+        const height = Math.min(4096, Math.max(400, Math.round(bounds.height + pad * 2)));
+        const vp = getViewportForBounds(bounds, width, height, 0.05, 2, 0.05);
+        const el = document.querySelector<HTMLElement>(".react-flow__viewport");
+        if (!el) throw new Error("no-viewport");
+
+        const { toPng } = await import("html-to-image");
+        const dataUrl = await toPng(el, {
+          backgroundColor: "#0a0a0a",
+          width,
+          height,
+          pixelRatio: 1.5,
+          style: { width: `${width}px`, height: `${height}px`, transform: `translate(${vp.x}px, ${vp.y}px) scale(${vp.zoom})` },
+          filter: (n) => {
+            const c = (n as HTMLElement).classList;
+            return !(c && (c.contains("react-flow__handle") || c.contains("react-flow__resize-control") || c.contains("react-flow__nodesselection")));
+          },
+        });
+
+        // Se pasa por un lienzo para poner la marca de agua del plan gratuito.
+        const img = new Image();
+        await new Promise<void>((resolve, reject) => {
+          img.onload = () => resolve();
+          img.onerror = () => reject(new Error("img"));
+          img.src = dataUrl;
+        });
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const g = canvas.getContext("2d")!;
+        g.drawImage(img, 0, 0);
+        if (!isPro) {
+          g.font = `${Math.round(canvas.width / 90) + 10}px monospace`;
+          g.fillStyle = "rgba(255,255,255,0.45)";
+          g.textAlign = "right";
+          g.fillText("Hecho con Taller · Versión definitiva", canvas.width - 24, canvas.height - 20);
+        }
+        const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png"));
+        if (!blob) throw new Error("blob");
+
+        const base = (boardName || "pizarra").replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-|-$/g, "").toLowerCase() || "pizarra";
+        let out = blob;
+        let ext = "png";
+        if (format === "pdf") {
+          const { PDFDocument } = await import("pdf-lib");
+          const pdf = await PDFDocument.create();
+          const png = await pdf.embedPng(await blob.arrayBuffer());
+          const w = canvas.width * 0.5;
+          const h = canvas.height * 0.5;
+          pdf.addPage([w, h]).drawImage(png, { x: 0, y: 0, width: w, height: h });
+          out = new Blob([new Uint8Array(await pdf.save())], { type: "application/pdf" });
+          ext = "pdf";
+        }
+        const url = URL.createObjectURL(out);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${base}.${ext}`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+      } catch {
+        setNotice("No se pudo exportar. Si hay imágenes de otras webs, prueba a subirlas a la pizarra.");
+      } finally {
+        setExporting(false);
+      }
+    },
+    [boardName, isPro],
+  );
+
   // ---------------------------------------------------------------- Guardado automático
   const save = useCallback(async () => {
     const version = versionRef.current;
     const payload = serialize(nodesRef.current, edgesRef.current, hiddenRef.current, hiddenRects.current);
     setSaveState("saving");
     try {
-      const result = await saveProjectMap(projectId, payload, updatedAtRef.current);
+      const result = await saveProjectMap(projectId, boardId, payload, updatedAtRef.current);
       if (result.ok) {
         updatedAtRef.current = result.updatedAt;
         setSaveError(null);
@@ -690,7 +763,7 @@ function MapBoard(props: Props) {
       setSaveError("No se pudo guardar. Comprueba tu conexión.");
       setSaveState("error");
     }
-  }, [projectId]);
+  }, [projectId, boardId]);
 
   useEffect(() => {
     // Nunca dos guardados a la vez: el segundo llevaría una versión vieja y daría un falso conflicto.
@@ -723,10 +796,10 @@ function MapBoard(props: Props) {
 
   // ---------------------------------------------------------------- Render
   const mapCtx = useMemo(
-    () => ({ projectId, tools: toolsByKey, hide, completeTask, changeStatus, busy }),
-    [projectId, toolsByKey, hide, completeTask, changeStatus, busy],
+    () => ({ projectId, tools: toolsByKey, entities, hide, completeTask, changeStatus, busy, readOnly: false }),
+    [projectId, toolsByKey, entities, hide, completeTask, changeStatus, busy],
   );
-  const itemCtx = useMemo(() => ({ update: updateItem, remove: removeItem }), [updateItem, removeItem]);
+  const itemCtx = useMemo(() => ({ update: updateItem, remove: removeItem, readOnly: false }), [updateItem, removeItem]);
 
   const visibleIds = useMemo(() => new Set(nodes.map((n) => n.id)), [nodes]);
   const rfEdges = useMemo(
@@ -878,6 +951,72 @@ function MapBoard(props: Props) {
                 <button type="button" className={btn} onClick={() => addItem("section")} title="Un marco con título para agrupar tarjetas">
                   + Sección
                 </button>
+
+                <div className="relative">
+                  <button type="button" className={btn} onClick={() => setMenu(menu === "project" ? null : "project")} aria-expanded={menu === "project"}>
+                    + Del proyecto
+                  </button>
+                  {menu === "project" && (
+                    <div className={`${popover} w-[22rem]`}>
+                      <div className="flex overflow-x-auto border-b border-line [scrollbar-width:none]" role="tablist">
+                        {MAP_ENTITY_KINDS.map((k) => (
+                          <button
+                            key={k}
+                            type="button"
+                            role="tab"
+                            aria-selected={projectTab === k}
+                            onClick={() => {
+                              setProjectTab(k);
+                              setProjectQuery("");
+                            }}
+                            className={`shrink-0 px-2.5 py-2 font-mono text-[10px] tracking-wider uppercase ${projectTab === k ? "text-accent" : "text-muted hover:text-fg"}`}
+                          >
+                            {MAP_ENTITY_LABELS[k].many} ({entities[k]?.length ?? 0})
+                          </button>
+                        ))}
+                      </div>
+                      {(() => {
+                        const all = entities[projectTab] ?? [];
+                        const q = projectQuery.trim().toLowerCase();
+                        const filtered = q ? all.filter((e) => `${e.title} ${e.sub ?? ""}`.toLowerCase().includes(q)) : all;
+                        return (
+                          <>
+                            <div className="flex items-center gap-2 border-b border-line p-2">
+                              <input
+                                value={projectQuery}
+                                onChange={(e) => setProjectQuery(e.target.value)}
+                                placeholder="Buscar…"
+                                aria-label="Buscar en el proyecto"
+                                className="min-w-0 flex-1 border border-line bg-transparent px-2 py-1 text-xs outline-none focus:border-accent"
+                              />
+                              <button
+                                type="button"
+                                disabled={filtered.length === 0}
+                                onClick={() => addEntities(projectTab, filtered)}
+                                className={btn}
+                                title="Las añade todas de golpe (hasta 30)"
+                              >
+                                Todas ({Math.min(filtered.length, 30)})
+                              </button>
+                            </div>
+                            <div className="max-h-64 overflow-y-auto">
+                              {filtered.length === 0 ? (
+                                <p className="p-3 font-sans text-xs text-muted">Todavía no hay nada de esto en el proyecto.</p>
+                              ) : (
+                                filtered.slice(0, 60).map((e) => (
+                                  <button key={e.id} type="button" onClick={() => addEntity(projectTab, e)} className="block w-full border-b border-line px-3 py-2 text-left hover:bg-white/5">
+                                    <span className="block font-display text-sm font-bold">{e.title}</span>
+                                    {e.sub && <span className="block truncate font-mono text-[11px] text-muted">{e.sub}</span>}
+                                  </button>
+                                ))
+                              )}
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  )}
+                </div>
                 <button type="button" className={btn} onClick={undo} disabled={hist.undo === 0} aria-label="Deshacer" title="Deshacer (Ctrl+Z)">
                   ↶
                 </button>
@@ -893,6 +1032,12 @@ function MapBoard(props: Props) {
                     <div className={`${popover} w-64`}>
                       <button type="button" onClick={refresh} disabled={busy} className="block w-full border-b border-line px-3 py-2 text-left font-mono text-[11px] tracking-wider uppercase hover:bg-white/5">
                         {busy ? "Actualizando…" : "↻ Actualizar tarjetas"}
+                      </button>
+                      <button type="button" onClick={() => void exportBoard("png")} disabled={exporting} className="block w-full border-b border-line px-3 py-2 text-left font-mono text-[11px] tracking-wider uppercase hover:bg-white/5">
+                        {exporting ? "Exportando…" : "Descargar imagen (PNG)"}
+                      </button>
+                      <button type="button" onClick={() => void exportBoard("pdf")} disabled={exporting} className="block w-full border-b border-line px-3 py-2 text-left font-mono text-[11px] tracking-wider uppercase hover:bg-white/5">
+                        Descargar PDF
                       </button>
                       {confirmReset ? (
                         <div className="flex items-center gap-3 border-b border-line px-3 py-2 font-mono text-[11px] uppercase">

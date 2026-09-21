@@ -60,3 +60,6 @@ export const MOODBOARD_AI_PRO_DAILY_LIMIT = 10;
 // protege el rendimiento del navegador.
 export const MAP_FREE_ITEM_LIMIT = 30;
 export const MAP_MAX_ITEMS = 300;
+// Varias pizarras por proyecto: el plan gratuito tiene una; PRO hasta MAP_MAX_BOARDS.
+export const MAP_FREE_BOARDS = 1;
+export const MAP_MAX_BOARDS = 20;

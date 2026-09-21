@@ -2,9 +2,12 @@ import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/lib/generated/prisma";
 import { buildProjectHighlights, getProjectSummary } from "@/lib/project-summary";
 import { PROJECT_STATUS_LABELS } from "@/lib/labels";
-import { MAP_FREE_ITEM_LIMIT, MAP_MAX_ITEMS } from "@/lib/limits";
+import { randomBytes } from "crypto";
+import { MAP_FREE_BOARDS, MAP_FREE_ITEM_LIMIT, MAP_MAX_BOARDS, MAP_MAX_ITEMS } from "@/lib/limits";
+import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
 import {
   MAP_COLORS,
+  MAP_ENTITY_KINDS,
   MAP_ITEM_SIZE,
   MAP_ITEM_TYPES,
   MAP_MAX_EDGES,
@@ -13,7 +16,10 @@ import {
   MAP_TOOL_KEYS,
   MAP_TOOL_SIZE,
   NOTE_COLORS,
+  type MapBoardInfo,
   type MapEdge,
+  type MapEntities,
+  type MapEntityKind,
   type MapItem,
   type MapItemType,
   type MapLayout,
@@ -208,9 +214,16 @@ function sanitizeItems(raw: unknown[]): MapItem[] {
       item.shape = (MAP_SHAPES as readonly string[]).includes(o.shape as string) ? (o.shape as MapItem["shape"]) : "rect";
       item.color = mapColor(o.color) ?? MAP_COLORS[0];
       item.text = text(o.text, 300);
-    } else {
+    } else if (type === "section") {
       item.title = text(o.title, 120);
       item.color = mapColor(o.color) ?? MAP_COLORS[5];
+    } else {
+      // entity
+      if (!(MAP_ENTITY_KINDS as readonly string[]).includes(o.kind as string)) continue;
+      item.kind = o.kind as MapEntityKind;
+      item.refId = text(o.refId, 60);
+      item.label = text(o.label, 160);
+      if (!item.refId && !item.label) continue;
     }
     seen.add(o.id);
     items.push(item);
@@ -268,19 +281,51 @@ export function sanitizeMapLayout(input: unknown): MapLayout {
   return { v: 2, tools, hidden, items, edges };
 }
 
-export async function getMapLayout(projectId: string): Promise<{ layout: MapLayout; updatedAt: string | null }> {
-  const row = await prisma.projectMap.findUnique({ where: { projectId } });
-  if (!row) return { layout: { v: 2, tools: {}, hidden: [], items: [], edges: [] }, updatedAt: null };
-  return { layout: sanitizeMapLayout(row.data), updatedAt: row.updatedAt.toISOString() };
+const EMPTY_LAYOUT: MapLayout = { v: 2, tools: {}, hidden: [], items: [], edges: [] };
+const DEFAULT_BOARD_NAME = "Mapa del proyecto";
+
+// Todo proyecto tiene al menos una pizarra: la primera («Mapa del proyecto») se crea al abrir el mapa.
+async function ensureDefaultBoard(projectId: string) {
+  if ((await prisma.projectMap.count({ where: { projectId } })) > 0) return;
+  try {
+    await prisma.projectMap.create({
+      data: { projectId, sortOrder: 0, name: DEFAULT_BOARD_NAME, data: EMPTY_LAYOUT as unknown as Prisma.InputJsonValue },
+    });
+  } catch {
+    // Dos visitas a la vez: la otra ya la creó (índice único por proyecto y orden).
+  }
+}
+
+export async function listMapBoards(projectId: string): Promise<MapBoardInfo[]> {
+  await ensureDefaultBoard(projectId);
+  const rows = await prisma.projectMap.findMany({
+    where: { projectId },
+    orderBy: { sortOrder: "asc" },
+    select: { id: true, name: true, shareToken: true },
+  });
+  return rows.map((r) => ({ id: r.id, name: r.name, shared: r.shareToken !== null }));
+}
+
+export async function getMapBoard(projectId: string, boardId: string) {
+  const row = await prisma.projectMap.findFirst({ where: { id: boardId, projectId } });
+  if (!row) return null;
+  return {
+    id: row.id,
+    name: row.name,
+    shareToken: row.shareToken,
+    layout: sanitizeMapLayout(row.data),
+    updatedAt: row.updatedAt.toISOString(),
+  };
 }
 
 export type MapSaveResult = { ok: true; updatedAt: string } | { ok: false; error: string; conflict?: boolean };
 
-// Guarda la disposición. Si otra persona guardó mientras tanto, no se pisa. El plan
-// gratuito no puede pasar del tope de elementos propios (lo que ya hubiera de
-// cuando era PRO se respeta mientras no crezca).
+// Guarda la disposición de una pizarra. Si otra persona guardó mientras tanto, no se
+// pisa. El plan gratuito no puede pasar del tope de elementos propios (lo que ya
+// hubiera de cuando era PRO se respeta mientras no crezca).
 export async function saveMapLayoutCore(
   projectId: string,
+  boardId: string,
   layoutInput: unknown,
   baseUpdatedAt: string | null,
   isPro: boolean,
@@ -289,40 +334,95 @@ export async function saveMapLayoutCore(
   const json = layout as unknown as Prisma.InputJsonValue;
   const conflict: MapSaveResult = {
     ok: false,
-    error: "Otra persona ha cambiado el mapa. Recarga para ver sus cambios.",
+    error: "Otra persona ha cambiado la pizarra. Recarga para ver sus cambios.",
     conflict: true,
   };
 
-  const current = await prisma.projectMap.findUnique({ where: { projectId } });
+  const current = await prisma.projectMap.findFirst({ where: { id: boardId, projectId } });
+  if (!current) return { ok: false, error: "Esta pizarra ya no existe. Recarga la página." };
 
   if (!isPro) {
-    const stored = current ? sanitizeMapLayout(current.data).items.length : 0;
+    const stored = sanitizeMapLayout(current.data).items.length;
     if (layout.items.length > Math.max(MAP_FREE_ITEM_LIMIT, stored)) {
       return {
         ok: false,
-        error: `El plan gratuito permite hasta ${MAP_FREE_ITEM_LIMIT} elementos propios en el mapa. Pásate a PRO para tener más.`,
+        error: `El plan gratuito permite hasta ${MAP_FREE_ITEM_LIMIT} elementos propios en la pizarra. Pásate a PRO para tener más.`,
       };
     }
   }
 
-  if (!current) {
-    if (baseUpdatedAt !== null) return conflict;
-    try {
-      const created = await prisma.projectMap.create({ data: { projectId, data: json } });
-      return { ok: true, updatedAt: created.updatedAt.toISOString() };
-    } catch {
-      return conflict;
-    }
-  }
   if (baseUpdatedAt !== current.updatedAt.toISOString()) return conflict;
 
   const result = await prisma.projectMap.updateMany({
-    where: { projectId, updatedAt: current.updatedAt },
+    where: { id: boardId, updatedAt: current.updatedAt },
     data: { data: json },
   });
   if (result.count === 0) return conflict;
-  const fresh = await prisma.projectMap.findUnique({ where: { projectId }, select: { updatedAt: true } });
+  const fresh = await prisma.projectMap.findUnique({ where: { id: boardId }, select: { updatedAt: true } });
   return { ok: true, updatedAt: (fresh?.updatedAt ?? new Date()).toISOString() };
+}
+
+export type BoardResult = { ok: true; id: string } | { ok: false; error: string; upgrade?: boolean };
+
+// Pizarra nueva y en blanco (sin las tarjetas de herramienta; se pueden mostrar desde «Más»).
+export async function createMapBoardCore(projectId: string, rawName: string, isPro: boolean): Promise<BoardResult> {
+  await ensureDefaultBoard(projectId);
+  const boards = await prisma.projectMap.findMany({ where: { projectId }, select: { sortOrder: true } });
+  if (!isPro && boards.length >= MAP_FREE_BOARDS) {
+    return {
+      ok: false,
+      upgrade: true,
+      error: "El plan gratuito tiene una pizarra por proyecto. Con PRO puedes tener varias.",
+    };
+  }
+  if (boards.length >= MAP_MAX_BOARDS) return { ok: false, error: `Ya hay ${MAP_MAX_BOARDS} pizarras en este proyecto.` };
+
+  const name = rawName.trim().slice(0, 60) || `Pizarra ${boards.length + 1}`;
+  const layout: MapLayout = { ...EMPTY_LAYOUT, hidden: [...MAP_TOOL_KEYS] };
+  const sortOrder = Math.max(...boards.map((b) => b.sortOrder)) + 1;
+  try {
+    const created = await prisma.projectMap.create({
+      data: { projectId, name, sortOrder, data: layout as unknown as Prisma.InputJsonValue },
+    });
+    return { ok: true, id: created.id };
+  } catch {
+    return { ok: false, error: "No se pudo crear la pizarra. Inténtalo de nuevo." };
+  }
+}
+
+export async function renameMapBoardCore(projectId: string, boardId: string, rawName: string): Promise<boolean> {
+  const name = rawName.trim().slice(0, 60);
+  if (!name) return false;
+  const r = await prisma.projectMap.updateMany({ where: { id: boardId, projectId }, data: { name } });
+  return r.count > 0;
+}
+
+export async function deleteMapBoardCore(projectId: string, boardId: string): Promise<{ ok: boolean; error?: string }> {
+  const count = await prisma.projectMap.count({ where: { projectId } });
+  if (count <= 1) return { ok: false, error: "Un proyecto necesita al menos una pizarra." };
+  const r = await prisma.projectMap.deleteMany({ where: { id: boardId, projectId } });
+  return { ok: r.count > 0 };
+}
+
+// Enlace público de solo lectura de una pizarra (PRO). Activarlo crea un token largo
+// imposible de adivinar; desactivarlo lo borra y el enlace antiguo deja de funcionar.
+export async function setMapBoardSharingCore(
+  projectId: string,
+  boardId: string,
+  enabled: boolean,
+  isPro: boolean,
+): Promise<{ ok: true; token: string | null } | { ok: false; error: string; upgrade?: boolean }> {
+  const board = await prisma.projectMap.findFirst({ where: { id: boardId, projectId }, select: { shareToken: true } });
+  if (!board) return { ok: false, error: "No se encontró la pizarra." };
+  if (!enabled) {
+    await prisma.projectMap.update({ where: { id: boardId }, data: { shareToken: null } });
+    return { ok: true, token: null };
+  }
+  if (!isPro) return { ok: false, upgrade: true, error: "Compartir una pizarra con un enlace público es una función de PRO." };
+  if (board.shareToken) return { ok: true, token: board.shareToken };
+  const token = randomBytes(18).toString("base64url");
+  await prisma.projectMap.update({ where: { id: boardId }, data: { shareToken: token } });
+  return { ok: true, token };
 }
 
 // Imágenes que ya hay en el proyecto (viñetas del storyboard y fotos de sus
@@ -352,4 +452,148 @@ export async function getMapProjectImages(projectId: string): Promise<MapProject
     for (const url of l.photoUrls.slice(0, 6)) if (url.startsWith("https://")) images.push({ url, label: l.name });
   }
   return images.slice(0, 80);
+}
+
+// ---------------------------------------------------------------------------
+// Cosas del proyecto como tarjetas sueltas (escenas, tareas, planos…)
+// ---------------------------------------------------------------------------
+
+const CAP = 200;
+const clip = (v: string | null | undefined, n: number) => (v ? (v.length > n ? `${v.slice(0, n - 1)}…` : v) : undefined);
+const dayLabel = (d: Date) => d.toLocaleDateString("es-ES", { weekday: "short", day: "numeric", month: "short" });
+
+export async function getMapEntities(projectId: string): Promise<MapEntities> {
+  const [scenes, characters, locations, shots, tasks, days, budget, documents, crew] = await Promise.all([
+    prisma.scene.findMany({
+      where: { projectId },
+      orderBy: [{ order: "asc" }, { number: "asc" }],
+      take: CAP,
+      select: {
+        id: true,
+        number: true,
+        intExt: true,
+        dayPart: true,
+        description: true,
+        location: { select: { name: true } },
+        _count: { select: { shots: true } },
+      },
+    }),
+    prisma.character.findMany({
+      where: { projectId },
+      orderBy: { name: "asc" },
+      take: CAP,
+      select: { id: true, name: true, notes: true, actor: { select: { name: true } } },
+    }),
+    prisma.location.findMany({
+      where: { scenes: { some: { projectId } } },
+      orderBy: { name: "asc" },
+      take: CAP,
+      select: { id: true, name: true, address: true, notes: true },
+    }),
+    prisma.shot.findMany({
+      where: { scene: { projectId } },
+      orderBy: [{ scene: { order: "asc" } }, { order: "asc" }],
+      take: CAP,
+      select: { id: true, number: true, shotSize: true, movement: true, description: true, done: true, scene: { select: { number: true } } },
+    }),
+    prisma.task.findMany({
+      where: { projectId },
+      orderBy: [{ status: "asc" }, { dueDate: { sort: "asc", nulls: "last" } }],
+      take: CAP,
+      select: { id: true, title: true, status: true, dueDate: true },
+    }),
+    prisma.shootingDay.findMany({
+      where: { projectId },
+      orderBy: { date: "asc" },
+      take: CAP,
+      select: { id: true, date: true, notes: true, callSheet: { select: { id: true } }, _count: { select: { scenes: true, shots: true } } },
+    }),
+    prisma.budgetCategory.findMany({
+      where: { projectId },
+      orderBy: { order: "asc" },
+      take: CAP,
+      select: { id: true, name: true, items: { select: { quantity: true, unitPrice: true, taxRate: true, actualAmount: true } } },
+    }),
+    prisma.document.findMany({
+      where: { projectId },
+      orderBy: { uploadedAt: "desc" },
+      take: CAP,
+      select: { id: true, fileName: true, notes: true },
+    }),
+    prisma.crewMember.findMany({
+      where: { projectId },
+      orderBy: { name: "asc" },
+      take: CAP,
+      select: { id: true, name: true, role: true },
+    }),
+  ]);
+
+  return {
+    scene: scenes.map((s) => ({
+      id: s.id,
+      title: `Escena ${s.number}`,
+      sub: `${INT_EXT_LABELS[s.intExt]} · ${DAY_PART_LABELS[s.dayPart]}${s.location ? ` · ${s.location.name}` : ""}`,
+      body: clip(s.description, 140),
+      tag: s._count.shots > 0 ? plural(s._count.shots, "plano", "planos") : undefined,
+      slug: `guion/${s.id}`,
+    })),
+    character: characters.map((c) => ({
+      id: c.id,
+      title: c.name,
+      sub: c.actor ? `Interpretado por ${c.actor.name}` : "Sin actor asignado",
+      body: clip(c.notes, 140),
+      slug: "personajes",
+    })),
+    location: locations.map((l) => ({ id: l.id, title: l.name, sub: l.address ?? undefined, body: clip(l.notes, 140), slug: "localizaciones" })),
+    shot: shots.map((s) => ({
+      id: s.id,
+      title: `Plano ${s.scene.number}.${s.number}`,
+      sub: [s.shotSize, s.movement].filter(Boolean).join(" · ") || undefined,
+      body: clip(s.description, 140),
+      tag: s.done ? "Rodado" : "Por rodar",
+      slug: "shot-list",
+    })),
+    task: tasks.map((t) => ({
+      id: t.id,
+      title: t.title,
+      sub: t.dueDate ? `Para el ${t.dueDate.toLocaleDateString("es-ES", { day: "numeric", month: "short" })}` : undefined,
+      done: t.status === "DONE",
+      slug: "tareas",
+    })),
+    day: days.map((d) => ({
+      id: d.id,
+      title: dayLabel(d.date),
+      sub: `${plural(d._count.scenes, "escena", "escenas")} · ${plural(d._count.shots, "plano", "planos")}`,
+      body: clip(d.notes, 140),
+      tag: d.callSheet ? "Call sheet listo" : "Sin call sheet",
+      slug: `plan-de-rodaje/${d.id}`,
+    })),
+    budget: budget.map((c) => {
+      const total = c.items.reduce((sum, i) => sum + Number(i.quantity) * Number(i.unitPrice) * (1 + Number(i.taxRate) / 100), 0);
+      const actual = c.items.reduce((sum, i) => sum + (i.actualAmount !== null ? Number(i.actualAmount) : 0), 0);
+      return {
+        id: c.id,
+        title: c.name,
+        sub: plural(c.items.length, "partida", "partidas"),
+        body: `Previsto ${euros(total)}${actual > 0 ? ` · Gastado ${euros(actual)}` : ""}`,
+        slug: "presupuesto",
+      };
+    }),
+    document: documents.map((d) => ({ id: d.id, title: d.fileName, body: clip(d.notes, 140), slug: "documentos" })),
+    crew: crew.map((m) => ({ id: m.id, title: m.name, sub: m.role ?? undefined, slug: "desglose" })),
+  };
+}
+
+// Deja solo lo que hay puesto en una pizarra (para la vista pública: no se cuela nada más).
+export function pickPlacedEntities(all: MapEntities, items: MapItem[]): MapEntities {
+  const out: MapEntities = {};
+  for (const kind of MAP_ENTITY_KINDS) {
+    const wanted = items.filter((i) => i.type === "entity" && i.kind === kind);
+    if (wanted.length === 0) continue;
+    const list = all[kind] ?? [];
+    const ids = new Set(wanted.map((i) => i.refId));
+    const labels = new Set(wanted.map((i) => (i.label ?? "").toLowerCase()));
+    out[kind] = list.filter((e) => ids.has(e.id) || labels.has(e.title.toLowerCase()));
+  }
+  return out;
 }

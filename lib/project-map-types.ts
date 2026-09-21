@@ -85,7 +85,7 @@ export type MapToolCard = {
 export type MapRect = { x: number; y: number; w: number; h: number };
 
 // Elementos propios de la pizarra (lo que pone la persona, además de las tarjetas de herramienta).
-export const MAP_ITEM_TYPES = ["note", "text", "image", "shape", "section"] as const;
+export const MAP_ITEM_TYPES = ["note", "text", "image", "shape", "section", "entity"] as const;
 export type MapItemType = (typeof MAP_ITEM_TYPES)[number];
 export const MAP_SHAPES = ["rect", "round", "ellipse"] as const;
 export type MapShape = (typeof MAP_SHAPES)[number];
@@ -115,7 +115,44 @@ export type MapItem = {
   shape?: MapShape;
   // section
   title?: string;
+  // entity: una cosa del proyecto (escena, tarea, plano…) que se muestra en vivo
+  kind?: MapEntityKind;
+  refId?: string;
+  // Nombre con el que se encontró (para volver a encontrarla si su id cambia, p. ej. al restaurar un guion).
+  label?: string;
 };
+
+// Cosas del proyecto que se pueden poner en la pizarra como tarjeta suelta.
+export const MAP_ENTITY_KINDS = ["scene", "character", "location", "shot", "task", "day", "budget", "document", "crew"] as const;
+export type MapEntityKind = (typeof MAP_ENTITY_KINDS)[number];
+
+export const MAP_ENTITY_LABELS: Record<MapEntityKind, { one: string; many: string }> = {
+  scene: { one: "Escena", many: "Escenas" },
+  character: { one: "Personaje", many: "Personajes" },
+  location: { one: "Localización", many: "Lugares" },
+  shot: { one: "Plano", many: "Planos" },
+  task: { one: "Tarea", many: "Tareas" },
+  day: { one: "Día de rodaje", many: "Días" },
+  budget: { one: "Presupuesto", many: "Presupuesto" },
+  document: { one: "Archivo", many: "Archivos" },
+  crew: { one: "Equipo", many: "Equipo" },
+};
+
+// Cómo se ve una cosa del proyecto en su tarjeta (lo calcula el servidor en cada visita).
+export type MapEntityView = {
+  id: string;
+  title: string;
+  sub?: string;
+  body?: string;
+  tag?: string;
+  // Solo tareas: si ya está hecha.
+  done?: boolean;
+  // Trozo de ruta tras /app/<proyecto>/
+  slug: string;
+};
+export type MapEntities = Partial<Record<MapEntityKind, MapEntityView[]>>;
+
+export type MapBoardInfo = { id: string; name: string; shared: boolean };
 
 // Línea o flecha entre dos elementos (tarjetas de herramienta incluidas; su id es "tool-<clave>").
 export type MapEdge = {
@@ -147,6 +184,7 @@ export const MAP_ITEM_SIZE: Record<MapItemType, { w: number; h: number }> = {
   image: { w: 280, h: 200 },
   shape: { w: 200, h: 120 },
   section: { w: 520, h: 360 },
+  entity: { w: 240, h: 130 },
 };
 
 export { NOTE_COLORS };

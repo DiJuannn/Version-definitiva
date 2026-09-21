@@ -16,7 +16,9 @@ import { BreakdownCategory } from "@/lib/generated/prisma";
 import { PageHeader } from "@/components/PageHeader";
 import { ResumenTabs } from "@/components/ResumenTabs";
 import { ProjectMapLoader } from "@/components/project-map/ProjectMapLoader";
-import { buildMapCards, getMapLayout, getMapProjectImages } from "@/lib/project-map";
+import { buildMapCards, getMapBoard, getMapEntities, getMapProjectImages, listMapBoards } from "@/lib/project-map";
+import { MapBoardTabs } from "@/components/project-map/MapBoardTabs";
+import { getSiteOrigin } from "@/lib/site-origin";
 import { MAP_FREE_ITEM_LIMIT, MAP_MAX_ITEMS } from "@/lib/limits";
 
 const WEEKDAYS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
@@ -125,22 +127,27 @@ export default async function ProjectSummaryPage({
   searchParams,
 }: {
   params: Promise<{ projectId: string }>;
-  searchParams: Promise<{ vista?: string }>;
+  searchParams: Promise<{ vista?: string; pizarra?: string }>;
 }) {
   const { projectId } = await params;
-  const { vista } = await searchParams;
+  const { vista, pizarra } = await searchParams;
 
   const access = await getProjectForCurrentUser(projectId);
   if (!access) notFound();
 
   // Mapa del proyecto: una tarjeta-resumen por herramienta, en un tablero editable.
   if (vista === "mapa") {
-    const [cards, { layout, updatedAt }, mapIsPro, images] = await Promise.all([
+    const boards = await listMapBoards(projectId);
+    const activeId = boards.find((b) => b.id === pizarra)?.id ?? boards[0].id;
+    const [cards, board, mapIsPro, images, entities, origin] = await Promise.all([
       buildMapCards(projectId),
-      getMapLayout(projectId),
+      getMapBoard(projectId, activeId),
       isProjectOwnerPro(access.organizationId),
       getMapProjectImages(projectId),
+      getMapEntities(projectId),
+      getSiteOrigin(),
     ]);
+    if (!board) notFound();
     return (
       <div>
         <PageHeader
@@ -152,11 +159,21 @@ export default async function ProjectSummaryPage({
         />
         <ResumenTabs projectId={projectId} active="mapa" />
         <div className="mt-6">
-          <ProjectMapLoader
+          <MapBoardTabs
             projectId={projectId}
+            boards={boards}
+            activeId={board.id}
+            shareUrl={board.shareToken ? `${origin}/pizarra/${board.shareToken}` : null}
+          />
+          <ProjectMapLoader
+            key={board.id}
+            projectId={projectId}
+            boardId={board.id}
+            boardName={board.name}
+            entities={entities}
             tools={cards}
-            layout={layout}
-            updatedAt={updatedAt}
+            layout={board.layout}
+            updatedAt={board.updatedAt}
             isPro={mapIsPro}
             freeLimit={MAP_FREE_ITEM_LIMIT}
             maxItems={MAP_MAX_ITEMS}
