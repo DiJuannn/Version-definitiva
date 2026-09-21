@@ -57,8 +57,8 @@ export function isUnlocked(access: Record<string, ToolAccess>, href: string): bo
 export const STAGES = [
   { id: 1, label: "Idea", hint: "Guion y personajes" },
   { id: 2, label: "Preparar", hint: "Plan, presupuesto y equipo" },
-  { id: 3, label: "Rodar", hint: "Rodaje y tomas" },
-  { id: 4, label: "Entregar", hint: "Montaje y entrega" },
+  { id: 3, label: "Rodar", hint: "Hojas de llamada y tomas" },
+  { id: 4, label: "Entregar", hint: "Gasto real y dossier" },
 ] as const;
 
 // En qué etapa está el proyecto, según lo que tiene y su estado.

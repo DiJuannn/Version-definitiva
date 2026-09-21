@@ -5,6 +5,11 @@ import type { ProjectFacts, ToolMode } from "@/lib/tool-rules";
 // Lectura de datos del proyecto y de la preferencia de modo (solo servidor). Las reglas viven en tool-rules.ts.
 
 export const TOOL_MODE_COOKIE = "taller_tools";
+export const WELCOME_COOKIE = "taller_welcome";
+
+export async function hasSeenWelcome(): Promise<boolean> {
+  return (await cookies()).get(WELCOME_COOKIE)?.value === "1";
+}
 
 export async function getProjectFacts(projectId: string): Promise<ProjectFacts> {
   const endOfToday = new Date();

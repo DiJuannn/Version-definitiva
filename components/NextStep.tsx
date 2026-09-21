@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AjoloteLogo } from "@/components/AjoloteLogo";
+import { SubmitButton } from "@/components/SubmitButton";
 import type { RoadmapStep } from "@/lib/project-roadmap";
 
 // Por qué importa cada paso y cuánto cuesta, en lenguaje llano.
@@ -22,7 +23,14 @@ function Marker({ step, current }: { step: RoadmapStep; current: boolean }) {
 }
 
 // El único paso que toca ahora, grande y con un solo botón; el resto del camino, plegado.
-export function NextStep({ steps }: { steps: RoadmapStep[] }) {
+export function NextStep({
+  steps,
+  startShootAction,
+}: {
+  steps: RoadmapStep[];
+  // Si se pasa, cuando todo lo esencial está listo se ofrece pasar el proyecto a «rodaje».
+  startShootAction?: () => Promise<void>;
+}) {
   const required = steps.filter((s) => s.required);
   const requiredDone = required.filter((s) => s.isDone).length;
   const next = steps.find((s) => s.required && !s.isDone) ?? null;
@@ -58,8 +66,15 @@ export function NextStep({ steps }: { steps: RoadmapStep[] }) {
               <p className="mt-3 max-w-xl font-sans text-sm text-muted">
                 {optional ? `Aún puedes mejorar el proyecto: ${optional.title.toLowerCase()}.` : "Y también todos los pasos opcionales."}
               </p>
+              {startShootAction && (
+                <form action={startShootAction} className="mt-5">
+                  <SubmitButton pendingLabel="Cambiando…" className="btn btn-primary">
+                    Empezar el rodaje →
+                  </SubmitButton>
+                </form>
+              )}
               {optional && (
-                <Link href={optional.href} className="btn btn-outline mt-5">
+                <Link href={optional.href} className={`btn btn-outline ${startShootAction ? "mt-3" : "mt-5"}`}>
                   {optional.ctaLabel} →
                 </Link>
               )}
