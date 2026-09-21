@@ -5,6 +5,7 @@ import { getCurrentProfile } from "@/lib/current-user";
 import { createShootingDay } from "@/lib/actions/shooting-days";
 import { getProjectScheduleConflicts } from "@/lib/schedule-conflicts";
 import { ShootingTimeline } from "@/components/ShootingTimeline";
+import { ScheduleAssistant } from "@/components/ScheduleAssistant";
 import { EmptyState } from "@/components/EmptyState";
 import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
 import { PageHeader } from "@/components/PageHeader";
@@ -71,6 +72,9 @@ export default async function PlanDeRodajePage({
     })),
   }));
 
+  const unscheduled = scenes.filter(
+    (scene) => scene.shootingDayScenes.length === 0 && !scene.shots.some((sh) => sh.shootingDayId),
+  ).length;
   const shotsTotal = scenes.reduce((n, scene) => n + scene.shots.length, 0);
   const shotsPlanned = scenes.reduce((n, scene) => n + scene.shots.filter((sh) => sh.shootingDayId).length, 0);
   const shotsDone = scenes.reduce((n, scene) => n + scene.shots.filter((sh) => sh.done).length, 0);
@@ -94,6 +98,10 @@ export default async function PlanDeRodajePage({
             : undefined
         }
       />
+
+      {unscheduled > 0 && (
+        <ScheduleAssistant projectId={projectId} unscheduled={unscheduled} hasDays={days.length > 0} />
+      )}
 
       <form action={createAction} className="mt-8 flex max-w-md items-end gap-2">
         <FormField label="Nuevo día de rodaje" className="w-full">
