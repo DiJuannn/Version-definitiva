@@ -21,12 +21,16 @@ import {
   type NodeChange,
 } from "@xyflow/react";
 import { findFreeSpot } from "@/components/canvas/free-spot";
+import { RemoteCursors, type RemoteCursor } from "@/components/project-map/RemoteCursors";
+import { createClient } from "@/lib/supabase/client";
+import { applyOps, canonical, diffLayouts, isEmptyOps, rebase, subtractOps, type MapOps } from "@/lib/project-map-merge";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 import { buildFromLayout, itemNode, sizeOf, toRfEdge, toolNode, type AnyNode } from "@/components/project-map/board-utils";
 import { loadImageSize, prepareImage } from "@/components/canvas/image-utils";
 import { ItemNodeView, ItemProvider, type ItemNode } from "@/components/project-map/itemNodes";
 import { MapProvider } from "@/components/project-map/mapContext";
 import { ToolNodeView } from "@/components/project-map/toolNode";
-import { completeMapTask, saveProjectMap, setMapProjectStatus, uploadMapImage } from "@/lib/actions/project-map";
+import { completeMapTask, fetchMapBoard, mapBoardVersion, saveProjectMap, setMapProjectStatus, uploadMapImage } from "@/lib/actions/project-map";
 import { MAP_MAX_EDGES } from "@/lib/project-map-types";
 import {
   MAP_COLORS,
@@ -56,6 +60,9 @@ type Props = {
   projectId: string;
   boardId: string;
   boardName: string;
+  // Quién soy (para que los demás me vean: nombre y color del cursor).
+  userId: string;
+  userName: string;
   entities: MapEntities;
   tools: MapToolCard[];
   layout: MapLayout;
@@ -92,8 +99,19 @@ const isEditable = (t: EventTarget | null) => {
 
 const HISTORY_MAX = 60;
 
+// Color estable por persona para su cursor y su avatar.
+function colorFor(id: string): string {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) % 360;
+  return `hsl(${h}, 75%, 62%)`;
+}
+// Lo que llega de otros navegadores no es de fiar: se limpia antes de pintarlo.
+const cleanName = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim().slice(0, 30) : "Alguien");
+const cleanColor = (v: unknown) => (typeof v === "string" && /^hsl\(\d{1,3}, 75%, 62%\)$/.test(v) ? v : "hsl(0, 0%, 70%)");
+const uniquePeers = <T extends { userId: string }>(list: T[]) => [...new Map(list.map((p) => [p.userId, p])).values()];
+
 function MapBoard(props: Props) {
-  const { projectId, boardId, boardName, entities, layout, isPro, freeLimit, maxItems, images } = props;
+  const { projectId, boardId, boardName, userId, userName, entities, layout, isPro, freeLimit, maxItems, images } = props;
   const router = useRouter();
   const { screenToFlowPosition, fitView } = useReactFlow<AnyNode>();
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -117,10 +135,12 @@ function MapBoard(props: Props) {
     hiddenRef.current = hidden;
   }, [nodes, edges, hidden]);
 
-  const updatedAtRef = useRef<string | null>(props.updatedAt);
-  const versionRef = useRef(0);
+  // Lo último que se sabe del servidor (base para calcular qué he cambiado yo) y su versión.
+  const lastSaved = useRef<MapLayout>(layout);
+  const knownVersion = useRef<string | null>(props.updatedAt);
+  const savingRef = useRef(false);
   const [dirty, setDirty] = useState(false);
-  const [saveState, setSaveState] = useState<"idle" | "saving" | "error" | "conflict">("idle");
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "error">("idle");
   const [saveError, setSaveError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [menu, setMenu] = useState<null | "image" | "shape" | "project" | "more">(null);
@@ -136,7 +156,6 @@ function MapBoard(props: Props) {
   const atFreeLimit = !isPro && itemsCount >= freeLimit;
 
   const markDirty = useCallback(() => {
-    versionRef.current += 1;
     setDirty(true);
     setSaveState((s) => (s === "error" ? "idle" : s));
   }, []);
@@ -208,6 +227,87 @@ function MapBoard(props: Props) {
     applySnapshot(next);
     setHist({ undo: past.current.length, redo: future.current.length });
   }, [applySnapshot]);
+
+  // ---------------------------------------------------------------- Trabajo en equipo
+  const currentLayout = useCallback(
+    () => serialize(nodesRef.current, edgesRef.current, hiddenRef.current, hiddenRects.current),
+    [],
+  );
+
+  // Pone en pantalla una pizarra ya fusionada sin tocar lo que no ha cambiado (selección, foco al escribir…).
+  const applyLayoutToState = useCallback((next: MapLayout) => {
+    const built = buildFromLayout(next);
+    hiddenRects.current = built.hiddenRects;
+    setNodes((prev) => {
+      const old = new Map(prev.map((n) => [n.id, n]));
+      return built.nodes.map((n) => {
+        const p = old.get(n.id);
+        if (!p) return n;
+        const ps = sizeOf(p);
+        const unchanged =
+          JSON.stringify(p.data) === JSON.stringify(n.data) &&
+          Math.round(p.position.x) === Math.round(n.position.x) &&
+          Math.round(p.position.y) === Math.round(n.position.y) &&
+          ps.w === Math.round(n.width ?? 0) &&
+          ps.h === Math.round(n.height ?? 0);
+        return unchanged ? p : ({ ...p, position: n.position, width: n.width, height: n.height, data: n.data } as AnyNode);
+      });
+    });
+    setEdges(next.edges);
+    setHidden(next.hidden);
+  }, []);
+
+  // Recibe la pizarra del servidor (tras guardar o al enterarse de que alguien cambió algo): se juntan
+  // sus cambios con los míos sin guardar, y lo de los demás se aplica también al historial de deshacer
+  // para que deshacer lo mío no borre lo suyo.
+  const applyRemote = useCallback(
+    (remote: MapLayout, version: string, sent?: MapOps) => {
+      const base = sent ? applyOps(lastSaved.current, sent) : lastSaved.current;
+      const local = currentLayout();
+      const merged = rebase(local, base, remote);
+      // Solo lo de los demás: lo que yo mismo acabo de mandar no se toca en el historial.
+      const theirs = subtractOps(diffLayouts(base, remote), sent ?? {});
+      lastSaved.current = remote;
+      knownVersion.current = version;
+      if (!isEmptyOps(theirs)) {
+        const patch = (snap: string) => {
+          try {
+            return JSON.stringify(applyOps(JSON.parse(snap) as MapLayout, theirs));
+          } catch {
+            return snap;
+          }
+        };
+        past.current = past.current.map(patch);
+        future.current = future.current.map(patch);
+        if (lastStable.current) lastStable.current = patch(lastStable.current);
+      }
+      if (canonical(merged) !== canonical(local)) applyLayoutToState(merged);
+      setDirty(!isEmptyOps(diffLayouts(remote, merged)));
+    },
+    [applyLayoutToState, currentLayout],
+  );
+
+  const pulling = useRef(false);
+  // Si llega un aviso mientras yo guardo o mientras ya estoy pidiendo la pizarra, no se pierde: se repite al terminar.
+  const pullAgain = useRef(false);
+  const pullRemote = useCallback(async () => {
+    if (pulling.current || savingRef.current) {
+      pullAgain.current = true;
+      return;
+    }
+    pulling.current = true;
+    try {
+      do {
+        pullAgain.current = false;
+        const r = await fetchMapBoard(projectId, boardId);
+        if (r.ok && r.updatedAt !== knownVersion.current) applyRemote(r.layout, r.updatedAt);
+      } while (pullAgain.current && !savingRef.current);
+    } catch {
+      // Sin conexión: se reintenta en el siguiente aviso o sondeo.
+    } finally {
+      pulling.current = false;
+    }
+  }, [applyRemote, boardId, projectId]);
 
   // ---------------------------------------------------------------- Cambios del lienzo
   const onNodesChange = useCallback(
@@ -688,7 +788,7 @@ function MapBoard(props: Props) {
           style: { width: `${width}px`, height: `${height}px`, transform: `translate(${vp.x}px, ${vp.y}px) scale(${vp.zoom})` },
           filter: (n) => {
             const c = (n as HTMLElement).classList;
-            return !(c && (c.contains("react-flow__handle") || c.contains("react-flow__resize-control") || c.contains("react-flow__nodesselection")));
+            return !(c && (c.contains("react-flow__handle") || c.contains("react-flow__resize-control") || c.contains("react-flow__nodesselection") || c.contains("map-cursor")));
           },
         });
 
@@ -743,41 +843,57 @@ function MapBoard(props: Props) {
     [boardName, isPro],
   );
 
-  // ---------------------------------------------------------------- Guardado automático
+  // ---------------------------------------------------------------- Guardado automático (por cambios)
+  const channelRef = useRef<RealtimeChannel | null>(null);
+  // El editor solo se ejecuta en el navegador (carga sin servidor), así que crypto siempre existe.
+  const clientId = useRef(crypto.randomUUID());
+
   const save = useCallback(async () => {
-    const version = versionRef.current;
-    const payload = serialize(nodesRef.current, edgesRef.current, hiddenRef.current, hiddenRects.current);
+    const ops = diffLayouts(lastSaved.current, currentLayout());
+    if (isEmptyOps(ops)) {
+      setDirty(false);
+      return;
+    }
+    savingRef.current = true;
     setSaveState("saving");
     try {
-      const result = await saveProjectMap(projectId, boardId, payload, updatedAtRef.current);
+      const result = await saveProjectMap(projectId, boardId, ops);
       if (result.ok) {
-        updatedAtRef.current = result.updatedAt;
         setSaveError(null);
         setSaveState("idle");
-        if (versionRef.current === version) setDirty(false);
+        applyRemote(result.layout, result.updatedAt, ops);
+        // Aviso a los demás (sin datos: ellos piden la pizarra al servidor, que comprueba el acceso).
+        void channelRef.current?.send({ type: "broadcast", event: "saved", payload: { v: result.updatedAt, from: clientId.current } });
       } else {
         setSaveError(result.error);
-        setSaveState(result.conflict ? "conflict" : "error");
+        setSaveState("error");
       }
     } catch {
       setSaveError("No se pudo guardar. Comprueba tu conexión.");
       setSaveState("error");
+    } finally {
+      savingRef.current = false;
+      if (pullAgain.current) {
+        pullAgain.current = false;
+        void pullRemote();
+      }
     }
-  }, [projectId, boardId]);
+  }, [applyRemote, boardId, currentLayout, projectId, pullRemote]);
 
   useEffect(() => {
-    // Nunca dos guardados a la vez: el segundo llevaría una versión vieja y daría un falso conflicto.
-    if (!dirty || saveState === "conflict" || saveState === "saving" || saveState === "error") return;
+    // Nunca dos guardados a la vez.
+    if (!dirty || saveState === "saving" || saveState === "error") return;
     const t = setTimeout(() => void save(), 1200);
     return () => clearTimeout(t);
   }, [dirty, nodes, edges, hidden, saveState, save]);
 
   useEffect(() => {
     const onHide = () => {
-      if (document.visibilityState === "hidden" && dirty && saveState !== "conflict" && saveState !== "saving") void save();
+      if (document.visibilityState === "hidden" && dirty && saveState !== "saving") void save();
+      if (document.visibilityState === "visible") void pullRemote();
     };
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (dirty && saveState !== "conflict") e.preventDefault();
+      if (dirty) e.preventDefault();
     };
     document.addEventListener("visibilitychange", onHide);
     window.addEventListener("beforeunload", onBeforeUnload);
@@ -785,7 +901,99 @@ function MapBoard(props: Props) {
       document.removeEventListener("visibilitychange", onHide);
       window.removeEventListener("beforeunload", onBeforeUnload);
     };
-  }, [dirty, saveState, save]);
+  }, [dirty, saveState, save, pullRemote]);
+
+  // ---------------------------------------------------------------- En directo: avisos, presencia y cursores
+  const [cursors, setCursors] = useState<Record<string, RemoteCursor>>({});
+  const [peers, setPeers] = useState<{ key: string; userId: string; name: string; color: string }[]>([]);
+  const myColor = useMemo(() => colorFor(userId), [userId]);
+  const lastCursorSent = useRef(0);
+
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase.channel(`map-board:${boardId}`, {
+      config: { presence: { key: clientId.current }, broadcast: { self: false } },
+    });
+    channelRef.current = channel;
+
+    channel
+      .on("broadcast", { event: "saved" }, ({ payload }) => {
+        const v = typeof payload?.v === "string" ? payload.v : null;
+        if (v && v !== knownVersion.current) void pullRemote();
+      })
+      .on("broadcast", { event: "cursor" }, ({ payload }) => {
+        const id = typeof payload?.id === "string" ? payload.id : null;
+        if (!id || id === clientId.current) return;
+        if (payload.x === null) {
+          setCursors((c) => Object.fromEntries(Object.entries(c).filter(([k]) => k !== id)));
+          return;
+        }
+        if (!Number.isFinite(payload.x) || !Number.isFinite(payload.y)) return;
+        setCursors((c) => ({
+          ...c,
+          [id]: { x: payload.x, y: payload.y, name: cleanName(payload.name), color: cleanColor(payload.color), at: Date.now() },
+        }));
+      })
+      .on("presence", { event: "sync" }, () => {
+        const state = channel.presenceState<{ name: string; color: string; userId: string }>();
+        const list: { key: string; userId: string; name: string; color: string }[] = [];
+        for (const [key, entries] of Object.entries(state)) {
+          const e = entries[0];
+          if (key === clientId.current || !e) continue;
+          list.push({ key, userId: String(e.userId ?? key), name: cleanName(e.name), color: cleanColor(e.color) });
+        }
+        setPeers(list);
+        setCursors((c) => Object.fromEntries(Object.entries(c).filter(([id]) => list.some((p) => p.key === id))));
+      })
+      .subscribe(async (status) => {
+        if (status === "SUBSCRIBED") await channel.track({ name: userName, color: myColor, userId });
+      });
+
+    return () => {
+      channelRef.current = null;
+      void supabase.removeChannel(channel);
+    };
+  }, [boardId, myColor, pullRemote, userId, userName]);
+
+  // Sondeo de respaldo: si el canal en directo falla, cada 15 s se comprueba si alguien cambió algo.
+  useEffect(() => {
+    const t = setInterval(async () => {
+      if (document.visibilityState !== "visible" || savingRef.current) return;
+      const v = await mapBoardVersion(projectId, boardId).catch(() => null);
+      if (v && v !== knownVersion.current) void pullRemote();
+    }, 15_000);
+    return () => clearInterval(t);
+  }, [boardId, projectId, pullRemote]);
+
+  // Los cursores que llevan tiempo quietos o de personas que se fueron, fuera.
+  useEffect(() => {
+    const t = setInterval(() => {
+      setCursors((c) => {
+        const fresh = Object.entries(c).filter(([, v]) => Date.now() - v.at < 8000);
+        return fresh.length === Object.keys(c).length ? c : Object.fromEntries(fresh);
+      });
+    }, 2500);
+    return () => clearInterval(t);
+  }, []);
+
+  const onPointerMove = useCallback(
+    (e: React.PointerEvent) => {
+      const now = Date.now();
+      if (now - lastCursorSent.current < 60 || !channelRef.current) return;
+      lastCursorSent.current = now;
+      const p = screenToFlowPosition({ x: e.clientX, y: e.clientY });
+      void channelRef.current.send({
+        type: "broadcast",
+        event: "cursor",
+        payload: { id: clientId.current, name: userName, color: myColor, x: Math.round(p.x), y: Math.round(p.y) },
+      });
+    },
+    [myColor, screenToFlowPosition, userName],
+  );
+
+  const onPointerLeave = useCallback(() => {
+    void channelRef.current?.send({ type: "broadcast", event: "cursor", payload: { id: clientId.current, x: null } });
+  }, []);
 
   useEffect(() => {
     if (!menu) return;
@@ -813,15 +1021,13 @@ function MapBoard(props: Props) {
   const colorable = (["text", "shape", "section"] as MapItemType[]).filter((t) => selTypes.has(t));
 
   const status =
-    saveState === "conflict"
-      ? { text: "Cambios de otra persona", tone: "text-danger" }
-      : saveState === "error"
-        ? { text: "Error al guardar", tone: "text-danger" }
-        : saveState === "saving"
-          ? { text: "Guardando…", tone: "text-muted" }
-          : dirty
-            ? { text: "Cambios sin guardar", tone: "text-muted" }
-            : { text: "✓ Guardado", tone: "text-success" };
+    saveState === "error"
+      ? { text: "Error al guardar", tone: "text-danger" }
+      : saveState === "saving"
+        ? { text: "Guardando…", tone: "text-muted" }
+        : dirty
+          ? { text: "Cambios sin guardar", tone: "text-muted" }
+          : { text: "✓ Guardado", tone: "text-success" };
 
   const btn =
     "border border-line bg-bg-raised px-2.5 py-1.5 font-mono text-[11px] tracking-wider uppercase transition-colors hover:border-accent hover:text-accent disabled:opacity-40";
@@ -835,6 +1041,8 @@ function MapBoard(props: Props) {
         <div
           ref={wrapperRef}
           className="relative h-[calc(100dvh-16rem)] min-h-[560px] border border-line"
+          onPointerMove={onPointerMove}
+          onPointerLeave={onPointerLeave}
           onDragOver={(e) => {
             if (e.dataTransfer?.types?.includes("Files")) e.preventDefault();
           }}
@@ -863,6 +1071,7 @@ function MapBoard(props: Props) {
             proOptions={{ hideAttribution: false }}
           >
             <Background gap={24} size={1} />
+            <RemoteCursors cursors={cursors} />
             <Controls showInteractive={false} />
             <MiniMap pannable zoomable className="hidden! sm:block!" maskColor="rgba(0,0,0,0.6)" />
 
@@ -1088,6 +1297,21 @@ function MapBoard(props: Props) {
 
             <Panel position="top-right" className="m-2!">
               <div className="flex items-center gap-3 border border-line bg-bg-raised px-3 py-1.5 font-mono text-[11px]">
+                {uniquePeers(peers).length > 0 && (
+                  <span className="flex items-center gap-1" aria-label={`${uniquePeers(peers).length} personas más en la pizarra`}>
+                    {uniquePeers(peers).slice(0, 5).map((p) => (
+                      <span
+                        key={p.userId}
+                        title={`${p.name} está en esta pizarra`}
+                        className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-black"
+                        style={{ background: p.color }}
+                      >
+                        {p.name.slice(0, 1).toUpperCase()}
+                      </span>
+                    ))}
+                    {uniquePeers(peers).length > 5 && <span className="text-muted">+{uniquePeers(peers).length - 5}</span>}
+                  </span>
+                )}
                 {!isPro && (
                   <span className={atFreeLimit ? "text-warn" : "text-muted"} title="Elementos propios (las tarjetas de herramienta no cuentan)">
                     {itemsCount}/{freeLimit}
@@ -1189,15 +1413,9 @@ function MapBoard(props: Props) {
           {(notice || saveError) && (
             <div className="absolute bottom-16 left-1/2 z-20 flex max-w-[92%] -translate-x-1/2 items-center gap-3 border border-warn/60 bg-bg-raised px-4 py-2 font-sans text-xs shadow-xl" role="alert">
               <span>{notice ?? saveError}</span>
-              {saveState === "conflict" ? (
-                <button type="button" onClick={() => window.location.reload()} className="font-mono text-[11px] tracking-wider text-accent uppercase underline">
-                  Recargar
-                </button>
-              ) : (
-                <button type="button" aria-label="Cerrar aviso" onClick={() => setNotice(null)} className="text-muted hover:text-fg">
-                  ×
-                </button>
-              )}
+              <button type="button" aria-label="Cerrar aviso" onClick={() => { setNotice(null); setSaveError(null); }} className="text-muted hover:text-fg">
+                ×
+              </button>
             </div>
           )}
         </div>

@@ -10,7 +10,9 @@ import {
   createMapBoardCore,
   deleteMapBoardCore,
   renameMapBoardCore,
-  saveMapLayoutCore,
+  applyMapOpsCore,
+  getMapBoard,
+  getMapBoardVersion,
   setMapBoardSharingCore,
   type BoardResult,
   type MapSaveResult,
@@ -19,18 +21,31 @@ import { isProjectOwnerPro } from "@/lib/project-plan";
 import { uploadProjectFile } from "@/lib/storage";
 import { PROJECT_STATUS_LABELS } from "@/lib/labels";
 import { ProjectStatus } from "@/lib/generated/prisma";
+import type { MapLayout } from "@/lib/project-map-types";
 
-// Guarda la disposición del mapa (posiciones, tarjetas ocultas y notas).
-export async function saveProjectMap(
-  projectId: string,
-  boardId: string,
-  layout: unknown,
-  baseUpdatedAt: string | null,
-): Promise<MapSaveResult> {
+// Guarda los CAMBIOS de la persona en la pizarra (se juntan con los de los demás en el servidor).
+export async function saveProjectMap(projectId: string, boardId: string, ops: unknown): Promise<MapSaveResult> {
   const project = await getProjectForCurrentUser(projectId);
   if (!project) return { ok: false, error: "No tienes acceso a este proyecto." };
   const pro = await isProjectOwnerPro(project.organizationId);
-  return saveMapLayoutCore(projectId, boardId, layout, baseUpdatedAt, pro);
+  return applyMapOpsCore(projectId, boardId, ops, pro);
+}
+
+// La pizarra tal como está ahora en el servidor (para ver lo que han hecho los demás).
+export async function fetchMapBoard(
+  projectId: string,
+  boardId: string,
+): Promise<{ ok: true; layout: MapLayout; updatedAt: string } | { ok: false }> {
+  const project = await getProjectForCurrentUser(projectId);
+  if (!project) return { ok: false };
+  const board = await getMapBoard(projectId, boardId);
+  return board ? { ok: true, layout: board.layout, updatedAt: board.updatedAt } : { ok: false };
+}
+
+export async function mapBoardVersion(projectId: string, boardId: string): Promise<string | null> {
+  const project = await getProjectForCurrentUser(projectId);
+  if (!project) return null;
+  return getMapBoardVersion(projectId, boardId);
 }
 
 // ---- Varias pizarras y enlace público

@@ -19,6 +19,7 @@ import { ProjectMapLoader } from "@/components/project-map/ProjectMapLoader";
 import { buildMapCards, getMapBoard, getMapEntities, getMapProjectImages, listMapBoards } from "@/lib/project-map";
 import { MapBoardTabs } from "@/components/project-map/MapBoardTabs";
 import { getSiteOrigin } from "@/lib/site-origin";
+import { getCurrentProfile } from "@/lib/current-user";
 import { MAP_FREE_ITEM_LIMIT, MAP_MAX_ITEMS } from "@/lib/limits";
 
 const WEEKDAYS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
@@ -137,6 +138,7 @@ export default async function ProjectSummaryPage({
 
   // Mapa del proyecto: una tarjeta-resumen por herramienta, en un tablero editable.
   if (vista === "mapa") {
+    const me = await getCurrentProfile();
     const boards = await listMapBoards(projectId);
     const activeId = boards.find((b) => b.id === pizarra)?.id ?? boards[0].id;
     const [cards, board, mapIsPro, images, entities, origin] = await Promise.all([
@@ -170,6 +172,8 @@ export default async function ProjectSummaryPage({
             projectId={projectId}
             boardId={board.id}
             boardName={board.name}
+            userId={me?.id ?? "anon"}
+            userName={me?.fullName ?? me?.email?.split("@")[0] ?? "Alguien"}
             entities={entities}
             tools={cards}
             layout={board.layout}

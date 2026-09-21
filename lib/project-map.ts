@@ -5,6 +5,7 @@ import { PROJECT_STATUS_LABELS } from "@/lib/labels";
 import { randomBytes } from "crypto";
 import { MAP_FREE_BOARDS, MAP_FREE_ITEM_LIMIT, MAP_MAX_BOARDS, MAP_MAX_ITEMS } from "@/lib/limits";
 import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
+import { applyOps, canonical, type MapOps } from "@/lib/project-map-merge";
 import {
   MAP_COLORS,
   MAP_ENTITY_KINDS,
@@ -318,48 +319,52 @@ export async function getMapBoard(projectId: string, boardId: string) {
   };
 }
 
-export type MapSaveResult = { ok: true; updatedAt: string } | { ok: false; error: string; conflict?: boolean };
+export type MapSaveResult =
+  | { ok: true; layout: MapLayout; updatedAt: string }
+  | { ok: false; error: string };
 
-// Guarda la disposición de una pizarra. Si otra persona guardó mientras tanto, no se
-// pisa. El plan gratuito no puede pasar del tope de elementos propios (lo que ya
-// hubiera de cuando era PRO se respeta mientras no crezca).
-export async function saveMapLayoutCore(
+// Aplica los CAMBIOS de una persona (no la pizarra entera) sobre la versión más reciente, con la
+// fila bloqueada para que dos guardados a la vez se apliquen uno detrás de otro. Devuelve la
+// pizarra resultante (con lo de los demás incluido). El plan gratuito no puede pasar del tope de
+// elementos propios (lo que ya hubiera de cuando era PRO se respeta mientras no crezca).
+export async function applyMapOpsCore(
   projectId: string,
   boardId: string,
-  layoutInput: unknown,
-  baseUpdatedAt: string | null,
+  ops: unknown,
   isPro: boolean,
 ): Promise<MapSaveResult> {
-  const layout = sanitizeMapLayout(layoutInput);
-  const json = layout as unknown as Prisma.InputJsonValue;
-  const conflict: MapSaveResult = {
-    ok: false,
-    error: "Otra persona ha cambiado la pizarra. Recarga para ver sus cambios.",
-    conflict: true,
-  };
+  const safeOps = (ops && typeof ops === "object" ? ops : {}) as MapOps;
 
-  const current = await prisma.projectMap.findFirst({ where: { id: boardId, projectId } });
-  if (!current) return { ok: false, error: "Esta pizarra ya no existe. Recarga la página." };
+  return prisma.$transaction(
+    async (tx) => {
+      await tx.$queryRaw`SELECT "id" FROM "ProjectMap" WHERE "id" = ${boardId} AND "projectId" = ${projectId} FOR UPDATE`;
+      const row = await tx.projectMap.findFirst({ where: { id: boardId, projectId } });
+      if (!row) return { ok: false as const, error: "Esta pizarra ya no existe. Recarga la página." };
 
-  if (!isPro) {
-    const stored = sanitizeMapLayout(current.data).items.length;
-    if (layout.items.length > Math.max(MAP_FREE_ITEM_LIMIT, stored)) {
-      return {
-        ok: false,
-        error: `El plan gratuito permite hasta ${MAP_FREE_ITEM_LIMIT} elementos propios en la pizarra. Pásate a PRO para tener más.`,
-      };
-    }
-  }
+      const current = sanitizeMapLayout(row.data);
+      const next = sanitizeMapLayout(applyOps(current, safeOps));
 
-  if (baseUpdatedAt !== current.updatedAt.toISOString()) return conflict;
+      if (!isPro && next.items.length > Math.max(MAP_FREE_ITEM_LIMIT, current.items.length)) {
+        return {
+          ok: false as const,
+          error: `El plan gratuito permite hasta ${MAP_FREE_ITEM_LIMIT} elementos propios en la pizarra. Pásate a PRO para tener más.`,
+        };
+      }
 
-  const result = await prisma.projectMap.updateMany({
-    where: { id: boardId, updatedAt: current.updatedAt },
-    data: { data: json },
-  });
-  if (result.count === 0) return conflict;
-  const fresh = await prisma.projectMap.findUnique({ where: { id: boardId }, select: { updatedAt: true } });
-  return { ok: true, updatedAt: (fresh?.updatedAt ?? new Date()).toISOString() };
+      if (canonical(next) === canonical(current)) {
+        return { ok: true as const, layout: next, updatedAt: row.updatedAt.toISOString() };
+      }
+      const updated = await tx.projectMap.update({ where: { id: boardId }, data: { data: next as unknown as Prisma.InputJsonValue } });
+      return { ok: true as const, layout: next, updatedAt: updated.updatedAt.toISOString() };
+    },
+    { timeout: 15_000, maxWait: 10_000 },
+  );
+}
+
+// Versión actual de una pizarra (barata): para saber si alguien ha cambiado algo.
+export async function getMapBoardVersion(projectId: string, boardId: string): Promise<string | null> {
+  const row = await prisma.projectMap.findFirst({ where: { id: boardId, projectId }, select: { updatedAt: true } });
+  return row ? row.updatedAt.toISOString() : null;
 }
 
 export type BoardResult = { ok: true; id: string } | { ok: false; error: string; upgrade?: boolean };
