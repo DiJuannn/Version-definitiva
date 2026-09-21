@@ -1,6 +1,7 @@
 import {
   FREE_ACTIVE_PROJECTS_LIMIT,
   FREE_PROJECT_COLLABORATORS_LIMIT,
+  MAP_FREE_ITEM_LIMIT,
   MOODBOARD_AI_PRO_DAILY_LIMIT,
   MOODBOARD_FREE_CARD_LIMIT,
   SCRIPT_ANALYSIS_FREE_DAILY_LIMIT,
@@ -19,6 +20,7 @@ export const FREE_FEATURES = [
   `Guiones de hasta ${SCRIPT_PAGE_LIMIT_FREE} páginas`,
   `${SCRIPT_ANALYSIS_FREE_DAILY_LIMIT} análisis de IA al día, ${SCRIPT_ANALYSIS_FREE_LIFETIME_LIMIT} en total`,
   `Moodboard con hasta ${MOODBOARD_FREE_CARD_LIMIT} tarjetas y 1 sugerencia de referencias con IA por proyecto`,
+  `Pizarra del Mapa del proyecto con hasta ${MAP_FREE_ITEM_LIMIT} elementos propios`,
 ];
 
 export const PRO_FEATURES = [
@@ -28,5 +30,6 @@ export const PRO_FEATURES = [
   "Dossier completo del proyecto en PDF",
   "Detector de continuidad con IA",
   `Moodboard sin tope de tarjetas y hasta ${MOODBOARD_AI_PRO_DAILY_LIMIT} sugerencias de referencias con IA al día por proyecto`,
+  "Pizarra del Mapa del proyecto sin tope de elementos",
   "Plantilla de documentos lista para firmar (permiso de rodaje, cesión de imagen, contrato de colaboración, autorización de menor, NDA)",
 ];

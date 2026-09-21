@@ -53,3 +53,10 @@ export const MOODBOARD_FREE_CARD_LIMIT = 30;
 export const MOODBOARD_MAX_CARDS = 300;
 export const MOODBOARD_AI_FREE_PER_PROJECT = 1;
 export const MOODBOARD_AI_PRO_DAILY_LIMIT = 10;
+
+// Pizarra del Mapa del proyecto: las tarjetas de herramienta (una por herramienta)
+// no cuentan; sí lo que pone la persona (notas, textos, imágenes, formas y
+// secciones). Gratis hasta MAP_FREE_ITEM_LIMIT; PRO hasta MAP_MAX_ITEMS, que
+// protege el rendimiento del navegador.
+export const MAP_FREE_ITEM_LIMIT = 30;
+export const MAP_MAX_ITEMS = 300;

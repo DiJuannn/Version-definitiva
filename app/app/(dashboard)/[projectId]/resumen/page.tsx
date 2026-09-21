@@ -16,7 +16,8 @@ import { BreakdownCategory } from "@/lib/generated/prisma";
 import { PageHeader } from "@/components/PageHeader";
 import { ResumenTabs } from "@/components/ResumenTabs";
 import { ProjectMapLoader } from "@/components/project-map/ProjectMapLoader";
-import { buildMapCards, getMapLayout } from "@/lib/project-map";
+import { buildMapCards, getMapLayout, getMapProjectImages } from "@/lib/project-map";
+import { MAP_FREE_ITEM_LIMIT, MAP_MAX_ITEMS } from "@/lib/limits";
 
 const WEEKDAYS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
@@ -134,7 +135,12 @@ export default async function ProjectSummaryPage({
 
   // Mapa del proyecto: una tarjeta-resumen por herramienta, en un tablero editable.
   if (vista === "mapa") {
-    const [cards, { layout, updatedAt }] = await Promise.all([buildMapCards(projectId), getMapLayout(projectId)]);
+    const [cards, { layout, updatedAt }, mapIsPro, images] = await Promise.all([
+      buildMapCards(projectId),
+      getMapLayout(projectId),
+      isProjectOwnerPro(access.organizationId),
+      getMapProjectImages(projectId),
+    ]);
     return (
       <div>
         <PageHeader
@@ -142,11 +148,20 @@ export default async function ProjectSummaryPage({
           backLabel={`← ${access.name}`}
           eyebrow="Proyecto"
           title="Resumen"
-          description="El mapa del proyecto: una tarjeta por herramienta con lo importante. Muévelas, ocúltalas o añade notas; el contenido se actualiza solo con tus datos."
+          description="La pizarra de tu proyecto: una tarjeta por herramienta con lo importante, y todo lo que quieras añadir (notas, textos, imágenes, formas, secciones y flechas). Las tarjetas se actualizan solas con tus datos."
         />
         <ResumenTabs projectId={projectId} active="mapa" />
         <div className="mt-6">
-          <ProjectMapLoader projectId={projectId} tools={cards} layout={layout} updatedAt={updatedAt} />
+          <ProjectMapLoader
+            projectId={projectId}
+            tools={cards}
+            layout={layout}
+            updatedAt={updatedAt}
+            isPro={mapIsPro}
+            freeLimit={MAP_FREE_ITEM_LIMIT}
+            maxItems={MAP_MAX_ITEMS}
+            images={images}
+          />
         </div>
       </div>
     );

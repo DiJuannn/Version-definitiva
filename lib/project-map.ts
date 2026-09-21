@@ -2,13 +2,21 @@ import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/lib/generated/prisma";
 import { buildProjectHighlights, getProjectSummary } from "@/lib/project-summary";
 import { PROJECT_STATUS_LABELS } from "@/lib/labels";
+import { MAP_FREE_ITEM_LIMIT, MAP_MAX_ITEMS } from "@/lib/limits";
 import {
-  MAP_MAX_NOTES,
+  MAP_COLORS,
+  MAP_ITEM_SIZE,
+  MAP_ITEM_TYPES,
+  MAP_MAX_EDGES,
+  MAP_SHAPES,
+  MAP_TEXT_SIZES,
   MAP_TOOL_KEYS,
   MAP_TOOL_SIZE,
   NOTE_COLORS,
+  type MapEdge,
+  type MapItem,
+  type MapItemType,
   type MapLayout,
-  type MapNote,
   type MapRect,
   type MapToolCard,
   type MapToolKey,
@@ -130,11 +138,16 @@ export async function buildMapCards(projectId: string): Promise<MapToolCard[]> {
 // Disposición guardada
 // ---------------------------------------------------------------------------
 
-const ID = /^[A-Za-z0-9_-]{1,60}$/;
+const ID = /^[A-Za-z0-9_-]{1,70}$/;
+const HEX = /^#[0-9a-fA-F]{6}$/;
 
 function num(value: unknown, min: number, max: number, fallback: number): number {
   const n = typeof value === "number" && Number.isFinite(value) ? value : fallback;
   return Math.min(max, Math.max(min, Math.round(n)));
+}
+
+function text(value: unknown, max: number): string | undefined {
+  return typeof value === "string" && value.length > 0 ? value.slice(0, max) : undefined;
 }
 
 function rect(value: unknown, key: MapToolKey): MapRect | null {
@@ -149,6 +162,89 @@ function rect(value: unknown, key: MapToolKey): MapRect | null {
   };
 }
 
+// Solo imágenes por https.
+function safeUrl(value: unknown): string | undefined {
+  const url = text(value, 1000);
+  if (!url) return undefined;
+  try {
+    return new URL(url).protocol === "https:" ? new URL(url).toString() : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+const mapColor = (value: unknown) => (typeof value === "string" && (MAP_COLORS as readonly string[]).includes(value) ? value : undefined);
+
+function sanitizeItems(raw: unknown[]): MapItem[] {
+  const seen = new Set<string>();
+  const items: MapItem[] = [];
+  for (const n of raw.slice(0, MAP_MAX_ITEMS)) {
+    if (!n || typeof n !== "object") continue;
+    const o = n as Record<string, unknown>;
+    if (typeof o.id !== "string" || !ID.test(o.id) || o.id.startsWith("tool-") || seen.has(o.id)) continue;
+    if (!(MAP_ITEM_TYPES as readonly string[]).includes(o.type as string)) continue;
+    const type = o.type as MapItemType;
+    const size = MAP_ITEM_SIZE[type];
+    const item: MapItem = {
+      id: o.id,
+      type,
+      x: num(o.x, -50000, 50000, 0),
+      y: num(o.y, -50000, 50000, 0),
+      w: num(o.w, 40, 1600, size.w),
+      h: num(o.h, 24, 1600, size.h),
+    };
+    if (type === "note") {
+      item.text = text(o.text, 2000);
+      item.color = (NOTE_COLORS as readonly string[]).includes(o.color as string) ? (o.color as string) : NOTE_COLORS[0];
+    } else if (type === "text") {
+      item.text = text(o.text, 1000);
+      item.size = (MAP_TEXT_SIZES as readonly string[]).includes(o.size as string) ? (o.size as MapItem["size"]) : "m";
+      item.color = mapColor(o.color) ?? MAP_COLORS[6];
+    } else if (type === "image") {
+      item.url = safeUrl(o.url);
+      if (!item.url) continue;
+      item.caption = text(o.caption, 200);
+    } else if (type === "shape") {
+      item.shape = (MAP_SHAPES as readonly string[]).includes(o.shape as string) ? (o.shape as MapItem["shape"]) : "rect";
+      item.color = mapColor(o.color) ?? MAP_COLORS[0];
+      item.text = text(o.text, 300);
+    } else {
+      item.title = text(o.title, 120);
+      item.color = mapColor(o.color) ?? MAP_COLORS[5];
+    }
+    seen.add(o.id);
+    items.push(item);
+  }
+  return items;
+}
+
+function sanitizeEdges(raw: unknown[], validIds: Set<string>): MapEdge[] {
+  const seen = new Set<string>();
+  const edges: MapEdge[] = [];
+  const handle = (v: unknown) => (typeof v === "string" && ["t", "r", "b", "l"].includes(v) ? v : undefined);
+  for (const e of raw.slice(0, MAP_MAX_EDGES)) {
+    if (!e || typeof e !== "object") continue;
+    const o = e as Record<string, unknown>;
+    if (typeof o.id !== "string" || !ID.test(o.id) || seen.has(o.id)) continue;
+    if (typeof o.source !== "string" || typeof o.target !== "string") continue;
+    if (o.source === o.target || !validIds.has(o.source) || !validIds.has(o.target)) continue;
+    seen.add(o.id);
+    edges.push({
+      id: o.id,
+      source: o.source,
+      target: o.target,
+      sh: handle(o.sh),
+      th: handle(o.th),
+      label: text(o.label, 80),
+      color: typeof o.color === "string" && HEX.test(o.color) && (MAP_COLORS as readonly string[]).includes(o.color) ? o.color : undefined,
+      dashed: o.dashed === true ? true : undefined,
+      arrow: o.arrow === false ? false : undefined,
+    });
+  }
+  return edges;
+}
+
+// Lee tanto la disposición nueva (v2: items + edges) como la primera versión (v1: solo notas).
 export function sanitizeMapLayout(input: unknown): MapLayout {
   const raw = (input && typeof input === "object" ? input : {}) as Record<string, unknown>;
 
@@ -163,42 +259,34 @@ export function sanitizeMapLayout(input: unknown): MapLayout {
     (MAP_TOOL_KEYS as readonly string[]).includes(k as string),
   );
 
-  const seen = new Set<string>();
-  const notes: MapNote[] = [];
-  for (const n of (Array.isArray(raw.notes) ? raw.notes : []).slice(0, MAP_MAX_NOTES)) {
-    if (!n || typeof n !== "object") continue;
-    const o = n as Record<string, unknown>;
-    if (typeof o.id !== "string" || !ID.test(o.id) || seen.has(o.id)) continue;
-    seen.add(o.id);
-    notes.push({
-      id: o.id,
-      text: typeof o.text === "string" && o.text.length > 0 ? o.text.slice(0, 1000) : undefined,
-      color: (NOTE_COLORS as readonly string[]).includes(o.color as string) ? (o.color as string) : NOTE_COLORS[0],
-      x: num(o.x, -50000, 50000, 0),
-      y: num(o.y, -50000, 50000, 0),
-      w: num(o.w, 80, 800, 220),
-      h: num(o.h, 40, 800, 150),
-    });
-  }
+  const legacyNotes = (Array.isArray(raw.notes) ? raw.notes : []).map((n) => ({ ...(n as object), type: "note" }));
+  const items = sanitizeItems([...(Array.isArray(raw.items) ? raw.items : []), ...legacyNotes]);
 
-  return { v: 1, tools, hidden, notes };
+  const validIds = new Set<string>([...MAP_TOOL_KEYS.map((k) => `tool-${k}`), ...items.map((i) => i.id)]);
+  const edges = sanitizeEdges(Array.isArray(raw.edges) ? raw.edges : [], validIds);
+
+  return { v: 2, tools, hidden, items, edges };
 }
 
 export async function getMapLayout(projectId: string): Promise<{ layout: MapLayout; updatedAt: string | null }> {
   const row = await prisma.projectMap.findUnique({ where: { projectId } });
-  if (!row) return { layout: { v: 1, tools: {}, hidden: [], notes: [] }, updatedAt: null };
+  if (!row) return { layout: { v: 2, tools: {}, hidden: [], items: [], edges: [] }, updatedAt: null };
   return { layout: sanitizeMapLayout(row.data), updatedAt: row.updatedAt.toISOString() };
 }
 
 export type MapSaveResult = { ok: true; updatedAt: string } | { ok: false; error: string; conflict?: boolean };
 
-// Guarda la disposición. Si otra persona guardó mientras tanto, no se pisa.
+// Guarda la disposición. Si otra persona guardó mientras tanto, no se pisa. El plan
+// gratuito no puede pasar del tope de elementos propios (lo que ya hubiera de
+// cuando era PRO se respeta mientras no crezca).
 export async function saveMapLayoutCore(
   projectId: string,
   layoutInput: unknown,
   baseUpdatedAt: string | null,
+  isPro: boolean,
 ): Promise<MapSaveResult> {
-  const json = sanitizeMapLayout(layoutInput) as unknown as Prisma.InputJsonValue;
+  const layout = sanitizeMapLayout(layoutInput);
+  const json = layout as unknown as Prisma.InputJsonValue;
   const conflict: MapSaveResult = {
     ok: false,
     error: "Otra persona ha cambiado el mapa. Recarga para ver sus cambios.",
@@ -206,6 +294,17 @@ export async function saveMapLayoutCore(
   };
 
   const current = await prisma.projectMap.findUnique({ where: { projectId } });
+
+  if (!isPro) {
+    const stored = current ? sanitizeMapLayout(current.data).items.length : 0;
+    if (layout.items.length > Math.max(MAP_FREE_ITEM_LIMIT, stored)) {
+      return {
+        ok: false,
+        error: `El plan gratuito permite hasta ${MAP_FREE_ITEM_LIMIT} elementos propios en el mapa. Pásate a PRO para tener más.`,
+      };
+    }
+  }
+
   if (!current) {
     if (baseUpdatedAt !== null) return conflict;
     try {
@@ -224,4 +323,33 @@ export async function saveMapLayoutCore(
   if (result.count === 0) return conflict;
   const fresh = await prisma.projectMap.findUnique({ where: { projectId }, select: { updatedAt: true } });
   return { ok: true, updatedAt: (fresh?.updatedAt ?? new Date()).toISOString() };
+}
+
+// Imágenes que ya hay en el proyecto (viñetas del storyboard y fotos de sus
+// localizaciones), para ponerlas en la pizarra sin subirlas otra vez.
+export type MapProjectImage = { url: string; label: string };
+
+export async function getMapProjectImages(projectId: string): Promise<MapProjectImage[]> {
+  const [frames, locations] = await Promise.all([
+    prisma.storyboardFrame.findMany({
+      where: { imageUrl: { not: null }, shot: { scene: { projectId } } },
+      orderBy: { createdAt: "asc" },
+      take: 60,
+      select: { imageUrl: true, shot: { select: { number: true, scene: { select: { number: true } } } } },
+    }),
+    prisma.location.findMany({
+      where: { scenes: { some: { projectId } } },
+      take: 20,
+      select: { name: true, photoUrls: true },
+    }),
+  ]);
+
+  const images: MapProjectImage[] = [];
+  for (const f of frames) {
+    if (f.imageUrl?.startsWith("https://")) images.push({ url: f.imageUrl, label: `Viñeta ${f.shot.scene.number}.${f.shot.number}` });
+  }
+  for (const l of locations) {
+    for (const url of l.photoUrls.slice(0, 6)) if (url.startsWith("https://")) images.push({ url, label: l.name });
+  }
+  return images.slice(0, 80);
 }

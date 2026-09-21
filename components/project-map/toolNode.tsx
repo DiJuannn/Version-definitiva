@@ -4,6 +4,7 @@ import { createContext, useContext } from "react";
 import Link from "next/link";
 import { NodeResizer, type Node, type NodeProps } from "@xyflow/react";
 import { MAP_PHASES, MAP_TOOL_PHASE, type MapToolCard, type MapToolKey } from "@/lib/project-map-types";
+import { Handles } from "@/components/project-map/itemNodes";
 
 export type ToolNode = Node<{ key: MapToolKey }, "tool">;
 
@@ -51,6 +52,7 @@ export function ToolNodeView({ data, selected }: NodeProps<ToolNode>) {
         lineClassName="border-accent!"
         handleClassName="h-2.5! w-2.5! rounded-none! border-accent! bg-bg!"
       />
+      <Handles selected={selected} />
       <button
         type="button"
         onClick={() => hide(card.key)}

@@ -82,17 +82,73 @@ export type MapToolCard = {
   project?: { status: string; options: { value: string; label: string }[] };
 };
 
-export type MapNote = { id: string; text?: string; color: string; x: number; y: number; w: number; h: number };
 export type MapRect = { x: number; y: number; w: number; h: number };
 
-export type MapLayout = {
-  v: 1;
-  tools: Partial<Record<MapToolKey, MapRect>>;
-  hidden: MapToolKey[];
-  notes: MapNote[];
+// Elementos propios de la pizarra (lo que pone la persona, además de las tarjetas de herramienta).
+export const MAP_ITEM_TYPES = ["note", "text", "image", "shape", "section"] as const;
+export type MapItemType = (typeof MAP_ITEM_TYPES)[number];
+export const MAP_SHAPES = ["rect", "round", "ellipse"] as const;
+export type MapShape = (typeof MAP_SHAPES)[number];
+export const MAP_TEXT_SIZES = ["s", "m", "l"] as const;
+export type MapTextSize = (typeof MAP_TEXT_SIZES)[number];
+
+// Colores de formas, secciones, textos y flechas (pensados para el fondo oscuro).
+export const MAP_COLORS = ["#a08fd0", "#ff4d1c", "#4f9d7a", "#d9a441", "#4a7fc1", "#8a8a84", "#f2f0ea"] as const;
+
+export type MapItem = {
+  id: string;
+  type: MapItemType;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  // note / text / shape (etiqueta)
+  text?: string;
+  // note: uno de NOTE_COLORS; text, shape, section: uno de MAP_COLORS
+  color?: string;
+  // text
+  size?: MapTextSize;
+  // image
+  url?: string;
+  caption?: string;
+  // shape
+  shape?: MapShape;
+  // section
+  title?: string;
 };
 
-export const MAP_MAX_NOTES = 100;
+// Línea o flecha entre dos elementos (tarjetas de herramienta incluidas; su id es "tool-<clave>").
+export type MapEdge = {
+  id: string;
+  source: string;
+  target: string;
+  // Punto de anclaje de cada extremo: t, r, b, l.
+  sh?: string;
+  th?: string;
+  label?: string;
+  color?: string;
+  dashed?: boolean;
+  arrow?: boolean;
+};
+
+export type MapLayout = {
+  v: 2;
+  tools: Partial<Record<MapToolKey, MapRect>>;
+  hidden: MapToolKey[];
+  items: MapItem[];
+  edges: MapEdge[];
+};
+
+export const MAP_MAX_EDGES = 400;
+
+export const MAP_ITEM_SIZE: Record<MapItemType, { w: number; h: number }> = {
+  note: { w: 220, h: 150 },
+  text: { w: 260, h: 60 },
+  image: { w: 280, h: 200 },
+  shape: { w: 200, h: 120 },
+  section: { w: 520, h: 360 },
+};
+
 export { NOTE_COLORS };
 
 // Disposición por defecto: una columna por fase, de izquierda a derecha.
