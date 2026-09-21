@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, type MouseEvent } from "react";
+import { ProjectSearch } from "@/components/ProjectSearch";
 import { ToolModeToggle } from "@/components/ToolModeToggle";
 import { TOOL_GROUPS } from "@/lib/tool-groups";
 import { isUnlocked, type ToolAccess, type ToolMode } from "@/lib/tool-rules";
@@ -135,6 +136,7 @@ export function ProjectSubNav({
           </details>
         );
       })}
+      <ProjectSearch projectId={projectId} />
       {mode === "simple" && <ToolModeToggle mode={mode} className={`${CHIP} ${CHIP_IDLE} border-dashed`} label="Ver todas" />}
     </nav>
   );
