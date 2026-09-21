@@ -3,6 +3,8 @@ import { getMobileProfile } from "@/lib/mobile-auth";
 import { getProjectForProfile } from "@/lib/project-access";
 import { getProjectOverview } from "@/lib/project-roadmap";
 import { CORS_HEADERS } from "@/lib/mobile-cors";
+import { getProjectFacts } from "@/lib/tool-access";
+import { computeAccess, computeStage } from "@/lib/tool-rules";
 
 export function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
@@ -33,13 +35,17 @@ export async function GET(
   }
 
   const budgetTarget = project.budgetTarget !== null ? Number(project.budgetTarget) : null;
-  const { healthMetrics, steps, toolStats } = await getProjectOverview(projectId, budgetTarget);
+  const [{ healthMetrics, steps, toolStats }, facts] = await Promise.all([
+    getProjectOverview(projectId, budgetTarget),
+    getProjectFacts(projectId),
+  ]);
 
   // `steps` es la misma Hoja de ruta que ProjectRoadmap.tsx en la web — se
   // añade aquí en vez de crear una ruta nueva porque ya se calcula junto
   // con `healthMetrics` en la misma consulta a getProjectOverview.
   return NextResponse.json(
-    { metrics: healthMetrics, roadmap: steps, toolStats },
+    // `access`: qué herramientas se enseñan ya (mismas reglas que la portada guiada de la web).
+    { metrics: healthMetrics, roadmap: steps, toolStats, access: computeAccess(facts), stage: computeStage(facts) },
     { headers: CORS_HEADERS },
   );
 }

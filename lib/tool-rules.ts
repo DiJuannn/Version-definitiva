@@ -39,6 +39,8 @@ export function computeAccess(f: ProjectFacts): Record<string, ToolAccess> {
     localizaciones: need(hasScenes, NEEDS_SCENES),
     "plan-de-rodaje": need(hasScenes, NEEDS_SCENES),
     documentos: need(hasDays, NEEDS_DAY),
+    // Solo la app nativa (en la web la pizarra vive dentro de Resumen).
+    pizarra: need(hasScenes, NEEDS_SCENES),
     "call-sheets": need(hasDays, NEEDS_DAY),
     "/app/calendario": need(hasDays, NEEDS_DAY),
     vehiculos: need(hasDays, NEEDS_DAY),
