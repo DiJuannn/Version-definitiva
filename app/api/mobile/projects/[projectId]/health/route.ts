@@ -35,7 +35,7 @@ export async function GET(
   }
 
   const budgetTarget = project.budgetTarget !== null ? Number(project.budgetTarget) : null;
-  const [{ healthMetrics, steps, toolStats }, facts] = await Promise.all([
+  const [{ healthMetrics, steps, toolStats, nextShoot, budget }, facts] = await Promise.all([
     getProjectOverview(projectId, budgetTarget),
     getProjectFacts(projectId),
   ]);
@@ -45,7 +45,18 @@ export async function GET(
   // con `healthMetrics` en la misma consulta a getProjectOverview.
   return NextResponse.json(
     // `access`: qué herramientas se enseñan ya (mismas reglas que la portada guiada de la web).
-    { metrics: healthMetrics, roadmap: steps, toolStats, access: computeAccess(facts), stage: computeStage(facts) },
+    {
+      metrics: healthMetrics,
+      roadmap: steps,
+      toolStats,
+      access: computeAccess(facts),
+      stage: computeStage(facts),
+      // Para la portada guiada de la app (etapas Rodar y Entregar).
+      status: project.status,
+      scenes: facts.scenes,
+      nextShoot,
+      budget,
+    },
     { headers: CORS_HEADERS },
   );
 }
