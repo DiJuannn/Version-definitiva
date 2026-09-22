@@ -29,7 +29,7 @@ export async function analyzeShotListCore(
   organizationPlan: OrganizationPlan,
   userId: string,
   file: File,
-): Promise<{ importId: string } | { error: string }> {
+): Promise<{ importId: string } | { error: string; upgrade?: boolean }> {
   const pro = isPro(organizationPlan);
 
   if (!pro) {
@@ -37,6 +37,7 @@ export async function analyzeShotListCore(
     if (lifetimeCount >= SHOT_LIST_IMPORT_FREE_LIFETIME_LIMIT) {
       return {
         error: `Has usado las ${SHOT_LIST_IMPORT_FREE_LIFETIME_LIMIT} importaciones disponibles en tu cuenta gratuita. Pásate a PRO en Organización para importar más guiones técnicos.`,
+        upgrade: true,
       };
     }
   }
@@ -59,6 +60,7 @@ export async function analyzeShotListCore(
       error: pro
         ? `Has alcanzado el máximo de ${dailyLimit} importaciones en 24 horas. Puedes volver a intentarlo en ${formatWait(dailyStatus.retryAt)}.`
         : `Ya has usado tu importación de hoy en el plan gratuito. Puedes volver a intentarlo en ${formatWait(dailyStatus.retryAt)}, o pásate a PRO en Organización para importar más.`,
+      upgrade: !pro,
     };
   }
 
@@ -69,6 +71,7 @@ export async function analyzeShotListCore(
       error: pro
         ? `Este documento tiene ${pageCount} páginas — el máximo por importación es ${pageLimit}.`
         : `Este documento tiene ${pageCount} páginas — el plan gratuito permite hasta ${pageLimit}. Pásate a PRO para documentos más largos.`,
+      upgrade: !pro,
     };
   }
 
