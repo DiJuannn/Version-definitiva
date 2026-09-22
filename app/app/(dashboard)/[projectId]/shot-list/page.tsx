@@ -64,7 +64,8 @@ export default async function ShotListPage({
         </p>
         <p className="mt-1 text-sm text-muted">
           Súbelo (PDF o Word) y la IA propone los planos de cada escena, listos para revisar antes de añadirlos —
-          sin teclearlos uno a uno. Si una escena no existe todavía, se crea.
+          sin teclearlos uno a uno. Para que cada plano se enganche a la escena correcta, el guion técnico debe
+          numerar las escenas igual que el guion; podrás corregirlo en la revisión si no coincide.
         </p>
         <div className="mt-3">
           <ShotListUploadForm action={uploadAction} />

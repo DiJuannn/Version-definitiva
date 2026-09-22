@@ -20,17 +20,16 @@ type ProposedScene = { number: string; shots: ProposedShot[] };
 type Proposal = { scenes: ProposedScene[] };
 
 type ShotRow = ProposedShot & { key: string; on: boolean };
-type SceneRow = { key: string; number: string; existing: boolean; shots: ShotRow[] };
+type SceneRow = { key: string; number: string; shots: ShotRow[] };
 
 const inputClass =
   "border border-line bg-transparent px-2.5 py-1.5 text-sm outline-none transition-colors focus:border-accent";
 const nextKey = () => `r${Math.random().toString(36).slice(2, 10)}`;
 
-function initialState(proposal: Proposal, existingShotsByScene: Record<string, string[]>): SceneRow[] {
+function initialState(proposal: Proposal): SceneRow[] {
   return proposal.scenes.map((scene) => ({
     key: nextKey(),
     number: scene.number,
-    existing: scene.number in existingShotsByScene,
     shots: scene.shots.map((shot) => ({ ...shot, key: nextKey(), on: true })),
   }));
 }
@@ -46,15 +45,27 @@ export function ShotListImportReview({
   proposal: Proposal;
   existingShotsByScene: Record<string, string[]>;
 }) {
-  const [scenes, setScenes] = useState<SceneRow[]>(() => initialState(proposal, existingShotsByScene));
+  const [scenes, setScenes] = useState<SceneRow[]>(() => initialState(proposal));
   const [pending, startTransition] = useTransition();
   const { toast } = useToast();
+
+  const existingSceneNumbers = useMemo(() => Object.keys(existingShotsByScene), [existingShotsByScene]);
+  const existingSceneSet = useMemo(() => new Set(existingSceneNumbers), [existingSceneNumbers]);
+
+  // El guion técnico debe numerar las escenas igual que el guion narrativo — si ninguna
+  // escena propuesta coincide con una existente (y el proyecto ya tiene escenas), lo más
+  // probable es que la numeración no case, no que sean escenas nuevas de verdad.
+  const matchedSceneCount = useMemo(
+    () => scenes.filter((s) => existingSceneSet.has(s.number.trim())).length,
+    [scenes, existingSceneSet],
+  );
+  const possibleNumberingMismatch = existingSceneNumbers.length > 0 && matchedSceneCount === 0;
 
   const totals = useMemo(() => {
     let on = 0;
     let updating = 0;
     for (const scene of scenes) {
-      const existingShots = new Set(existingShotsByScene[scene.number] ?? []);
+      const existingShots = new Set(existingShotsByScene[scene.number.trim()] ?? []);
       for (const shot of scene.shots) {
         if (!shot.on || !shot.number.trim()) continue;
         on++;
@@ -63,6 +74,10 @@ export function ShotListImportReview({
     }
     return { on, updating, creating: on - updating };
   }, [scenes, existingShotsByScene]);
+
+  function updateScene(sceneKey: string, patch: Partial<SceneRow>) {
+    setScenes((prev) => prev.map((scene) => (scene.key !== sceneKey ? scene : { ...scene, ...patch })));
+  }
 
   function updateShot(sceneKey: string, shotKey: string, patch: Partial<ShotRow>) {
     setScenes((prev) =>
@@ -92,7 +107,7 @@ export function ShotListImportReview({
     const payload: Proposal = {
       scenes: scenes
         .map((scene) => ({
-          number: scene.number,
+          number: scene.number.trim(),
           shots: scene.shots
             .filter((s) => s.on && s.number.trim())
             .map((s) => ({
@@ -138,24 +153,58 @@ export function ShotListImportReview({
 
   return (
     <div className="mt-8 space-y-5">
+      {possibleNumberingMismatch && (
+        <div className="border border-warn/60 bg-warn/5 p-4">
+          <p className="font-mono text-[10px] tracking-widest text-warn uppercase">⚠ Revisa la numeración</p>
+          <p className="mt-1 text-sm text-fg">
+            Ninguna de las escenas de este guion técnico coincide con las {existingSceneNumbers.length} escenas que
+            ya tiene el proyecto. Para que los planos se enganchen a la escena correcta, el guion técnico debe
+            numerar las escenas igual que el guion. Corrige el número de cada escena abajo (o dentro del campo
+            aparecerán sugerencias con los números existentes) antes de añadir los planos — si no, se crearán
+            escenas nuevas y vacías en vez de rellenar las que ya tienes.
+          </p>
+        </div>
+      )}
+
       <p className="font-mono text-xs text-muted">
         {totals.on} plano{totals.on === 1 ? "" : "s"} seleccionado{totals.on === 1 ? "" : "s"}
         {totals.creating > 0 && ` · ${totals.creating} nuevo${totals.creating === 1 ? "" : "s"}`}
         {totals.updating > 0 && ` · ${totals.updating} actualizará${totals.updating === 1 ? "" : "n"} uno existente`}
       </p>
 
+      <datalist id="escenas-existentes">
+        {existingSceneNumbers.map((n) => (
+          <option key={n} value={n} />
+        ))}
+      </datalist>
+
       {scenes.map((scene) => {
-        const existingShots = new Set(existingShotsByScene[scene.number] ?? []);
+        const trimmedNumber = scene.number.trim();
+        const isExisting = existingSceneSet.has(trimmedNumber);
+        const existingShots = new Set(existingShotsByScene[trimmedNumber] ?? []);
         const allOn = scene.shots.every((s) => s.on);
         return (
-          <section key={scene.key} className="border border-line bg-bg-raised/40">
+          <section
+            key={scene.key}
+            className={`border bg-bg-raised/40 ${isExisting ? "border-line" : "border-warn/50"}`}
+          >
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3">
-              <h2 className="font-display text-base font-bold">
-                Escena {scene.number}{" "}
-                <span className="font-mono text-[10px] font-normal tracking-widest text-muted uppercase">
-                  {scene.existing ? "(existe)" : "(se creará)"}
+              <div className="flex items-center gap-2">
+                <span className="font-display text-base font-bold">Escena</span>
+                <input
+                  value={scene.number}
+                  onChange={(e) => updateScene(scene.key, { number: e.target.value })}
+                  list="escenas-existentes"
+                  className={`${inputClass} w-24 font-display text-base font-bold`}
+                />
+                <span
+                  className={`font-mono text-[10px] font-normal tracking-widest uppercase ${
+                    isExisting ? "text-muted" : "text-warn"
+                  }`}
+                >
+                  {isExisting ? "(existe)" : "(se creará)"}
                 </span>
-              </h2>
+              </div>
               <label className="flex items-center gap-1.5 font-mono text-[10px] tracking-widest text-muted uppercase">
                 <input type="checkbox" checked={allOn} onChange={(e) => toggleScene(scene.key, e.target.checked)} />
                 Todos
