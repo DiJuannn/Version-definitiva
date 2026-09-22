@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { prisma } from "@/lib/prisma";
 import { PdfLink } from "@/components/PdfLink";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { getShootingDaySummary } from "@/lib/shooting-day-summary";
@@ -21,6 +22,15 @@ export default async function CallSheetDetailPage({
 
   const summary = await getShootingDaySummary(dayId);
   if (!summary || summary.shootingDay.projectId !== projectId) notFound();
+
+  const [allCharacters, allCrewMembers] = await Promise.all([
+    prisma.character.findMany({ where: { projectId }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
+    prisma.crewMember.findMany({
+      where: { projectId },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, role: true },
+    }),
+  ]);
 
   const callSheet = summary.shootingDay.callSheet;
   const shareToken = summary.shootingDay.shareToken;
@@ -55,7 +65,11 @@ export default async function CallSheetDetailPage({
         link={shareToken ? `${origin}/hoja/${shareToken}` : null}
       />
 
-      <CallSheetView projectName={project.name} summary={summary} />
+      <CallSheetView
+        projectName={project.name}
+        summary={summary}
+        edit={{ projectId, shootingDayId: dayId, allCharacters, allCrewMembers }}
+      />
 
       <form
         action={updateAction}

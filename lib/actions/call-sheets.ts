@@ -8,7 +8,16 @@ import { getCurrentProfile } from "@/lib/current-user";
 import { optionalString } from "@/lib/form-utils";
 import { logActivity } from "@/lib/activity-log";
 import { notifyCallSheetChange } from "@/lib/call-sheet-change-alert";
-import { generateAllCallSheetsCore, setCallSheetSharingCore, upsertCallSheetCore } from "@/lib/call-sheets-core";
+import {
+  clearCallSheetCrewOverrideCore,
+  clearSceneCastOverrideCore,
+  generateAllCallSheetsCore,
+  setCallSheetCrewCore,
+  setCallSheetSharingCore,
+  setSceneCastOverrideCore,
+  updateSceneCallTimeCore,
+  upsertCallSheetCore,
+} from "@/lib/call-sheets-core";
 
 export async function upsertCallSheet(
   projectId: string,
@@ -115,4 +124,85 @@ export async function setCallSheetSharing(
 
   revalidatePath(`/app/${projectId}/call-sheets/${shootingDayId}`);
   return {};
+}
+
+export async function updateSceneCallTime(
+  projectId: string,
+  shootingDayId: string,
+  assignmentId: string,
+  formData: FormData,
+) {
+  const project = await getProjectForCurrentUser(projectId);
+  if (!project) return;
+
+  const ok = await updateSceneCallTimeCore(
+    projectId,
+    shootingDayId,
+    assignmentId,
+    optionalString(formData.get("callTime")),
+  );
+  if (!ok) return;
+
+  await notifyCallSheetChange(projectId, shootingDayId);
+  revalidatePath(`/app/${projectId}/call-sheets/${shootingDayId}`);
+}
+
+export async function updateSceneCastOverride(
+  projectId: string,
+  shootingDayId: string,
+  sceneId: string,
+  formData: FormData,
+) {
+  const project = await getProjectForCurrentUser(projectId);
+  if (!project) return;
+
+  const ok = await setSceneCastOverrideCore(
+    projectId,
+    shootingDayId,
+    sceneId,
+    formData.getAll("characterIds").map(String),
+  );
+  if (!ok) return;
+
+  const profile = await getCurrentProfile();
+  await logActivity(projectId, profile?.id, `corrigió a mano el reparto citado de una escena del call sheet`);
+  await notifyCallSheetChange(projectId, shootingDayId);
+  revalidatePath(`/app/${projectId}/call-sheets/${shootingDayId}`);
+}
+
+export async function clearSceneCastOverride(
+  projectId: string,
+  shootingDayId: string,
+  sceneId: string,
+) {
+  const project = await getProjectForCurrentUser(projectId);
+  if (!project) return;
+
+  await clearSceneCastOverrideCore(projectId, shootingDayId, sceneId);
+  revalidatePath(`/app/${projectId}/call-sheets/${shootingDayId}`);
+}
+
+export async function updateCallSheetCrew(
+  projectId: string,
+  shootingDayId: string,
+  formData: FormData,
+) {
+  const project = await getProjectForCurrentUser(projectId);
+  if (!project) return;
+
+  const ok = await setCallSheetCrewCore(projectId, shootingDayId, formData.getAll("crewMemberIds").map(String));
+  if (!ok) return;
+
+  const profile = await getCurrentProfile();
+  await logActivity(projectId, profile?.id, `corrigió a mano el equipo técnico citado del call sheet`);
+  await notifyCallSheetChange(projectId, shootingDayId);
+  revalidatePath(`/app/${projectId}/call-sheets/${shootingDayId}`);
+}
+
+export async function clearCallSheetCrewOverride(projectId: string, shootingDayId: string) {
+  const project = await getProjectForCurrentUser(projectId);
+  if (!project) return;
+
+  await clearCallSheetCrewOverrideCore(projectId, shootingDayId);
+  revalidatePath(`/app/${projectId}/call-sheets/${shootingDayId}`);
 }

@@ -506,10 +506,11 @@ model Character {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  project Project          @relation(fields: [projectId], references: [id])
-  actor   Actor?           @relation(fields: [actorId], references: [id])
-  scenes  SceneCharacter[]
-  shots   ShotCharacter[]
+  project          Project                     @relation(fields: [projectId], references: [id])
+  actor            Actor?                      @relation(fields: [actorId], references: [id])
+  scenes           SceneCharacter[]
+  shots            ShotCharacter[]
+  dayCastOverrides ShootingDaySceneCharacter[]
 
   @@index([projectId])
   @@index([actorId])
@@ -689,14 +690,15 @@ model Scene {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  project           Project                 @relation(fields: [projectId], references: [id])
-  location          Location?               @relation(fields: [locationId], references: [id])
+  project           Project                       @relation(fields: [projectId], references: [id])
+  location          Location?                     @relation(fields: [locationId], references: [id])
   characters        SceneCharacter[]
   breakdownElements SceneBreakdownElement[]
   crewMembers       SceneCrewMember[]
   shootingDayScenes ShootingDayScene[]
   shots             Shot[]
   clapLogs          ClapLog[]
+  castOverrides     ShootingDaySceneCastOverride[]
 
   @@index([projectId])
   @@index([locationId])
@@ -764,10 +766,11 @@ model CrewMember {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  project     Project           @relation(fields: [projectId], references: [id])
-  person      Person?           @relation(fields: [personId], references: [id])
-  scenes      SceneCrewMember[]
-  budgetItems BudgetItem[]
+  project        Project                @relation(fields: [projectId], references: [id])
+  person         Person?                @relation(fields: [personId], references: [id])
+  scenes         SceneCrewMember[]
+  budgetItems    BudgetItem[]
+  callSheetCites CallSheetCrewMember[]
 
   @@index([projectId])
   @@index([personId])
@@ -801,13 +804,14 @@ model ShootingDay {
   // por WhatsApp sin que el equipo tenga cuenta). Null = no compartido.
   shareToken String? @unique
 
-  project             Project              @relation(fields: [projectId], references: [id])
+  project             Project                        @relation(fields: [projectId], references: [id])
   scenes              ShootingDayScene[]
   shots               Shot[]
   callSheet           CallSheet?
   tasks               Task[]
   itemReservations    ItemReservation[]
   vehicleReservations VehicleReservation[]
+  castOverrides       ShootingDaySceneCastOverride[]
 
   @@index([projectId])
 }
@@ -894,6 +898,35 @@ model ShootingDayScene {
   @@index([sceneId])
 }
 
+// Corrección manual de a quién cita la hoja de llamada en una escena, para
+// un día concreto — tiene la última palabra por encima de lo que sale solo
+// (planos del día si los hay, si no el reparto completo de la escena; ver
+// lib/shooting-day-summary.ts). Clave (shootingDayId, sceneId), no el id de
+// ShootingDayScene: esa fila se borra y se recrea entera cada vez que se
+// guarda Plan de rodaje, así que atar la corrección a su id la perdería sin
+// avisar en el próximo guardado del plan.
+model ShootingDaySceneCastOverride {
+  shootingDayId String
+  sceneId       String
+
+  shootingDay ShootingDay @relation(fields: [shootingDayId], references: [id], onDelete: Cascade)
+  scene       Scene       @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+
+  @@id([shootingDayId, sceneId])
+  @@index([sceneId])
+}
+
+model ShootingDaySceneCharacter {
+  shootingDayId String
+  sceneId       String
+  characterId   String
+
+  character Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  @@id([shootingDayId, sceneId, characterId])
+  @@index([characterId])
+}
+
 model CallSheet {
   id              String   @id @default(cuid())
   shootingDayId   String   @unique
@@ -901,10 +934,25 @@ model CallSheet {
   transportNotes  String?
   cateringNotes   String?
   additionalNotes String?
+  // true = el equipo técnico citado en la hoja lo eligió la persona a mano
+  // (CallSheetCrewMember), no lo que sale solo del reparto de las escenas.
+  crewOverridden  Boolean  @default(false)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  shootingDay ShootingDay @relation(fields: [shootingDayId], references: [id], onDelete: Cascade)
+  shootingDay ShootingDay           @relation(fields: [shootingDayId], references: [id], onDelete: Cascade)
+  crewCited   CallSheetCrewMember[]
+}
+
+model CallSheetCrewMember {
+  callSheetId  String
+  crewMemberId String
+
+  callSheet  CallSheet  @relation(fields: [callSheetId], references: [id], onDelete: Cascade)
+  crewMember CrewMember @relation(fields: [crewMemberId], references: [id], onDelete: Cascade)
+
+  @@id([callSheetId, crewMemberId])
+  @@index([crewMemberId])
 }
 
 model Shot {
