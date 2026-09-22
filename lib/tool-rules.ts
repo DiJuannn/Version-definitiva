@@ -42,6 +42,7 @@ export function computeAccess(f: ProjectFacts): Record<string, ToolAccess> {
     // Solo la app nativa (en la web la pizarra vive dentro de Resumen).
     pizarra: need(hasScenes, NEEDS_SCENES),
     festivales: need(shooting, "Se activa cuando termines de rodar."),
+    montaje: need(shooting, "Se activa cuando termines de rodar."),
     // Solo la app nativa (en la web van en el menú «Recursos» / «Más»).
     equipo: need(hasScenes, NEEDS_SCENES),
     inventario: need(hasDays, NEEDS_DAY),

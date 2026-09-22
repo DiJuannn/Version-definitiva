@@ -345,3 +345,14 @@ export function TakeReportIcon({ className }: IconProps) {
     </svg>
   );
 }
+
+// Icono de Montaje (postproducción): una tira de fotogramas.
+export function EditIcon({ className }: IconProps) {
+  return (
+    <svg {...shared} className={className}>
+      <rect x="3" y="5" width="18" height="14" rx="1" stroke="currentColor" />
+      <path d="M8 5v14M16 5v14" stroke="currentColor" />
+      <path d="M5.5 8h1M5.5 11h1M5.5 14h1M5.5 17h1M17.5 8h1M17.5 11h1M17.5 14h1M17.5 17h1" stroke="currentColor" strokeLinecap="round" />
+    </svg>
+  );
+}

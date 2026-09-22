@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getProjectForCurrentUser } from "@/lib/project-access";
+import { listFestivalSubmissionsCore } from "@/lib/festival-submissions-core";
 import { PageHeader } from "@/components/PageHeader";
 import { FestivalGuide } from "@/components/FestivalGuide";
+import { FestivalSubmissionsPanel } from "@/components/FestivalSubmissionsPanel";
 
 export default async function FestivalesPage({
   params,
@@ -13,6 +15,8 @@ export default async function FestivalesPage({
 
   const project = await getProjectForCurrentUser(projectId);
   if (!project) notFound();
+
+  const submissions = await listFestivalSubmissionsCore(projectId);
 
   return (
     <div>
@@ -36,6 +40,19 @@ export default async function FestivalesPage({
             )}
           </>
         }
+      />
+      <FestivalSubmissionsPanel
+        projectId={projectId}
+        submissions={submissions.map((s) => ({
+          id: s.id,
+          festivalName: s.festivalName,
+          deadline: s.deadline ? s.deadline.toISOString() : null,
+          submittedAt: s.submittedAt ? s.submittedAt.toISOString() : null,
+          fee: s.fee !== null ? Number(s.fee) : null,
+          status: s.status,
+          url: s.url,
+          notes: s.notes,
+        }))}
       />
       <FestivalGuide projectType={project.type} />
     </div>

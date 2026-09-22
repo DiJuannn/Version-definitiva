@@ -141,6 +141,18 @@ export function StageFocus({
         <li className="flex flex-wrap items-center justify-between gap-3 border border-line p-4">
           <div>
             <p className="font-display text-sm font-bold">
+              <span aria-hidden className="text-muted">○ </span>
+              Prepara el montaje
+            </p>
+            <p className="font-mono text-xs text-muted">Selección de tomas, registro de cortes, checklist de entrega y créditos.</p>
+          </div>
+          <Link href={`/app/${projectId}/montaje`} className="btn btn-outline">
+            Ir a Montaje
+          </Link>
+        </li>
+        <li className="flex flex-wrap items-center justify-between gap-3 border border-line p-4">
+          <div>
+            <p className="font-display text-sm font-bold">
               <span aria-hidden className={spendDone ? "text-success" : "text-muted"}>{spendDone ? "✓ " : "○ "}</span>
               Anota el gasto real
             </p>

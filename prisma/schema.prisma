@@ -319,8 +319,65 @@ model Project {
   backups           ProjectBackup[]
   moodboard         Moodboard?
   projectMaps       ProjectMap[]
+  editCuts          EditCut[]
+  festivalSubmissions FestivalSubmission[]
 
   @@index([organizationId])
+}
+
+// Montaje → Cortes: registro de versiones del montaje (no el archivo de vídeo en sí, solo el
+// seguimiento: qué corte es, de cuándo, cómo quedó de duración y qué se dijo al verlo).
+model EditCut {
+  id            String        @id @default(cuid())
+  projectId     String
+  name          String
+  durationLabel String?
+  date          DateTime?
+  status        EditCutStatus @default(DRAFT)
+  notes         String?
+  order         Int           @default(0)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+enum EditCutStatus {
+  DRAFT
+  REVIEW
+  FINAL
+}
+
+// Festivales → seguimiento de envíos: a qué festivales (de la guía o cualquier otro) se ha
+// presentado el proyecto, cuándo y con qué resultado. La guía en sí (lib/festivals.ts) no vive
+// en la base de datos porque es una lista curada a mano, igual en la web y en la app.
+model FestivalSubmission {
+  id           String                   @id @default(cuid())
+  projectId    String
+  festivalName String
+  deadline     DateTime?
+  submittedAt  DateTime?
+  fee          Decimal?
+  status       FestivalSubmissionStatus @default(PLANNED)
+  url          String?
+  notes        String?
+  createdAt    DateTime                 @default(now())
+  updatedAt    DateTime                 @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+enum FestivalSubmissionStatus {
+  PLANNED
+  SUBMITTED
+  IN_REVIEW
+  SELECTED
+  REJECTED
+  WITHDRAWN
 }
 
 // Pizarras del proyecto (pestaña Mapa del proyecto de Resumen): un proyecto

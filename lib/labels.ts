@@ -1,11 +1,28 @@
 import {
   BreakdownCategory,
   DayPart,
+  EditCutStatus,
+  FestivalSubmissionStatus,
   IntExt,
   InventoryItemCategory,
   LocationCharacteristic,
   ProjectStatus,
 } from "@/lib/generated/prisma";
+
+export const EDIT_CUT_STATUS_LABELS: Record<EditCutStatus, string> = {
+  DRAFT: "Borrador",
+  REVIEW: "En revisión",
+  FINAL: "Final",
+};
+
+export const FESTIVAL_SUBMISSION_STATUS_LABELS: Record<FestivalSubmissionStatus, string> = {
+  PLANNED: "Por enviar",
+  SUBMITTED: "Enviado",
+  IN_REVIEW: "En selección",
+  SELECTED: "Seleccionado",
+  REJECTED: "Rechazado",
+  WITHDRAWN: "Retirado",
+};
 
 export const INT_EXT_LABELS: Record<IntExt, string> = {
   INT: "INT",
