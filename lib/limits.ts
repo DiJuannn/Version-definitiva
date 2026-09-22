@@ -27,6 +27,14 @@ export const SCRIPT_ANALYSIS_PRO_DAILY_LIMIT = 50;
 export const SCRIPT_PAGE_LIMIT_FREE = 80;
 export const SCRIPT_PAGE_LIMIT_PRO = 200;
 
+// Importar guion técnico en Lista de planos: mismos topes que el análisis
+// de guion narrativo (misma llamada con coste a Mistral), pero contados
+// aparte porque son herramientas distintas.
+export const SHOT_LIST_IMPORT_HOURLY_LIMIT = 3;
+export const SHOT_LIST_IMPORT_FREE_DAILY_LIMIT = 1;
+export const SHOT_LIST_IMPORT_FREE_LIFETIME_LIMIT = 3;
+export const SHOT_LIST_IMPORT_PRO_DAILY_LIMIT = 50;
+
 // Cuántas llamadas a Mistral (análisis de guion o continuidad) pueden
 // estar en marcha a la vez, en toda la cuenta — no por usuario. Con la
 // cuota actual de tokens/minuto del workspace (ver

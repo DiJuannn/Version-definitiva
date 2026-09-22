@@ -149,6 +149,115 @@ export async function analyzeScriptPdf(
   return JSON.parse(text) as ScriptAnalysisProposal;
 }
 
+export type ShotListProposal = {
+  scenes: {
+    number: string;
+    shots: {
+      number: string;
+      shotType?: string;
+      shotSize?: string;
+      angle?: string;
+      movement?: string;
+      camera?: string;
+      lens?: string;
+      description?: string;
+      audio?: string;
+      notes?: string;
+    }[];
+  }[];
+};
+
+const shotListSchema = {
+  type: "object",
+  properties: {
+    scenes: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          number: { type: "string" },
+          shots: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                number: { type: "string" },
+                shotType: { type: "string" },
+                shotSize: { type: "string" },
+                angle: { type: "string" },
+                movement: { type: "string" },
+                camera: { type: "string" },
+                lens: { type: "string" },
+                description: { type: "string" },
+                audio: { type: "string" },
+                notes: { type: "string" },
+              },
+              required: ["number"],
+            },
+          },
+        },
+        required: ["number", "shots"],
+      },
+    },
+  },
+  required: ["scenes"],
+};
+
+const SHOT_LIST_PROMPT = `Analiza este guion técnico (shot list / desglose de planos) de un proyecto audiovisual y extrae, escena por escena, todos los planos que aparecen.
+
+Para cada escena indica su número tal como aparece en el documento (por ejemplo "1", "4A", "12"). Para cada plano dentro de esa escena indica:
+- number: el número o identificador del plano dentro de la escena (por ejemplo "1", "2", "A", "1A"). Si el documento numera los planos de forma global en vez de por escena, usa ese mismo número tal cual.
+- shotType: tipo de plano si se especifica (p. ej. "plano secuencia", "inserto", "recurso").
+- shotSize: tamaño de plano (p. ej. "PG", "PGG", "PA", "PM", "PMC", "PP", "PPP", "plano detalle").
+- angle: ángulo de cámara si se especifica (p. ej. "picado", "contrapicado", "cenital", "a nivel").
+- movement: movimiento de cámara si se especifica (p. ej. "fijo", "panorámica", "travelling", "grúa", "steadicam", "zoom", "dolly", "mano").
+- camera: cámara o unidad si se especifica.
+- lens: óptica/lente si se especifica.
+- description: qué ocurre en el plano (acción, encuadre).
+- audio: notas de sonido si se especifican.
+- notes: cualquier otra nota relevante (duración prevista, referencias, etc.).
+
+No inventes datos que no estén en el documento — si un campo no aparece para un plano, omítelo. Usa los números de escena y de plano exactamente como están escritos en el documento, sin renumerar ni reordenar.
+
+Responde únicamente con el JSON solicitado.`;
+
+export async function analyzeShotListPdf(documentUrl: string): Promise<ShotListProposal> {
+  const mistral = getClient();
+
+  const response = await mistral.chat.complete({
+    model: "mistral-small-latest",
+    messages: [
+      {
+        role: "user",
+        content: [
+          { type: "document_url", documentUrl },
+          { type: "text", text: SHOT_LIST_PROMPT },
+        ],
+      },
+    ],
+    responseFormat: {
+      type: "json_schema",
+      jsonSchema: {
+        name: "shot_list_import",
+        schemaDefinition: shotListSchema,
+        strict: true,
+      },
+    },
+  });
+
+  const content = response.choices?.[0]?.message?.content;
+  const text =
+    typeof content === "string"
+      ? content
+      : Array.isArray(content)
+        ? content.map((chunk) => ("text" in chunk ? chunk.text : "")).join("")
+        : "";
+
+  if (!text) throw new Error("Mistral no devolvió contenido");
+
+  return JSON.parse(text) as ShotListProposal;
+}
+
 export type ContinuitySceneInput = {
   number: string;
   intExt: string;

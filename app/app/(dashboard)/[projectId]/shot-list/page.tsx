@@ -3,12 +3,18 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { createShot } from "@/lib/actions/shots";
+import { analyzeShotList } from "@/lib/actions/shot-list-import";
 import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
 import { EmptyState } from "@/components/EmptyState";
 import { PdfLink } from "@/components/PdfLink";
 import { PageHeader } from "@/components/PageHeader";
 import { SubmitButton } from "@/components/SubmitButton";
 import { FormField } from "@/components/FormField";
+import { ShotListUploadForm } from "@/components/ShotListUploadForm";
+
+// El análisis del guion técnico llama a Mistral y puede tardar más de
+// los 10s que Vercel da por defecto a una función.
+export const maxDuration = 60;
 
 const FIELD =
   "border border-line bg-transparent px-3 py-1.5 text-xs outline-none transition-colors focus:border-accent";
@@ -35,6 +41,7 @@ export default async function ShotListPage({
   });
   const shotCount = scenes.reduce((n, s) => n + s.shots.length, 0);
   const scenesWithShots = scenes.filter((s) => s.shots.length > 0).length;
+  const uploadAction = analyzeShotList.bind(null, projectId);
 
   return (
     <div>
@@ -51,10 +58,23 @@ export default async function ShotListPage({
         actions={<PdfLink href={`/api/pdf/shot-list/${projectId}`} />}
       />
 
+      <div className="mt-6 border border-line bg-bg-raised/40 p-4 print:hidden">
+        <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
+          ¿Ya tienes un guion técnico escrito?
+        </p>
+        <p className="mt-1 text-sm text-muted">
+          Súbelo (PDF o Word) y la IA propone los planos de cada escena, listos para revisar antes de añadirlos —
+          sin teclearlos uno a uno. Si una escena no existe todavía, se crea.
+        </p>
+        <div className="mt-3">
+          <ShotListUploadForm action={uploadAction} />
+        </div>
+      </div>
+
       {scenes.length === 0 ? (
         <EmptyState
           title="No hay escenas creadas todavía"
-          description="Crea las escenas del proyecto en Guion antes de definir sus planos."
+          description="Crea las escenas del proyecto en Guion, o sube tu guion técnico arriba para crearlas junto con sus planos."
           actionLabel="Ir a Guion"
           actionHref={`/app/${projectId}/guion`}
         />
