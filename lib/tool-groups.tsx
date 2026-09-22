@@ -10,6 +10,7 @@ import {
   FolderIcon,
   LocationIcon,
   MoodboardIcon,
+  PeopleIcon,
   SceneIcon,
   ScheduleIcon,
   ScriptIcon,
@@ -47,7 +48,13 @@ export const TOOL_GROUPS: { label: string; tools: ToolDefinition[] }[] = [
         icon: <StackIcon />,
         label: "Desglose",
         href: "desglose",
-        description: "Lo que necesita cada escena: atrezzo, vestuario y equipo.",
+        description: "Lo que necesita cada escena: atrezzo, vestuario y material técnico.",
+      },
+      {
+        icon: <PeopleIcon />,
+        label: "Equipo técnico",
+        href: "equipo",
+        description: "Quién forma el equipo del proyecto y qué rol tiene cada uno.",
       },
       {
         icon: <CastIcon />,

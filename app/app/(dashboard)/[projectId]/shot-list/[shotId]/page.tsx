@@ -6,6 +6,7 @@ import { deleteShot, updateShot } from "@/lib/actions/shots";
 import { DeleteButton } from "@/components/DeleteButton";
 import { PageHeader } from "@/components/PageHeader";
 import { SubmitButton } from "@/components/SubmitButton";
+import { ChipOption } from "@/components/ChipOption";
 
 export default async function ShotDetailPage({
   params,
@@ -19,10 +20,19 @@ export default async function ShotDetailPage({
 
   const shot = await prisma.shot.findFirst({
     where: { id: shotId, scene: { projectId } },
-    include: { scene: { select: { number: true } } },
+    include: {
+      scene: {
+        select: {
+          number: true,
+          characters: { include: { character: true }, orderBy: { character: { name: "asc" } } },
+        },
+      },
+      characters: { select: { characterId: true } },
+    },
   });
   if (!shot) notFound();
 
+  const selectedCharacterIds = new Set(shot.characters.map((c) => c.characterId));
   const updateAction = updateShot.bind(null, projectId, shotId);
 
   const fields: Array<[string, string, string]> = [
@@ -112,6 +122,29 @@ export default async function ShotDetailPage({
             className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
           />
         </label>
+        {shot.scene.characters.length > 0 && (
+          <div className="flex flex-col gap-1.5 sm:col-span-2 lg:col-span-3">
+            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+              Personajes en este plano
+            </span>
+            <p className="font-sans text-xs text-muted">
+              Solo estos aparecen en la hoja de llamada del día en que se rueda este plano — no todo
+              el reparto de la escena.
+            </p>
+            <div className="mt-1 flex flex-wrap gap-2">
+              {shot.scene.characters.map(({ character }) => (
+                <ChipOption
+                  key={character.id}
+                  type="checkbox"
+                  name="characterIds"
+                  value={character.id}
+                  label={character.name}
+                  defaultChecked={selectedCharacterIds.has(character.id)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
         <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-3">
           <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
             Notas

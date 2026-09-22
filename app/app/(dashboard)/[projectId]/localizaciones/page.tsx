@@ -60,7 +60,7 @@ export default async function ProjectLocationsPage({
       </div>
 
       {library ? (
-        <LocationsLibrary organizationId={project.organizationId} />
+        <LocationsLibrary organizationId={project.organizationId} from={projectId} />
       ) : (
         <>
           <p className="mt-4 max-w-2xl font-sans text-sm text-muted">
@@ -80,7 +80,7 @@ export default async function ProjectLocationsPage({
               {locations.map((location) => (
                 <ListRow
                   key={location.id}
-                  href={`/app/localizaciones/${location.id}`}
+                  href={`/app/localizaciones/${location.id}?from=${projectId}`}
                   title={
                     <span className="font-display text-lg font-bold transition-colors group-hover:text-accent">
                       {location.name}

@@ -176,8 +176,8 @@ export async function getProjectOverview(
     {
       key: "localizaciones",
       phase: "base",
-      title: "Localizaciones",
-      instruction: "Asigna una localización a cada escena.",
+      title: "Localización de las escenas",
+      instruction: "Asigna una localización a cada escena desde Guion.",
       href: `/app/${projectId}/guion`,
       ctaLabel: "Ir a Guion",
       isDone: scenesTotal > 0 && scenesWithLocation === scenesTotal,

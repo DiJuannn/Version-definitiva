@@ -16,7 +16,15 @@ const FIELD =
 // Biblioteca de localizaciones de la organización (mapa, alta y listado). La
 // usan /app/localizaciones y la pestaña «Toda la biblioteca» de las
 // localizaciones de un proyecto.
-export async function LocationsLibrary({ organizationId }: { organizationId: string }) {
+export async function LocationsLibrary({
+  organizationId,
+  from,
+}: {
+  organizationId: string;
+  // projectId de origen: si viene de la pestaña "biblioteca" de un
+  // proyecto, para que el detalle de cada localización sepa volver ahí.
+  from?: string;
+}) {
   const locations = await prisma.location.findMany({
     where: { organizationId },
     orderBy: { name: "asc" },
@@ -113,7 +121,7 @@ export async function LocationsLibrary({ organizationId }: { organizationId: str
           {locations.map((location) => (
             <ListRow
               key={location.id}
-              href={`/app/localizaciones/${location.id}`}
+              href={`/app/localizaciones/${location.id}${from ? `?from=${from}` : ""}`}
               title={
                 <span className="font-display text-lg font-bold transition-colors group-hover:text-accent">
                   {location.name}

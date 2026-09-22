@@ -5,6 +5,7 @@
 export const TOOL_KEYWORDS: Record<string, string[]> = {
   guion: ["script", "guión", "escenas", "subir guion", "pdf", "analizar", "continuidad"],
   desglose: ["breakdown", "atrezzo", "vestuario", "props", "elementos"],
+  equipo: ["crew", "equipo técnico", "técnicos", "staff", "director de fotografía", "sonido", "iluminación"],
   personajes: ["reparto", "actores", "actrices", "cast", "papeles"],
   "shot-list": ["shot list", "shotlist", "planos", "shots", "plano"],
   storyboard: ["viñetas", "dibujos", "guion grafico", "guion gráfico"],

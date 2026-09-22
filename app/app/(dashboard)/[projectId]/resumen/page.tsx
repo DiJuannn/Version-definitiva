@@ -581,7 +581,7 @@ export default async function ProjectSummaryPage({
       <GroupTitle>Equipo y recursos</GroupTitle>
       <div className="space-y-3">
         <Section
-          href={`/app/${projectId}/desglose?tab=equipo`}
+          href={`/app/${projectId}/equipo`}
           title="Equipo técnico"
           teaser={`${project.crewMembers.length} personas`}
         >

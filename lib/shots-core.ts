@@ -11,7 +11,10 @@ export async function createShotCore(
   const number = input.number.trim();
   if (!number) return null;
 
-  const count = await prisma.shot.count({ where: { sceneId } });
+  const [count, sceneCharacters] = await Promise.all([
+    prisma.shot.count({ where: { sceneId } }),
+    prisma.sceneCharacter.findMany({ where: { sceneId }, select: { characterId: true } }),
+  ]);
   const shot = await prisma.shot.create({
     data: {
       sceneId,
@@ -19,6 +22,12 @@ export async function createShotCore(
       shotSize: input.shotSize ?? null,
       description: input.description ?? null,
       order: count,
+      // Arranca con el reparto de la escena (editable después) — así la
+      // hoja de llamada tiene algo sensato desde el primer momento, sin
+      // obligar a configurar el plano antes de que sirva de nada.
+      characters: sceneCharacters.length > 0
+        ? { create: sceneCharacters.map((sc) => ({ characterId: sc.characterId })) }
+        : undefined,
     },
   });
   return shot.id;
@@ -72,4 +81,41 @@ export async function updateShotCore(
 
 export async function deleteShotCore(projectId: string, shotId: string) {
   await prisma.shot.deleteMany({ where: { id: shotId, scene: { projectId } } });
+}
+
+// Qué personajes de la escena salen de verdad en este plano — decide a
+// quién cita la hoja de llamada cuando el día solo rueda algunos planos.
+export async function updateShotCharactersCore(
+  projectId: string,
+  shotId: string,
+  characterIds: string[],
+): Promise<boolean> {
+  const shot = await prisma.shot.findFirst({
+    where: { id: shotId, scene: { projectId } },
+    select: { sceneId: true },
+  });
+  if (!shot) return false;
+
+  // Solo personajes que de verdad son de esa escena — lo que llegue de
+  // fuera se descarta en silencio en vez de fallar.
+  const validIds = new Set(
+    (
+      await prisma.sceneCharacter.findMany({
+        where: { sceneId: shot.sceneId, characterId: { in: characterIds } },
+        select: { characterId: true },
+      })
+    ).map((sc) => sc.characterId),
+  );
+
+  await prisma.$transaction([
+    prisma.shotCharacter.deleteMany({ where: { shotId } }),
+    ...(validIds.size > 0
+      ? [
+          prisma.shotCharacter.createMany({
+            data: [...validIds].map((characterId) => ({ shotId, characterId })),
+          }),
+        ]
+      : []),
+  ]);
+  return true;
 }

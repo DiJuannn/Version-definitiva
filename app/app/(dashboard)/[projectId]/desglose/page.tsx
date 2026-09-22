@@ -5,9 +5,7 @@ import { getProjectForCurrentUser } from "@/lib/project-access";
 import { DeleteButton } from "@/components/DeleteButton";
 import {
   createBreakdownElement,
-  createCrewMember,
   deleteBreakdownElement,
-  deleteCrewMember,
   updateBreakdownElementCategory,
 } from "@/lib/actions/breakdown";
 import { BREAKDOWN_CATEGORY_LABELS } from "@/lib/labels";
@@ -47,36 +45,18 @@ export default async function DesglosePage({
   const project = await getProjectForCurrentUser(projectId);
   if (!project) notFound();
 
-  const [elements, crewMembers, people] = await Promise.all([
-    prisma.breakdownElement.findMany({
-      where: { projectId },
-      orderBy: { name: "asc" },
-      select: {
-        id: true,
-        name: true,
-        category: true,
-        _count: { select: { scenes: true } },
-      },
-    }),
-    prisma.crewMember.findMany({
-      where: { projectId },
-      orderBy: { name: "asc" },
-      select: {
-        id: true,
-        name: true,
-        role: true,
-        _count: { select: { scenes: true } },
-      },
-    }),
-    prisma.person.findMany({
-      where: { organizationId: project.organizationId },
-      orderBy: { firstName: "asc" },
-      select: { id: true, firstName: true, lastName: true },
-    }),
-  ]);
+  const elements = await prisma.breakdownElement.findMany({
+    where: { projectId },
+    orderBy: { name: "asc" },
+    select: {
+      id: true,
+      name: true,
+      category: true,
+      _count: { select: { scenes: true } },
+    },
+  });
 
   const createElementAction = createBreakdownElement.bind(null, projectId);
-  const createCrewAction = createCrewMember.bind(null, projectId);
 
   const categoryTabs: SectionTab[] = Object.values(BreakdownCategory).map((category) => {
     const items = elements.filter((el) => el.category === category);
@@ -149,89 +129,7 @@ export default async function DesglosePage({
     };
   });
 
-  const crewTab: SectionTab = {
-    id: "equipo",
-    label: "Equipo técnico",
-    count: crewMembers.length,
-    group: "Personas",
-    content: (
-      <div>
-        <form
-          action={createCrewAction}
-          className="grid gap-3 border border-line p-4 sm:grid-cols-2 xl:grid-cols-3"
-        >
-          <FormField label="Persona del directorio Equipo" className="sm:col-span-2 xl:col-span-3">
-            <select name="personId" defaultValue="" className={inputClass}>
-              <option value="" className="bg-bg">
-                Persona nueva (sin usar el directorio)
-              </option>
-              {people.map((person) => (
-                <option key={person.id} value={person.id} className="bg-bg">
-                  {person.firstName} {person.lastName ?? ""}
-                </option>
-              ))}
-            </select>
-          </FormField>
-          <FormField label="Nombre">
-            <input name="name" placeholder="si no usas Equipo" className={inputClass} />
-          </FormField>
-          <FormField label="Rol">
-            <input name="role" placeholder="Director de fotografía" className={inputClass} />
-          </FormField>
-          <FormField label="Email">
-            <input name="email" className={inputClass} />
-          </FormField>
-          <FormField label="Teléfono">
-            <input name="phone" className={inputClass} />
-          </FormField>
-          <div className="sm:col-span-2 xl:col-span-3">
-            <SubmitButton
-              pendingLabel="Añadiendo…"
-              savedLabel="✓ Añadido"
-              className="btn btn-secondary"
-            >
-              Añadir
-            </SubmitButton>
-          </div>
-        </form>
-
-        {crewMembers.length === 0 ? (
-          <p className="mt-6 font-mono text-sm text-muted">
-            Aún no hay equipo técnico. Añade el primer miembro arriba.
-          </p>
-        ) : (
-          <div className="mt-4 border-t border-line">
-            {crewMembers.map((member) => (
-              <div
-                key={member.id}
-                className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-line py-3"
-              >
-                <div className="min-w-0">
-                  <span className="font-mono text-sm">{member.name}</span>
-                  {member.role && (
-                    <span className="ml-2 font-mono text-xs text-muted">{member.role}</span>
-                  )}
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="font-mono text-[11px] text-muted">
-                    {member._count.scenes} escena{member._count.scenes === 1 ? "" : "s"}
-                  </span>
-                  <form action={deleteCrewMember.bind(null, projectId, member.id)}>
-                    <DeleteButton
-                      confirmMessage="¿Eliminar a este miembro del equipo?"
-                      className="link-action"
-                    />
-                  </form>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    ),
-  };
-
-  const tabs = [...categoryTabs, crewTab];
+  const tabs = categoryTabs;
   // Si no se pide ninguna, se abre la primera categoría que ya tenga algo.
   const firstFilled = tabs.find((t) => Number(t.count ?? 0) > 0)?.id;
 
@@ -244,10 +142,14 @@ export default async function DesglosePage({
         title="Desglose"
         description={
           <>
-            Atrezzo, vestuario, equipo técnico y más, por categorías. Se asigna a cada escena
+            Atrezzo, vestuario, material técnico y más, por categorías. Se asigna a cada escena
             desde{" "}
             <Link href={`/app/${projectId}/guion`} className="text-fg hover:text-accent">
               Guion
+            </Link>
+            . El equipo técnico ahora tiene su propio apartado:{" "}
+            <Link href={`/app/${projectId}/equipo`} className="text-fg hover:text-accent">
+              Equipo técnico
             </Link>
             .
           </>

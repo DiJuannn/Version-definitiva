@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { optionalString } from "@/lib/form-utils";
-import { createShotCore, deleteShotCore, updateShotCore } from "@/lib/shots-core";
+import { createShotCore, deleteShotCore, updateShotCharactersCore, updateShotCore } from "@/lib/shots-core";
 
 function optionalInt(value: FormDataEntryValue | null): number | null {
   const str = String(value ?? "").trim();
@@ -52,10 +52,12 @@ export async function updateShot(
     audio: optionalString(formData.get("audio")),
     notes: optionalString(formData.get("notes")),
   });
+  await updateShotCharactersCore(projectId, shotId, formData.getAll("characterIds").map(String));
 
   revalidatePath(`/app/${projectId}/shot-list`);
   revalidatePath(`/app/${projectId}/shot-list/${shotId}`);
   revalidatePath(`/app/${projectId}/storyboard`);
+  revalidatePath(`/app/${projectId}/call-sheets`);
 }
 
 export async function deleteShot(projectId: string, shotId: string) {

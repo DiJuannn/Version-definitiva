@@ -46,9 +46,16 @@ export function CallSheetView({
           <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
             Localizaciones
           </p>
-          <p className="mt-1 font-mono text-sm">
-            {summary.locations.map((l) => l.name).join(", ") || "—"}
-          </p>
+          {summary.locations.length === 0 ? (
+            <p className="mt-1 font-mono text-sm">—</p>
+          ) : (
+            summary.locations.map((l) => (
+              <p key={l.id} className="mt-1 font-mono text-sm">
+                {l.name}
+                {l.address ? <span className="text-muted"> — {l.address}</span> : ""}
+              </p>
+            ))
+          )}
         </div>
       </div>
 
@@ -77,7 +84,9 @@ export function CallSheetView({
                       : ""}
                   </span>
                   <span className="font-mono text-xs text-muted">
-                    {assignment.scene.characters.map((c) => c.character.name).join(", ")}
+                    {(summary.charactersByAssignment.get(assignment.id) ?? [])
+                      .map((c) => c.character.name)
+                      .join(", ")}
                   </span>
                 </div>
                 {assignment.scene.shots.length > 0 && (

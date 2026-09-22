@@ -509,6 +509,7 @@ model Character {
   project Project          @relation(fields: [projectId], references: [id])
   actor   Actor?           @relation(fields: [actorId], references: [id])
   scenes  SceneCharacter[]
+  shots   ShotCharacter[]
 
   @@index([projectId])
   @@index([actorId])
@@ -933,9 +934,26 @@ model Shot {
   scene       Scene             @relation(fields: [sceneId], references: [id], onDelete: Cascade)
   shootingDay ShootingDay?      @relation(fields: [shootingDayId], references: [id], onDelete: SetNull)
   storyboard  StoryboardFrame[]
+  characters  ShotCharacter[]
 
   @@index([sceneId])
   @@index([shootingDayId])
+}
+
+// Qué personajes de la escena salen realmente en este plano — para que la
+// hoja de llamada de un día que solo rueda algunos planos (no la escena
+// entera) cite solo a quien hace falta ese día, no todo el reparto de la
+// escena. Se rellena al crear el plano con el reparto de la escena en ese
+// momento (editable después); ver createShotCore.
+model ShotCharacter {
+  shotId      String
+  characterId String
+
+  shot      Shot      @relation(fields: [shotId], references: [id], onDelete: Cascade)
+  character Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  @@id([shotId, characterId])
+  @@index([characterId])
 }
 
 model StoryboardFrame {

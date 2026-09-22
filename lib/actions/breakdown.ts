@@ -69,7 +69,7 @@ export async function createCrewMember(projectId: string, formData: FormData) {
     notes: optionalString(formData.get("notes")),
   });
 
-  revalidatePath(`/app/${projectId}/desglose`);
+  revalidatePath(`/app/${projectId}/equipo`);
 }
 
 export async function deleteCrewMember(projectId: string, crewMemberId: string) {
@@ -78,5 +78,5 @@ export async function deleteCrewMember(projectId: string, crewMemberId: string) 
 
   await deleteCrewMemberCore(projectId, crewMemberId);
 
-  revalidatePath(`/app/${projectId}/desglose`);
+  revalidatePath(`/app/${projectId}/equipo`);
 }

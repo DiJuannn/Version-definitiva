@@ -67,7 +67,7 @@ export async function GET(
         intExtLabel: INT_EXT_LABELS[a.scene.intExt],
         dayPartLabel: DAY_PART_LABELS[a.scene.dayPart],
         locationName: a.scene.location?.name ?? null,
-        characterNames: a.scene.characters.map((c) => c.character.name),
+        characterNames: (summary.charactersByAssignment.get(a.id) ?? []).map((c) => c.character.name),
         // Planos de la escena que se ruedan este día.
         shots: a.scene.shots.map((shot) => ({
           label: `${a.scene.number}.${shot.number}`,

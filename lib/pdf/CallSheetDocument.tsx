@@ -1,5 +1,5 @@
 import { Document, Page, Text, View } from "@react-pdf/renderer";
-import { pdfStyles } from "@/lib/pdf/styles";
+import { colors, pdfStyles } from "@/lib/pdf/styles";
 import { PdfHeader, PdfFooter, SectionTitle, Watermark, rowStyle } from "@/lib/pdf/components";
 import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
 import type { ShootingDaySummary } from "@/lib/shooting-day-summary";
@@ -14,8 +14,15 @@ export function CallSheetDocument({
   // Solo en el plan Free — Pro descarga el PDF limpio.
   watermark?: boolean;
 }) {
-  const { shootingDay, sceneAssignments, locations, characters, crewMembers, breakdownElements } =
-    summary;
+  const {
+    shootingDay,
+    sceneAssignments,
+    charactersByAssignment,
+    locations,
+    characters,
+    crewMembers,
+    breakdownElements,
+  } = summary;
   const callSheet = shootingDay.callSheet;
 
   return (
@@ -33,20 +40,27 @@ export function CallSheetDocument({
           })}
         />
 
-        <View style={[pdfStyles.section, pdfStyles.grid2]}>
+        <View style={[pdfStyles.section, pdfStyles.grid2, { marginBottom: 22 }]}>
           <View style={pdfStyles.col}>
             <Text style={pdfStyles.sectionLabel}>Hora general de llamada</Text>
             <Text style={pdfStyles.value}>{callSheet?.generalCallTime ?? "—"}</Text>
           </View>
           <View style={pdfStyles.col}>
             <Text style={pdfStyles.sectionLabel}>Localizaciones</Text>
-            <Text style={pdfStyles.value}>
-              {locations.map((l) => l.name).join(", ") || "—"}
-            </Text>
+            {locations.length === 0 ? (
+              <Text style={pdfStyles.value}>—</Text>
+            ) : (
+              locations.map((l) => (
+                <Text key={l.id} style={[pdfStyles.value, { marginBottom: 3 }]}>
+                  {l.name}
+                  {l.address ? <Text style={{ color: colors.muted }}> — {l.address}</Text> : ""}
+                </Text>
+              ))
+            )}
           </View>
         </View>
 
-        <View style={pdfStyles.section}>
+        <View style={[pdfStyles.section, { marginBottom: 22 }]}>
           <SectionTitle>Escenas</SectionTitle>
           <View style={pdfStyles.tableHeader}>
             <Text style={[pdfStyles.th, { width: 50 }]}>Hora</Text>
@@ -59,12 +73,12 @@ export function CallSheetDocument({
             </Text>
           ) : (
             sceneAssignments.map((assignment, i) => (
-              <View key={assignment.id} wrap={false}>
-                <View style={rowStyle(i)}>
+              <View key={assignment.id} wrap={false} style={{ marginBottom: 4 }}>
+                <View style={[rowStyle(i), { paddingVertical: 8 }]}>
                   <Text style={[pdfStyles.td, { width: 50 }]}>
                     {assignment.callTime ?? "—"}
                   </Text>
-                  <Text style={[pdfStyles.td, { flex: 1 }]}>
+                  <Text style={[pdfStyles.td, { flex: 1, lineHeight: 1.4 }]}>
                     Escena {assignment.scene.number} —{" "}
                     {INT_EXT_LABELS[assignment.scene.intExt]}{" "}
                     {DAY_PART_LABELS[assignment.scene.dayPart]}
@@ -72,19 +86,30 @@ export function CallSheetDocument({
                       ? ` · ${assignment.scene.location.name}`
                       : ""}
                   </Text>
-                  <Text style={[pdfStyles.td, { flex: 1 }]}>
-                    {assignment.scene.characters.map((c) => c.character.name).join(", ") ||
-                      "—"}
+                  <Text style={[pdfStyles.td, { flex: 1, lineHeight: 1.4 }]}>
+                    {(charactersByAssignment.get(assignment.id) ?? [])
+                      .map((c) => c.character.name)
+                      .join(", ") || "—"}
                   </Text>
                 </View>
                 {/* Planos que se ruedan este día (si la escena tiene shot list). */}
                 {assignment.scene.shots.map((shot) => (
-                  <View key={shot.id} style={{ flexDirection: "row", paddingLeft: 50, paddingVertical: 1.5 }}>
-                    <Text style={[pdfStyles.td, { width: 34 }]}>
+                  <View
+                    key={shot.id}
+                    style={{
+                      flexDirection: "row",
+                      marginLeft: 50,
+                      paddingLeft: 8,
+                      paddingVertical: 3.5,
+                      borderLeftWidth: 1.5,
+                      borderLeftColor: colors.line,
+                    }}
+                  >
+                    <Text style={[pdfStyles.td, { width: 32, color: colors.muted }]}>
                       {assignment.scene.number}.{shot.number}
                     </Text>
-                    <Text style={[pdfStyles.td, { width: 40 }]}>{shot.shotSize ?? ""}</Text>
-                    <Text style={[pdfStyles.td, { flex: 1 }]}>
+                    <Text style={[pdfStyles.td, { width: 40, color: colors.muted }]}>{shot.shotSize ?? ""}</Text>
+                    <Text style={[pdfStyles.td, { flex: 1, color: colors.muted }]}>
                       {[shot.description, shot.movement].filter(Boolean).join(" · ")}
                     </Text>
                   </View>
@@ -94,7 +119,7 @@ export function CallSheetDocument({
           )}
         </View>
 
-        <View style={[pdfStyles.section, pdfStyles.grid3]}>
+        <View style={[pdfStyles.section, pdfStyles.grid3, { marginBottom: 22 }]}>
           <View style={pdfStyles.col}>
             <Text style={pdfStyles.sectionLabel}>Cast</Text>
             <Text style={pdfStyles.value}>

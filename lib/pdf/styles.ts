@@ -98,6 +98,7 @@ export const pdfStyles = StyleSheet.create({
   },
   value: {
     fontSize: 10.5,
+    lineHeight: 1.5,
   },
   statValue: {
     fontSize: 19,

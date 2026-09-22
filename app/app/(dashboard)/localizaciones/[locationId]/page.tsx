@@ -26,10 +26,10 @@ export default async function LocationDetailPage({
   searchParams,
 }: {
   params: Promise<{ locationId: string }>;
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; from?: string }>;
 }) {
   const { locationId } = await params;
-  const { tab } = await searchParams;
+  const { tab, from } = await searchParams;
 
   const profile = await getCurrentProfile();
   if (!profile) return null;
@@ -38,6 +38,17 @@ export default async function LocationDetailPage({
     where: { id: locationId, organizationId: profile.organizationId },
   });
   if (!location) notFound();
+
+  // Si se llegó aquí desde las localizaciones de un proyecto, "atrás" debe
+  // volver ahí, no a la biblioteca global.
+  const fromProject = from
+    ? await prisma.project.findFirst({
+        where: { id: from, organizationId: profile.organizationId },
+        select: { id: true, name: true },
+      })
+    : null;
+  const backHref = fromProject ? `/app/${fromProject.id}/localizaciones` : "/app/localizaciones";
+  const backLabel = fromProject ? `← Localizaciones (${fromProject.name})` : "← Localizaciones";
 
   const scenesUsingLocation = await prisma.scene.findMany({
     where: { locationId },
@@ -61,8 +72,8 @@ export default async function LocationDetailPage({
   return (
     <div>
       <PageHeader
-        backHref="/app/localizaciones"
-        backLabel="← Localizaciones"
+        backHref={backHref}
+        backLabel={backLabel}
         eyebrow="Recursos"
         title={`${location.name}`}
       />
