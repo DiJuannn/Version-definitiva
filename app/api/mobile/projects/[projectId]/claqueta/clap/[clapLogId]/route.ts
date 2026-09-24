@@ -37,6 +37,7 @@ export async function PATCH(
     ...(typeof body.take === "number" ? { take: body.take } : {}),
     ...(body.shotNumber === null || typeof body.shotNumber === "string" ? { shotNumber: body.shotNumber } : {}),
     ...(typeof body.sceneNumber === "string" ? { sceneNumber: body.sceneNumber } : {}),
+    ...(body.clip === null || typeof body.clip === "string" ? { clip: body.clip } : {}),
   });
   if (!ok) {
     return NextResponse.json({ error: "Toma no encontrada o datos no válidos." }, { status: 404, headers: CORS_HEADERS });

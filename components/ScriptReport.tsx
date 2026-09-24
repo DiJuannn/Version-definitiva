@@ -230,7 +230,7 @@ export function ScriptReport({ projectId, initial, today }: { projectId: string;
                               {shot.takes.map((take) => (
                                 <li
                                   key={take.id}
-                                  className={`grid grid-cols-[auto_4.5rem_3rem_1fr_auto] items-center gap-3 border-l-2 py-1.5 pl-3 ${
+                                  className={`grid grid-cols-[auto_4.5rem_4.5rem_3rem_1fr_auto] items-center gap-3 border-l-2 py-1.5 pl-3 ${
                                     take.good ? "border-success bg-success/5" : "border-transparent"
                                   }`}
                                 >
@@ -248,6 +248,12 @@ export function ScriptReport({ projectId, initial, today }: { projectId: string;
                                     ✓
                                   </button>
                                   <span className="font-mono text-sm">Toma {take.take}</span>
+                                  <span
+                                    className="truncate font-mono text-[11px] text-muted"
+                                    title="Archivo de la cámara"
+                                  >
+                                    {take.clip ?? "—"}
+                                  </span>
                                   <span className="font-mono text-[11px] text-muted">{timeOf(take.at)}</span>
                                   {editingNote === take.id ? (
                                     <input

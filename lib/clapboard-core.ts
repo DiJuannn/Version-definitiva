@@ -1,5 +1,22 @@
 import { prisma } from "@/lib/prisma";
 import { DayPart, IntExt } from "@/lib/generated/prisma";
+import { takeKey } from "@/lib/clip-number";
+
+// Toma más alta ya usada por escena+plano (clave de takeKey): la claqueta
+// arranca en la siguiente, y en 1 si esa combinación aún no tiene tomas.
+export async function getLastTakeByKey(projectId: string): Promise<Record<string, number>> {
+  const rows = await prisma.clapLog.groupBy({
+    by: ["sceneNumber", "shotNumber"],
+    where: { projectId },
+    _max: { take: true },
+  });
+  const result: Record<string, number> = {};
+  for (const row of rows) {
+    const key = takeKey(row.sceneNumber, row.shotNumber);
+    result[key] = Math.max(result[key] ?? 0, row._max.take ?? 0);
+  }
+  return result;
+}
 
 // Misma idea que optionalString (lib/form-utils.ts) pero para valores
 // planos de JS en vez de FormDataEntryValue — la app manda JSON, no un
@@ -16,6 +33,7 @@ export type LogClapInput = {
   take: number;
   director?: string | null;
   camera?: string | null;
+  clip?: string | null;
   intExt?: string | null;
   dayPart?: string | null;
   // Parte de script: tomas metidas a mano (sin claqueta) o ya marcadas buenas.
@@ -55,6 +73,7 @@ export async function logClapCore(projectId: string, input: LogClapInput): Promi
       take,
       director: normalize(input.director),
       camera: normalize(input.camera),
+      clip: normalize(input.clip),
       intExt,
       dayPart,
       good: input.good === true,
@@ -140,6 +159,7 @@ export type UpdateClapLogInput = {
   take?: number;
   shotNumber?: string | null;
   sceneNumber?: string;
+  clip?: string | null;
 };
 
 export async function updateClapLogCore(
@@ -157,9 +177,11 @@ export async function updateClapLogCore(
     shotNumber?: string | null;
     sceneNumber?: string;
     sceneId?: string | null;
+    clip?: string | null;
   } = {};
   if (typeof input.good === "boolean") data.good = input.good;
   if (input.notes !== undefined) data.notes = normalize(input.notes);
+  if (input.clip !== undefined) data.clip = normalize(input.clip);
   if (input.take !== undefined) {
     const take = Number(input.take);
     if (!Number.isFinite(take) || take < 1) return false;

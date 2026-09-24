@@ -32,6 +32,7 @@ export async function logClap(
     take: Number(formData.get("take")),
     director: optionalString(formData.get("director")),
     camera: optionalString(formData.get("camera")),
+    clip: optionalString(formData.get("clip")),
     intExt: optionalString(formData.get("intExt")),
     dayPart: optionalString(formData.get("dayPart")),
   });

@@ -1,10 +1,11 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import Link from "next/link";
 import { logClap, deleteClapLog, updateClapLog } from "@/lib/actions/clapboard";
 import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
+import { nextClip, takeKey } from "@/lib/clip-number";
 import { DeleteButton } from "@/components/DeleteButton";
 import { useToast } from "@/components/Toast";
 
@@ -23,6 +24,7 @@ type ClapLogEntry = {
   take: number;
   director: string | null;
   camera: string | null;
+  clip?: string | null;
   // Parte de script: toma buena y nota.
   good?: boolean;
   notes?: string | null;
@@ -31,45 +33,103 @@ type ClapLogEntry = {
   failed?: boolean;
 };
 
-// Ruido percusivo sintetizado con Web Audio — sin depender de ningún
-// archivo de sonido con licencia. Un estallido de ruido blanco con caída
-// muy rápida suena como un "clac" seco, parecido al de una claqueta real.
-function playClapSound() {
+// Lo que tarda la chapeta en cerrarse — el golpe (sonido y destello) cae
+// justo al final, para que en cámara el fotograma del cierre y el pico de
+// audio coincidan y el montador los pueda sincronizar sin aplausos extra.
+const CLOSE_MS = 70;
+// Cuánto se queda cerrada antes de volver a abrirse (visible varios fotogramas).
+const HOLD_MS = 650;
+
+let sharedAudio: AudioContext | null = null;
+
+// Golpe percusivo sintetizado con Web Audio (sin archivos con licencia): un
+// "crack" de ruido con cuerpo más un golpe grave, comprimido para que suene
+// fuerte y seco — tiene que oírse bien en el micro de la cámara. Se programa
+// en el reloj de audio para caer justo cuando se cierra la chapeta.
+function playClapSound(delaySeconds: number) {
   try {
     const AudioContextClass =
       window.AudioContext ||
       (window as unknown as { webkitAudioContext: typeof AudioContext })
         .webkitAudioContext;
-    const ctx = new AudioContextClass();
-    const duration = 0.09;
+    // Un solo contexto reutilizado: crear uno nuevo en cada toque añade
+    // retraso variable, justo lo que desincroniza la marca.
+    if (!sharedAudio || sharedAudio.state === "closed") sharedAudio = new AudioContextClass();
+    const ctx = sharedAudio;
+    if (ctx.state === "suspended") void ctx.resume();
+    const at = ctx.currentTime + delaySeconds;
+
+    const compressor = ctx.createDynamicsCompressor();
+    compressor.threshold.value = -24;
+    compressor.knee.value = 0;
+    compressor.ratio.value = 12;
+    compressor.attack.value = 0.001;
+    compressor.release.value = 0.1;
+    const master = ctx.createGain();
+    master.gain.value = 2.2;
+    compressor.connect(master);
+    master.connect(ctx.destination);
+
+    // Crack: ruido blanco con caída rápida pero con cuerpo (0,18 s).
+    const duration = 0.18;
     const bufferSize = Math.floor(ctx.sampleRate * duration);
     const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
     const data = buffer.getChannelData(0);
     for (let i = 0; i < bufferSize; i++) {
-      const decay = Math.pow(1 - i / bufferSize, 4);
-      data[i] = (Math.random() * 2 - 1) * decay;
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / bufferSize, 3);
     }
     const noise = ctx.createBufferSource();
     noise.buffer = buffer;
-    const filter = ctx.createBiquadFilter();
-    filter.type = "highpass";
-    filter.frequency.value = 800;
-    const gain = ctx.createGain();
-    gain.gain.setValueAtTime(1, ctx.currentTime);
-    noise.connect(filter);
-    filter.connect(gain);
-    gain.connect(ctx.destination);
-    noise.start();
-    noise.stop(ctx.currentTime + duration);
-    // El contexto puede haberse cerrado ya solo (algunos navegadores lo
-    // hacen si la pestaña pierde foco) — cerrarlo dos veces rechaza la
-    // promesa y Next.js lo muestra como un error sin capturar.
-    noise.onended = () => {
-      if (ctx.state !== "closed") ctx.close().catch(() => {});
-    };
+    const highpass = ctx.createBiquadFilter();
+    highpass.type = "highpass";
+    highpass.frequency.value = 250;
+    const presence = ctx.createBiquadFilter();
+    presence.type = "peaking";
+    presence.frequency.value = 2500;
+    presence.gain.value = 8;
+    noise.connect(highpass);
+    highpass.connect(presence);
+    presence.connect(compressor);
+    noise.start(at);
+    noise.stop(at + duration);
+
+    // Golpe grave: la madera chocando.
+    const thump = ctx.createOscillator();
+    thump.type = "sine";
+    thump.frequency.setValueAtTime(180, at);
+    thump.frequency.exponentialRampToValueAtTime(60, at + 0.08);
+    const thumpGain = ctx.createGain();
+    thumpGain.gain.setValueAtTime(0.9, at);
+    thumpGain.gain.exponentialRampToValueAtTime(0.001, at + 0.1);
+    thump.connect(thumpGain);
+    thumpGain.connect(compressor);
+    thump.start(at);
+    thump.stop(at + 0.1);
   } catch {
     // Si el navegador bloquea audio sin interacción previa u otra causa,
     // el clap sigue funcionando en silencio — nunca debe romper el flujo.
+  }
+}
+
+type SavedBoard = {
+  sceneEntryMode: "list" | "manual";
+  sceneId: string;
+  manualSceneNumber: string;
+  shotNumber: string;
+  director: string;
+  camera: string;
+  clip: string;
+  take: number;
+};
+
+const storageKey = (projectId: string) => `taller_claqueta_${projectId}`;
+
+function readSaved(projectId: string): Partial<SavedBoard> | null {
+  try {
+    const raw = window.localStorage.getItem(storageKey(projectId));
+    return raw ? (JSON.parse(raw) as Partial<SavedBoard>) : null;
+  } catch {
+    return null;
   }
 }
 
@@ -77,13 +137,13 @@ export function ClaquetaBoard({
   projectId,
   projectName,
   scenes,
-  lastTakeBySceneNumber,
+  lastTakeByKey,
   initialLog,
 }: {
   projectId: string;
   projectName: string;
   scenes: SceneOption[];
-  lastTakeBySceneNumber: Record<string, number>;
+  lastTakeByKey: Record<string, number>;
   initialLog: ClapLogEntry[];
 }) {
   // Aunque el proyecto ya tenga escenas cargadas, tiene que poder
@@ -97,12 +157,16 @@ export function ClaquetaBoard({
     sceneEntryMode === "list" ? scenes.find((s) => s.id === sceneId) ?? null : null;
   const sceneNumber = selectedScene ? selectedScene.number : manualSceneNumber.trim();
 
-  const [take, setTake] = useState(() =>
-    sceneNumber ? (lastTakeBySceneNumber[sceneNumber] ?? 0) + 1 : 1,
-  );
+  // Última toma usada por escena+plano; se actualiza en cada clap para que
+  // volver a una escena ya rodada hoy siga donde se quedó.
+  const [takeMap, setTakeMap] = useState(lastTakeByKey);
+  const nextTakeFor = (scene: string, shot: string) => (takeMap[takeKey(scene, shot)] ?? 0) + 1;
+
   const [shotNumber, setShotNumber] = useState("");
+  const [take, setTake] = useState(() => (sceneNumber ? nextTakeFor(sceneNumber, "") : 1));
   const [director, setDirector] = useState("");
   const [camera, setCamera] = useState("");
+  const [clip, setClip] = useState("");
   const [clapping, setClapping] = useState(false);
   const [saving, setSaving] = useState(false);
   const { toast } = useToast();
@@ -114,23 +178,71 @@ export function ClaquetaBoard({
     year: "numeric",
   });
 
+  // Memoria: al volver de otra herramienta (o recargar), la claqueta sigue
+  // con lo último que tenía puesto en este navegador. Se lee tras montar (en
+  // el servidor no hay localStorage) y solo después se empieza a guardar,
+  // para no pisar lo guardado con los valores por defecto.
+  const [restored, setRestored] = useState(false);
+  useEffect(() => {
+    const saved = readSaved(projectId);
+    if (saved) {
+      const mode = saved.sceneEntryMode === "manual" || scenes.length === 0 ? "manual" : "list";
+      const id = saved.sceneId && scenes.some((s) => s.id === saved.sceneId) ? saved.sceneId : scenes[0]?.id ?? "";
+      const manual = saved.manualSceneNumber ?? "";
+      const shot = saved.shotNumber ?? "";
+      const scene = mode === "list" ? scenes.find((s) => s.id === id)?.number ?? "" : manual.trim();
+      // Nunca por debajo de lo que ya hay guardado en el servidor para esa
+      // escena+plano: repetir un número de toma es peor que saltarse uno.
+      const serverNext = scene ? nextTakeFor(scene, shot) : 1;
+      /* eslint-disable react-hooks/set-state-in-effect */
+      setSceneEntryMode(mode);
+      setSceneId(id);
+      setManualSceneNumber(manual);
+      setShotNumber(shot);
+      setDirector(saved.director ?? "");
+      setCamera(saved.camera ?? "");
+      setClip(saved.clip ?? "");
+      setTake(Math.max(Number(saved.take) || 1, serverNext));
+      /* eslint-enable react-hooks/set-state-in-effect */
+    }
+    setRestored(true);
+    // Solo al montar: después manda lo que la persona toque.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!restored) return;
+    const data: SavedBoard = { sceneEntryMode, sceneId, manualSceneNumber, shotNumber, director, camera, clip, take };
+    try {
+      window.localStorage.setItem(storageKey(projectId), JSON.stringify(data));
+    } catch {
+      // Sin almacenamiento (modo privado estricto): la claqueta sigue funcionando sin memoria.
+    }
+  }, [restored, projectId, sceneEntryMode, sceneId, manualSceneNumber, shotNumber, director, camera, clip, take]);
+
+  // Escena nueva o plano nuevo = toma 1 (o la siguiente a la última que ya
+  // tenga esa escena+plano).
   function pickScene(id: string) {
     setSceneId(id);
     const scene = scenes.find((s) => s.id === id);
-    const num = scene ? scene.number : "";
-    setTake((lastTakeBySceneNumber[num] ?? 0) + 1);
+    setTake(nextTakeFor(scene?.number ?? "", shotNumber));
   }
 
   function updateManualSceneNumber(value: string) {
     setManualSceneNumber(value);
-    setTake((lastTakeBySceneNumber[value.trim()] ?? 0) + 1);
+    setTake(nextTakeFor(value.trim(), shotNumber));
+  }
+
+  function updateShotNumber(value: string) {
+    setShotNumber(value);
+    setTake(nextTakeFor(sceneNumber, value));
   }
 
   function switchToManualScene() {
     const prefill = selectedScene?.number ?? manualSceneNumber;
     setManualSceneNumber(prefill);
     setSceneEntryMode("manual");
-    setTake((lastTakeBySceneNumber[prefill.trim()] ?? 0) + 1);
+    setTake(nextTakeFor(prefill.trim(), shotNumber));
   }
 
   function switchToSceneList() {
@@ -138,7 +250,7 @@ export function ClaquetaBoard({
     const id = sceneId || scenes[0]?.id || "";
     setSceneId(id);
     const scene = scenes.find((s) => s.id === id);
-    setTake((lastTakeBySceneNumber[scene?.number ?? ""] ?? 0) + 1);
+    setTake(nextTakeFor(scene?.number ?? "", shotNumber));
   }
 
   async function handleClap() {
@@ -148,10 +260,11 @@ export function ClaquetaBoard({
     // servidor — en un rodaje real cada milisegundo de retraso en el
     // "clac" desincroniza la marca de referencia para el montaje.
     setClapping(true);
-    playClapSound();
-    window.setTimeout(() => setClapping(false), 380);
+    playClapSound(CLOSE_MS / 1000);
+    window.setTimeout(() => setClapping(false), CLOSE_MS + HOLD_MS);
 
     const thisTake = take;
+    const thisClip = clip.trim();
     const optimisticId = `pending-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     const optimisticEntry: ClapLogEntry = {
       id: optimisticId,
@@ -160,10 +273,18 @@ export function ClaquetaBoard({
       take: thisTake,
       director: director || null,
       camera: camera || null,
+      clip: thisClip || null,
       createdAt: new Date().toISOString(),
     };
     setLog((prev) => [optimisticEntry, ...prev].slice(0, 20));
     setTake(thisTake + 1);
+    setTakeMap((prev) => {
+      const key = takeKey(sceneNumber, shotNumber);
+      return { ...prev, [key]: Math.max(prev[key] ?? 0, thisTake) };
+    });
+    // La cámara crea un archivo nuevo por toma: el siguiente es el mismo
+    // nombre con el número sumado (C0009 → C0010).
+    if (thisClip) setClip(nextClip(thisClip));
 
     const fd = new FormData();
     // sceneId solo tiene sentido si la escena viene de la lista real — si se
@@ -174,6 +295,7 @@ export function ClaquetaBoard({
     fd.set("take", String(thisTake));
     if (director) fd.set("director", director);
     if (camera) fd.set("camera", camera);
+    if (thisClip) fd.set("clip", thisClip);
     if (selectedScene) {
       fd.set("intExt", selectedScene.intExt);
       fd.set("dayPart", selectedScene.dayPart);
@@ -281,18 +403,34 @@ export function ClaquetaBoard({
               deslizándose por encima de la ficha de ajustes de debajo,
               solapando los campos y volviéndolos ilegibles. */}
           <div className="select-none">
-            {/* Chapeta a rayas — la parte que "golpea" el tablero al claquetar. */}
-            <motion.div
-              animate={{ rotateX: clapping ? -38 : 0 }}
-              transition={{ duration: clapping ? 0.07 : 0.28, ease: clapping ? "easeIn" : "easeOut" }}
-              style={{
-                transformOrigin: "top center",
-                transformPerspective: 500,
-                backgroundImage:
-                  "repeating-linear-gradient(135deg, #f2f0ea 0 18px, #0a0a0a 18px 36px)",
-              }}
-              className="h-11 rounded-t-sm border-2 border-b-0 border-fg sm:h-14"
-            />
+            {/* Chapeta de dos piezas, como una claqueta de verdad: la de arriba
+                está ABIERTA en reposo (bisagra a la izquierda) y al tocar se
+                cierra de golpe sobre la fija. Así, en cámara, el fotograma en
+                que se juntan se ve sin dudas — y el sonido cae justo ahí. */}
+            <div className="relative pt-12 sm:pt-16">
+              <motion.div
+                initial={false}
+                animate={{ rotate: clapping ? 0 : -7 }}
+                transition={
+                  clapping
+                    ? { duration: CLOSE_MS / 1000, ease: "easeIn" }
+                    : { duration: 0.3, ease: "easeOut" }
+                }
+                style={{
+                  transformOrigin: "0% 100%",
+                  backgroundImage:
+                    "repeating-linear-gradient(45deg, #f2f0ea 0 18px, #0a0a0a 18px 36px)",
+                }}
+                className="h-10 rounded-t-sm border-2 border-fg sm:h-12"
+              />
+              <div
+                style={{
+                  backgroundImage:
+                    "repeating-linear-gradient(135deg, #f2f0ea 0 18px, #0a0a0a 18px 36px)",
+                }}
+                className="h-10 border-2 border-t-0 border-b-0 border-fg sm:h-12"
+              />
+            </div>
             <button
               type="button"
               onClick={handleClap}
@@ -313,7 +451,7 @@ export function ClaquetaBoard({
               </p>
             </div>
 
-            <div className="mt-3 grid grid-cols-2 gap-3 border-b border-fg/25 pb-3">
+            <div className="mt-3 grid grid-cols-3 gap-3 border-b border-fg/25 pb-3">
               <div className="min-w-0">
                 <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
                   Director
@@ -325,6 +463,12 @@ export function ClaquetaBoard({
                   Cámara
                 </p>
                 <p className="mt-0.5 truncate font-mono text-sm text-fg">{camera || "—"}</p>
+              </div>
+              <div className="min-w-0">
+                <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
+                  Clip
+                </p>
+                <p className="mt-0.5 truncate font-mono text-sm text-fg">{clip || "—"}</p>
               </div>
             </div>
 
@@ -374,14 +518,20 @@ export function ClaquetaBoard({
               {!sceneNumber ? "Elige una escena" : saving ? "Guardando…" : "Toca para claquetar"}
             </p>
 
+            {/* Destello blanco en el instante del cierre — lo más visible en
+                cámara (varios fotogramas a tope y luego se apaga). */}
             <AnimatePresence>
               {clapping && (
                 <motion.div
-                  initial={{ opacity: 0.9 }}
-                  animate={{ opacity: 0 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: [0, 1, 1, 0] }}
                   exit={{ opacity: 0 }}
-                  transition={{ duration: 0.35, ease: "easeOut" }}
-                  className="pointer-events-none absolute inset-0 bg-accent"
+                  transition={{
+                    duration: (CLOSE_MS + HOLD_MS) / 1000,
+                    times: [0, CLOSE_MS / (CLOSE_MS + HOLD_MS), (CLOSE_MS + 180) / (CLOSE_MS + HOLD_MS), 1],
+                    ease: "linear",
+                  }}
+                  className="pointer-events-none absolute inset-0 bg-white"
                 />
               )}
             </AnimatePresence>
@@ -471,17 +621,34 @@ export function ClaquetaBoard({
             </span>
             <input
               value={shotNumber}
-              onChange={(e) => setShotNumber(e.target.value)}
+              onChange={(e) => updateShotNumber(e.target.value)}
               placeholder="Plano (ej. 3A)"
               className="border border-line bg-transparent px-3 py-2.5 text-sm outline-none transition-colors focus:border-accent"
             />
           </label>
           <label className="flex flex-col gap-1">
             <span className="flex items-center gap-1.5 font-mono text-[10px] tracking-widest text-muted uppercase">
+              Clip de cámara (opcional)
+              {clip && (
+                <span className="flex items-center gap-1 normal-case tracking-normal text-accent">
+                  <span className="h-1 w-1 rounded-full bg-accent" />
+                  sube solo
+                </span>
+              )}
+            </span>
+            <input
+              value={clip}
+              onChange={(e) => setClip(e.target.value)}
+              placeholder="Archivo de la cámara (ej. C0009)"
+              autoCapitalize="characters"
+              className={`border bg-transparent px-3 py-2.5 font-mono text-sm outline-none transition-colors focus:border-accent ${clip ? "border-accent/40" : "border-line"}`}
+            />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="flex items-center gap-1.5 font-mono text-[10px] tracking-widest text-muted uppercase">
               Director (opcional)
-              {/* Aviso puramente visual: el campo ya se mantiene solo entre
-                  tomas mientras no salgas de esta pantalla — este punto solo
-                  lo comunica, no cambia cuándo ni cómo se recuerda. */}
+              {/* Aviso puramente visual: toda la claqueta se recuerda en este
+                  navegador aunque salgas a otra herramienta (ver readSaved). */}
               {director && (
                 <span className="flex items-center gap-1 normal-case tracking-normal text-accent">
                   <span className="h-1 w-1 rounded-full bg-accent" />
@@ -575,6 +742,7 @@ export function ClaquetaBoard({
                           <p className="font-mono text-sm">
                             {entry.shotNumber ? `Plano ${entry.shotNumber} · ` : ""}
                             Toma {entry.take}
+                            {entry.clip ? <span className="text-muted"> · {entry.clip}</span> : ""}
                             {entry.failed && (
                               <span className="ml-2 text-[10px] tracking-widest text-warn uppercase">
                                 Sin guardar

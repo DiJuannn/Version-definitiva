@@ -1245,6 +1245,9 @@ model ClapLog {
   take        Int
   director    String?
   camera      String?
+  // Nombre del archivo de vídeo que genera la cámara para esta toma (p. ej.
+  // "C0009" en Sony) — lo que se busca después en el material para montar.
+  clip        String?
   intExt      IntExt?
   dayPart     DayPart?
   // Parte de script: la toma buena (la "rodeada") y una observación breve.

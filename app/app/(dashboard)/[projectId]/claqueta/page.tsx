@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { PageHeader } from "@/components/PageHeader";
 import { ClaquetaBoard } from "@/components/ClaquetaBoard";
+import { getLastTakeByKey } from "@/lib/clapboard-core";
 
 export default async function ClaquetaPage({
   params,
@@ -14,7 +15,7 @@ export default async function ClaquetaPage({
   const project = await getProjectForCurrentUser(projectId);
   if (!project) notFound();
 
-  const [scenes, recentLog, takeAggregates] = await Promise.all([
+  const [scenes, recentLog, lastTakeByKey] = await Promise.all([
     prisma.scene.findMany({
       where: { projectId },
       orderBy: [{ order: "asc" }, { number: "asc" }],
@@ -37,21 +38,14 @@ export default async function ClaquetaPage({
         take: true,
         director: true,
         camera: true,
+        clip: true,
         good: true,
         notes: true,
         createdAt: true,
       },
     }),
-    prisma.clapLog.groupBy({
-      by: ["sceneNumber"],
-      where: { projectId },
-      _max: { take: true },
-    }),
+    getLastTakeByKey(projectId),
   ]);
-
-  const lastTakeBySceneNumber = Object.fromEntries(
-    takeAggregates.map((row) => [row.sceneNumber, row._max.take ?? 0]),
-  );
 
   const sceneOptions = scenes.map((scene) => ({
     id: scene.id,
@@ -84,7 +78,7 @@ export default async function ClaquetaPage({
           projectId={projectId}
           projectName={project.name}
           scenes={sceneOptions}
-          lastTakeBySceneNumber={lastTakeBySceneNumber}
+          lastTakeByKey={lastTakeByKey}
           initialLog={initialLog}
         />
       </div>

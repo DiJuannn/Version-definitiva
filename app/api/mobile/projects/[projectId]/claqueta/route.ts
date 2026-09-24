@@ -3,6 +3,7 @@ import { getMobileProfile } from "@/lib/mobile-auth";
 import { getProjectForProfile } from "@/lib/project-access";
 import { prisma } from "@/lib/prisma";
 import { CORS_HEADERS } from "@/lib/mobile-cors";
+import { getLastTakeByKey } from "@/lib/clapboard-core";
 
 export function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
@@ -32,7 +33,7 @@ export async function GET(
     );
   }
 
-  const [scenes, recentLog, takeAggregates] = await Promise.all([
+  const [scenes, recentLog, takeAggregates, lastTakeByKey] = await Promise.all([
     prisma.scene.findMany({
       where: { projectId },
       orderBy: [{ order: "asc" }, { number: "asc" }],
@@ -55,6 +56,7 @@ export async function GET(
         take: true,
         director: true,
         camera: true,
+        clip: true,
         good: true,
         notes: true,
         createdAt: true,
@@ -65,6 +67,7 @@ export async function GET(
       where: { projectId },
       _max: { take: true },
     }),
+    getLastTakeByKey(projectId),
   ]);
 
   const lastTakeBySceneNumber = Object.fromEntries(
@@ -81,7 +84,10 @@ export async function GET(
         locationName: scene.location?.name ?? null,
       })),
       log: recentLog.map((entry) => ({ ...entry, createdAt: entry.createdAt.toISOString() })),
+      // Solo por escena: lo sigue leyendo la versión de la app ya instalada.
       lastTakeBySceneNumber,
+      // Por escena + plano (clave de lib/clip-number.ts takeKey).
+      lastTakeByKey,
     },
     { headers: CORS_HEADERS },
   );

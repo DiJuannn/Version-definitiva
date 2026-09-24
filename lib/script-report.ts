@@ -15,6 +15,8 @@ export type ScriptTake = {
   at: string;
   director: string | null;
   camera: string | null;
+  // Archivo de vídeo de la cámara (p. ej. "C0009").
+  clip: string | null;
 };
 
 export type ScriptShot = {
@@ -134,6 +136,7 @@ export async function getScriptReport(projectId: string): Promise<ScriptReport> 
       at: log.createdAt.toISOString(),
       director: log.director,
       camera: log.camera,
+      clip: log.clip,
     });
   }
 
