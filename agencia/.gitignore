@@ -45,3 +45,4 @@ next-env.d.ts
 /test-media
 /e2e/artifacts
 !.env.example
+/.storage-test

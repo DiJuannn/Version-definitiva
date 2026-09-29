@@ -243,6 +243,87 @@ try {
   check(svgBox && Math.abs(svgBox.width - vid.vw * scale) < 2 && Math.abs(svgBox.height - vid.vh * scale) < 2, "En móvil el dibujo se pinta sobre el área real de la imagen");
   await shot(clm, "e2e-07-client-mobile");
 
+  // ─── Extra (sala de revisión): comportamiento del reproductor y del panel ──
+  step("Extra. Reproductor, borradores, búsqueda y exportación");
+  // Paso por fotograma: el clip tiene el número de fotograma impreso (25 fps).
+  await seek(cl, 100.5 / 25);
+  await cl.keyboard.press("ArrowRight");
+  await cl.waitForTimeout(300);
+  const f1 = await cl.evaluate(() => Math.floor(document.querySelector("video").currentTime * 25 + 1e-6));
+  await cl.keyboard.press("Shift+ArrowRight");
+  await cl.waitForTimeout(300);
+  const f2 = await cl.evaluate(() => Math.floor(document.querySelector("video").currentTime * 25 + 1e-6));
+  await cl.keyboard.press("ArrowLeft");
+  await cl.waitForTimeout(300);
+  const f3 = await cl.evaluate(() => Math.floor(document.querySelector("video").currentTime * 25 + 1e-6));
+  check(f1 === 101 && f2 === 111 && f3 === 110, `Paso por fotograma exacto con fps declarado (${f1}, ${f2}, ${f3})`);
+  // Velocidad y zoom
+  await cl.click("button[aria-label='Velocidad de reproducción']");
+  await cl.click("button:has-text('0.5×')");
+  check((await cl.evaluate(() => document.querySelector("video").playbackRate)) === 0.5, "Cambio de velocidad a 0,5×");
+  await cl.click("button[aria-label='Velocidad de reproducción']");
+  await cl.click("button:has-text('1×')");
+  await cl.keyboard.press("z");
+  check(await cl.locator("button[aria-label='Zoom 150 %']").isVisible(), "Zoom con la tecla Z");
+  await cl.keyboard.press("z");
+  await cl.keyboard.press("z");
+  await cl.keyboard.press("z");
+  // Repetir tramo: el comentario de tramo 4–7 s
+  await cl.locator("article:has-text('Este tramo va lento') button[aria-label^='Ir a']").click();
+  await cl.keyboard.press("r");
+  await cl.waitForTimeout(3600);
+  const looped = await cl.evaluate(() => document.querySelector("video").currentTime);
+  check(looped >= 3.9 && looped <= 7.1, `Repetición del tramo: la reproducción vuelve al inicio (t=${looped.toFixed(2)} s)`);
+  await cl.keyboard.press("r");
+  await cl.keyboard.press("k");
+  // Vista previa al pasar por la línea de tiempo
+  const track = await cl.locator("[role=slider][aria-label='Posición en el vídeo']").boundingBox();
+  await cl.mouse.move(track.x + track.width * 0.5, track.y + track.height / 2);
+  await cl.waitForTimeout(1200);
+  const preview = await cl.evaluate(() => {
+    const c = document.querySelector("section[aria-label='Reproductor'] canvas");
+    if (!c) return 0;
+    const d = c.getContext("2d").getImageData(0, 0, c.width, c.height).data;
+    let lit = 0;
+    for (let i = 0; i < d.length; i += 40) lit += d[i] + d[i + 1] + d[i + 2] > 30 ? 1 : 0;
+    return lit;
+  });
+  check(preview > 50, "Vista previa del fotograma al pasar por la línea de tiempo");
+  await cl.mouse.move(10, 10);
+  // Pantalla completa conservando el panel
+  await cl.keyboard.press("f");
+  await cl.waitForTimeout(500);
+  const fs = await cl.evaluate(() => !!document.fullscreenElement && !!document.fullscreenElement.querySelector("#composer"));
+  check(fs, "Pantalla completa con el panel y el compositor disponibles");
+  await cl.evaluate(() => document.exitFullscreen());
+  // Borrador recuperable tras recargar
+  await cl.fill("#composer textarea", "Borrador que no quiero perder");
+  await cl.waitForTimeout(500);
+  await cl.reload();
+  await waitVideo(cl);
+  // El <video> se renderiza en servidor y puede estar listo antes de hidratar: esperamos al borrador.
+  const restored = await cl.waitForFunction(() => document.querySelector("#composer textarea")?.value === "Borrador que no quiero perder", null, { timeout: 10000 }).then(() => true, () => false);
+  check(restored, "El borrador sobrevive a una recarga");
+  await cl.fill("#composer textarea", "");
+  // Búsqueda y filtros
+  await cl.fill("[aria-label='Buscar en comentarios']", "pelota");
+  check((await cl.locator("article").count()) === 1, "Búsqueda por texto");
+  await cl.fill("[aria-label='Buscar en comentarios']", "");
+  await cl.click("button:has-text('Filtros')");
+  await cl.check("text=Solo con dibujo >> input");
+  check((await cl.locator("article").count()) === 1, "Filtro: solo comentarios con dibujo");
+  await cl.selectOption("[aria-label='Estado']", "none");
+  check((await cl.locator("article").count()) === 0, "Filtros combinados (con dibujo + sin corrección)");
+  await cl.click("button:has-text('Quitar filtros')");
+  check((await cl.locator("article").count()) === 4, "Quitar filtros vuelve a mostrar todo");
+  // Exportaciones e informe
+  const csv = await cl.evaluate(async (v) => (await fetch(`/api/review/${v}/export?format=csv`)).text(), v1);
+  check(csv.includes("Aquí el texto entra demasiado pronto") && csv.includes("00:00:02:00") && !csv.includes("Nota interna"), "Exportación CSV con timecode y sin comentarios internos");
+  const rep = await cl.context().newPage();
+  await rep.goto(`${BASE}/revision/${v1}/informe`);
+  check((await rep.locator("ol > li").count()) === 4 && !(await rep.locator("text=Nota interna").count()), "Informe imprimible con los 4 comentarios del cliente");
+  await rep.close();
+
   // ─── 8. Editor responde y atiende correcciones ────────────────────────
   step("8. Editor responde y atiende correcciones");
   await ed.goto(`${BASE}/inicio`);
@@ -369,6 +450,31 @@ try {
   await coord.waitForTimeout(800);
   await guest.goto(link);
   check(await guest.locator("text=Este enlace no está disponible").isVisible(), "Tras revocar, el enlace deja de funcionar");
+
+  step("Extra. Enlace con contraseña y dominio");
+  await coord.goto(`${BASE}/proyectos/${projectId}/compartir`);
+  await coord.fill("#s-name", "Protegido");
+  await coord.fill("#s-pw", "palabra-clave");
+  await coord.fill("#s-domain", "cliente.com");
+  await coord.click("button:has-text('Crear enlace')");
+  await coord.waitForSelector("input[aria-label='Enlace de revisión']");
+  const link2 = await coord.inputValue("input[aria-label='Enlace de revisión']");
+  const g2 = await (await b.newContext()).newPage();
+  await g2.goto(link2);
+  await g2.fill("#g-name", "Pepa");
+  await g2.fill("#g-email", "pepa@otro.com");
+  await g2.fill("#g-pw", "mala");
+  await g2.click("button:has-text('Entrar a la revisión')");
+  check(await g2.locator("text=Contraseña incorrecta").isVisible({ timeout: 10000 }).catch(() => false) || (await g2.waitForSelector("text=Contraseña incorrecta", { timeout: 10000 }).then(() => true)), "Contraseña del enlace obligatoria");
+  await g2.fill("#g-pw", "palabra-clave");
+  await g2.click("button:has-text('Entrar a la revisión')");
+  await g2.waitForSelector("text=solo admite emails de cliente.com", { timeout: 10000 });
+  check(true, "Restricción por dominio de email");
+  await g2.fill("#g-email", "pepa@cliente.com");
+  await g2.click("button:has-text('Entrar a la revisión')");
+  const inside = await g2.waitForSelector(`text=Reel vertical ${RUN}`, { timeout: 15000 }).then(() => true, () => false);
+  check(inside, "Con contraseña y dominio correctos, el invitado ve el proyecto");
+  check(await g2.locator("text=Revisar V2").isVisible(), "El invitado de proyecto ve la última versión publicada");
 
   // ─── Avisos ────────────────────────────────────────────────────────────
   step("Extra. Avisos");

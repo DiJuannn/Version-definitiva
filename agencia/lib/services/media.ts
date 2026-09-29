@@ -249,7 +249,8 @@ export async function requestDownload(a: Actor, assetId: string, ip?: string | n
     await loadProject(a, asset.projectId);
     allowed = isInternal(a) || (a.kind === "user" && asset.visibility === "CLIENT");
   }
-  if (!allowed) throw forbidden("No tienes permiso para descargar este archivo");
+  // A clientes e invitados no se les confirma que el archivo existe.
+  if (!allowed) throw isInternal(a) ? forbidden("No tienes permiso para descargar este archivo") : notFound("Archivo");
 
   await db.$transaction(async (tx) => {
     await tx.downloadLog.create({

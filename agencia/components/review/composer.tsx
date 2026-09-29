@@ -98,9 +98,11 @@ export function Composer({
               role="radio"
               aria-checked={draft.mode === m}
               onClick={() => {
-                if (m === "range" && !draft.range) set({ mode: m, range: { start: currentMs, end: currentMs + 3000 } });
-                else if (m === "instant") set({ mode: m, timeMs: currentMs });
-                else set({ mode: m, ...(m === "general" ? { shapes: [] } : {}) });
+                // Una nota general suele ser opinión, no un cambio concreto: se propone sin corrección.
+                if (m === "range" && !draft.range) set({ mode: m, isCorrection: true, range: { start: currentMs, end: currentMs + 3000 } });
+                else if (m === "instant") set({ mode: m, isCorrection: true, timeMs: currentMs });
+                else if (m === "general") set({ mode: m, isCorrection: false, shapes: [] });
+                else set({ mode: m, isCorrection: true });
               }}
               className={cx("inline-flex h-7 items-center gap-1 rounded px-2 text-[12px]", draft.mode === m ? "bg-white/12 text-c-ink" : "text-c-ink-3 hover:text-c-ink")}
             >

@@ -46,6 +46,26 @@ export const PIECE_STATUS: Record<PieceStatus, { label: string; tone: Tone }> = 
   CANCELLED: { label: "Cancelada", tone: "muted" },
 };
 
+/** Lo que ve el cliente: sin detalles del flujo interno de la agencia. */
+export const CLIENT_PIECE_STATUS: Record<PieceStatus, { label: string; tone: Tone }> = {
+  DRAFT: { label: "En preparación", tone: "muted" },
+  PENDING_ASSIGNMENT: { label: "En preparación", tone: "muted" },
+  ASSIGNED: { label: "En preparación", tone: "info" },
+  IN_EDIT: { label: "En edición", tone: "progress" },
+  INTERNAL_REVIEW: { label: "En edición", tone: "progress" },
+  CLIENT_REVIEW: { label: "Lista para revisar", tone: "marker" },
+  CHANGES_REQUESTED: { label: "Cambios pedidos", tone: "attention" },
+  IN_CORRECTION: { label: "Aplicando cambios", tone: "progress" },
+  APPROVED: { label: "Aprobada", tone: "success" },
+  FINAL_DELIVERY: { label: "Entregada", tone: "success" },
+  COMPLETED: { label: "Completada", tone: "success" },
+  CANCELLED: { label: "Cancelada", tone: "muted" },
+};
+
+export function pieceStatusFor(role: string | null | undefined, status: PieceStatus) {
+  return role === "CLIENT" ? CLIENT_PIECE_STATUS[status] : PIECE_STATUS[status];
+}
+
 export const VERSION_STATUS: Record<VersionStatus, { label: string; tone: Tone }> = {
   INTERNAL_REVIEW: { label: "Revisión interna", tone: "info" },
   INTERNAL_CHANGES: { label: "Cambios internos", tone: "danger" },

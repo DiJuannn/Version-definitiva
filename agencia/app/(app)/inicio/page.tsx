@@ -9,7 +9,7 @@ import { Chip, Tape } from "@/components/ui/chip";
 import { EmptyState, PageHeader, Section } from "@/components/ui/misc";
 import { PieceList, PieceRow } from "@/components/work/piece-row";
 import { ActivityList } from "@/components/work/activity";
-import { AVAILABILITY, CATEGORY_LABEL, PIECE_STATUS, PROJECT_STATUS } from "@/lib/domain/labels";
+import { AVAILABILITY, CATEGORY_LABEL, CLIENT_PIECE_STATUS, PIECE_STATUS, PROJECT_STATUS } from "@/lib/domain/labels";
 import { formatClock } from "@/lib/domain/timecode";
 import { fmtDate, fmtDue } from "@/lib/format";
 import { cx } from "@/components/ui/cx";
@@ -144,12 +144,16 @@ async function EditorHome({ me }: { me: UserActor }) {
   const d = await editorDashboard(me);
   return (
     <>
-      <PageHeader eyebrow={fmtDate(new Date())} title={greeting(me.name)} meta={<span>{d.pieces.length} piezas asignadas · {d.corrections.length} correcciones abiertas</span>} />
+      <PageHeader
+        eyebrow={fmtDate(new Date())}
+        title={greeting(me.name)}
+        meta={<span>{d.pieces.length === 1 ? "1 pieza asignada" : `${d.pieces.length} piezas asignadas`} · {d.corrections.length === 1 ? "1 corrección abierta" : `${d.corrections.length} correcciones abiertas`}</span>}
+      />
       <div className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
         <div className="flex flex-col gap-5">
           <Section title="Ahora" description="Piezas que dependen de ti, las más urgentes primero.">
             {d.now.length ? (
-              <PieceList>{d.now.map((p) => <PieceRow key={p.id} p={p} />)}</PieceList>
+              <PieceList>{d.now.map((p) => <PieceRow key={p.id} p={{ ...p, editor: null }} />)}</PieceList>
             ) : (
               <EmptyState title="Nada urgente">Cuando te asignen una pieza o te pidan cambios aparecerá aquí.</EmptyState>
             )}
@@ -193,7 +197,7 @@ async function EditorHome({ me }: { me: UserActor }) {
           </Section>
         </div>
         <Section title="Todas mis piezas">
-          {d.pieces.length ? <PieceList>{d.pieces.map((p) => <PieceRow key={p.id} p={p} />)}</PieceList> : <EmptyState title="No tienes piezas asignadas" />}
+          {d.pieces.length ? <PieceList>{d.pieces.map((p) => <PieceRow key={p.id} p={{ ...p, editor: null }} />)}</PieceList> : <EmptyState title="No tienes piezas asignadas" />}
         </Section>
       </div>
     </>
@@ -238,7 +242,7 @@ async function ClientHome({ me }: { me: UserActor }) {
                     <Link href={`/piezas/${p.id}`} className="min-w-0 flex-1 truncate text-sm font-medium after:absolute after:inset-0">
                       {p.title}
                     </Link>
-                    <Chip tone={PIECE_STATUS[p.status].tone}>{PIECE_STATUS[p.status].label}</Chip>
+                    <Chip tone={CLIENT_PIECE_STATUS[p.status].tone}>{CLIENT_PIECE_STATUS[p.status].label}</Chip>
                   </li>
                 ))}
               </ul>
@@ -267,8 +271,8 @@ async function ClientHome({ me }: { me: UserActor }) {
           <Section title="Tus proyectos" actions={<Link href="/proyectos" className="text-[13px] text-ink-2 hover:text-ink">Ver todos</Link>}>
             <ul className="divide-y divide-line">
               {d.projects.map((p) => (
-                <li key={p.id} className="relative flex items-center gap-3 px-4 py-3 hover:bg-surface-2">
-                  <Link href={`/proyectos/${p.id}`} className="min-w-0 flex-1 truncate text-sm font-medium after:absolute after:inset-0">
+                <li key={p.id} className="relative flex flex-wrap items-center gap-x-3 gap-y-1.5 px-4 py-3 hover:bg-surface-2">
+                  <Link href={`/proyectos/${p.id}`} className="min-w-0 flex-1 basis-40 truncate text-sm font-medium after:absolute after:inset-0">
                     {p.name}
                   </Link>
                   {p.brief?.status === "DRAFT" && <Chip tone="attention">Brief sin enviar</Chip>}

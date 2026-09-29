@@ -99,7 +99,7 @@ export default async function ProjectPage(props: PageProps<"/proyectos/[projectI
             {project.pieces.length ? (
               <PieceList>
                 {project.pieces.map((p) => (
-                  <PieceRow key={p.id} showProject={false} p={{ ...p, currentVersion: me.role === "CLIENT" ? p.clientVersion : p.currentVersion }} />
+                  <PieceRow key={p.id} showProject={false} clientView={me.role === "CLIENT"} p={{ ...p, editor: me.role === "CLIENT" ? null : p.editor, _count: me.role === "CLIENT" ? undefined : p._count, currentVersion: me.role === "CLIENT" ? p.clientVersion : p.currentVersion }} />
                 ))}
               </PieceList>
             ) : (

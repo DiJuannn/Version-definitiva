@@ -3,7 +3,7 @@ import { AlertTriangle, MessageSquareWarning } from "lucide-react";
 import type { PieceStatus, Priority, VersionStatus } from "@prisma/client";
 import { Chip, Tape } from "@/components/ui/chip";
 import { cx } from "@/components/ui/cx";
-import { PIECE_STATUS, PRIORITY } from "@/lib/domain/labels";
+import { CLIENT_PIECE_STATUS, PIECE_STATUS, PRIORITY } from "@/lib/domain/labels";
 import { pieceRisk } from "@/lib/domain/piece-status";
 import { fmtDue } from "@/lib/format";
 
@@ -20,9 +20,9 @@ export type PieceRowData = {
   _count?: { corrections: number };
 };
 
-export function PieceRow({ p, href, showProject = true, action }: { p: PieceRowData; href?: string; showProject?: boolean; action?: React.ReactNode }) {
+export function PieceRow({ p, href, showProject = true, action, clientView = false }: { p: PieceRowData; href?: string; showProject?: boolean; action?: React.ReactNode; clientView?: boolean }) {
   const risk = pieceRisk(p.status, p.dueDate);
-  const s = PIECE_STATUS[p.status];
+  const s = (clientView ? CLIENT_PIECE_STATUS : PIECE_STATUS)[p.status];
   return (
     <li className="group relative flex flex-col gap-2 px-4 py-3 transition-colors hover:bg-surface-2 sm:flex-row sm:items-center sm:gap-4">
       <div className="min-w-0 flex-1">

@@ -1,14 +1,14 @@
 "use client";
 
-import { useActionState } from "react";
+import { useKeepValuesAction } from "@/components/ui/action-form";
 import { loginAction } from "@/app/actions/auth";
 import { Field, Input } from "@/components/ui/field";
 import { buttonClass } from "@/components/ui/button";
 
 export function LoginForm({ next }: { next: string }) {
-  const [state, action, pending] = useActionState(loginAction, null);
+  const { state, pending, onSubmit } = useKeepValuesAction(loginAction);
   return (
-    <form action={action} className="flex flex-col gap-4" noValidate>
+    <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
       <input type="hidden" name="next" value={next} />
       <Field label="Email" htmlFor="email">
         <Input id="email" name="email" type="email" autoComplete="username" required autoFocus />

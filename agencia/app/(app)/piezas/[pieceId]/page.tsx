@@ -13,7 +13,7 @@ import { DefinitionList, EmptyState, Notice, PageHeader, Section } from "@/compo
 import { DownloadButton } from "@/components/work/download-button";
 import { AssignForm, BlockerForm, DeliveryForm } from "./forms";
 import { NewVersionPanel } from "./new-version";
-import { BLOCKER_KIND, CATEGORY_LABEL, CORRECTION_STATUS, PIECE_STATUS, VERSION_STATUS } from "@/lib/domain/labels";
+import { BLOCKER_KIND, CATEGORY_LABEL, CORRECTION_STATUS, PIECE_STATUS, VERSION_STATUS, pieceStatusFor } from "@/lib/domain/labels";
 import { manualPieceTransitions } from "@/lib/domain/piece-status";
 import { formatClock } from "@/lib/domain/timecode";
 import { fmtBytes, fmtDate, fmtDateTime, fmtDue } from "@/lib/format";
@@ -67,7 +67,7 @@ export default async function PiecePage(props: PageProps<"/piezas/[pieceId]">) {
         title={piece.title}
         meta={
           <>
-            <Chip tone={PIECE_STATUS[piece.status].tone}>{PIECE_STATUS[piece.status].label}</Chip>
+            <Chip tone={pieceStatusFor(me.role, piece.status).tone}>{pieceStatusFor(me.role, piece.status).label}</Chip>
             <span className="text-ink-3">{fmtDue(piece.dueDate)}</span>
             {internal && <span className="text-ink-3">· {piece.editor ? `Edita ${piece.editor.name}` : "Sin editor"}</span>}
           </>

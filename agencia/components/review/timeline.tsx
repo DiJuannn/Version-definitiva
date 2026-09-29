@@ -157,8 +157,14 @@ function HoverFrame({ src, ms }: { src: string; ms: number }) {
     const v = document.createElement("video");
     v.muted = true;
     v.preload = "auto";
-    v.crossOrigin = "anonymous";
-    v.src = src;
+    v.playsInline = true;
+    const seekNext = () => {
+      // Solo se busca cuando hay metadatos; si no, se guarda la petición.
+      if (pending.current === null || v.readyState < 1 || busy.current) return;
+      busy.current = true;
+      v.currentTime = pending.current / 1000;
+      pending.current = null;
+    };
     const draw = () => {
       const c = canvas.current;
       if (c && v.videoWidth) {
@@ -166,31 +172,30 @@ function HoverFrame({ src, ms }: { src: string; ms: number }) {
         c.getContext("2d")?.drawImage(v, 0, 0, c.width, c.height);
       }
       busy.current = false;
-      if (pending.current !== null) {
-        const next = pending.current;
-        pending.current = null;
-        busy.current = true;
-        v.currentTime = next / 1000;
-      }
+      seekNext();
     };
     v.addEventListener("seeked", draw);
+    v.addEventListener("loadedmetadata", seekNext);
+    v.src = src;
     video.current = v;
     return () => {
       v.removeEventListener("seeked", draw);
+      v.removeEventListener("loadedmetadata", seekNext);
       v.removeAttribute("src");
       v.load();
+      video.current = null;
     };
   }, [src]);
 
   useEffect(() => {
     const v = video.current;
     if (!v) return;
-    if (busy.current) {
-      pending.current = ms;
-      return;
+    pending.current = ms;
+    if (!busy.current && v.readyState >= 1) {
+      busy.current = true;
+      v.currentTime = ms / 1000;
+      pending.current = null;
     }
-    busy.current = true;
-    v.currentTime = ms / 1000;
   }, [ms]);
 
   return <canvas ref={canvas} width={160} height={90} className="block w-40 rounded border border-white/20 bg-black shadow-lg" />;
