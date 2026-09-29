@@ -68,6 +68,7 @@ export function Thread({
   onCorrection,
   canWithdrawOthers,
   versionId,
+  onSuggestCategory,
 }: {
   c: ReviewComment;
   n: number;
@@ -87,6 +88,7 @@ export function Thread({
   onCorrection: (id: string, patch: Record<string, unknown>) => Promise<void>;
   canWithdrawOthers: boolean;
   versionId: string;
+  onSuggestCategory?: (correctionId: string) => Promise<{ category: string; reason: string }>;
 }) {
   const [replyOpen, setReplyOpen] = useState(false);
   const [reply, setReply, clearReply] = useDraft(`corte:reply:${versionId}:${c.id}`, { body: "", mentionIds: [] as string[] });
@@ -96,6 +98,7 @@ export function Thread({
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [copied, setCopied] = useState(false);
+  const [aiSug, setAiSug] = useState<{ category: string; reason: string } | null>(null);
 
   const run = async (fn: () => Promise<void>) => {
     setBusy(true);
@@ -256,6 +259,17 @@ export function Thread({
               ))}
             </select>
           )}
+          {team && onSuggestCategory && !locked && (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void run(async () => setAiSug(await onSuggestCategory(corr.id)))}
+              className="h-6 rounded px-1.5 text-[11px] text-c-ink-3 hover:bg-white/8 hover:text-c-ink"
+              title="Propuesta de la IA; no se aplica sola"
+            >
+              Sugerir categoría (IA)
+            </button>
+          )}
           <span className="ml-auto flex gap-1">
             {!locked &&
               targets.map((t) => (
@@ -280,6 +294,17 @@ export function Thread({
         </div>
       )}
 
+      {aiSug && corr && (
+        <div className="mt-2 flex flex-wrap items-center gap-2 rounded-md border border-c-line bg-c-bg p-2 text-[12px] text-c-ink-2">
+          <span>
+            Propuesta de la IA: <strong className="text-c-ink">{CATEGORY_LABEL[aiSug.category as keyof typeof CATEGORY_LABEL]}</strong> — {aiSug.reason}
+          </span>
+          <button type="button" className="rounded bg-white/10 px-2 py-0.5 text-c-ink" onClick={() => void run(async () => { await onCorrection(corr.id, { category: aiSug.category }); setAiSug(null); })}>
+            Aplicar
+          </button>
+          <button type="button" className="px-1 text-c-ink-3" onClick={() => setAiSug(null)}>Descartar</button>
+        </div>
+      )}
       {showHistory && corr && (
         <ol className="mt-2 rounded-md bg-c-bg p-2 text-[11px] text-c-ink-2">
           {corr.history.map((h, i) => (

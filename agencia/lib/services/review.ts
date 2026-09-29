@@ -8,6 +8,7 @@ import type { Annotation } from "@/lib/domain/annotation";
 import { mediaUrl, signMedia } from "@/lib/storage/signed-url";
 import { canDecide } from "./approvals";
 import { reviewParticipants } from "./participants";
+import { aiAvailable } from "./ai";
 
 export function mediaSubject(a: Actor) {
   return a.kind === "user" ? `u:${a.sessionId}` : `g:${a.id}`;
@@ -113,6 +114,7 @@ export async function getReviewPayload(a: Actor, versionId: string) {
       : null,
   }));
 
+  const ai = internal ? await aiAvailable(a.organizationId) : false;
   const canComment = a.kind === "guest" ? a.link.canComment && !!v.publishedAt : internal || !!v.publishedAt;
   const decidable = !!v.publishedAt && isDecidable(v.status);
 
@@ -202,6 +204,7 @@ export async function getReviewPayload(a: Actor, versionId: string) {
       internalChanges: isManager(a) && v.status === "INTERNAL_REVIEW",
       revoke: a.kind === "user" && a.role === "ADMIN",
       share: isManager(a),
+      ai,
     },
   };
 }

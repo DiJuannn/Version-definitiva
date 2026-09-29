@@ -587,6 +587,7 @@ export function ReviewRoom({
                 onEdit={(id, body) => mutate(`/api/review/comments/${id}`, "PATCH", { body }, "Comentario editado")}
                 onWithdraw={(id) => mutate(`/api/review/comments/${id}`, "DELETE", undefined, "Comentario retirado")}
                 onCorrection={(id, patch) => mutate(`/api/review/corrections/${id}`, "PATCH", patch)}
+                onSuggestCategory={p.perms.ai ? (id) => apiFetch(`/api/review/corrections/${id}/ai-category`, linkId, { method: "POST" }) : undefined}
               />
             ))
           ) : (
@@ -1036,6 +1037,8 @@ function VersionInfo({ p, fmt, versionHrefBase, onRevoke }: { p: Payload; fmt: (
         )}
       </section>
 
+      {p.me.internal && <AiSummary p={p} />}
+
       <section>
         <h3 className="mb-2 text-[12px] font-semibold tracking-wider text-c-ink-3 uppercase">Decisiones</h3>
         {p.approvals.length ? (
@@ -1102,6 +1105,48 @@ function VersionInfo({ p, fmt, versionHrefBase, onRevoke }: { p: Payload; fmt: (
         </ul>
       </section>
     </div>
+  );
+}
+
+function AiSummary({ p }: { p: Payload }) {
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  return (
+    <section>
+      <h3 className="mb-2 text-[12px] font-semibold tracking-wider text-c-ink-3 uppercase">Resumen de la conversación</h3>
+      {p.perms.ai ? (
+        <>
+          <button
+            type="button"
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true);
+              setErr("");
+              try {
+                setText((await apiFetch<{ summary: string }>(`/api/review/${p.version.id}/ai-summary`, null, { method: "POST" })).summary);
+              } catch (e) {
+                setErr((e as Error).message);
+              } finally {
+                setBusy(false);
+              }
+            }}
+            className="h-8 rounded-md border border-c-line px-2.5 text-[13px] text-c-ink hover:bg-white/8"
+          >
+            {busy ? "Resumiendo…" : "Resumir con IA"}
+          </button>
+          {text && (
+            <div className="mt-2 rounded-md bg-c-bg p-3 text-[13px] whitespace-pre-line text-c-ink-2">
+              <p className="mb-1 text-[11px] text-c-ink-3">Propuesta generada por IA: revísala antes de usarla.</p>
+              {text}
+            </div>
+          )}
+          {err && <p role="alert" className="mt-2 text-[12px] text-[#ff8a80]">{err}</p>}
+        </>
+      ) : (
+        <p className="text-[13px] text-c-ink-3">La IA no está activada en esta agencia. El resumen manual sigue disponible exportando los comentarios.</p>
+      )}
+    </section>
   );
 }
 
