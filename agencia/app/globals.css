@@ -1,0 +1,133 @@
+@import "tailwindcss";
+
+/*
+ * Sistema visual de Corte.
+ * - Sala (app): grises fríos de sala de montaje, tinta casi negra.
+ * - Cine (revisión): oscuro neutro para no teñir la imagen.
+ * - Acento único: amarillo lápiz graso (marcas sobre película). Se usa para
+ *   marcar, nunca como texto sobre fondo claro.
+ */
+:root {
+  --bg: #eceef1;
+  --surface: #ffffff;
+  --surface-2: #f6f7f9;
+  --line: #d9dde3;
+  --line-strong: #bfc5ce;
+  --ink: #14161a;
+  --ink-2: #454c57;
+  --ink-3: #646c78;
+  --marker: #ffd23f;
+  --marker-soft: #fff0b3;
+  --marker-ink: #4d3d00;
+  --focus: #2f5bea;
+
+  --tone-info: #2548c9;
+  --tone-info-bg: #e5ebfc;
+  --tone-progress: #0b6f78;
+  --tone-progress-bg: #d9f1f2;
+  --tone-attention: #8f5100;
+  --tone-attention-bg: #ffefd1;
+  --tone-success: #17704a;
+  --tone-success-bg: #daf2e5;
+  --tone-danger: #b3261e;
+  --tone-danger-bg: #fbe3df;
+  --tone-muted: #535b67;
+  --tone-muted-bg: #e5e8ec;
+
+  /* Sala de revisión */
+  --c-bg: #0a0b0d;
+  --c-panel: #121418;
+  --c-panel-2: #191c21;
+  --c-line: #262a32;
+  --c-ink: #e8eaee;
+  --c-ink-2: #a6adb8;
+  --c-ink-3: #7c8490;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-marker: var(--marker);
+  --color-marker-soft: var(--marker-soft);
+  --color-marker-ink: var(--marker-ink);
+  --color-focus: var(--focus);
+  --color-c-bg: var(--c-bg);
+  --color-c-panel: var(--c-panel);
+  --color-c-panel-2: var(--c-panel-2);
+  --color-c-line: var(--c-line);
+  --color-c-ink: var(--c-ink);
+  --color-c-ink-2: var(--c-ink-2);
+  --color-c-ink-3: var(--c-ink-3);
+
+  --font-sans: var(--ff-body), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--ff-display), var(--ff-body), ui-sans-serif, sans-serif;
+  --font-mono: var(--ff-code), ui-monospace, monospace;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--ff-body), ui-sans-serif, system-ui, sans-serif;
+  font-feature-settings: "ss01", "cv11";
+}
+
+/* Foco visible y consistente para teclado */
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.cine :focus-visible {
+  outline-color: var(--marker);
+}
+
+.font-display {
+  font-family: var(--ff-display), var(--ff-body), sans-serif;
+  font-stretch: 112%;
+  letter-spacing: -0.01em;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Etiqueta tipo cinta de carrocero: bordes dentados como cinta rasgada a mano. */
+.tape {
+  clip-path: polygon(
+    0 8%, 4px 0, 100% 0, calc(100% - 3px) 30%, 100% 55%, calc(100% - 4px) 78%, 100% 100%,
+    3px 100%, 0 72%, 4px 50%, 0 26%
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+.cine .scroll-thin {
+  scrollbar-color: var(--c-line) transparent;
+}
+
+@keyframes pulse-marker {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 210, 63, 0.55); }
+  50% { box-shadow: 0 0 0 6px rgba(255, 210, 63, 0); }
+}
+.flash-marker {
+  animation: pulse-marker 1.2s ease-out 2;
+}

@@ -12,13 +12,6 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
-    "lib/generated/**",
-    // Scripts de herramientas sueltas (Node CommonJS), no son parte de la
-    // app ni se compilan con Next.js.
-    "scripts/**",
-    // Plataforma de la agencia: proyecto independiente con su propio
-    // package.json, lint y tsconfig (ver agencia/README.md).
-    "agencia/**",
   ]),
 ]);
 

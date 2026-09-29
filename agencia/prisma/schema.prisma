@@ -1,0 +1,921 @@
+// Modelo de datos de Corte — plataforma interna de la agencia.
+// Reglas generales (ver ARCHITECTURE.md):
+// - Toda entidad de negocio lleva organizationId (aislamiento multi-organización).
+// - Los importes se guardan en céntimos (Int) con moneda ISO explícita.
+// - Las aprobaciones, eventos de correcciones y auditoría son append-only.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ───────────────────────── Organización y usuarios ─────────────────────────
+
+enum ApprovalPolicy {
+  // No se puede aprobar mientras haya correcciones pendientes o en curso.
+  BLOCK_IF_OPEN
+  // Se puede aprobar, pero hay que confirmarlo explícitamente; se registra el
+  // número de correcciones abiertas en el momento de aprobar.
+  ALLOW_WITH_ACK
+}
+
+model Organization {
+  id             String         @id @default(cuid())
+  name           String
+  slug           String         @unique
+  currency       String         @default("EUR")
+  // Impuesto por defecto en puntos básicos (2100 = 21 %). Solo informativo.
+  defaultTaxBps  Int            @default(2100)
+  approvalPolicy ApprovalPolicy @default(ALLOW_WITH_ACK)
+  // Permite que los clientes creen solicitudes de proyecto.
+  clientRequests Boolean        @default(true)
+  // Permite enviar datos de clientes a un proveedor de IA externo.
+  aiEnabled      Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  users          User[]
+  clients        Client[]
+  teams          Team[]
+  projects       Project[]
+  pieces         Piece[]
+  media          MediaAsset[]
+  shareLinks     ShareLink[]
+  notifications  Notification[]
+  auditLogs      AuditLog[]
+  packages       ServicePackage[]
+  financeLines   FinanceLine[]
+  emailOutbox    EmailOutbox[]
+}
+
+enum Role {
+  ADMIN
+  COORDINATOR
+  EDITOR
+  CLIENT
+}
+
+model User {
+  id             String    @id @default(cuid())
+  organizationId String
+  email          String    @unique
+  name           String
+  role           Role
+  passwordHash   String
+  active         Boolean   @default(true)
+  // Solo para usuarios CLIENT: cliente al que pertenecen.
+  clientId       String?
+  // Permiso explícito de ver información económica (coordinadores).
+  canViewFinance Boolean   @default(false)
+  // Editores: ver sus propios pagos.
+  canViewOwnPay  Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  lastLoginAt    DateTime?
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  client         Client?      @relation(fields: [clientId], references: [id])
+  sessions       Session[]
+  editorProfile  EditorProfile?
+  teamsCoordinated Team[]     @relation("TeamCoordinator")
+  teamMemberships TeamMember[]
+  projectsCoordinated Project[] @relation("ProjectCoordinator")
+  piecesEditing  Piece[]      @relation("PieceEditor")
+  versionsUploaded Version[]  @relation("VersionUploader")
+  versionsPublished Version[] @relation("VersionPublisher")
+  comments       Comment[]
+  correctionsAssigned Correction[] @relation("CorrectionAssignee")
+  notifications  Notification[]
+  notificationPrefs NotificationPreference[]
+  passwordResets PasswordReset[]
+
+  @@index([organizationId, role])
+}
+
+model Session {
+  id         String    @id @default(cuid())
+  userId     String
+  // SHA-256 del token; el token en claro solo vive en la cookie.
+  tokenHash  String    @unique
+  createdAt  DateTime  @default(now())
+  expiresAt  DateTime
+  lastSeenAt DateTime  @default(now())
+  revokedAt  DateTime?
+  userAgent  String?
+  ip         String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model PasswordReset {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model RateLimit {
+  key         String   @id
+  windowStart DateTime
+  count       Int
+}
+
+// ───────────────────────── Equipos y editores ─────────────────────────
+
+enum Availability {
+  AVAILABLE
+  LIMITED
+  UNAVAILABLE
+}
+
+model EditorProfile {
+  userId           String       @id
+  specialties      String[]
+  software         String[]
+  availability     Availability @default(AVAILABLE)
+  availabilityNote String?
+  // Número de piezas activas simultáneas que puede llevar con comodidad.
+  capacity         Int          @default(3)
+  // Tarifa privada por pieza en céntimos (solo ADMIN / finanzas).
+  rateCents        Int?
+  rateCurrency     String       @default("EUR")
+  internalNotes    String?
+  updatedAt        DateTime     @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Team {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  coordinatorId  String
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  coordinator  User         @relation("TeamCoordinator", fields: [coordinatorId], references: [id])
+  members      TeamMember[]
+  projects     Project[]
+}
+
+model TeamMember {
+  teamId String
+  userId String
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([teamId, userId])
+}
+
+// ───────────────────────── Clientes y perfil de estilo ─────────────────────────
+
+model Client {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  contactName    String?
+  contactEmail   String?
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization  Organization   @relation(fields: [organizationId], references: [id])
+  users         User[]
+  projects      Project[]
+  styleProfiles StyleProfile[]
+  styleSuggestions StyleSuggestion[]
+  packages      ServicePackage[]
+
+  @@index([organizationId])
+}
+
+// Cada cambio del perfil crea una nueva fila (versionado). Los proyectos
+// apuntan a la versión vigente en su creación, así que editar el perfil no
+// altera trabajos antiguos.
+model StyleProfile {
+  id          String   @id @default(cuid())
+  clientId    String
+  version     Int
+  data        Json
+  createdById String
+  createdAt   DateTime @default(now())
+
+  client   Client    @relation(fields: [clientId], references: [id])
+  projects Project[]
+
+  @@unique([clientId, version])
+}
+
+enum SuggestionStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model StyleSuggestion {
+  id           String           @id @default(cuid())
+  clientId     String
+  field        String
+  text         String
+  // Correcciones que sirven de evidencia (ids) y cómo se detectó.
+  evidence     Json
+  source       String
+  status       SuggestionStatus @default(PENDING)
+  decidedById  String?
+  decidedAt    DateTime?
+  createdAt    DateTime         @default(now())
+
+  client Client @relation(fields: [clientId], references: [id])
+}
+
+// ───────────────────────── Proyectos, piezas y brief ─────────────────────────
+
+enum ProjectStatus {
+  DRAFT
+  REQUESTED
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+enum Priority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+model Project {
+  id             String        @id @default(cuid())
+  organizationId String
+  clientId       String
+  teamId         String?
+  coordinatorId  String?
+  name           String
+  description    String?
+  contentType    String?
+  status         ProjectStatus @default(DRAFT)
+  priority       Priority      @default(NORMAL)
+  dueDate        DateTime?
+  internalNotes  String?
+  styleProfileId String?
+  packageId      String?
+  createdById    String
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  organization Organization    @relation(fields: [organizationId], references: [id])
+  client       Client          @relation(fields: [clientId], references: [id])
+  team         Team?           @relation(fields: [teamId], references: [id])
+  coordinator  User?           @relation("ProjectCoordinator", fields: [coordinatorId], references: [id])
+  styleProfile StyleProfile?   @relation(fields: [styleProfileId], references: [id])
+  package      ServicePackage? @relation(fields: [packageId], references: [id])
+  brief        Brief?
+  pieces       Piece[]
+  media        MediaAsset[]
+  financeLines FinanceLine[]
+
+  @@index([organizationId, status])
+  @@index([clientId])
+}
+
+enum BriefStatus {
+  DRAFT
+  SUBMITTED
+}
+
+model Brief {
+  id          String      @id @default(cuid())
+  projectId   String      @unique
+  status      BriefStatus @default(DRAFT)
+  // Campos estructurados; esquema validado en lib/domain/brief.ts
+  data        Json
+  updatedById String?
+  submittedAt DateTime?
+  updatedAt   DateTime    @updatedAt
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+// Estados de pieza (ver lib/domain/piece-status.ts para las transiciones).
+enum PieceStatus {
+  DRAFT
+  PENDING_ASSIGNMENT
+  ASSIGNED
+  IN_EDIT
+  INTERNAL_REVIEW
+  CLIENT_REVIEW
+  CHANGES_REQUESTED
+  IN_CORRECTION
+  APPROVED
+  FINAL_DELIVERY
+  COMPLETED
+  CANCELLED
+}
+
+model Piece {
+  id                String      @id @default(cuid())
+  organizationId    String
+  projectId         String
+  title             String
+  description       String?
+  format            String?
+  aspectRatio       String?
+  resolution        String?
+  targetDurationSec Int?
+  status            PieceStatus @default(PENDING_ASSIGNMENT)
+  priority          Priority    @default(NORMAL)
+  dueDate           DateTime?
+  editorId          String?
+  // Punteros explícitos: versión más reciente, publicada al cliente y aprobada.
+  currentVersionId  String?     @unique
+  clientVersionId   String?     @unique
+  approvedVersionId String?     @unique
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  organization    Organization @relation(fields: [organizationId], references: [id])
+  project         Project      @relation(fields: [projectId], references: [id])
+  editor          User?        @relation("PieceEditor", fields: [editorId], references: [id])
+  versions        Version[]    @relation("PieceVersions")
+  currentVersion  Version?     @relation("PieceCurrentVersion", fields: [currentVersionId], references: [id])
+  clientVersion   Version?     @relation("PieceClientVersion", fields: [clientVersionId], references: [id])
+  approvedVersion Version?     @relation("PieceApprovedVersion", fields: [approvedVersionId], references: [id])
+  blockers        Blocker[]
+  corrections     Correction[]
+  deliveries      Delivery[]
+  media           MediaAsset[]
+  events          PieceEvent[]
+
+  @@index([organizationId, status])
+  @@index([projectId])
+  @@index([editorId])
+}
+
+model PieceEvent {
+  id         String      @id @default(cuid())
+  pieceId    String
+  fromStatus PieceStatus?
+  toStatus   PieceStatus
+  actorId    String?
+  note       String?
+  createdAt  DateTime    @default(now())
+
+  piece Piece @relation(fields: [pieceId], references: [id], onDelete: Cascade)
+
+  @@index([pieceId, createdAt])
+}
+
+enum BlockerKind {
+  MISSING_MATERIAL
+  PENDING_DECISION
+  OTHER
+}
+
+model Blocker {
+  id          String      @id @default(cuid())
+  pieceId     String
+  kind        BlockerKind
+  reason      String
+  ownerId     String?
+  createdById String
+  createdAt   DateTime    @default(now())
+  resolvedAt  DateTime?
+  resolvedById String?
+
+  piece Piece @relation(fields: [pieceId], references: [id], onDelete: Cascade)
+
+  @@index([pieceId])
+}
+
+// ───────────────────────── Versiones ─────────────────────────
+
+enum VersionStatus {
+  // Subida por el editor, solo visible internamente.
+  INTERNAL_REVIEW
+  // El coordinador pidió cambios antes de enseñarla al cliente.
+  INTERNAL_CHANGES
+  // Publicada y visible para el cliente, pendiente de su decisión.
+  CLIENT_REVIEW
+  // El cliente pidió cambios sobre esta versión.
+  CHANGES_REQUESTED
+  // Aprobada (inmutable desde este momento).
+  APPROVED
+  // Reemplazada por una versión posterior sin decisión.
+  SUPERSEDED
+}
+
+model Version {
+  id            String        @id @default(cuid())
+  pieceId       String
+  number        Int
+  status        VersionStatus @default(INTERNAL_REVIEW)
+  changeSummary String?
+  uploadedById  String
+  publishedAt   DateTime?
+  publishedById String?
+  // Media de reproducción (PREVIEW) y referencia opcional al máster.
+  previewAssetId String?      @unique
+  sourceAssetId  String?      @unique
+  durationMs    Int?
+  width         Int?
+  height        Int?
+  // Fotogramas por segundo declarados; null = desconocido (sin paso por fotograma fiable).
+  fps           Float?
+  // true cuando fps se ha verificado con el pipeline de media.
+  fpsVerified   Boolean       @default(false)
+  metadata      Json?
+  // Se bloquea al aprobar: no se puede cambiar el archivo ni el resumen.
+  lockedAt      DateTime?
+  createdAt     DateTime      @default(now())
+
+  piece         Piece       @relation("PieceVersions", fields: [pieceId], references: [id])
+  pieceCurrent  Piece?      @relation("PieceCurrentVersion")
+  pieceClient   Piece?      @relation("PieceClientVersion")
+  pieceApproved Piece?      @relation("PieceApprovedVersion")
+  uploadedBy    User        @relation("VersionUploader", fields: [uploadedById], references: [id])
+  publishedBy   User?       @relation("VersionPublisher", fields: [publishedById], references: [id])
+  previewAsset  MediaAsset? @relation("VersionPreview", fields: [previewAssetId], references: [id])
+  sourceAsset   MediaAsset? @relation("VersionSource", fields: [sourceAssetId], references: [id])
+  comments      Comment[]
+  approvals     Approval[]
+  correctionsFromHere Correction[] @relation("CorrectionOrigin")
+  correctionsAddressed Correction[] @relation("CorrectionAddressedIn")
+  deliveries    Delivery[]
+
+  @@unique([pieceId, number])
+}
+
+// ───────────────────────── Comentarios y correcciones ─────────────────────────
+
+enum Visibility {
+  // Solo equipo de la agencia (admin, coordinador, editor).
+  INTERNAL
+  // Visible también para el cliente y los invitados de enlaces.
+  CLIENT
+}
+
+enum CorrectionCategory {
+  VIDEO
+  AUDIO
+  COLOR
+  SUBTITLES
+  MOTION_GRAPHICS
+  BRANDING
+  OTHER
+}
+
+model Comment {
+  id            String      @id @default(cuid())
+  versionId     String
+  parentId      String?
+  authorUserId  String?
+  authorGuestId String?
+  body          String
+  // Instante (timeMs) o tramo (timeMs..endMs). Ambos nulos = comentario general.
+  timeMs        Int?
+  endMs         Int?
+  visibility    Visibility  @default(CLIENT)
+  // Dibujo normalizado al área real de la imagen (ver lib/domain/annotation.ts).
+  annotation    Json?
+  links         String[]
+  editedAt      DateTime?
+  deletedAt     DateTime?
+  createdAt     DateTime    @default(now())
+  lastActivityAt DateTime   @default(now())
+
+  version     Version          @relation(fields: [versionId], references: [id])
+  parent      Comment?         @relation("Replies", fields: [parentId], references: [id])
+  replies     Comment[]        @relation("Replies")
+  authorUser  User?            @relation(fields: [authorUserId], references: [id])
+  authorGuest ReviewGuest?     @relation(fields: [authorGuestId], references: [id])
+  revisions   CommentRevision[]
+  mentions    CommentMention[]
+  correction  Correction?
+
+  @@index([versionId, createdAt])
+  @@index([parentId])
+}
+
+model CommentRevision {
+  id        String   @id @default(cuid())
+  commentId String
+  body      String
+  // EDIT o DELETE
+  action    String
+  actorUserId  String?
+  actorGuestId String?
+  createdAt DateTime @default(now())
+
+  comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+}
+
+model CommentMention {
+  commentId String
+  userId    String
+
+  comment Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@id([commentId, userId])
+}
+
+enum CorrectionStatus {
+  PENDING
+  IN_PROGRESS
+  // El equipo la ha resuelto; falta verificación de quien la pidió o del coordinador.
+  RESOLVED
+  VERIFIED
+  // Descartada con motivo (p.ej. el cliente cambió de idea).
+  DISMISSED
+}
+
+model Correction {
+  id                  String             @id @default(cuid())
+  commentId           String             @unique
+  pieceId             String
+  originVersionId     String
+  status              CorrectionStatus   @default(PENDING)
+  category            CorrectionCategory @default(OTHER)
+  assigneeId          String?
+  // Versión publicada en la que el editor declara haberla atendido.
+  addressedInVersionId String?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+
+  comment           Comment           @relation(fields: [commentId], references: [id])
+  piece             Piece             @relation(fields: [pieceId], references: [id])
+  originVersion     Version           @relation("CorrectionOrigin", fields: [originVersionId], references: [id])
+  addressedInVersion Version?         @relation("CorrectionAddressedIn", fields: [addressedInVersionId], references: [id])
+  assignee          User?             @relation("CorrectionAssignee", fields: [assigneeId], references: [id])
+  events            CorrectionEvent[]
+
+  @@index([pieceId, status])
+}
+
+model CorrectionEvent {
+  id           String            @id @default(cuid())
+  correctionId String
+  fromStatus   CorrectionStatus?
+  toStatus     CorrectionStatus
+  actorUserId  String?
+  actorGuestId String?
+  note         String?
+  createdAt    DateTime          @default(now())
+
+  correction Correction @relation(fields: [correctionId], references: [id], onDelete: Cascade)
+
+  @@index([correctionId, createdAt])
+}
+
+// ───────────────────────── Aprobaciones y entregas ─────────────────────────
+
+enum Decision {
+  APPROVED
+  CHANGES_REQUESTED
+}
+
+// Append-only: nunca se actualiza salvo revokedAt (con motivo y actor).
+model Approval {
+  id                 String    @id @default(cuid())
+  versionId          String
+  decision           Decision
+  actorUserId        String?
+  actorGuestId       String?
+  actorName          String
+  actorEmail         String?
+  note               String?
+  openCorrections    Int
+  acknowledgedOpen   Boolean   @default(false)
+  createdAt          DateTime  @default(now())
+  revokedAt          DateTime?
+  revokedById        String?
+  revokeReason       String?
+
+  version Version @relation(fields: [versionId], references: [id])
+
+  @@index([versionId])
+}
+
+model Delivery {
+  id          String   @id @default(cuid())
+  pieceId     String
+  versionId   String
+  assetId     String   @unique
+  note        String?
+  createdById String
+  createdAt   DateTime @default(now())
+
+  piece   Piece      @relation(fields: [pieceId], references: [id])
+  version Version    @relation(fields: [versionId], references: [id])
+  asset   MediaAsset @relation(fields: [assetId], references: [id])
+}
+
+// ───────────────────────── Media ─────────────────────────
+
+enum MediaKind {
+  SOURCE
+  PROXY
+  PREVIEW
+  DELIVERABLE
+  REFERENCE
+  ATTACHMENT
+}
+
+enum StorageProviderKind {
+  LOCAL
+  S3
+  EXTERNAL_LINK
+}
+
+enum MediaStatus {
+  UPLOADING
+  PROCESSING
+  READY
+  FAILED
+}
+
+model MediaAsset {
+  id             String              @id @default(cuid())
+  organizationId String
+  kind           MediaKind
+  provider       StorageProviderKind
+  storageKey     String?
+  externalUrl    String?
+  filename       String
+  label          String?
+  mimeType       String?
+  sizeBytes      BigInt?
+  uploadedBytes  BigInt              @default(0)
+  checksumSha256 String?
+  status         MediaStatus         @default(UPLOADING)
+  error          String?
+  visibility     Visibility          @default(INTERNAL)
+  projectId      String?
+  pieceId        String?
+  durationMs     Int?
+  width          Int?
+  height         Int?
+  posterKey      String?
+  createdById    String?
+  createdAt      DateTime            @default(now())
+  // Retención: fecha a partir de la cual el archivo puede purgarse.
+  retainUntil    DateTime?
+  deletedAt      DateTime?
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  project      Project?     @relation(fields: [projectId], references: [id])
+  piece        Piece?       @relation(fields: [pieceId], references: [id])
+  versionPreview Version?   @relation("VersionPreview")
+  versionSource  Version?   @relation("VersionSource")
+  delivery     Delivery?
+  downloads    DownloadLog[]
+
+  @@index([organizationId, kind])
+  @@index([projectId])
+  @@index([pieceId])
+}
+
+model DownloadLog {
+  id           String   @id @default(cuid())
+  assetId      String
+  actorUserId  String?
+  actorGuestId String?
+  ip           String?
+  createdAt    DateTime @default(now())
+
+  asset MediaAsset @relation(fields: [assetId], references: [id])
+}
+
+// ───────────────────────── Enlaces de revisión ─────────────────────────
+
+enum ShareScope {
+  PROJECT
+  PIECE
+  VERSION
+}
+
+model ShareLink {
+  id             String     @id @default(cuid())
+  organizationId String
+  tokenHash      String     @unique
+  // Primeros caracteres del token para identificarlo en la interfaz.
+  tokenPrefix    String
+  name           String
+  scope          ShareScope
+  projectId      String
+  pieceId        String?
+  versionId      String?
+  canComment     Boolean    @default(true)
+  canApprove     Boolean    @default(false)
+  canDownload    Boolean    @default(false)
+  // Pide nombre y email antes de ver el contenido.
+  requireIdentity Boolean   @default(true)
+  passwordHash   String?
+  // Si se define, solo emails de este dominio (p.ej. cliente.com).
+  allowedDomain  String?
+  expiresAt      DateTime?
+  revokedAt      DateTime?
+  createdById    String
+  createdAt      DateTime   @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  guests       ReviewGuest[]
+  events       ShareLinkEvent[]
+
+  @@index([projectId])
+}
+
+model ReviewGuest {
+  id               String   @id @default(cuid())
+  shareLinkId      String
+  name             String
+  email            String?
+  sessionTokenHash String   @unique
+  createdAt        DateTime @default(now())
+  lastSeenAt       DateTime @default(now())
+
+  shareLink ShareLink @relation(fields: [shareLinkId], references: [id], onDelete: Cascade)
+  comments  Comment[]
+}
+
+model ShareLinkEvent {
+  id          String   @id @default(cuid())
+  shareLinkId String
+  guestId     String?
+  // OPENED, VIEWED, COMMENTED, APPROVED, DOWNLOADED
+  type        String
+  data        Json?
+  createdAt   DateTime @default(now())
+
+  shareLink ShareLink @relation(fields: [shareLinkId], references: [id], onDelete: Cascade)
+
+  @@index([shareLinkId, createdAt])
+}
+
+// ───────────────────────── Notificaciones ─────────────────────────
+
+model Notification {
+  id             String    @id @default(cuid())
+  organizationId String
+  userId         String
+  type           String
+  title          String
+  body           String?
+  url            String?
+  // Agrupa avisos repetidos: mismo (userId, groupKey) sin leer => se incrementa count.
+  groupKey       String
+  count          Int       @default(1)
+  readAt         DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt, updatedAt])
+  @@index([userId, groupKey])
+}
+
+model NotificationPreference {
+  userId String
+  type   String
+  inApp  Boolean @default(true)
+  email  Boolean @default(true)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, type])
+}
+
+enum OutboxStatus {
+  PENDING
+  SENT
+  FAILED
+  SKIPPED
+}
+
+model EmailOutbox {
+  id             String       @id @default(cuid())
+  organizationId String
+  // Evita duplicados: el mismo evento nunca genera dos emails.
+  idempotencyKey String       @unique
+  to             String
+  subject        String
+  body           String
+  status         OutboxStatus @default(PENDING)
+  attempts       Int          @default(0)
+  lastError      String?
+  nextAttemptAt  DateTime     @default(now())
+  sentAt         DateTime?
+  createdAt      DateTime     @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([status, nextAttemptAt])
+}
+
+// ───────────────────────── Finanzas ─────────────────────────
+
+enum BillingPeriod {
+  ONE_OFF
+  MONTHLY
+  QUARTERLY
+}
+
+model ServicePackage {
+  id             String        @id @default(cuid())
+  organizationId String
+  clientId       String?
+  name           String
+  description    String?
+  period         BillingPeriod @default(MONTHLY)
+  // Número de piezas incluidas por periodo (configurable, nunca fijo en código).
+  piecesIncluded Int
+  priceCents     Int
+  currency       String        @default("EUR")
+  active         Boolean       @default(true)
+  createdAt      DateTime      @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  client       Client?      @relation(fields: [clientId], references: [id])
+  projects     Project[]
+}
+
+enum FinanceKind {
+  // Ingreso: precio al cliente.
+  REVENUE
+  // Descuento aplicado al cliente (importe positivo que resta).
+  DISCOUNT
+  // Coste de edición (pago a editor).
+  EDITOR_COST
+  // Otros costes (música, stock, locución...).
+  OTHER_COST
+}
+
+enum FinanceLineStatus {
+  ESTIMATED
+  CONFIRMED
+  // Cobro recibido (REVENUE) o pago realizado (costes). No ejecuta pagos.
+  SETTLED
+}
+
+model FinanceLine {
+  id             String            @id @default(cuid())
+  organizationId String
+  projectId      String
+  kind           FinanceKind
+  description    String
+  amountCents    Int
+  currency       String
+  // Impuesto aplicable en puntos básicos (solo informativo en ingresos).
+  taxBps         Int               @default(0)
+  status         FinanceLineStatus @default(ESTIMATED)
+  editorId       String?
+  dueDate        DateTime?
+  settledAt      DateTime?
+  createdById    String
+  createdAt      DateTime          @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  project      Project      @relation(fields: [projectId], references: [id])
+
+  @@index([projectId])
+  @@index([editorId])
+}
+
+// ───────────────────────── Auditoría ─────────────────────────
+
+model AuditLog {
+  id             String   @id @default(cuid())
+  organizationId String
+  actorUserId    String?
+  actorGuestId   String?
+  actorLabel     String
+  action         String
+  entityType     String
+  entityId       String
+  // Proyecto relacionado, para mostrar la actividad del proyecto.
+  projectId      String?
+  // true si la entrada es visible para el cliente en su historial.
+  clientVisible  Boolean  @default(false)
+  data           Json?
+  ip             String?
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, createdAt])
+  @@index([projectId, createdAt])
+}
