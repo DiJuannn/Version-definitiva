@@ -13,9 +13,9 @@
     "e2e": "node e2e/run.mjs",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
-    "db:seed": "tsx prisma/seed.ts",
+    "db:seed": "tsx --env-file=.env prisma/seed.ts",
     "media:test": "node scripts/make-test-videos.mjs",
-    "outbox": "tsx scripts/process-outbox.ts",
+    "outbox": "tsx --env-file=.env scripts/process-outbox.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {
