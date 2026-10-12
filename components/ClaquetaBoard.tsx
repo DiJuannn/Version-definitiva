@@ -9,6 +9,19 @@ import { nextClip, takeKey } from "@/lib/clip-number";
 import { DeleteButton } from "@/components/DeleteButton";
 import { useToast } from "@/components/Toast";
 
+type DayPlanShot = {
+  id: string;
+  sceneId: string;
+  sceneNumber: string;
+  shotNumber: string;
+  size: string | null;
+  description: string | null;
+  time: string;
+  done: boolean;
+};
+
+type DayPlan = { isToday: boolean; title: string; href: string; shots: DayPlanShot[] };
+
 type SceneOption = {
   id: string;
   number: string;
@@ -139,12 +152,15 @@ export function ClaquetaBoard({
   scenes,
   lastTakeByKey,
   initialLog,
+  dayPlan = null,
 }: {
   projectId: string;
   projectName: string;
   scenes: SceneOption[];
   lastTakeByKey: Record<string, number>;
   initialLog: ClapLogEntry[];
+  // Orden de rodaje de hoy (o de la próxima jornada), del Plan de rodaje.
+  dayPlan?: DayPlan | null;
 }) {
   // Aunque el proyecto ya tenga escenas cargadas, tiene que poder
   // escribirse el número a mano — no todo el mundo rellena antes el guion.
@@ -252,6 +268,20 @@ export function ClaquetaBoard({
     const scene = scenes.find((s) => s.id === id);
     setTake(nextTakeFor(scene?.number ?? "", shotNumber));
   }
+
+  // Carga un plano del plan en la claqueta (escena de la lista + plano + su toma siguiente).
+  function loadPlanShot(shot: DayPlanShot) {
+    setSceneEntryMode("list");
+    setSceneId(shot.sceneId);
+    setShotNumber(shot.shotNumber);
+    setTake(nextTakeFor(shot.sceneNumber, shot.shotNumber));
+  }
+  const planIndex = dayPlan
+    ? dayPlan.shots.findIndex((s) => s.sceneNumber === sceneNumber && s.shotNumber.toLowerCase() === shotNumber.trim().toLowerCase())
+    : -1;
+  const nextPlanShot = dayPlan
+    ? (dayPlan.shots.slice(planIndex + 1).find((s) => !s.done) ?? dayPlan.shots.find((s) => !s.done && s !== dayPlan.shots[planIndex]) ?? null)
+    : null;
 
   async function handleClap() {
     if (!sceneNumber || clapping) return;
@@ -390,6 +420,60 @@ export function ClaquetaBoard({
   }
 
   return (
+    <>
+    {dayPlan && (
+      <section aria-label="Plan de rodaje de hoy" className="mb-6 rounded-xl border border-line bg-bg-raised/40 p-4">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <div className="min-w-0">
+            <p className="text-xs text-muted">{dayPlan.isToday ? "Plan de hoy" : "Próxima jornada"}</p>
+            <p className="text-sm font-semibold first-letter:uppercase">{dayPlan.title}</p>
+          </div>
+          <p className="text-[13px] text-muted">
+            {dayPlan.shots.filter((s) => s.done).length} de {dayPlan.shots.length} planos rodados
+          </p>
+          {planIndex >= 0 && (
+            <p className="text-[13px]">
+              En la claqueta: <span className="font-mono">{dayPlan.shots[planIndex].sceneNumber}.{dayPlan.shots[planIndex].shotNumber}</span>
+            </p>
+          )}
+          {nextPlanShot ? (
+            <button type="button" onClick={() => loadPlanShot(nextPlanShot)} className="btn btn-primary btn-sm ml-auto">
+              Siguiente: {nextPlanShot.sceneNumber}.{nextPlanShot.shotNumber}
+              {nextPlanShot.size ? ` ${nextPlanShot.size}` : ""} · {nextPlanShot.time}
+            </button>
+          ) : (
+            <span className="ml-auto text-[13px] text-success">✓ Todo el plan está rodado</span>
+          )}
+        </div>
+        <details className="group mt-3">
+          <summary className="cursor-pointer list-none text-[13px] text-muted hover:text-accent [&::-webkit-details-marker]:hidden">
+            <span className="inline-block transition-transform group-open:rotate-90">›</span> Ver el orden completo
+          </summary>
+          <ol className="mt-2 grid gap-1 sm:grid-cols-2">
+            {dayPlan.shots.map((s, i) => (
+              <li key={s.id}>
+                <button
+                  type="button"
+                  onClick={() => loadPlanShot(s)}
+                  className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] transition-colors hover:bg-accent/10 ${
+                    i === planIndex ? "bg-accent/15" : ""
+                  }`}
+                >
+                  <span className="w-11 font-mono text-muted">{s.time}</span>
+                  <span className="w-10 font-mono">{s.sceneNumber}.{s.shotNumber}</span>
+                  <span className="w-8 font-mono text-xs text-muted">{s.size ?? ""}</span>
+                  <span className={`min-w-0 flex-1 truncate ${s.done ? "text-muted line-through" : ""}`}>{s.description ?? ""}</span>
+                  {s.done && <span className="text-success">✓</span>}
+                </button>
+              </li>
+            ))}
+          </ol>
+          <a href={dayPlan.href} className="mt-2 inline-block text-[13px] text-accent hover:underline">
+            Abrir en Plan de rodaje →
+          </a>
+        </details>
+      </section>
+    )}
     <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
       {/* min-w-0: sin esto, un elemento de grid no se encoge por debajo del
           ancho mínimo de su contenido y el tablero se sale de la pantalla
@@ -808,5 +892,6 @@ export function ClaquetaBoard({
         )}
       </div>
     </div>
+    </>
   );
 }

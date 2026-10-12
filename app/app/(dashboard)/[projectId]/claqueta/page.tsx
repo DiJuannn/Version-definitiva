@@ -4,6 +4,8 @@ import { getProjectForCurrentUser } from "@/lib/project-access";
 import { PageHeader } from "@/components/PageHeader";
 import { ClaquetaBoard } from "@/components/ClaquetaBoard";
 import { getLastTakeByKey } from "@/lib/clapboard-core";
+import { getShootingDaySummary } from "@/lib/shooting-day-summary";
+import { formatHHMM } from "@/lib/schedule-plan";
 
 export default async function ClaquetaPage({
   params,
@@ -47,6 +49,36 @@ export default async function ClaquetaPage({
     getLastTakeByKey(projectId),
   ]);
 
+  // El plan de hoy (o de la próxima jornada): la claqueta sigue su orden de rodaje.
+  const tz = "Europe/Madrid";
+  const todayKey = new Date().toLocaleDateString("en-CA", { timeZone: tz });
+  const days = await prisma.shootingDay.findMany({ where: { projectId }, orderBy: { date: "asc" }, select: { id: true, date: true } });
+  const planDay =
+    days.find((d) => d.date.toLocaleDateString("en-CA", { timeZone: tz }) === todayKey) ??
+    days.find((d) => d.date.toLocaleDateString("en-CA", { timeZone: tz }) > todayKey) ??
+    null;
+  const planSummary = planDay ? await getShootingDaySummary(planDay.id) : null;
+  const dayPlan =
+    planDay && planSummary && planSummary.runOrder.blocks.length > 0
+      ? {
+          isToday: planDay.date.toLocaleDateString("en-CA", { timeZone: tz }) === todayKey,
+          title: `Día ${planSummary.dayNumber} · ${planDay.date.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long", timeZone: tz })}`,
+          href: `/app/${projectId}/plan-de-rodaje?dia=${planDay.id}`,
+          shots: planSummary.runOrder.blocks.flatMap((b) =>
+            b.shots.map((s) => ({
+              id: s.id,
+              sceneId: s.sceneId,
+              sceneNumber: s.sceneNumber,
+              shotNumber: s.number,
+              size: s.shotSize,
+              description: s.description,
+              time: formatHHMM(s.start),
+              done: s.done,
+            })),
+          ),
+        }
+      : null;
+
   const sceneOptions = scenes.map((scene) => ({
     id: scene.id,
     number: scene.number,
@@ -80,6 +112,7 @@ export default async function ClaquetaPage({
           scenes={sceneOptions}
           lastTakeByKey={lastTakeByKey}
           initialLog={initialLog}
+          dayPlan={dayPlan}
         />
       </div>
     </div>
