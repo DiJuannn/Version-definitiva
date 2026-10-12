@@ -3,6 +3,7 @@ import type { ShootingDaySummary } from "@/lib/shooting-day-summary";
 import { ChipOption } from "@/components/ChipOption";
 import { SubmitButton } from "@/components/SubmitButton";
 import { SceneTag, sceneStripColor } from "@/components/SceneTag";
+import { formatHHMM } from "@/lib/schedule-plan";
 import { PeopleStack, PersonInitials } from "@/components/PersonInitials";
 import {
   clearCallSheetCrewOverride,
@@ -68,6 +69,9 @@ export function CallSheetView({
   const dayMonth = date.toLocaleDateString("es-ES", { day: "numeric", month: "long", timeZone: "Europe/Madrid" });
   const year = date.toLocaleDateString("es-ES", { year: "numeric", timeZone: "Europe/Madrid" });
   const shotTotal = summary.sceneAssignments.reduce((n, a) => n + a.scene.shots.length, 0);
+  // Con orden de rodaje (bloques) las horas salen de ahí; la lista por escenas
+  // queda solo para corregir a mano quién sale.
+  const hasRun = summary.runOrder.blocks.length > 0;
 
   // En qué escenas del día sale cada personaje (para la tabla de reparto).
   const scenesByCharacter = new Map<string, ShootingDaySummary["sceneAssignments"][number]["scene"][]>();
@@ -96,7 +100,7 @@ export function CallSheetView({
         <div className="border-t border-line pt-4 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-7 sm:text-right">
           <p className="text-[13px] text-muted">Llamada general</p>
           <p className="font-mono text-[2.75rem] leading-none font-medium text-accent">
-            {callSheet?.generalCallTime || "—"}
+            {summary.runOrder.callTime ?? (callSheet?.generalCallTime || "—")}
           </p>
         </div>
       </section>
@@ -138,13 +142,19 @@ export function CallSheetView({
         </Fact>
       </div>
 
-      {/* Orden del día */}
+      {hasRun && <RunOrderSection summary={summary} edit={edit} />}
+
+      {/* Orden del día por escenas (sin orden de rodaje) o corrección de quién sale */}
+      {(!hasRun || edit) && (
+      <SceneListWrapper hasRun={hasRun}>
+      {!hasRun && (
       <SectionTitle
         title="Orden del día"
         meta={`${summary.sceneAssignments.length} escena${summary.sceneAssignments.length === 1 ? "" : "s"}${
           shotTotal > 0 ? ` · ${shotTotal} plano${shotTotal === 1 ? "" : "s"}` : ""
         }`}
       />
+      )}
       <div className="overflow-hidden rounded-xl border border-line">
         {summary.sceneAssignments.length === 0 ? (
           <p className="p-5 text-sm text-muted">Sin escenas asignadas todavía.</p>
@@ -158,9 +168,12 @@ export function CallSheetView({
             return (
               <div
                 key={assignment.id}
-                className="grid grid-cols-[5.5rem_1fr] gap-x-3 gap-y-3 border-b border-line/70 p-4 last:border-b-0 sm:grid-cols-[6.25rem_1fr_auto]"
+                className={`grid gap-x-3 gap-y-3 border-b border-line/70 p-4 last:border-b-0 ${
+                  hasRun ? "grid-cols-1 sm:grid-cols-[1fr_auto]" : "grid-cols-[5.5rem_1fr] sm:grid-cols-[6.25rem_1fr_auto]"
+                }`}
               >
                 {/* Hora */}
+                {!hasRun && (
                 <div className="pt-0.5">
                   {edit ? (
                     <form
@@ -186,6 +199,7 @@ export function CallSheetView({
                     <span className="font-mono text-lg">{assignment.callTime ?? "—"}</span>
                   )}
                 </div>
+                )}
 
                 {/* Escena */}
                 <div className="min-w-0 border-l-4 pl-3.5" style={{ borderLeftColor: sceneStripColor(scene.intExt, scene.dayPart) }}>
@@ -225,14 +239,18 @@ export function CallSheetView({
                 </div>
 
                 {/* Quién sale */}
-                <div className="col-start-2 flex flex-wrap items-center gap-2.5 sm:col-start-3 sm:justify-end sm:self-start">
+                <div
+                  className={`flex flex-wrap items-center gap-2.5 sm:justify-end sm:self-start ${
+                    hasRun ? "sm:col-start-2" : "col-start-2 sm:col-start-3"
+                  }`}
+                >
                   <PeopleStack names={names} />
                   {names.length > 0 && <span className="text-[13px] text-fg/80">{names.join(", ")}</span>}
                   {isOverridden && <span className="text-xs text-accent">(editado)</span>}
                 </div>
 
                 {edit && (
-                  <details className="col-start-2 -mt-1 sm:col-end-4 print:hidden">
+                  <details className={`-mt-1 print:hidden ${hasRun ? "sm:col-span-2" : "col-start-2 sm:col-end-4"}`}>
                     <summary className={EDIT_SUMMARY}>
                       <span aria-hidden>✎</span> Editar quién sale
                     </summary>
@@ -271,6 +289,8 @@ export function CallSheetView({
           })
         )}
       </div>
+      </SceneListWrapper>
+      )}
 
       {/* Reparto y equipo */}
       <div className="grid gap-x-4 lg:grid-cols-2">
@@ -288,6 +308,7 @@ export function CallSheetView({
                   <tr className="bg-bg-raised text-left text-xs text-muted">
                     <th scope="col" className="px-3 py-2.5 font-medium">Personaje</th>
                     <th scope="col" className="px-3 py-2.5 font-medium">Escenas</th>
+                    {hasRun && <th scope="col" className="px-3 py-2.5 font-medium">Citación</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -316,6 +337,18 @@ export function CallSheetView({
                           ))}
                         </span>
                       </td>
+                      {hasRun && (
+                        <td className="px-3 py-2.5 font-mono whitespace-nowrap">
+                          {summary.runOrder.castCalls[c.id] ? (
+                            <>
+                              {summary.runOrder.castCalls[c.id].call}
+                              <span className="block text-xs text-muted">hasta {summary.runOrder.castCalls[c.id].until}</span>
+                            </>
+                          ) : (
+                            <span className="text-muted">—</span>
+                          )}
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
@@ -421,5 +454,116 @@ export function CallSheetView({
         </div>
       </div>
     </div>
+  );
+}
+
+function SceneListWrapper({ hasRun, children }: { hasRun: boolean; children: ReactNode }) {
+  if (!hasRun) return <>{children}</>;
+  return (
+    <details className="group mt-3 print:hidden">
+      <summary className={EDIT_SUMMARY}>
+        <span aria-hidden>✎</span> Corregir a mano quién sale en cada escena
+      </summary>
+      <div className="mt-3">{children}</div>
+    </details>
+  );
+}
+
+const EVENT_TONE: Record<string, string> = { MEAL: "text-warn", MOVE: "text-[#8fb7f2]", NOTE: "text-fg/80" };
+const EVENT_ICON: Record<string, string> = { MEAL: "🍽", MOVE: "⇄", NOTE: "✎" };
+
+// Orden de rodaje con horas: sale del Plan de rodaje (bloques), así la hoja
+// de llamada y el plan nunca dicen cosas distintas.
+function RunOrderSection({ summary, edit }: { summary: ShootingDaySummary; edit?: EditContext }) {
+  const run = summary.runOrder;
+  const names = new Map(summary.characters.map((c) => [c.id, c.name]));
+  for (const a of summary.sceneAssignments) for (const c of summary.charactersByAssignment.get(a.id) ?? []) names.set(c.character.id, c.character.name);
+  const shotCount = run.blocks.reduce((n, b) => n + b.shots.length, 0);
+  return (
+    <>
+      <SectionTitle
+        title="Orden de rodaje"
+        meta={`${shotCount} plano${shotCount === 1 ? "" : "s"}${run.wrap ? ` · fin previsto ${run.wrap}` : ""}`}
+        action={
+          edit ? (
+            <a href={`/app/${edit.projectId}/plan-de-rodaje?dia=${edit.shootingDayId}`} className="link-action print:hidden">
+              Cambiar el orden en Plan de rodaje →
+            </a>
+          ) : undefined
+        }
+      />
+      <ol className="overflow-hidden rounded-xl border border-line">
+        <li className="grid grid-cols-[3.75rem_1fr] gap-3 border-b border-line/70 px-4 py-2.5 text-sm">
+          <span className="font-mono">{run.callTime ?? "—"}</span>
+          <span>
+            <b>Llamada general</b> <span className="text-muted">· preparación {run.prepMin} min</span>
+          </span>
+        </li>
+        {run.blocks.map((block) => {
+          const time = formatHHMM(block.start);
+          if (block.kind === "MEAL" || block.kind === "MOVE" || block.kind === "NOTE") {
+            return (
+              <li key={block.id} className={`grid grid-cols-[3.75rem_1fr] gap-3 border-b border-line/70 bg-bg-raised/30 px-4 py-2.5 text-sm ${EVENT_TONE[block.kind]}`}>
+                <span className="font-mono">{time}</span>
+                <span>
+                  <span aria-hidden>{EVENT_ICON[block.kind]}</span> <b>{block.label}</b>
+                  {block.minutes > 0 && <span className="text-muted"> · {block.minutes} min</span>}
+                </span>
+              </li>
+            );
+          }
+          if (block.kind === "SCENE" && block.scene) {
+            const people = block.scene.characterIds.map((id) => names.get(id)).filter((n): n is string => Boolean(n));
+            return (
+              <li key={block.id} className="grid grid-cols-[3.75rem_1fr] gap-3 border-b border-line/70 px-4 py-3 text-sm">
+                <span className="font-mono">{time}</span>
+                <div className="border-l-4 pl-3" style={{ borderLeftColor: sceneStripColor(block.scene.intExt, block.scene.dayPart) }}>
+                  <p className="flex flex-wrap items-center gap-2">
+                    <b>{block.label.split(" · ")[0]}</b>
+                    <span className="font-semibold">
+                      Escena <span className="font-mono">{block.scene.number}</span> entera
+                    </span>
+                    <SceneTag intExt={block.scene.intExt} dayPart={block.scene.dayPart} />
+                    {block.location && <span>{block.location}</span>}
+                  </p>
+                  {people.length > 0 && <p className="mt-1 text-[13px] text-fg/80">{people.join(", ")}</p>}
+                </div>
+              </li>
+            );
+          }
+          return (
+            <li key={block.id} className="border-b border-line/70 px-4 py-3 last:border-b-0">
+              <div className="grid grid-cols-[3.75rem_1fr] gap-3 text-sm">
+                <span className="font-mono">{time}</span>
+                <p className="font-bold">{block.label}</p>
+              </div>
+              <ul className="mt-1.5 space-y-1">
+                {block.shots.map((shot) => {
+                  const people = shot.characterIds.map((id) => names.get(id)).filter((n): n is string => Boolean(n));
+                  return (
+                    <li key={shot.id} className="grid grid-cols-[3.75rem_4px_2.75rem_2.5rem_1fr] items-start gap-x-2 gap-y-0.5 text-[13px] sm:grid-cols-[3.75rem_4px_2.75rem_2.5rem_1fr_auto]">
+                      <span className="font-mono text-muted">{formatHHMM(shot.start)}</span>
+                      <span className="mt-0.5 h-4 w-1 rounded-full" style={{ background: sceneStripColor(shot.intExt, shot.dayPart) }} />
+                      <span className="font-mono">
+                        {shot.sceneNumber}.{shot.number}
+                      </span>
+                      <span className="font-mono text-muted">{shot.shotSize ?? ""}</span>
+                      <span className={shot.done ? "text-muted line-through" : "text-fg/90"}>{shot.description ?? ""}</span>
+                      {people.length > 0 && <span className="col-start-5 text-xs text-muted sm:col-start-auto sm:text-right">{people.join(", ")}</span>}
+                    </li>
+                  );
+                })}
+              </ul>
+            </li>
+          );
+        })}
+        {run.wrap && (
+          <li className="grid grid-cols-[3.75rem_1fr] gap-3 px-4 py-2.5 text-sm">
+            <span className="font-mono">{run.wrap}</span>
+            <b>Fin de rodaje previsto</b>
+          </li>
+        )}
+      </ol>
+    </>
   );
 }

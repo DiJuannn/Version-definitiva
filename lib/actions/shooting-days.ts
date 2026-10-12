@@ -36,7 +36,7 @@ export async function createShootingDay(projectId: string, formData: FormData) {
   );
 
   revalidatePath(`/app/${projectId}/plan-de-rodaje`);
-  redirect(`/app/${projectId}/plan-de-rodaje/${result.id}`);
+  redirect(`/app/${projectId}/plan-de-rodaje?dia=${result.id}`);
 }
 
 export async function updateShootingDay(

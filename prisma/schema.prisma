@@ -296,6 +296,9 @@ model Project {
   endDate        DateTime?
   budgetTarget   Decimal?
   notes          String?
+  // Horas de trabajo de una jornada de rodaje (sin la comida): a partir de
+  // ahí el plan de rodaje avisa de jornada larga.
+  workdayHours   Int           @default(10)
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
@@ -699,6 +702,7 @@ model Scene {
   shots             Shot[]
   clapLogs          ClapLog[]
   castOverrides     ShootingDaySceneCastOverride[]
+  scheduleBlocks    ScheduleBlock[]
 
   @@index([projectId])
   @@index([locationId])
@@ -792,6 +796,12 @@ model ShootingDay {
   projectId String
   date      DateTime
   notes     String?
+  // Hora de llamada general ("07:45") y minutos de preparación (montaje,
+  // vestuario, maquillaje) antes del primer bloque del orden de rodaje.
+  callTime  String?
+  prepMin   Int?
+  // Último cambio del orden de rodaje (para avisar de hoja de llamada desactualizada).
+  planUpdatedAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -808,6 +818,7 @@ model ShootingDay {
   scenes              ShootingDayScene[]
   shots               Shot[]
   callSheet           CallSheet?
+  scheduleBlocks      ScheduleBlock[]
   tasks               Task[]
   itemReservations    ItemReservation[]
   vehicleReservations VehicleReservation[]
@@ -898,6 +909,41 @@ model ShootingDayScene {
   @@index([sceneId])
 }
 
+// Orden de rodaje de una jornada: bloques en el orden real en que se ruedan.
+// SHOTS = planos de cualquier escena (juntos por sitio/luz); SCENE = una
+// escena sin lista de planos, entera; MEAL/MOVE/NOTE = comida, cambio de set
+// o traslado, y notas (con su duración).
+enum ScheduleBlockKind {
+  SHOTS
+  SCENE
+  MEAL
+  MOVE
+  NOTE
+}
+
+model ScheduleBlock {
+  id            String            @id @default(cuid())
+  shootingDayId String
+  kind          ScheduleBlockKind @default(SHOTS)
+  order         Int               @default(0)
+  title         String?
+  sceneId       String?
+  // MEAL/MOVE/NOTE/SCENE: duración fija; SHOTS: vacío = suma de sus planos.
+  durationMin   Int?
+  // Hora fija de inicio ("19:30", p. ej. esperar a que oscurezca); vacío = a continuación del anterior.
+  startTime     String?
+  notes         String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  shootingDay ShootingDay @relation(fields: [shootingDayId], references: [id], onDelete: Cascade)
+  scene       Scene?      @relation(fields: [sceneId], references: [id], onDelete: Cascade)
+  shots       Shot[]
+
+  @@index([shootingDayId])
+  @@index([sceneId])
+}
+
 // Corrección manual de a quién cita la hoja de llamada en una escena, para
 // un día concreto — tiene la última palabra por encima de lo que sale solo
 // (planos del día si los hay, si no el reparto completo de la escena; ver
@@ -975,17 +1021,28 @@ model Shot {
   // planificar) y si ya está rodado. Una escena puede repartir sus planos en
   // varios días; ShootingDayScene sigue diciendo qué escenas tiene cada día.
   shootingDayId String?
+  // Dónde va dentro del orden de rodaje de su jornada (bloque y posición).
+  // El día manda (shootingDayId); el bloque se ajusta a él al sincronizar.
+  blockId       String?
+  blockOrder    Int      @default(0)
+  // Minutos de rodaje estimados; vacío = estimación por tamaño y movimiento.
+  estimatedMin  Int?
   done          Boolean  @default(false)
+  // Rodado pero hay que repetirlo (vuelve a "por programar").
+  retake        Boolean  @default(false)
+  retakeNote    String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   scene       Scene             @relation(fields: [sceneId], references: [id], onDelete: Cascade)
   shootingDay ShootingDay?      @relation(fields: [shootingDayId], references: [id], onDelete: SetNull)
+  block       ScheduleBlock?    @relation(fields: [blockId], references: [id], onDelete: SetNull)
   storyboard  StoryboardFrame[]
   characters  ShotCharacter[]
 
   @@index([sceneId])
   @@index([shootingDayId])
+  @@index([blockId])
 }
 
 // Qué personajes de la escena salen realmente en este plano — para que la
