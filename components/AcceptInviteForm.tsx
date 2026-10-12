@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import Link from "next/link";
 import { AuthField } from "@/components/AuthField";
 import { acceptInvite } from "@/lib/actions/auth";
+import { FormError } from "@/components/FormError";
 
 export function AcceptInviteForm({
   token,
@@ -48,7 +49,7 @@ export function AcceptInviteForm({
         />
 
         {state?.error && (
-          <p className="font-mono text-xs text-danger">{state.error}</p>
+          <FormError message={state.error} />
         )}
 
         <label className="flex items-start gap-2 font-mono text-xs text-muted">

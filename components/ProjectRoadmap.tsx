@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "motion/react";
+import { DURATION, EASE, ENTER } from "@/lib/motion";
 import { AjoloteLogo } from "@/components/AjoloteLogo";
 import { HelpTip } from "@/components/HelpTip";
 import { FeatureIntro } from "@/components/FeatureIntro";
@@ -57,9 +58,9 @@ export function ProjectRoadmap({ steps }: { steps: RoadmapStep[] }) {
 
   return (
     <motion.section
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: ENTER.taller.y }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: ENTER.taller.duration, ease: EASE }}
       className="mt-6 border border-line bg-bg-raised/30 p-6"
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -84,7 +85,7 @@ export function ProjectRoadmap({ steps }: { steps: RoadmapStep[] }) {
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: DURATION.slow, ease: EASE }}
           className="hidden sm:block"
         >
           <AjoloteLogo className="h-14 w-auto shrink-0" />

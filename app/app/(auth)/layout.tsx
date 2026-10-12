@@ -22,7 +22,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           Versión definitiva
         </span>
       </Link>
-      <div className="w-full max-w-sm">{children}</div>
+      <main id="contenido" className="w-full max-w-sm">{children}</main>
       <nav className="mt-12 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 font-mono text-[11px] tracking-widest text-muted uppercase">
         {LEGAL_LINKS.map((item) => (
           <Link key={item.href} href={item.href} className="hover:text-accent">

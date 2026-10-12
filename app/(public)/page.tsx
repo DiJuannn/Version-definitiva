@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { HeroReveal } from "@/components/HeroReveal";
+import { CreditsMarquee } from "@/components/CreditsMarquee";
 import { PlaceholderFrame } from "@/components/PlaceholderFrame";
 import { Reveal } from "@/components/Reveal";
 import { PortfolioSection } from "@/components/PortfolioSection";
@@ -163,15 +164,21 @@ export default async function PublicHomePage() {
           <CameraOverlay />
           <div className="relative flex h-full flex-col">
             <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col justify-center px-6">
-              <HeroReveal>
-                <h1 className="max-w-4xl font-display text-5xl leading-[0.95] font-black tracking-tight text-fg uppercase sm:text-7xl lg:text-[7rem]">
-                  {heroTitleLines.map((line, i) => (
-                    <span key={i}>
+              {/* Titular por líneas: cada una sube desde una máscara, como un
+                  rótulo de cine (CSS puro, sin esperar al JavaScript). */}
+              <h1 className="max-w-4xl font-display text-5xl leading-[0.95] font-black tracking-tight text-fg uppercase sm:text-7xl lg:text-[7rem]">
+                {heroTitleLines.map((line, i) => (
+                  <span key={i} className="-mt-[0.15em] block overflow-hidden pt-[0.15em] pb-[0.06em]">
+                    <span
+                      className="hero-line block"
+                      style={{ animationDelay: `${0.1 + i * 0.12}s` }}
+                    >
                       {line}
-                      {i < heroTitleLines.length - 1 && <br />}
                     </span>
-                  ))}
-                </h1>
+                  </span>
+                ))}
+              </h1>
+              <HeroReveal delay={0.1 + heroTitleLines.length * 0.12}>
                 <div className="mt-6 flex flex-wrap items-center gap-x-8 gap-y-4">
                   <p className="max-w-md font-mono text-sm text-muted">
                     {heroSubtitle}
@@ -192,22 +199,7 @@ export default async function PublicHomePage() {
         </PlaceholderFrame>
       </section>
 
-      <div className="group flex w-full overflow-hidden border-y border-line bg-bg-raised py-4 [contain:layout_paint]">
-        <div className="flex w-max animate-[credits-scroll_70s_linear_infinite] group-hover:[animation-play-state:paused]">
-          {[0, 1].map((copy) => (
-            <div key={copy} className="flex shrink-0 items-center gap-6 pr-6">
-              {tags.map((tag, i) => (
-                <span key={i} className="flex items-center gap-6">
-                  <span className="font-mono text-sm tracking-widest whitespace-nowrap uppercase">
-                    {tag}
-                  </span>
-                  <span className="text-accent-purple-soft">●</span>
-                </span>
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
+      <CreditsMarquee tags={tags} />
 
       <section id="servicios" className="px-6 py-28">
         <div className="mx-auto max-w-6xl">

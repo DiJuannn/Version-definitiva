@@ -2,15 +2,20 @@
 
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useMotionValue, useSpring } from "motion/react";
+import { DURATION, EASE } from "@/lib/motion";
 
 const HOVER_SELECTOR = "a, button, [data-cursor-hover]";
 const INTERACTIVE_SELECTOR = "a, button, input, textarea, select, [role='button']";
+// En los campos de texto vuelve el cursor del sistema (el de escribir): el
+// decorativo no deja ver dónde va el texto.
+const TEXT_FIELD_SELECTOR = "input, textarea, select, [contenteditable='true']";
 
 type RecMark = { id: number; x: number; y: number };
 
 export function CustomCursor() {
   const [enabled, setEnabled] = useState(false);
   const [hovering, setHovering] = useState(false);
+  const [overTextField, setOverTextField] = useState(false);
   const [marks, setMarks] = useState<RecMark[]>([]);
   const nextId = useRef(0);
 
@@ -21,6 +26,15 @@ export function CustomCursor() {
 
   useEffect(() => {
     if (!window.matchMedia("(pointer: fine)").matches) return;
+    // Quien pide menos movimiento o más contraste conserva su cursor del
+    // sistema (tamaño, color y velocidad que haya configurado).
+    if (
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+      window.matchMedia("(prefers-contrast: more)").matches ||
+      window.matchMedia("(forced-colors: active)").matches
+    ) {
+      return;
+    }
     // matchMedia solo existe en el cliente: el estado inicial debe ser
     // `false` (igual que en el servidor) para no desajustar la hidratación.
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -32,6 +46,7 @@ export function CustomCursor() {
       y.set(e.clientY);
       const target = e.target as HTMLElement | null;
       setHovering(!!target?.closest(HOVER_SELECTOR));
+      setOverTextField(!!target?.closest(TEXT_FIELD_SELECTOR));
     }
 
     function handleClick(e: MouseEvent) {
@@ -64,8 +79,8 @@ export function CustomCursor() {
           fill="none"
           className={hovering ? "fixed left-0 top-0 text-accent" : "fixed left-0 top-0 text-fg"}
           style={{ x: springX, y: springY, translateX: "-50%", translateY: "-50%" }}
-          animate={{ scale: hovering ? 1.35 : 1 }}
-          transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+          animate={{ scale: hovering ? 1.35 : 1, opacity: overTextField ? 0 : 1 }}
+          transition={{ duration: DURATION.quick, ease: EASE }}
         >
           <path d="M2 8V2H8" stroke="currentColor" strokeWidth="1.5" />
           <path d="M16 2H22V8" stroke="currentColor" strokeWidth="1.5" />
@@ -80,14 +95,14 @@ export function CustomCursor() {
               className="absolute rounded-full border border-accent"
               initial={{ width: 8, height: 8, x: -4, y: -4, opacity: 0.9 }}
               animate={{ width: 46, height: 46, x: -23, y: -23, opacity: 0 }}
-              transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 0.55, ease: EASE }}
             />
             <motion.div
               className="absolute flex items-center gap-1.5 whitespace-nowrap font-mono text-[11px] tracking-widest text-accent uppercase"
               initial={{ opacity: 0, y: 0, scale: 0.8, x: 12 }}
               animate={{ opacity: 1, y: -16, scale: 1, x: 12 }}
               exit={{ opacity: 0, y: -28 }}
-              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              transition={{ duration: 0.5, ease: EASE }}
             >
               <motion.span
                 className="h-1.5 w-1.5 rounded-full bg-accent"

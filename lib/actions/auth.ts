@@ -6,7 +6,10 @@ import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/lib/prisma";
 import { signUpCore } from "@/lib/auth-core";
 
-export type AuthActionState = { error: string } | undefined;
+// `values`: lo que se escribió, para devolverlo al formulario tras un error
+// (React vacía los campos al terminar la acción; sin esto había que
+// reescribirlo todo). Nunca incluye la contraseña.
+export type AuthActionState = { error: string; values?: Record<string, string> } | undefined;
 
 // Solo se sigue un "next" que sea una ruta relativa de la propia app — si
 // viniera algo como "https://otra-web.com", sería una redirección abierta
@@ -27,7 +30,7 @@ export async function logIn(
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    return { error: "Email o contraseña incorrectos." };
+    return { error: "Email o contraseña incorrectos.", values: { email } };
   }
 
   redirect(safeNextPath(formData.get("next")) ?? "/app");
@@ -52,7 +55,14 @@ export async function signUp(
   );
 
   if (!result.ok) {
-    return { error: result.error };
+    return {
+      error: result.error,
+      values: {
+        organizationName: String(formData.get("organizationName") ?? ""),
+        fullName: String(formData.get("fullName") ?? ""),
+        email: String(formData.get("email") ?? ""),
+      },
+    };
   }
 
   if (!result.session) {

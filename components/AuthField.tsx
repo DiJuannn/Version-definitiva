@@ -9,12 +9,14 @@ export function AuthField({
   type = "text",
   required,
   autoComplete,
+  defaultValue,
 }: {
   label: string;
   name: string;
   type?: string;
   required?: boolean;
   autoComplete?: string;
+  defaultValue?: string;
 }) {
   const isPassword = type === "password";
   const [visible, setVisible] = useState(false);
@@ -34,6 +36,7 @@ export function AuthField({
           type={isPassword && visible ? "text" : type}
           required={required}
           autoComplete={autoComplete}
+          defaultValue={defaultValue}
           className={`w-full border border-line bg-transparent px-3 py-2.5 text-sm text-fg outline-none transition-colors focus:border-accent ${
             isPassword ? "pr-10" : ""
           }`}

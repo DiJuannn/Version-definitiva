@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AuthField } from "@/components/AuthField";
 import { updatePassword } from "@/lib/actions/auth";
 import { createClient } from "@/lib/supabase/client";
+import { FormError } from "@/components/FormError";
 
 export default function ResetPasswordPage() {
   const [state, formAction, pending] = useActionState(updatePassword, undefined);
@@ -70,7 +71,7 @@ export default function ResetPasswordPage() {
         />
 
         {state?.error && (
-          <p className="font-mono text-xs text-danger">{state.error}</p>
+          <FormError message={state.error} />
         )}
 
         <button

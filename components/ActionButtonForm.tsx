@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { SubmitButton } from "@/components/SubmitButton";
+import { FormError } from "@/components/FormError";
 
 export type ActionState = { error: string } | undefined;
 
@@ -28,7 +29,7 @@ export function ActionButtonForm({
         {children}
       </SubmitButton>
       {state?.error && (
-        <p className="mt-2 font-mono text-xs text-danger">{state.error}</p>
+        <FormError message={state.error} className="mt-2" />
       )}
     </form>
   );

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { AuthField } from "@/components/AuthField";
 import { logIn } from "@/lib/actions/auth";
+import { FormError } from "@/components/FormError";
 
 export default function LoginPage() {
   return (
@@ -44,7 +45,14 @@ function LoginForm() {
 
       <form action={formAction} className="mt-8 space-y-4">
         {next && <input type="hidden" name="next" value={next} />}
-        <AuthField label="Email" name="email" type="email" required autoComplete="email" />
+        <AuthField
+          label="Email"
+          name="email"
+          type="email"
+          required
+          autoComplete="email"
+          defaultValue={state?.values?.email}
+        />
         <AuthField
           label="Contraseña"
           name="password"
@@ -54,7 +62,7 @@ function LoginForm() {
         />
 
         {state?.error && (
-          <p className="font-mono text-xs text-danger">{state.error}</p>
+          <FormError message={state.error} />
         )}
 
         <button

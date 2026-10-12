@@ -70,7 +70,7 @@ export default async function PublicLayout({ children }: LayoutProps<"/">) {
           </div>
         </div>
       </header>
-      <main className="flex-1">{children}</main>
+      <main id="contenido" className="flex-1">{children}</main>
       <footer className="border-t border-line px-6 py-8 text-center font-mono text-xs tracking-widest text-muted uppercase">
         <p>© {new Date().getFullYear()} Versión definitiva</p>
         <nav className="mt-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">

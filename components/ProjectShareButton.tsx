@@ -7,6 +7,7 @@ import { DeleteButton } from "@/components/DeleteButton";
 import { ShareIcon } from "@/components/ToolIcons";
 import { SubmitButton } from "@/components/SubmitButton";
 import { useClickOutside } from "@/lib/use-click-outside";
+import { FormError } from "@/components/FormError";
 
 type ShareEntry = {
   id: string;
@@ -69,7 +70,7 @@ export function ProjectShareButton({
             proyecto — no el resto de tu organización.
           </p>
           {shareState?.error && (
-            <p className="mt-2 font-mono text-[11px] text-danger">{shareState.error}</p>
+            <FormError message={shareState.error} className="mt-2 !text-[11px]" />
           )}
 
           {shares.length > 0 && (

@@ -64,7 +64,7 @@ export default async function AdminLayout({
           <span className="truncate">{profile?.email}</span>
         </div>
       </header>
-      <main className="flex-1 px-4 py-8 sm:px-6 sm:py-10">
+      <main id="contenido" className="flex-1 px-4 py-8 sm:px-6 sm:py-10">
         <div className="mx-auto max-w-4xl">{children}</div>
       </main>
     </div>

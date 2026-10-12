@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { deleteOwnAccount } from "@/lib/actions/account";
+import { FormError } from "@/components/FormError";
 
 const CONFIRM_PHRASE = "ELIMINAR MI CUENTA";
 
@@ -63,7 +64,7 @@ export function DeleteAccountCard({ soleMember }: { soleMember: boolean }) {
           />
 
           {state?.error && (
-            <p className="mt-3 font-mono text-xs text-danger">{state.error}</p>
+            <FormError message={state.error} className="mt-3" />
           )}
 
           <div className="mt-5 flex items-center gap-4">

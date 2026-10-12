@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { AuthField } from "@/components/AuthField";
 import { requestPasswordReset } from "@/lib/actions/auth";
+import { FormError } from "@/components/FormError";
 
 export default function ForgotPasswordPage() {
   return (
@@ -54,7 +55,7 @@ function ForgotPasswordForm() {
         <AuthField label="Email" name="email" type="email" required autoComplete="email" />
 
         {state?.error && (
-          <p className="font-mono text-xs text-danger">{state.error}</p>
+          <FormError message={state.error} />
         )}
 
         <button

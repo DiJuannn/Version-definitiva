@@ -102,7 +102,7 @@ export default async function DashboardLayout({
           <DashboardNav items={nav} />
         </MainContainer>
       </header>
-      <main className="flex-1 px-4 pt-8 pb-28 sm:px-6 sm:pt-12 sm:pb-24">
+      <main id="contenido" className="flex-1 px-4 pt-8 pb-28 sm:px-6 sm:pt-12 sm:pb-24">
         <MainContainer>{children}</MainContainer>
       </main>
     </div>

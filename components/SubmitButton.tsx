@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
+import { motion } from "motion/react";
+import { DURATION } from "@/lib/motion";
 
 export function SubmitButton({
   children,
@@ -45,7 +47,21 @@ export function SubmitButton({
       {pending && (
         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current" />
       )}
-      {pending ? pendingLabel : justSaved && savedLabel ? savedLabel : children}
+      {pending ? (
+        pendingLabel
+      ) : justSaved && savedLabel ? (
+        // Pequeño "pop" al confirmar: se nota que se ha guardado sin mirar dos veces.
+        <motion.span
+          className="inline-block"
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: DURATION.standard, ease: [0.34, 1.56, 0.64, 1] }}
+        >
+          {savedLabel}
+        </motion.span>
+      ) : (
+        children
+      )}
     </button>
   );
 }

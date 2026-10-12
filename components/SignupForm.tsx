@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import Link from "next/link";
 import { AuthField } from "@/components/AuthField";
 import { signUp } from "@/lib/actions/auth";
+import { FormError } from "@/components/FormError";
 
 export function SignupForm() {
   const [state, formAction, pending] = useActionState(signUp, undefined);
@@ -20,9 +21,17 @@ export function SignupForm() {
           label="Nombre de la productora"
           name="organizationName"
           required
+          defaultValue={state?.values?.organizationName}
         />
-        <AuthField label="Tu nombre" name="fullName" autoComplete="name" />
-        <AuthField label="Email" name="email" type="email" required autoComplete="email" />
+        <AuthField label="Tu nombre" name="fullName" autoComplete="name" defaultValue={state?.values?.fullName} />
+        <AuthField
+          label="Email"
+          name="email"
+          type="email"
+          required
+          autoComplete="email"
+          defaultValue={state?.values?.email}
+        />
         <AuthField
           label="Contraseña"
           name="password"
@@ -32,7 +41,7 @@ export function SignupForm() {
         />
 
         {state?.error && (
-          <p className="font-mono text-xs text-danger">{state.error}</p>
+          <FormError message={state.error} />
         )}
 
         <label className="flex items-start gap-2 font-mono text-xs text-muted">

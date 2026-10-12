@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import type { AnalyzeShotListState } from "@/lib/actions/shot-list-import";
+import { FormError } from "@/components/FormError";
 
 function UploadStatus() {
   const { pending } = useFormStatus();
@@ -42,7 +43,7 @@ export function ShotListUploadForm({
       </label>
       <UploadStatus />
       {state?.error && (
-        <p className="w-full font-mono text-xs text-danger">{state.error}</p>
+        <FormError message={state.error} className="w-full" />
       )}
     </form>
   );

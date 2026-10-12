@@ -1,6 +1,8 @@
 "use client";
 
-import { useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { motion } from "motion/react";
+import { DURATION, EASE, EASE_IN_OUT } from "@/lib/motion";
 
 export type SectionTab = {
   id: string;
@@ -42,6 +44,8 @@ export function SectionTabs({
   );
   const buttons = useRef<Record<string, HTMLButtonElement | null>>({});
   const side = layout === "side";
+  // Una marca por grupo de pestañas (puede haber varios en la misma página).
+  const indicatorId = useId();
 
   function select(id: string, focus = false) {
     setActive(id);
@@ -114,16 +118,28 @@ export function SectionTabs({
                   side
                     ? `-mb-px border-b-2 lg:mb-0 lg:justify-between lg:border-b-0 lg:border-l-2 lg:py-2.5 ${
                         isActive
-                          ? "border-accent text-fg lg:bg-bg-raised"
+                          ? "border-transparent text-fg lg:bg-bg-raised"
                           : "border-transparent text-muted hover:text-fg"
                       }`
                     : `-mb-px border-b-2 ${
                         isActive
-                          ? "border-accent text-fg"
+                          ? "border-transparent text-fg"
                           : "border-transparent text-muted hover:text-fg"
                       }`
                 }`}
               >
+                {isActive && (
+                  // La marca de la pestaña activa se desliza de una a otra en vez de
+                  // saltar: se ve de dónde viene y a dónde va.
+                  <motion.span
+                    layoutId={indicatorId}
+                    aria-hidden
+                    transition={{ duration: DURATION.standard, ease: EASE_IN_OUT }}
+                    className={`absolute inset-x-0 -bottom-0.5 h-0.5 bg-accent ${
+                      side ? "lg:inset-x-auto lg:top-0 lg:bottom-0 lg:-left-0.5 lg:h-auto lg:w-0.5" : ""
+                    }`}
+                  />
+                )}
                 <span>{tab.label}</span>
                 {tab.alert && (
                   <span
@@ -160,7 +176,15 @@ export function SectionTabs({
             aria-labelledby={`tab-${tab.id}`}
             hidden={tab.id !== active}
           >
-            {tab.content}
+            {/* Sin desmontar nada (los formularios de dentro conservan lo escrito):
+                al activarse, el panel entra con un fundido corto. */}
+            <motion.div
+              initial={false}
+              animate={tab.id === active ? { opacity: 1, y: 0 } : { opacity: 0, y: 4 }}
+              transition={{ duration: DURATION.standard, ease: EASE }}
+            >
+              {tab.content}
+            </motion.div>
           </div>
         ))}
       </div>
