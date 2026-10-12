@@ -60,7 +60,7 @@ export async function VehiclesFleet({ organizationId }: { organizationId: string
               }
               trailing={
                 <>
-                  <span className="font-mono text-xs text-muted">
+                  <span className="text-xs text-muted">
                     {vehicle._count.reservations} reserva
                     {vehicle._count.reservations === 1 ? "" : "s"}
                   </span>

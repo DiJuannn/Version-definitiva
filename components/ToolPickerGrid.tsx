@@ -40,7 +40,7 @@ export function ToolPickerGrid({
     <>
       {groups.map((group) => (
         <div key={group.label} className="mt-8 first:mt-0">
-          <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
+          <p className="text-xs text-muted">
             {group.label}
           </p>
           <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
@@ -82,7 +82,7 @@ export function ToolPickerGrid({
                 key={project.id}
                 type="button"
                 onClick={() => router.push(`/app/${project.id}/${pickerTool.href}`)}
-                className="block min-h-11 w-full py-3 text-left font-mono text-sm transition-colors hover:text-accent"
+                className="block min-h-11 w-full py-3 text-left text-sm transition-colors hover:text-accent"
               >
                 {project.name}
               </button>

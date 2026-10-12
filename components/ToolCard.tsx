@@ -40,7 +40,7 @@ export function ToolCard({
   variant?: "square" | "row";
 }) {
   const badgePill = badge && (
-    <span className="rounded-full bg-accent px-2 py-0.5 font-mono text-[9px] tracking-widest text-bg uppercase">
+    <span className="rounded-full bg-accent px-2 py-0.5 text-xs text-bg">
       {badge}
     </span>
   );
@@ -58,19 +58,19 @@ export function ToolCard({
             {href && <LinkPendingHint />}
           </div>
           {stat && (
-            <p className={`mt-1 font-mono text-[11px] ${STAT_TONE[stat.tone ?? "none"]}`}>
+            <p className={`mt-1 text-xs ${STAT_TONE[stat.tone ?? "none"]}`}>
               {stat.text}
             </p>
           )}
           {description && (
-            <p className="mt-1 line-clamp-1 font-mono text-[11px] leading-relaxed text-muted sm:line-clamp-none">
+            <p className="mt-1 line-clamp-1 text-xs leading-relaxed text-muted sm:line-clamp-none">
               {description}
             </p>
           )}
         </div>
         <span
           aria-hidden
-          className="shrink-0 self-center font-mono text-xs text-accent opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100"
+          className="shrink-0 self-center text-xs text-accent opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100"
         >
           →
         </span>
@@ -104,12 +104,12 @@ export function ToolCard({
       {description && (
         <>
           {/* Táctil: sin hover, la descripción se lee debajo del nombre. */}
-          <p className="line-clamp-3 font-mono text-[10px] leading-relaxed text-muted [@media(hover:hover)]:hidden">
+          <p className="line-clamp-3 text-xs leading-relaxed text-muted [@media(hover:hover)]:hidden">
             {description}
           </p>
           {/* Ratón o teclado: capa que aparece al pasar por encima o al enfocar. */}
           <div className="absolute inset-0 hidden items-center justify-center bg-bg/95 p-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100 [@media(hover:hover)]:flex">
-            <p className="font-mono text-[11px] leading-relaxed text-muted">
+            <p className="text-xs leading-relaxed text-muted">
               {description}
             </p>
           </div>

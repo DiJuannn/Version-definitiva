@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { BackLink } from "@/components/BackLink";
 
 // Cabecera común de las páginas de herramienta: volver + acciones a la
-// derecha, y debajo etiqueta, título grande y una línea de contexto.
+// derecha, y debajo etiqueta, título y una línea de contexto.
 export function PageHeader({
   backHref,
   backLabel,
@@ -26,11 +26,11 @@ export function PageHeader({
       </div>
       <div className="mt-6">
         {eyebrow && (
-          <p className="font-mono text-[11px] tracking-widest text-accent uppercase">
+          <p className="text-[13px] text-muted">
             {eyebrow}
           </p>
         )}
-        <h1 className="mt-1.5 font-display text-3xl font-black tracking-tight uppercase sm:text-4xl">
+        <h1 className="mt-1 font-display text-2xl font-bold tracking-tight sm:text-[1.75rem]">
           {title}
         </h1>
         {description && (

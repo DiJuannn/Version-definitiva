@@ -76,15 +76,15 @@ export default async function MontajePage({
                         <div key={scene.sceneNumber} className="border-b border-line py-4 last:border-b-0">
                           <p className="font-display text-base font-bold">
                             Escena {scene.sceneNumber}
-                            {scene.context ? <span className="ml-2 font-mono text-xs text-muted">{scene.context}</span> : null}
+                            {scene.context ? <span className="ml-2 text-xs text-muted">{scene.context}</span> : null}
                           </p>
                           {scene.shots.length === 0 ? (
-                            <p className="mt-1 font-mono text-xs text-warn">Sin ninguna toma buena todavía.</p>
+                            <p className="mt-1 text-xs text-warn">Sin ninguna toma buena todavía.</p>
                           ) : (
                             <ul className="mt-2 space-y-2">
                               {scene.shots.map((shot) => (
                                 <li key={shot.key} className="border-l-2 border-accent/40 pl-3">
-                                  <p className="font-mono text-sm">
+                                  <p className="text-sm">
                                     {shot.label}
                                     {shot.size ? ` · ${shot.size}` : ""} —{" "}
                                     <span className="text-success">
@@ -96,7 +96,7 @@ export default async function MontajePage({
                                   {shot.goodTakes
                                     .filter((t) => t.notes)
                                     .map((t, i) => (
-                                      <p key={i} className="font-mono text-xs text-muted">
+                                      <p key={i} className="text-xs text-muted">
                                         Toma {t.take}: {t.notes}
                                       </p>
                                     ))}
@@ -157,7 +157,7 @@ export default async function MontajePage({
                     </p>
                     <CopyTextButton text={creditsText} label="Copiar créditos" />
                   </div>
-                  <pre className="mt-6 max-w-2xl overflow-x-auto whitespace-pre-wrap border border-line bg-bg-raised/40 p-5 font-mono text-sm leading-relaxed">
+                  <pre className="mt-6 max-w-2xl overflow-x-auto whitespace-pre-wrap border border-line bg-bg-raised/40 p-5 text-sm leading-relaxed">
                     {creditsText}
                   </pre>
                 </div>

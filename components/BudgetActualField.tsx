@@ -63,9 +63,9 @@ export function BudgetActualField({
           inputMode="decimal"
           defaultValue={actual ?? ""}
           placeholder="Gastado"
-          className="w-24 bg-transparent px-2 py-1.5 text-right font-mono text-xs tabular-nums outline-none placeholder:text-muted/60"
+          className="w-24 bg-transparent px-2 py-1.5 text-right text-xs tabular-nums outline-none placeholder:text-muted/60"
         />
-        <span aria-hidden className="pr-2 font-mono text-xs text-muted">
+        <span aria-hidden className="pr-2 text-xs text-muted">
           €
         </span>
       </div>

@@ -40,7 +40,7 @@ export function ProjectBreadcrumb({
   const others = projects.filter((p) => p.id !== projectId);
 
   return (
-    <nav aria-label="Ruta" className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[11px] tracking-widest uppercase print:hidden">
+    <nav aria-label="Ruta" className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs print:hidden">
       <Link href="/app/proyectos" className="text-muted hover:text-fg">
         Proyectos
       </Link>

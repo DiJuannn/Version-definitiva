@@ -11,7 +11,7 @@ export function StageStepper({ stage, className = "mt-8" }: { stage: 1 | 2 | 3 |
           <li key={s.id} aria-current={current ? "step" : undefined}>
             <div className={`h-1 ${done ? "bg-accent" : current ? "bg-accent/60" : "bg-line"}`} />
             <p
-              className={`mt-2 flex items-center gap-1.5 font-mono text-[11px] tracking-widest uppercase ${
+              className={`mt-2 flex items-center gap-1.5 text-xs ${
                 current ? "text-accent" : done ? "text-fg" : "text-muted"
               }`}
             >

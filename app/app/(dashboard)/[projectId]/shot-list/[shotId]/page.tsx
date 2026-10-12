@@ -57,7 +57,7 @@ export default async function ShotDetailPage({
         className="mt-8 grid gap-4 border border-line p-5 sm:grid-cols-2 lg:grid-cols-3"
       >
         <label className="flex flex-col gap-1">
-          <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+          <span className="text-xs text-muted">
             Número
           </span>
           <input
@@ -69,7 +69,7 @@ export default async function ShotDetailPage({
         </label>
         {fields.map(([name, label, value]) => (
           <label key={name} className="flex flex-col gap-1">
-            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+            <span className="text-xs text-muted">
               {label}
             </span>
             <input
@@ -80,7 +80,7 @@ export default async function ShotDetailPage({
           </label>
         ))}
         <label className="flex flex-col gap-1">
-          <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+          <span className="text-xs text-muted">
             FPS
           </span>
           <input
@@ -91,7 +91,7 @@ export default async function ShotDetailPage({
           />
         </label>
         <label className="flex flex-col gap-1">
-          <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+          <span className="text-xs text-muted">
             Duración (seg)
           </span>
           <input
@@ -102,7 +102,7 @@ export default async function ShotDetailPage({
           />
         </label>
         <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-3">
-          <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+          <span className="text-xs text-muted">
             Descripción
           </span>
           <textarea
@@ -113,7 +113,7 @@ export default async function ShotDetailPage({
           />
         </label>
         <label className="flex flex-col gap-1 sm:col-span-2">
-          <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+          <span className="text-xs text-muted">
             Audio
           </span>
           <input
@@ -124,7 +124,7 @@ export default async function ShotDetailPage({
         </label>
         {shot.scene.characters.length > 0 && (
           <div className="flex flex-col gap-1.5 sm:col-span-2 lg:col-span-3">
-            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+            <span className="text-xs text-muted">
               Personajes en este plano
             </span>
             <p className="font-sans text-xs text-muted">
@@ -146,7 +146,7 @@ export default async function ShotDetailPage({
           </div>
         )}
         <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-3">
-          <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+          <span className="text-xs text-muted">
             Notas
           </span>
           <textarea

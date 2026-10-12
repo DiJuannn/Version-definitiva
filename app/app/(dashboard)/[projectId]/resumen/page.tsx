@@ -62,7 +62,7 @@ function plural(n: number, one: string, many: string) {
   return `${n} ${n === 1 ? one : many}`;
 }
 
-const LABEL = "font-mono text-[10px] tracking-widest text-muted uppercase";
+const LABEL = "text-xs text-muted";
 
 function Bar({ value }: { value: number }) {
   const pct = Math.max(0, Math.min(100, Math.round(value * 100)));
@@ -95,7 +95,7 @@ function Section({
           <span className="text-muted transition-transform group-open:rotate-90">→</span>
           {title}
           {status === "ok" && (
-            <span className="font-mono text-xs text-success" title="Completo" aria-label="Completo">
+            <span className="text-xs text-success" title="Completo" aria-label="Completo">
               ✓
             </span>
           )}
@@ -103,7 +103,7 @@ function Section({
             <span className="h-1.5 w-1.5 rounded-full bg-warn" title="Tiene pendientes" aria-label="Tiene pendientes" />
           )}
         </span>
-        <span className="text-right font-mono text-xs text-muted">{teaser}</span>
+        <span className="text-right text-xs text-muted">{teaser}</span>
       </summary>
       <div className="border-t border-line p-4">
         {children}
@@ -120,7 +120,7 @@ function GroupTitle({ children }: { children: React.ReactNode }) {
 }
 
 function Empty({ children }: { children: React.ReactNode }) {
-  return <p className="font-mono text-sm text-muted">{children}</p>;
+  return <p className="text-sm text-muted">{children}</p>;
 }
 
 export default async function ProjectSummaryPage({
@@ -268,7 +268,7 @@ export default async function ProjectSummaryPage({
           <span className="text-base text-muted">%</span>
         </p>
         <div className="min-w-0 flex-1">
-          <p className="font-mono text-xs sm:text-sm">{headline.sentence}</p>
+          <p className="text-xs sm:text-sm">{headline.sentence}</p>
           <div className="mt-2">
             <Bar value={headline.percent / 100} />
           </div>
@@ -279,17 +279,17 @@ export default async function ProjectSummaryPage({
       <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <div className="border border-line p-4">
           <p className={LABEL}>Estado</p>
-          <p className="mt-1 font-mono text-sm">{PROJECT_STATUS_LABELS[project.status]}</p>
+          <p className="mt-1 text-sm">{PROJECT_STATUS_LABELS[project.status]}</p>
         </div>
         <div className="border border-line p-4">
           <p className={LABEL}>Escenas</p>
-          <p className="mt-1 font-mono text-sm">{project.scenes.length}</p>
+          <p className="mt-1 text-sm">{project.scenes.length}</p>
         </div>
         <div className="border border-line p-4">
           <p className={LABEL}>Días de rodaje</p>
-          <p className="mt-1 font-mono text-sm">{project.shootingDays.length}</p>
+          <p className="mt-1 text-sm">{project.shootingDays.length}</p>
           {nextShoot && (
-            <p className="mt-1 font-mono text-[11px] text-muted">
+            <p className="mt-1 text-xs text-muted">
               Próximo: {nextShoot.date.toLocaleDateString("es-ES", { day: "numeric", month: "short", timeZone: "UTC" })}
               {nextShoot.daysUntil === 0 ? " (hoy)" : nextShoot.daysUntil === 1 ? " (mañana)" : ` (en ${nextShoot.daysUntil} días)`}
             </p>
@@ -297,11 +297,11 @@ export default async function ProjectSummaryPage({
         </div>
         <div className="border border-line p-4">
           <p className={LABEL}>Presupuesto</p>
-          <p className="mt-1 font-mono text-sm">
+          <p className="mt-1 text-sm">
             {budgetTarget ? `${currency(budgetGrandTotal)} / ${currency(budgetTarget)}` : currency(budgetGrandTotal)}
           </p>
           {hasBudgetActual && (
-            <p className="mt-1 font-mono text-[11px] text-muted">Gastado {currency(budgetGrandActual)}</p>
+            <p className="mt-1 text-xs text-muted">Gastado {currency(budgetGrandActual)}</p>
           )}
         </div>
       </div>
@@ -309,7 +309,7 @@ export default async function ProjectSummaryPage({
       {/* Lo que falta: un solo bloque, cerrado hasta que se necesite */}
       <div className="mt-3">
         {pending.length === 0 ? (
-          <p className="border border-line px-4 py-3 font-mono text-xs text-success">✓ Todo al día: no hay nada pendiente.</p>
+          <p className="border border-line px-4 py-3 text-xs text-success">✓ Todo al día: no hay nada pendiente.</p>
         ) : (
           <details className="group border border-warn/50">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 transition-colors hover:text-accent [&::-webkit-details-marker]:hidden">
@@ -318,14 +318,14 @@ export default async function ProjectSummaryPage({
                 Por resolver
                 <span className="h-1.5 w-1.5 rounded-full bg-warn" aria-hidden />
               </span>
-              <span className="font-mono text-xs text-muted">{plural(pending.length, "cosa", "cosas")}</span>
+              <span className="text-xs text-muted">{plural(pending.length, "cosa", "cosas")}</span>
             </summary>
             <ul className="divide-y divide-line border-t border-line px-4">
               {pending.map((item) => (
                 <li key={item.text}>
                   <Link
                     href={toolHref(item.tool)}
-                    className="flex items-center justify-between gap-3 py-2.5 font-mono text-xs transition-colors hover:text-accent"
+                    className="flex items-center justify-between gap-3 py-2.5 text-xs transition-colors hover:text-accent"
                   >
                     <span>{item.text}</span>
                     <span aria-hidden className="text-muted">
@@ -354,13 +354,13 @@ export default async function ProjectSummaryPage({
               {project.scenes.map((scene) => (
                 <div key={scene.id} className="flex items-center justify-between gap-4 py-2.5">
                   <div>
-                    <span className="font-mono text-sm">Escena {scene.number}</span>
-                    <span className="ml-2 font-mono text-xs text-muted">
+                    <span className="text-sm">Escena {scene.number}</span>
+                    <span className="ml-2 text-xs text-muted">
                       {INT_EXT_LABELS[scene.intExt]} · {DAY_PART_LABELS[scene.dayPart]}
                       {scene.location ? ` · ${scene.location.name}` : ""}
                     </span>
                   </div>
-                  <span className="shrink-0 font-mono text-xs text-muted">
+                  <span className="shrink-0 text-xs text-muted">
                     {scene.characters.length} pj · {scene._count.shots} planos
                   </span>
                 </div>
@@ -381,8 +381,8 @@ export default async function ProjectSummaryPage({
             <div className="divide-y divide-line">
               {project.characters.map((character) => (
                 <div key={character.id} className="flex items-center justify-between gap-4 py-2.5">
-                  <span className="font-mono text-sm">{character.name}</span>
-                  <span className={`font-mono text-xs ${character.actor ? "text-muted" : "text-warn"}`}>
+                  <span className="text-sm">{character.name}</span>
+                  <span className={`text-xs ${character.actor ? "text-muted" : "text-warn"}`}>
                     {character.actor?.name ?? "Sin actor asignado"}
                   </span>
                 </div>
@@ -400,10 +400,10 @@ export default async function ProjectSummaryPage({
                 .filter((group) => group.items.length > 0)
                 .map((group) => (
                   <div key={group.category}>
-                    <p className="font-mono text-[10px] tracking-widest text-accent uppercase">
+                    <p className="text-xs text-accent">
                       {BREAKDOWN_CATEGORY_LABELS[group.category]} ({group.items.length})
                     </p>
-                    <p className="mt-1 font-mono text-xs text-muted">{group.items.map((item) => item.name).join(", ")}</p>
+                    <p className="mt-1 text-xs text-muted">{group.items.map((item) => item.name).join(", ")}</p>
                   </div>
                 ))}
             </div>
@@ -416,7 +416,7 @@ export default async function ProjectSummaryPage({
           status={statusOf("shot-list", "storyboard")}
           teaser={`${shotsTotal} planos · ${storyboardFramesCount} viñetas`}
         >
-          <p className="font-mono text-sm">
+          <p className="text-sm">
             {plural(shotsTotal, "plano definido", "planos definidos")} en total ·{" "}
             {plural(storyboardFramesCount, "viñeta", "viñetas")} de storyboard.
           </p>
@@ -445,10 +445,10 @@ export default async function ProjectSummaryPage({
                       className="block py-2.5 transition-colors hover:text-accent"
                     >
                       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
-                        <span className="font-mono text-sm">
+                        <span className="text-sm">
                           {day.date.toLocaleDateString("es-ES", { weekday: "short", day: "2-digit", month: "short" })}
                         </span>
-                        <span className="font-mono text-xs text-muted">
+                        <span className="text-xs text-muted">
                           {plural(day.scenes.length, "escena", "escenas")}
                           {day.shots.length > 0
                             ? ` · ${plural(day.shots.length, "plano", "planos")}${doneShots > 0 ? ` (${doneShots} rodados)` : ""}`
@@ -456,7 +456,7 @@ export default async function ProjectSummaryPage({
                           · {day.callSheet ? "con call sheet" : "sin call sheet"}
                         </span>
                       </div>
-                      <p className="mt-1 font-mono text-[11px] text-muted">
+                      <p className="mt-1 text-xs text-muted">
                         {[
                           day.crewNames.length > 0 ? `Equipo: ${day.crewNames.join(", ")}` : null,
                           day.itemNames.length > 0 ? `Material: ${day.itemNames.join(", ")}` : null,
@@ -474,14 +474,14 @@ export default async function ProjectSummaryPage({
                 <div className="mt-6 grid gap-6 lg:grid-cols-2">
                   {calendarMonths.map((monthStart) => (
                     <div key={monthStart.toISOString()}>
-                      <p className="font-mono text-[10px] tracking-widest text-accent uppercase">
+                      <p className="text-xs text-accent">
                         {monthStart.toLocaleDateString("es-ES", { month: "long", year: "numeric" })}
                       </p>
                       <div className="mt-2 grid grid-cols-7 border-t border-l border-line">
                         {WEEKDAYS.map((label) => (
                           <div
                             key={label}
-                            className="border-r border-b border-line bg-bg-raised px-1 py-1 font-mono text-[9px] tracking-widest text-muted uppercase"
+                            className="border-r border-b border-line bg-bg-raised px-1 py-1 text-xs text-muted"
                           >
                             {label}
                           </div>
@@ -493,11 +493,11 @@ export default async function ProjectSummaryPage({
                             const shootingDay = shootingDaysWithNeeds.find((d) => sameDay(d.date, day));
                             const cellContent = (
                               <>
-                                <p className={`font-mono text-[10px] ${shootingDay ? "text-accent" : "text-muted"}`}>
+                                <p className={`text-xs ${shootingDay ? "text-accent" : "text-muted"}`}>
                                   {day.getDate()}
                                 </p>
                                 {shootingDay && (
-                                  <p className="mt-0.5 truncate font-mono text-[9px] text-fg">
+                                  <p className="mt-0.5 truncate text-xs text-fg">
                                     {shootingDay.shots.length > 0
                                       ? `${shootingDay.shots.length} pl.`
                                       : `${shootingDay.scenes.length} esc.`}
@@ -549,16 +549,16 @@ export default async function ProjectSummaryPage({
             <div className="divide-y divide-line">
               {budgetCategoriesWithTotals.map((category) => (
                 <div key={category.id} className="flex items-center justify-between gap-4 py-2.5">
-                  <span className="font-mono text-sm">{category.name}</span>
-                  <span className="font-mono text-xs text-muted">
+                  <span className="text-sm">{category.name}</span>
+                  <span className="text-xs text-muted">
                     {currency(category.total)}
                     {hasBudgetActual && category.actual > 0 ? ` · gastado ${currency(category.actual)}` : ""}
                   </span>
                 </div>
               ))}
               <div className="flex items-center justify-between gap-4 py-2.5">
-                <span className="font-mono text-sm font-bold uppercase">Total</span>
-                <span className="font-mono text-sm text-accent">{currency(budgetGrandTotal)}</span>
+                <span className="text-sm font-bold">Total</span>
+                <span className="text-sm text-accent">{currency(budgetGrandTotal)}</span>
               </div>
             </div>
           )}
@@ -570,7 +570,7 @@ export default async function ProjectSummaryPage({
             title="Parte de script"
             teaser={`${script.takes} tomas · ${script.good} buenas`}
           >
-            <p className="font-mono text-sm">
+            <p className="text-sm">
               {plural(script.takes, "toma apuntada", "tomas apuntadas")}, {plural(script.good, "buena", "buenas")}
               {shotsTotal > 0 ? ` · ${script.shotsWithGood} de ${shotsTotal} planos con toma buena` : ""}.
             </p>
@@ -591,8 +591,8 @@ export default async function ProjectSummaryPage({
             <div className="divide-y divide-line">
               {project.crewMembers.map((member) => (
                 <div key={member.id} className="flex items-center justify-between gap-4 py-2.5">
-                  <span className="font-mono text-sm">{member.name}</span>
-                  <span className="font-mono text-xs text-muted">
+                  <span className="text-sm">{member.name}</span>
+                  <span className="text-xs text-muted">
                     {[member.role, member.phone].filter(Boolean).join(" · ") || "—"}
                   </span>
                 </div>
@@ -608,8 +608,8 @@ export default async function ProjectSummaryPage({
             <div className="divide-y divide-line">
               {locations.map((location) => (
                 <div key={location.id} className="flex items-center justify-between gap-4 py-2.5">
-                  <span className="font-mono text-sm">{location.name}</span>
-                  <span className="font-mono text-xs text-muted">{plural(location.sceneCount, "escena", "escenas")}</span>
+                  <span className="text-sm">{location.name}</span>
+                  <span className="text-xs text-muted">{plural(location.sceneCount, "escena", "escenas")}</span>
                 </div>
               ))}
             </div>
@@ -623,8 +623,8 @@ export default async function ProjectSummaryPage({
             <div className="divide-y divide-line">
               {inventoryItems.map((item) => (
                 <div key={item.id} className="flex items-center justify-between gap-4 py-2.5">
-                  <span className="font-mono text-sm">{item.name}</span>
-                  <span className="font-mono text-xs text-muted">
+                  <span className="text-sm">{item.name}</span>
+                  <span className="text-xs text-muted">
                     {INVENTORY_CATEGORY_LABELS[item.category as keyof typeof INVENTORY_CATEGORY_LABELS] ?? item.category} ·{" "}
                     {plural(item.daysCount, "día", "días")}
                   </span>
@@ -641,8 +641,8 @@ export default async function ProjectSummaryPage({
             <div className="divide-y divide-line">
               {vehicles.map((vehicle) => (
                 <div key={vehicle.id} className="flex items-center justify-between gap-4 py-2.5">
-                  <span className="font-mono text-sm">{vehicle.name}</span>
-                  <span className="font-mono text-xs text-muted">
+                  <span className="text-sm">{vehicle.name}</span>
+                  <span className="text-xs text-muted">
                     {[vehicle.type, vehicle.plate].filter(Boolean).join(" · ")}
                     {vehicle.type || vehicle.plate ? " · " : ""}
                     {plural(vehicle.daysCount, "día", "días")}

@@ -14,7 +14,7 @@ export function NewProjectPanel({ hasProjects }: { hasProjects: boolean }) {
   return (
     <>
       <div className="flex items-center justify-between">
-        <p className="font-mono text-[10px] tracking-widest text-accent uppercase">
+        <p className="text-xs text-accent">
           Proyectos recientes
         </p>
         <div className="flex items-center gap-4">
@@ -23,7 +23,7 @@ export function NewProjectPanel({ hasProjects }: { hasProjects: boolean }) {
               type="button"
               onClick={() => setOpen((v) => !v)}
               aria-expanded={open}
-              className="flex items-center gap-1.5 font-mono text-[10px] tracking-widest text-muted uppercase transition hover:text-accent"
+              className="flex items-center gap-1.5 text-xs text-muted transition hover:text-accent"
             >
               <span
                 className={`inline-block text-sm leading-none transition-transform ${open ? "rotate-45" : ""}`}
@@ -35,7 +35,7 @@ export function NewProjectPanel({ hasProjects }: { hasProjects: boolean }) {
           )}
           <Link
             href="/app/proyectos"
-            className="font-mono text-[10px] tracking-widest text-muted uppercase hover:text-accent"
+            className="text-xs text-muted hover:text-accent"
           >
             Ver todos →
           </Link>
@@ -47,7 +47,7 @@ export function NewProjectPanel({ hasProjects }: { hasProjects: boolean }) {
             action={createProject}
             formClassName="flex flex-col gap-3 sm:flex-row sm:items-center"
             inputClassName="w-full border border-line bg-transparent px-3 py-2.5 text-sm outline-none transition-colors focus:border-accent"
-            buttonClassName="shrink-0 rounded-full bg-accent px-6 py-2.5 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90 disabled:opacity-70"
+            buttonClassName="shrink-0 rounded-full bg-accent px-6 py-2.5 text-[13px] text-bg transition-opacity hover:opacity-90 disabled:opacity-70"
             autoFocus
           />
         </div>

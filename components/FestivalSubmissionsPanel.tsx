@@ -53,7 +53,7 @@ function Row({ projectId, submission }: { projectId: string; submission: Festiva
               submission.festivalName
             )}
           </p>
-          <p className="font-mono text-xs text-muted">
+          <p className="text-xs text-muted">
             {submission.deadline && (
               <span className={urgent ? "text-warn" : ""}>
                 Plazo: {new Date(submission.deadline).toLocaleDateString("es-ES")}
@@ -70,7 +70,7 @@ function Row({ projectId, submission }: { projectId: string; submission: Festiva
               name="status"
               defaultValue={submission.status}
               onChange={(e) => e.currentTarget.form?.requestSubmit()}
-              className="border border-line bg-transparent px-2 py-1.5 font-mono text-[11px] uppercase outline-none focus:border-accent"
+              className="border border-line bg-transparent px-2 py-1.5 text-xs outline-none focus:border-accent"
             >
               {Object.entries(FESTIVAL_SUBMISSION_STATUS_LABELS).map(([value, label]) => (
                 <option key={value} value={value} className="bg-bg">
@@ -105,7 +105,7 @@ export function FestivalSubmissionsPanel({
     <section className="mt-8 border border-line p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="font-mono text-[11px] tracking-widest text-accent uppercase">Tu seguimiento</p>
+          <p className="text-xs text-accent">Tu seguimiento</p>
           <h2 className="mt-1 font-display text-xl font-black">Envíos a festivales</h2>
         </div>
         <button type="button" onClick={() => setOpen((v) => !v)} className="link-action">
@@ -114,7 +114,7 @@ export function FestivalSubmissionsPanel({
       </div>
 
       {pending.length > 0 && (
-        <p className="mt-3 border border-warn/60 bg-warn/10 px-3 py-2 font-mono text-xs text-warn">
+        <p className="mt-3 border border-warn/60 bg-warn/10 px-3 py-2 text-xs text-warn">
           {pending.length === 1
             ? `El plazo de «${pending[0].festivalName}» se acaba pronto.`
             : `${pending.length} plazos se acaban en menos de dos semanas.`}

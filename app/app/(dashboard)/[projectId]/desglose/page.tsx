@@ -89,7 +89,7 @@ export default async function DesglosePage({
           </form>
 
           {items.length === 0 ? (
-            <p className="mt-6 font-mono text-sm text-muted">
+            <p className="mt-6 text-sm text-muted">
               Aún no hay elementos de {BREAKDOWN_CATEGORY_LABELS[category].toLowerCase()}.
               Añade el primero arriba, o asígnalos a cada escena desde{" "}
               <Link href={`/app/${projectId}/guion`} className="text-fg hover:text-accent">
@@ -104,9 +104,9 @@ export default async function DesglosePage({
                   key={item.id}
                   className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-line py-3"
                 >
-                  <span className="min-w-0 font-mono text-sm">{item.name}</span>
+                  <span className="min-w-0 text-sm">{item.name}</span>
                   <div className="flex items-center gap-3">
-                    <span className="font-mono text-[11px] text-muted">
+                    <span className="text-xs text-muted">
                       {item._count.scenes} escena{item._count.scenes === 1 ? "" : "s"}
                     </span>
                     <BreakdownCategorySelect

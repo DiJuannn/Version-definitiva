@@ -93,7 +93,7 @@ function itemActive(pathname: string, item: NavItem) {
 }
 
 const TAB =
-  "relative flex items-center gap-1.5 px-3 pt-2.5 pb-3.5 font-mono text-[11px] tracking-widest uppercase transition-colors";
+  "relative flex items-center gap-1.5 px-3 pt-2.5 pb-3.5 text-xs transition-colors";
 
 function GroupTab({ item, pathname }: { item: NavItem; pathname: string }) {
   const [open, setOpen] = useState(false);
@@ -139,7 +139,7 @@ function GroupTab({ item, pathname }: { item: NavItem; pathname: string }) {
                 key={child.href}
                 href={child.href}
                 role="menuitem"
-                className={`flex items-center gap-2.5 border-l-2 px-3.5 py-2.5 font-mono text-xs transition ${
+                className={`flex items-center gap-2.5 border-l-2 px-3.5 py-2.5 text-xs transition ${
                   childActive
                     ? "border-accent text-accent"
                     : "border-transparent text-muted hover:border-accent/60 hover:text-fg"
@@ -178,7 +178,7 @@ export function DashboardNav({ items }: { items: NavItem[] }) {
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-label="Abrir menú"
-        className="mt-4 flex min-h-10 items-center gap-2 font-mono text-xs tracking-widest text-muted uppercase lg:hidden"
+        className="mt-4 flex min-h-10 items-center gap-2 text-[13px] text-muted lg:hidden"
       >
         <span className="flex h-4 w-5 flex-col justify-between">
           <span
@@ -207,7 +207,7 @@ export function DashboardNav({ items }: { items: NavItem[] }) {
                 key={entry.href}
                 href={entry.href}
                 aria-current={active ? "page" : undefined}
-                className={`flex min-h-11 items-center gap-3 border-l-2 pl-3 font-mono text-xs tracking-widest uppercase transition ${
+                className={`flex min-h-11 items-center gap-3 border-l-2 pl-3 text-[13px] transition ${
                   active
                     ? "border-accent text-fg"
                     : "border-transparent text-muted hover:text-fg"

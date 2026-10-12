@@ -24,7 +24,7 @@ function StatusBadge({ status }: { status: string }) {
   const tone =
     status === "FINAL" ? "border-success/60 text-success" : status === "REVIEW" ? "border-warn/60 text-warn" : "border-line text-muted";
   return (
-    <span className={`shrink-0 border px-2 py-1 font-mono text-[10px] tracking-widest uppercase ${tone}`}>
+    <span className={`shrink-0 border px-2 py-1 text-xs ${tone}`}>
       {EDIT_CUT_STATUS_LABELS[status as keyof typeof EDIT_CUT_STATUS_LABELS] ?? status}
     </span>
   );
@@ -39,7 +39,7 @@ function CutRow({ projectId, cut }: { projectId: string; cut: EditCutView }) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="font-display text-base font-bold">{cut.name}</p>
-          <p className="font-mono text-xs text-muted">
+          <p className="text-xs text-muted">
             {[cut.date ? new Date(cut.date).toLocaleDateString("es-ES") : null, cut.durationLabel].filter(Boolean).join(" · ") ||
               "Sin fecha ni duración"}
           </p>
@@ -59,7 +59,7 @@ function CutRow({ projectId, cut }: { projectId: string; cut: EditCutView }) {
               defaultValue={cut.status}
               disabled={pending}
               onChange={(e) => e.currentTarget.form?.requestSubmit()}
-              className="border border-line bg-transparent px-2 py-1.5 font-mono text-[11px] uppercase outline-none focus:border-accent disabled:opacity-60"
+              className="border border-line bg-transparent px-2 py-1.5 text-xs outline-none focus:border-accent disabled:opacity-60"
             >
               {Object.entries(EDIT_CUT_STATUS_LABELS).map(([value, label]) => (
                 <option key={value} value={value} className="bg-bg">

@@ -34,10 +34,10 @@ export default async function AcceptProjectSharePage({
   if (!share) {
     return (
       <div>
-        <h1 className="font-display text-2xl font-bold uppercase">
+        <h1 className="font-display text-2xl font-bold">
           Enlace no válido
         </h1>
-        <p className="mt-2 font-mono text-sm text-muted">
+        <p className="mt-2 text-sm text-muted">
           Este enlace de proyecto compartido no existe o ha sido revocado.
         </p>
       </div>
@@ -52,10 +52,10 @@ export default async function AcceptProjectSharePage({
   if (share.userId && share.userId !== profile.id) {
     return (
       <div>
-        <h1 className="font-display text-2xl font-bold uppercase">
+        <h1 className="font-display text-2xl font-bold">
           Enlace ya usado
         </h1>
-        <p className="mt-2 font-mono text-sm text-muted">
+        <p className="mt-2 text-sm text-muted">
           Este enlace de proyecto compartido ya lo ha reclamado otra persona.
           Pide uno nuevo a quien te lo compartió.
         </p>
@@ -67,13 +67,13 @@ export default async function AcceptProjectSharePage({
 
   return (
     <div>
-      <p className="font-mono text-xs tracking-widest text-accent uppercase">
+      <p className="text-[13px] text-accent">
         Proyecto compartido
       </p>
-      <h1 className="mt-1 font-display text-2xl font-bold uppercase">
+      <h1 className="mt-1 font-display text-2xl font-bold">
         {share.project.name}
       </h1>
-      <p className="mt-3 max-w-md font-mono text-sm text-muted">
+      <p className="mt-3 max-w-md text-sm text-muted">
         <strong className="text-fg">{ownerLabel}</strong> te ha compartido
         este proyecto. Podrás verlo y editarlo, pero no verás el resto de
         sus proyectos ni de su organización.

@@ -53,19 +53,19 @@ export function ProjectShareButton({
       {open && (
         <div className="absolute right-0 z-20 mt-2 w-80 border border-line bg-bg p-4 shadow-lg">
           <div className="flex items-center justify-between gap-3">
-            <p className="font-mono text-[10px] tracking-widest text-accent uppercase">
+            <p className="text-xs text-accent">
               Compartir proyecto
             </p>
             <form action={createShareAction}>
               <SubmitButton
                 pendingLabel="Generando…"
-                className="font-mono text-[10px] tracking-widest text-muted uppercase hover:text-accent"
+                className="text-xs text-muted hover:text-accent"
               >
                 + Generar enlace
               </SubmitButton>
             </form>
           </div>
-          <p className="mt-2 font-mono text-[11px] leading-relaxed text-muted">
+          <p className="mt-2 text-xs leading-relaxed text-muted">
             Quien entre con este enlace verá y podrá editar solo este
             proyecto — no el resto de tu organización.
           </p>
@@ -81,7 +81,7 @@ export function ProjectShareButton({
                   className="flex items-center justify-between gap-3 py-2.5"
                 >
                   <div className="min-w-0">
-                    <p className="truncate font-mono text-xs">
+                    <p className="truncate text-xs">
                       {share.userEmail ?? "Pendiente de aceptar"}
                     </p>
                   </div>
@@ -94,7 +94,7 @@ export function ProjectShareButton({
                     <form action={revokeProjectShare.bind(null, projectId, share.id)}>
                       <DeleteButton
                         confirmMessage="¿Revocar el acceso a este proyecto?"
-                        className="font-mono text-[10px] tracking-widest text-muted uppercase hover:text-accent"
+                        className="text-xs text-muted hover:text-accent"
                       >
                         Revocar
                       </DeleteButton>

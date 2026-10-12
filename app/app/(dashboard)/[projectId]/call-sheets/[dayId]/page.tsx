@@ -40,20 +40,25 @@ export default async function CallSheetDetailPage({
 
   return (
     <div>
-      <div className="flex items-center justify-between print:hidden">
-        <BackLink href={`/app/${projectId}/call-sheets`}>← Call sheets</BackLink>
-        <PdfLink href={`/api/pdf/call-sheet/${dayId}`} />
+      <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
+        <BackLink href={`/app/${projectId}/call-sheets`}>← Hojas de llamada</BackLink>
+        <div className="flex flex-wrap items-center gap-2">
+          <a href="#datos-del-dia" className="btn btn-outline">
+            Editar datos del día
+          </a>
+          <PdfLink href={`/api/pdf/call-sheet/${dayId}`} />
+        </div>
       </div>
 
       {!callSheet && (
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border border-warn/50 p-4 print:hidden">
-          <p className="font-mono text-xs text-warn">
-            Este call sheet todavía no está generado: lo que ves se calcula del plan de rodaje, pero
-            no consta como creado.
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-warn/50 p-4 print:hidden">
+          <p className="text-sm text-warn">
+            Esta hoja de llamada todavía no está generada: lo que ves se calcula del plan de rodaje,
+            pero no consta como creada.
           </p>
           <form action={generateAction}>
             <SubmitButton pendingLabel="Generando…" className="btn btn-primary btn-sm">
-              Generar call sheet
+              Generar hoja de llamada
             </SubmitButton>
           </form>
         </div>
@@ -73,50 +78,49 @@ export default async function CallSheetDetailPage({
 
       <form
         action={updateAction}
-        className="mt-8 grid gap-4 border border-line p-5 sm:grid-cols-2 print:hidden"
+        id="datos-del-dia"
+        className="mt-10 grid scroll-mt-40 gap-4 rounded-xl border border-line p-5 sm:grid-cols-2 print:hidden"
       >
-        <p className="font-mono text-[10px] tracking-widest text-muted uppercase sm:col-span-2">
-          Editar campos del call sheet
-        </p>
+        <h2 className="text-[1.0625rem] font-bold sm:col-span-2">Datos generales del día</h2>
         <label className="flex flex-col gap-1">
-          <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+          <span className="text-xs text-muted">
             Hora general de llamada
           </span>
           <input
             name="generalCallTime"
             defaultValue={callSheet?.generalCallTime ?? ""}
             placeholder="08:00"
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="rounded-md border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
           />
         </label>
         <label className="flex flex-col gap-1">
-          <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+          <span className="text-xs text-muted">
             Transporte
           </span>
           <input
             name="transportNotes"
             defaultValue={callSheet?.transportNotes ?? ""}
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="rounded-md border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
           />
         </label>
         <label className="flex flex-col gap-1">
-          <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-            Catering
+          <span className="text-xs text-muted">
+            Comida y catering
           </span>
           <input
             name="cateringNotes"
             defaultValue={callSheet?.cateringNotes ?? ""}
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="rounded-md border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
           />
         </label>
         <label className="flex flex-col gap-1">
-          <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+          <span className="text-xs text-muted">
             Notas adicionales
           </span>
           <input
             name="additionalNotes"
             defaultValue={callSheet?.additionalNotes ?? ""}
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="rounded-md border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
           />
         </label>
         <div>
@@ -128,7 +132,7 @@ export default async function CallSheetDetailPage({
             Guardar
           </SubmitButton>
         </div>
-        <p className="font-mono text-[11px] text-muted sm:col-span-2">
+        <p className="text-xs text-muted sm:col-span-2">
           Con el plan PRO, si el equipo técnico ya recibió el recordatorio de este rodaje, guardar
           cambios les avisa por email de que algo ha cambiado.
         </p>

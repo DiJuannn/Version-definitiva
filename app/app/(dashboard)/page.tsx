@@ -268,7 +268,7 @@ export default async function DashboardPage() {
       <div className="flex items-center gap-4">
         <AjoloteLogo className="h-12 w-auto shrink-0 sm:h-14" priority />
         <div>
-          <p className="font-mono text-xs tracking-widest text-accent uppercase">
+          <p className="text-[13px] text-accent">
             {greeting(now.getHours())}
           </p>
           <h1 className="mt-0.5 font-display text-2xl font-bold sm:text-3xl">
@@ -279,7 +279,7 @@ export default async function DashboardPage() {
 
       {!heroProject ? (
         <DashboardReveal className="mt-8 border border-accent/50 bg-gradient-to-br from-accent-purple/30 via-bg-raised to-bg p-8 text-center sm:p-12">
-          <p className="font-mono text-xs tracking-widest text-accent uppercase">Empieza aquí</p>
+          <p className="text-[13px] text-accent">Empieza aquí</p>
           <h2 className="mt-2 font-display text-2xl font-bold sm:text-3xl">
             Crea tu primer proyecto
           </h2>
@@ -295,7 +295,7 @@ export default async function DashboardPage() {
         <>
           <div className="mt-8 grid gap-4 lg:grid-cols-[1.3fr_1fr]">
             <DashboardReveal className="border border-line bg-bg-raised/40 p-6">
-              <p className="font-mono text-[11px] tracking-widest text-muted uppercase">
+              <p className="text-xs text-muted">
                 Próximo rodaje
               </p>
               {nextShoot ? (
@@ -303,7 +303,7 @@ export default async function DashboardPage() {
                   <p className="mt-3 font-display text-4xl font-black">
                     {relativeDay(nextShoot.date, now)}
                   </p>
-                  <p className="mt-1 font-mono text-xs text-muted">
+                  <p className="mt-1 text-xs text-muted">
                     {nextShoot.date.toLocaleDateString("es-ES", {
                       weekday: "long",
                       day: "numeric",
@@ -317,7 +317,7 @@ export default async function DashboardPage() {
                       {nextShoot.project.name}
                     </Link>
                   </p>
-                  <p className="mt-2 font-mono text-xs">
+                  <p className="mt-2 text-xs">
                     {nextShoot._count.scenes} escena{nextShoot._count.scenes === 1 ? "" : "s"} ·{" "}
                     <span className={nextShoot.callSheet ? "text-success" : "text-warn"}>
                       {nextShoot.callSheet ? "call sheet creado" : "call sheet sin crear"}
@@ -362,7 +362,7 @@ export default async function DashboardPage() {
               className="border border-line bg-bg-raised/40 p-6"
               delay={0.05}
             >
-              <p className="font-mono text-[11px] tracking-widest text-muted uppercase">
+              <p className="text-xs text-muted">
                 Requiere atención
               </p>
               {attention.length === 0 ? (
@@ -378,7 +378,7 @@ export default async function DashboardPage() {
                     <li key={item.id}>
                       <Link
                         href={item.href}
-                        className="group flex items-start gap-2.5 py-1 font-mono text-xs"
+                        className="group flex items-start gap-2.5 py-1 text-xs"
                       >
                         <span
                           aria-hidden
@@ -403,13 +403,13 @@ export default async function DashboardPage() {
           >
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="min-w-0">
-                <p className="font-mono text-[11px] tracking-widest text-accent uppercase">
+                <p className="text-xs text-accent">
                   Continuar
                 </p>
                 <h2 className="mt-1 truncate font-display text-2xl font-bold sm:text-3xl">
                   {heroProject.name}
                 </h2>
-                <p className="mt-1 font-mono text-xs text-muted">
+                <p className="mt-1 text-xs text-muted">
                   {heroCurrent
                     ? `Siguiente: ${heroCurrent.title}`
                     : "Listo para rodar: pasos requeridos completados"}
@@ -443,10 +443,10 @@ export default async function DashboardPage() {
           >
             <ClaquetaIcon className="h-5 w-5 shrink-0 text-accent" />
             <span className="min-w-0">
-              <span className="block font-mono text-xs tracking-widest uppercase transition-colors group-hover:text-accent">
+              <span className="block text-[13px] transition-colors group-hover:text-accent">
                 Claqueta digital
               </span>
-              <span className="block truncate font-mono text-[10px] text-muted">
+              <span className="block truncate text-xs text-muted">
                 {heroProject ? heroProject.name : "Elige o crea un proyecto"}
               </span>
             </span>
@@ -467,14 +467,14 @@ export default async function DashboardPage() {
                 ▾
               </summary>
               <div className="absolute right-0 top-full z-20 mt-1 w-56 border border-line bg-bg-raised py-1 shadow-lg">
-                <p className="px-3 py-1.5 font-mono text-[9px] tracking-widest text-muted uppercase">
+                <p className="px-3 py-1.5 text-xs text-muted">
                   Abrir la claqueta de otro proyecto
                 </p>
                 {recentProjects.map((project) => (
                   <Link
                     key={project.id}
                     href={`/app/${project.id}/claqueta`}
-                    className="block px-3 py-2.5 font-mono text-xs text-muted hover:bg-bg hover:text-accent"
+                    className="block px-3 py-2.5 text-xs text-muted hover:bg-bg hover:text-accent"
                   >
                     {project.name}
                   </Link>
@@ -488,13 +488,13 @@ export default async function DashboardPage() {
       <div className="mt-6 flex flex-wrap items-center gap-x-8 gap-y-3 border-y border-line py-3 sm:mt-8">
         <div className="flex items-baseline gap-2">
           <span className="font-display text-xl font-bold">{activeProjectsCount}</span>
-          <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+          <span className="text-xs text-muted">
             Proyectos activos
           </span>
         </div>
         <div className="flex items-baseline gap-2">
           <span className="font-display text-xl font-bold">{currency(budgetActual)}</span>
-          <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+          <span className="text-xs text-muted">
             Gastado de {currency(budgetPlanned)} previstos
           </span>
         </div>
@@ -503,7 +503,7 @@ export default async function DashboardPage() {
             href="/app/organizacion"
             className="ml-auto flex items-baseline gap-2 transition-colors hover:text-accent"
           >
-            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+            <span className="text-xs text-muted">
               Plan gratuito: {activeProjectsCount} de {FREE_ACTIVE_PROJECTS_LIMIT} proyectos ·
               Ver PRO
             </span>
@@ -533,7 +533,7 @@ export default async function DashboardPage() {
                     <div className="mt-2 flex flex-wrap items-center gap-2">
                       <StatusPill status={project.status} />
                       {!isOwnProject && (
-                        <span className="font-mono text-[10px] text-muted">
+                        <span className="text-xs text-muted">
                           Propietario: {ownerLabel}
                         </span>
                       )}
@@ -543,7 +543,7 @@ export default async function DashboardPage() {
                         <div className="h-1 w-full bg-line">
                           <div className="h-full bg-accent" style={{ width: `${pct}%` }} />
                         </div>
-                        <p className="mt-1 font-mono text-[10px] text-muted">
+                        <p className="mt-1 text-xs text-muted">
                           {p.done}/{p.total} pasos requeridos
                         </p>
                       </div>
@@ -576,11 +576,11 @@ export default async function DashboardPage() {
 
       <div className="mt-8 grid gap-4 sm:mt-10 lg:grid-cols-2">
         <DashboardReveal className="border border-line bg-bg-raised/40 p-5" delay={0.18}>
-          <p className="font-mono text-[11px] tracking-widest text-accent uppercase">Agenda</p>
+          <p className="text-xs text-accent">Agenda</p>
           <div className="mt-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
             <div>
               <div className="flex items-center justify-between">
-                <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                <p className="text-xs text-muted">
                   Tareas pendientes
                 </p>
                 <Link href="/app/tareas" className="link-action">
@@ -596,7 +596,7 @@ export default async function DashboardPage() {
                       <TaskCheck taskId={task.id} done={false} title={task.title} />
                       <Link
                         href={`/app/tareas/${task.id}`}
-                        className="min-w-0 flex-1 truncate py-1.5 font-mono text-xs hover:text-accent"
+                        className="min-w-0 flex-1 truncate py-1.5 text-xs hover:text-accent"
                       >
                         {task.title}
                         {task.project && (
@@ -611,7 +611,7 @@ export default async function DashboardPage() {
 
             <div>
               <div className="flex items-center justify-between">
-                <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                <p className="text-xs text-muted">
                   Próximos 14 días
                 </p>
                 <Link href="/app/calendario" className="link-action">
@@ -628,7 +628,7 @@ export default async function DashboardPage() {
                     <li key={event.id}>
                       <Link
                         href={event.href}
-                        className="group flex items-start gap-2 py-1.5 font-mono text-xs"
+                        className="group flex items-start gap-2 py-1.5 text-xs"
                       >
                         <span className="w-12 shrink-0 text-muted">
                           {event.date
@@ -652,7 +652,7 @@ export default async function DashboardPage() {
         </DashboardReveal>
 
         <DashboardReveal className="border border-line bg-bg-raised/40 p-5" delay={0.2}>
-          <p className="font-mono text-[11px] tracking-widest text-accent uppercase">
+          <p className="text-xs text-accent">
             Actividad reciente
           </p>
           {activity.length === 0 ? (
@@ -662,7 +662,7 @@ export default async function DashboardPage() {
           ) : (
             <ul className="mt-4 space-y-2.5">
               {activity.map((entry) => (
-                <li key={entry.id} className="font-mono text-xs text-muted">
+                <li key={entry.id} className="text-xs text-muted">
                   <span className="text-fg">
                     {entry.user?.fullName ?? entry.user?.email ?? "Alguien"}
                   </span>{" "}

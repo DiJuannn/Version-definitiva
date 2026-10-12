@@ -20,17 +20,17 @@ export function AcceptInviteForm({
 
   return (
     <div>
-      <h1 className="font-display text-2xl font-bold uppercase">
+      <h1 className="font-display text-2xl font-bold">
         Únete a {organizationName}
       </h1>
-      <p className="mt-2 font-mono text-xs text-muted">
+      <p className="mt-2 text-xs text-muted">
         Te han invitado a colaborar en el Taller. Crea tu contraseña para
         entrar.
       </p>
 
       <form action={formAction} className="mt-8 space-y-4">
         <div>
-          <label className="block font-mono text-xs tracking-widest text-muted uppercase">
+          <label className="block text-[13px] text-muted">
             Email
           </label>
           <input
@@ -52,7 +52,7 @@ export function AcceptInviteForm({
           <FormError message={state.error} />
         )}
 
-        <label className="flex items-start gap-2 font-mono text-xs text-muted">
+        <label className="flex items-start gap-2 text-xs text-muted">
           <input type="checkbox" name="acceptTerms" required className="mt-0.5" />
           <span>
             Acepto los{" "}
@@ -84,7 +84,7 @@ export function AcceptInviteForm({
         </button>
       </form>
 
-      <div className="mt-6 text-center font-mono text-xs text-muted">
+      <div className="mt-6 text-center text-xs text-muted">
         ¿Ya tienes cuenta?{" "}
         <Link href="/app/login" className="text-fg hover:text-accent">
           Entrar

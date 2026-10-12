@@ -31,7 +31,7 @@ function useBoard(): BoardContext {
 
 const FIELD =
   "nodrag nowheel w-full bg-transparent outline-none placeholder:opacity-50 focus:bg-white/5";
-const LABEL = "font-mono text-[9px] tracking-widest uppercase";
+const LABEL = "text-xs";
 
 function Frame({
   id,
@@ -150,7 +150,7 @@ function PaletteCard({ id, card, selected }: { id: string; card: MoodboardCard; 
           placeholder="Paleta"
           maxLength={120}
           aria-label="Nombre de la paleta"
-          className={`${FIELD} mb-2 font-mono text-[11px] tracking-widest text-fg uppercase`}
+          className={`${FIELD} mb-2 text-xs text-fg`}
         />
         <div className="flex min-h-0 flex-1 gap-1">
           {colors.map((color, i) => (
@@ -218,7 +218,7 @@ function ReferenceCard({ id, card, selected }: { id: string; card: MoodboardCard
             placeholder="Año"
             maxLength={12}
             aria-label="Año"
-            className={`${FIELD} w-14 shrink-0 font-mono text-[11px] text-muted`}
+            className={`${FIELD} w-14 shrink-0 text-xs text-muted`}
           />
         </div>
         <input
@@ -300,7 +300,7 @@ function LiveCard({ id, card, selected }: { id: string; card: MoodboardCard; sel
         {found ? (
           <>
             <p className="font-display text-base leading-tight font-bold text-fg">{title}</p>
-            {detail && <p className="font-mono text-[11px] text-muted">{detail}</p>}
+            {detail && <p className="text-xs text-muted">{detail}</p>}
             {extra && <p className="line-clamp-4 min-h-0 flex-1 overflow-hidden font-sans text-xs leading-snug text-muted">{extra}</p>}
             <Link href={href} className={`nodrag ${LABEL} mt-auto self-start text-accent hover:underline`}>
               Abrir →

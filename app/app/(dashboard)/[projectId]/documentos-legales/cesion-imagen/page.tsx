@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/PageHeader";
 
 const inputClass =
   "w-full border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent";
-const labelClass = "font-mono text-[10px] tracking-widest text-muted uppercase";
+const labelClass = "text-xs text-muted";
 
 export default async function CesionImagenPage({
   params,

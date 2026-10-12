@@ -117,18 +117,18 @@ export function ScriptReport({ projectId, initial, today }: { projectId: string;
       <div className="grid grid-cols-2 gap-px overflow-hidden border border-line bg-line sm:grid-cols-4">
         <div className="bg-bg px-4 py-3">
           <p className="font-display text-2xl font-black tabular-nums">{totals.takes}</p>
-          <p className="mt-0.5 font-mono text-[10px] tracking-widest text-muted uppercase">Tomas</p>
+          <p className="mt-0.5 text-xs text-muted">Tomas</p>
         </div>
         <div className="bg-bg px-4 py-3">
           <p className="font-display text-2xl font-black text-success tabular-nums">{totals.good}</p>
-          <p className="mt-0.5 font-mono text-[10px] tracking-widest text-muted uppercase">Buenas</p>
+          <p className="mt-0.5 text-xs text-muted">Buenas</p>
         </div>
         <div className="bg-bg px-4 py-3 sm:col-span-2">
           <p className="font-display text-2xl font-black tabular-nums">
             {report.shotsWithGood}
             <span className="text-muted">/{report.shotsTotal}</span>
           </p>
-          <p className="mt-0.5 font-mono text-[10px] tracking-widest text-muted uppercase">
+          <p className="mt-0.5 text-xs text-muted">
             Planos de la shot list con toma buena
           </p>
           {report.shotsTotal > 0 && (
@@ -150,7 +150,7 @@ export function ScriptReport({ projectId, initial, today }: { projectId: string;
               type="button"
               onClick={() => setOnlyGood(opt.v)}
               aria-pressed={onlyGood === opt.v}
-              className={`border px-3 py-1.5 font-mono text-[11px] tracking-widest uppercase transition-colors ${
+              className={`border px-3 py-1.5 text-xs transition-colors ${
                 onlyGood === opt.v ? "border-accent bg-accent/10 text-accent" : "border-line text-muted hover:text-fg"
               }`}
             >
@@ -178,7 +178,7 @@ export function ScriptReport({ projectId, initial, today }: { projectId: string;
       {report.days.length === 0 ? (
         <div className="mt-8 border border-dashed border-line p-8 text-center">
           <p className="font-display text-lg font-bold">Todavía no hay tomas</p>
-          <p className="mx-auto mt-2 max-w-md font-mono text-xs text-muted">
+          <p className="mx-auto mt-2 max-w-md text-xs text-muted">
             Marca tomas con la claqueta durante el rodaje y aparecerán aquí solas, o apúntalas a mano con
             &ldquo;Añadir toma a mano&rdquo;.
           </p>
@@ -200,8 +200,8 @@ export function ScriptReport({ projectId, initial, today }: { projectId: string;
             return (
               <section key={day.dateKey}>
                 <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-accent/40 pb-2">
-                  <h2 className="font-display text-lg font-black tracking-tight uppercase">{day.label}</h2>
-                  <p className="font-mono text-xs text-muted">
+                  <h2 className="font-display text-lg font-bold">{day.label}</h2>
+                  <p className="text-xs text-muted">
                     {dayTakes.length} toma{dayTakes.length === 1 ? "" : "s"} · {dayGood} buena{dayGood === 1 ? "" : "s"}
                   </p>
                 </div>
@@ -211,17 +211,17 @@ export function ScriptReport({ projectId, initial, today }: { projectId: string;
                     <div key={scene.sceneNumber} className="border border-line">
                       <div className="flex flex-wrap items-baseline justify-between gap-2 bg-bg-raised px-4 py-2">
                         <p className="font-display text-sm font-bold">Escena {scene.sceneNumber}</p>
-                        {scene.context && <p className="font-mono text-[11px] text-muted">{scene.context}</p>}
+                        {scene.context && <p className="text-xs text-muted">{scene.context}</p>}
                       </div>
                       <div className="divide-y divide-line">
                         {scene.shots.map((shot) => (
                           <div key={shot.key} className="px-4 py-3">
                             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                              <span className="font-mono text-sm text-accent">{shot.label}</span>
-                              {shot.size && <span className="font-mono text-xs uppercase">{shot.size}</span>}
-                              {shot.description && <span className="font-mono text-xs text-muted">{shot.description}</span>}
+                              <span className="text-sm text-accent">{shot.label}</span>
+                              {shot.size && <span className="text-[13px]">{shot.size}</span>}
+                              {shot.description && <span className="text-xs text-muted">{shot.description}</span>}
                               {shot.shotNumber && !shot.inShotList && (
-                                <span className="border border-line px-1.5 py-0.5 font-mono text-[10px] text-muted">
+                                <span className="border border-line px-1.5 py-0.5 text-xs text-muted">
                                   no está en la shot list
                                 </span>
                               )}
@@ -247,14 +247,14 @@ export function ScriptReport({ projectId, initial, today }: { projectId: string;
                                   >
                                     ✓
                                   </button>
-                                  <span className="font-mono text-sm">Toma {take.take}</span>
+                                  <span className="text-sm">Toma {take.take}</span>
                                   <span
-                                    className="truncate font-mono text-[11px] text-muted"
+                                    className="truncate text-xs text-muted"
                                     title="Archivo de la cámara"
                                   >
                                     {take.clip ?? "—"}
                                   </span>
-                                  <span className="font-mono text-[11px] text-muted">{timeOf(take.at)}</span>
+                                  <span className="text-xs text-muted">{timeOf(take.at)}</span>
                                   {editingNote === take.id ? (
                                     <input
                                       autoFocus
@@ -265,13 +265,13 @@ export function ScriptReport({ projectId, initial, today }: { projectId: string;
                                         if (e.key === "Enter") e.currentTarget.blur();
                                         if (e.key === "Escape") setEditingNote(null);
                                       }}
-                                      className="min-w-0 border border-accent bg-transparent px-2 py-1 font-mono text-xs outline-none"
+                                      className="min-w-0 border border-accent bg-transparent px-2 py-1 text-xs outline-none"
                                     />
                                   ) : (
                                     <button
                                       type="button"
                                       onClick={() => setEditingNote(take.id)}
-                                      className={`min-w-0 truncate text-left font-mono text-xs hover:text-accent ${
+                                      className={`min-w-0 truncate text-left text-xs hover:text-accent ${
                                         take.notes ? "text-fg" : "text-muted"
                                       }`}
                                     >
@@ -282,7 +282,7 @@ export function ScriptReport({ projectId, initial, today }: { projectId: string;
                                     type="button"
                                     onClick={() => remove(take.id)}
                                     aria-label={`Eliminar la toma ${take.take}`}
-                                    className="px-1 font-mono text-[11px] text-muted hover:text-danger"
+                                    className="px-1 text-xs text-muted hover:text-danger"
                                   >
                                     ✕
                                   </button>
@@ -380,7 +380,7 @@ function ManualForm({
   return (
     <form onSubmit={submit} className="mt-4 grid gap-3 border border-line p-5 sm:grid-cols-2 lg:grid-cols-4">
       <label className="flex flex-col gap-1">
-        <span className="font-mono text-[10px] tracking-widest text-muted uppercase">Escena</span>
+        <span className="text-xs text-muted">Escena</span>
         <input
           list="script-scenes"
           value={sceneNumber}
@@ -397,7 +397,7 @@ function ManualForm({
         </datalist>
       </label>
       <label className="flex flex-col gap-1">
-        <span className="font-mono text-[10px] tracking-widest text-muted uppercase">Plano</span>
+        <span className="text-xs text-muted">Plano</span>
         <input
           list="script-shots"
           value={shotNumber}
@@ -414,18 +414,18 @@ function ManualForm({
         </datalist>
       </label>
       <label className="flex flex-col gap-1">
-        <span className="font-mono text-[10px] tracking-widest text-muted uppercase">Toma</span>
+        <span className="text-xs text-muted">Toma</span>
         <input type="number" min={1} value={take} onChange={(e) => setTake(e.target.value)} required className={FIELD} />
       </label>
       <label className="flex flex-col gap-1">
-        <span className="font-mono text-[10px] tracking-widest text-muted uppercase">Día</span>
+        <span className="text-xs text-muted">Día</span>
         <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required className={FIELD} />
       </label>
       <label className="flex flex-col gap-1 sm:col-span-2">
-        <span className="font-mono text-[10px] tracking-widest text-muted uppercase">Nota</span>
+        <span className="text-xs text-muted">Nota</span>
         <input value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Opcional" className={FIELD} />
       </label>
-      <label className="flex items-center gap-2 self-end pb-2 font-mono text-xs">
+      <label className="flex items-center gap-2 self-end pb-2 text-xs">
         <input type="checkbox" checked={good} onChange={(e) => setGood(e.target.checked)} />
         Es una toma buena
       </label>
@@ -434,7 +434,7 @@ function ManualForm({
           {saving ? "Guardando…" : "Añadir toma"}
         </button>
       </div>
-      {error && <p className="font-mono text-xs text-danger sm:col-span-2 lg:col-span-4">{error}</p>}
+      {error && <p className="text-xs text-danger sm:col-span-2 lg:col-span-4">{error}</p>}
     </form>
   );
 }

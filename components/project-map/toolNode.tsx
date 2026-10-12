@@ -8,10 +8,10 @@ import { useMap } from "@/components/project-map/mapContext";
 
 export type ToolNode = Node<{ key: MapToolKey }, "tool">;
 
-const LABEL = "font-mono text-[9px] tracking-widest uppercase";
+const LABEL = "text-xs";
 
 function StatusMark({ status }: { status: MapToolCard["status"] }) {
-  if (status === "ok") return <span className="font-mono text-xs text-success" title="Completo">✓</span>;
+  if (status === "ok") return <span className="text-xs text-success" title="Completo">✓</span>;
   if (status === "warn") return <span className="h-2 w-2 rounded-full bg-warn" title="Falta algo" />;
   return null;
 }
@@ -57,11 +57,11 @@ export function ToolNodeView({ data, selected }: NodeProps<ToolNode>) {
           <span className={`${LABEL} text-accent`}>{phase}</span>
           <StatusMark status={card.status} />
         </div>
-        <p className="shrink-0 truncate font-display text-xs font-bold tracking-wide uppercase">{card.title}</p>
+        <p className="shrink-0 truncate font-display text-xs font-bold">{card.title}</p>
         <p className="shrink-0 font-display text-2xl leading-none font-black">{card.headline}</p>
 
         {card.lines.map((line, i) => (
-          <p key={i} className="shrink-0 font-mono text-[11px] leading-snug text-muted">
+          <p key={i} className="shrink-0 text-xs leading-snug text-muted">
             {line}
           </p>
         ))}
@@ -85,7 +85,7 @@ export function ToolNodeView({ data, selected }: NodeProps<ToolNode>) {
               disabled={busy || readOnly}
               onChange={(e) => changeStatus(e.target.value)}
               aria-label="Estado del proyecto"
-              className="mt-1 w-full border border-line bg-bg px-2 py-1.5 font-mono text-xs"
+              className="mt-1 w-full border border-line bg-bg px-2 py-1.5 text-xs"
             >
               {card.project.options.map((o) => (
                 <option key={o.value} value={o.value}>
@@ -112,7 +112,7 @@ export function ToolNodeView({ data, selected }: NodeProps<ToolNode>) {
                   />
                   <span className="min-w-0 font-sans text-xs leading-snug">
                     {t.title}
-                    {t.due && <span className="ml-1 font-mono text-[10px] text-muted">· {t.due}</span>}
+                    {t.due && <span className="ml-1 text-xs text-muted">· {t.due}</span>}
                   </span>
                 </li>
               ))

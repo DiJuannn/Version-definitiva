@@ -63,13 +63,13 @@ export function StageFocus({
     const today = nextShoot ? isToday(nextShoot.date) : false;
     return (
       <section aria-labelledby="stage-focus-title" className={embedded ? "p-6 sm:p-8" : "mt-6 border border-accent/40 bg-bg-raised/40 p-6 sm:p-8"}>
-        <p className="font-mono text-[11px] tracking-widest text-accent uppercase">Estás rodando</p>
+        <p className="text-xs text-accent">Estás rodando</p>
         {nextShoot ? (
           <>
             <h2 id="stage-focus-title" className="mt-1.5 font-display text-2xl font-black tracking-tight sm:text-3xl">
               {today ? "Hoy se rueda" : `Próximo día: ${dayText(nextShoot.date)}`}
             </h2>
-            <p className="mt-3 font-mono text-xs text-muted">
+            <p className="mt-3 text-xs text-muted">
               {today ? dayText(nextShoot.date) + " · " : ""}
               {nextShoot.scenesCount} escena{nextShoot.scenesCount === 1 ? "" : "s"} ·{" "}
               {nextShoot.hasCallSheet ? "hoja de llamada lista" : "sin hoja de llamada"}
@@ -109,13 +109,13 @@ export function StageFocus({
             </div>
           </>
         )}
-        <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-line pt-4 font-mono text-[11px] tracking-widest uppercase">
+        <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-line pt-4 text-xs">
           <Link href={`/app/${projectId}/plan-de-rodaje`} className="text-muted hover:text-accent">
             Marcar planos rodados
           </Link>
           {nextShoot && (
             <form action={setProjectStatus.bind(null, projectId, "POST_PRODUCTION")}>
-              <SubmitButton pendingLabel="Cambiando…" className="tracking-widest text-muted uppercase hover:text-accent">
+              <SubmitButton pendingLabel="Cambiando…" className="text-muted hover:text-accent">
                 Ya he terminado de rodar
               </SubmitButton>
             </form>
@@ -129,7 +129,7 @@ export function StageFocus({
   const spendDone = budget.actual > 0;
   return (
     <section aria-labelledby="stage-focus-title" className={embedded ? "p-6 sm:p-8" : "mt-6 border border-accent/40 bg-bg-raised/40 p-6 sm:p-8"}>
-      <p className={`font-mono text-[11px] tracking-widest uppercase ${finished ? "text-success" : "text-accent"}`}>
+      <p className={`text-xs ${finished ? "text-success" : "text-accent"}`}>
         {finished ? "Terminado" : "Recta final"}
       </p>
       <h2 id="stage-focus-title" className="mt-1.5 font-display text-2xl font-black tracking-tight sm:text-3xl">
@@ -147,7 +147,7 @@ export function StageFocus({
               <span aria-hidden className="text-muted">○ </span>
               Prepara el montaje
             </p>
-            <p className="font-mono text-xs text-muted">Selección de tomas, registro de cortes, checklist de entrega y créditos.</p>
+            <p className="text-xs text-muted">Selección de tomas, registro de cortes, checklist de entrega y créditos.</p>
           </div>
           <Link href={`/app/${projectId}/montaje`} className="btn btn-outline">
             Ir a Montaje
@@ -159,7 +159,7 @@ export function StageFocus({
               <span aria-hidden className={spendDone ? "text-success" : "text-muted"}>{spendDone ? "✓ " : "○ "}</span>
               Anota el gasto real
             </p>
-            <p className="font-mono text-xs text-muted">
+            <p className="text-xs text-muted">
               {spendDone ? `${currency(budget.actual)} gastados de ${currency(budget.planned)} previstos` : "Aún no has anotado ningún gasto real."}
             </p>
           </div>
@@ -173,7 +173,7 @@ export function StageFocus({
               <span aria-hidden className="text-muted">○ </span>
               Descarga el dossier
             </p>
-            <p className="font-mono text-xs text-muted">Un PDF con el resumen del proyecto: escenas, días de rodaje, planos y presupuesto.</p>
+            <p className="text-xs text-muted">Un PDF con el resumen del proyecto: escenas, días de rodaje, planos y presupuesto.</p>
           </div>
           <PdfLink href={`/api/pdf/dossier/${projectId}`} label="Descargar dossier" />
         </li>
@@ -183,7 +183,7 @@ export function StageFocus({
               <span aria-hidden className="text-muted">○ </span>
               Elige festivales donde presentarlo
             </p>
-            <p className="font-mono text-xs text-muted">Los de tu zona, los online y dónde ver las convocatorias abiertas.</p>
+            <p className="text-xs text-muted">Los de tu zona, los online y dónde ver las convocatorias abiertas.</p>
           </div>
           <Link href={`/app/${projectId}/festivales`} className="btn btn-outline">
             Ver festivales
@@ -195,7 +195,7 @@ export function StageFocus({
               <span aria-hidden className={finished ? "text-success" : "text-muted"}>{finished ? "✓ " : "○ "}</span>
               Marca el proyecto como terminado
             </p>
-            <p className="font-mono text-xs text-muted">Solo cambia el estado; nada se borra.</p>
+            <p className="text-xs text-muted">Solo cambia el estado; nada se borra.</p>
           </div>
           {!finished && (
             <StatusButton projectId={projectId} status="FINISHED" label="Está terminado" pendingLabel="Cambiando…" primary />

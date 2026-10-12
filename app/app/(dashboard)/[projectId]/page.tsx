@@ -117,7 +117,7 @@ export default async function ProjectTallerPage({
             {stage === 1 && facts.scenes === 0 && (
               <Link
                 href={`/app/${project.id}?ayuda=1`}
-                className="font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent"
+                className="text-xs text-muted hover:text-accent"
               >
                 ¿Cómo funciona?
               </Link>
@@ -149,7 +149,7 @@ export default async function ProjectTallerPage({
       {/* Datos del proyecto y actividad: se consultan poco, así que van
           plegados al final en vez de alargar la portada. */}
       <details className="group mt-10 border-t border-line pt-4">
-        <summary className="flex cursor-pointer list-none items-center justify-between py-2 font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent [&::-webkit-details-marker]:hidden">
+        <summary className="flex cursor-pointer list-none items-center justify-between py-2 text-xs text-muted hover:text-accent [&::-webkit-details-marker]:hidden">
           <span>Datos del proyecto{activityLogs.length > 0 ? " y actividad reciente" : ""}</span>
           <span aria-hidden className="transition-transform group-open:rotate-90">→</span>
         </summary>

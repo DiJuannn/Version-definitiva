@@ -41,14 +41,14 @@ function FestivalCard({ festival }: { festival: Festival }) {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="font-display text-base font-bold">{festival.name}</p>
-          <p className="font-mono text-xs text-muted">
+          <p className="text-xs text-muted">
             {festival.city}
             {festival.when ? ` · suele ser en ${festival.when.charAt(0).toLowerCase()}${festival.when.slice(1)}` : ""}
           </p>
         </div>
         <ul className="flex flex-wrap gap-1.5">
           {festival.kinds.map((kind) => (
-            <li key={kind} className="rounded-full border border-line px-2 py-0.5 font-mono text-[10px] tracking-widest text-muted uppercase">
+            <li key={kind} className="rounded-full border border-line px-2 py-0.5 text-xs text-muted">
               {KIND_LABELS[kind]}
             </li>
           ))}
@@ -72,7 +72,7 @@ function Group({ title, festivals }: { title: string; festivals: Festival[] }) {
   if (festivals.length === 0) return null;
   return (
     <div className="mt-8">
-      <p className="font-mono text-[11px] tracking-widest text-accent uppercase">{title}</p>
+      <p className="text-xs text-accent">{title}</p>
       <ul className="mt-3 grid gap-3 sm:grid-cols-2">
         {festivals.map((f) => (
           <FestivalCard key={f.name} festival={f} />
@@ -107,7 +107,7 @@ export function FestivalGuide({ projectType }: { projectType: string | null }) {
     <div>
       <div className="mt-8 flex flex-wrap items-end gap-x-6 gap-y-3">
         <label className="flex flex-col gap-1">
-          <span className="font-mono text-[10px] tracking-widest text-muted uppercase">¿Dónde vives?</span>
+          <span className="text-xs text-muted">¿Dónde vives?</span>
           <select
             value={zone}
             onChange={(e) => chooseZone(e.target.value)}
@@ -164,7 +164,7 @@ export function FestivalGuide({ projectType }: { projectType: string | null }) {
       )}
 
       <div className="mt-10 border border-accent/40 bg-bg-raised/40 p-6">
-        <p className="font-mono text-[11px] tracking-widest text-accent uppercase">Buscar convocatorias abiertas</p>
+        <p className="text-xs text-accent">Buscar convocatorias abiertas</p>
         <p className="mt-2 max-w-xl font-sans text-sm text-muted">
           Las fechas de inscripción cambian cada año y los festivales que aquí no salen son muchísimos. Estas
           plataformas enseñan las convocatorias abiertas, con su plazo y su precio, y desde ellas envías tu proyecto.
@@ -189,7 +189,7 @@ export function FestivalGuide({ projectType }: { projectType: string | null }) {
       </div>
 
       <div className="mt-8 border border-line p-6">
-        <p className="font-mono text-[11px] tracking-widest text-accent uppercase">Antes de enviar</p>
+        <p className="text-xs text-accent">Antes de enviar</p>
         <ul className="mt-3 grid gap-2 font-sans text-sm text-muted sm:grid-cols-2">
           <li>○ El montaje final exportado, con subtítulos en inglés si puedes.</li>
           <li>○ Sinopsis corta y larga, y la ficha técnica y artística.</li>

@@ -47,7 +47,7 @@ export default async function InventarioPage() {
           <select
             name="category"
             defaultValue="OTHER"
-            className="border border-line bg-transparent px-3 py-2 font-mono text-xs uppercase outline-none focus:border-accent"
+            className="border border-line bg-transparent px-3 py-2 text-[13px] outline-none focus:border-accent"
           >
             {Object.values(InventoryItemCategory).map((value) => (
               <option key={value} value={value} className="bg-bg">
@@ -96,7 +96,7 @@ export default async function InventarioPage() {
               meta={`${INVENTORY_CATEGORY_LABELS[item.category]} · cantidad ${item.quantity}${item.notes ? ` · ${item.notes}` : ""}`}
               trailing={
                 <>
-                  <span className="font-mono text-xs text-muted">
+                  <span className="text-xs text-muted">
                     {item._count.reservations} reserva
                     {item._count.reservations === 1 ? "" : "s"}
                   </span>

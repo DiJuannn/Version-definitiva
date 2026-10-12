@@ -17,7 +17,7 @@ export function CopyLinkButton({ link }: { link: string }) {
           setCopied(false);
         }
       }}
-      className="font-mono text-[11px] tracking-widest text-accent uppercase hover:opacity-80"
+      className="text-xs text-accent hover:opacity-80"
     >
       {copied ? "Copiado ✓" : "Copiar enlace"}
     </button>

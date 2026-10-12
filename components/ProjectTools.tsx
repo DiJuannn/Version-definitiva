@@ -42,7 +42,7 @@ export function ProjectTools({
   return (
     <section className="mt-10">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="font-mono text-[11px] tracking-widest text-accent uppercase">
+        <p className="text-xs text-accent">
           {mode === "simple" ? "Tus herramientas ahora" : "Herramientas"}
         </p>
         <div className="flex flex-wrap items-center gap-4">
@@ -57,7 +57,7 @@ export function ProjectTools({
       {mode === "full" ? (
         TOOL_GROUPS.map((group) => (
           <div key={group.label} className="mt-6">
-            <p className="font-mono text-[10px] tracking-widest text-muted uppercase">{group.label}</p>
+            <p className="text-xs text-muted">{group.label}</p>
             <DashboardStagger className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{group.tools.map(card)}</DashboardStagger>
           </div>
         ))
@@ -67,7 +67,7 @@ export function ProjectTools({
 
           {locked.length > 0 && (
             <details className="group mt-6 border border-line">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent [&::-webkit-details-marker]:hidden">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-xs text-muted hover:text-accent [&::-webkit-details-marker]:hidden">
                 <span>Se irán activando ({locked.length})</span>
                 <span aria-hidden className="transition-transform group-open:rotate-90">→</span>
               </summary>
@@ -78,7 +78,7 @@ export function ProjectTools({
                     <span className="min-w-0">
                       <span className="font-display text-sm font-bold">{tool.label}</span>
                       <span className="block font-sans text-xs text-muted">{tool.description}</span>
-                      <span className="mt-0.5 block font-mono text-[11px] text-accent">{access[tool.href]?.reason}</span>
+                      <span className="mt-0.5 block text-xs text-accent">{access[tool.href]?.reason}</span>
                     </span>
                   </li>
                 ))}

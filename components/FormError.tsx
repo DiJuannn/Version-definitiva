@@ -14,7 +14,7 @@ export function FormError({ message, className = "" }: { message: string; classN
       initial={{ x: 0 }}
       animate={{ x: [0, -8, 8, -5, 5, 0] }}
       transition={{ duration: 0.35, ease: "easeInOut" }}
-      className={`font-mono text-xs text-danger ${className}`}
+      className={`text-xs text-danger ${className}`}
     >
       {message}
     </motion.p>

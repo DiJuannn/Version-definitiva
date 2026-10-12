@@ -42,16 +42,16 @@ export function DossierEmailButton({ projectId }: { projectId: string }) {
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="font-mono text-xs text-muted hover:text-accent"
+          className="text-xs text-muted hover:text-accent"
         >
           Cancelar
         </button>
       </form>
       {state && "error" in state && (
-        <p className="mt-1 font-mono text-xs text-danger">{state.error}</p>
+        <p className="mt-1 text-xs text-danger">{state.error}</p>
       )}
       {state && "success" in state && (
-        <p className="mt-1 font-mono text-xs text-success">✓ Enviado.</p>
+        <p className="mt-1 text-xs text-success">✓ Enviado.</p>
       )}
     </div>
   );

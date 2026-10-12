@@ -88,7 +88,7 @@ export default async function EquipoPage({
       </form>
 
       {crewMembers.length === 0 ? (
-        <p className="mt-6 font-mono text-sm text-muted">
+        <p className="mt-6 text-sm text-muted">
           Aún no hay equipo técnico. Añade el primer miembro arriba.
         </p>
       ) : (
@@ -99,16 +99,16 @@ export default async function EquipoPage({
               className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-line py-3"
             >
               <div className="min-w-0">
-                <span className="font-mono text-sm">{member.name}</span>
-                {member.role && <span className="ml-2 font-mono text-xs text-muted">{member.role}</span>}
+                <span className="text-sm">{member.name}</span>
+                {member.role && <span className="ml-2 text-xs text-muted">{member.role}</span>}
                 {(member.email || member.phone) && (
-                  <div className="font-mono text-[11px] text-muted">
+                  <div className="text-xs text-muted">
                     {[member.email, member.phone].filter(Boolean).join(" · ")}
                   </div>
                 )}
               </div>
               <div className="flex items-center gap-3">
-                <span className="font-mono text-[11px] text-muted">
+                <span className="text-xs text-muted">
                   {member._count.scenes} escena{member._count.scenes === 1 ? "" : "s"}
                 </span>
                 <form action={deleteCrewMember.bind(null, projectId, member.id)}>

@@ -16,7 +16,7 @@ function closeOnClick(e: MouseEvent<HTMLAnchorElement>) {
 }
 
 const CHIP =
-  "flex min-h-9 items-center gap-1.5 rounded-full border px-3.5 py-1.5 font-mono text-[11px] tracking-widest uppercase transition active:scale-[0.97]";
+  "flex min-h-9 items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs transition active:scale-[0.97]";
 const CHIP_IDLE = "border-line text-muted hover:border-accent/60 hover:text-fg";
 const CHIP_ACTIVE = "border-accent/50 bg-accent/10 text-accent";
 
@@ -116,7 +116,7 @@ export function ProjectSubNav({
                     href={toolHref(tool)}
                     onClick={closeOnClick}
                     aria-current={toolActive ? "page" : undefined}
-                    className={`flex items-center gap-2.5 border-l-2 px-3.5 py-2.5 font-mono text-xs transition ${
+                    className={`flex items-center gap-2.5 border-l-2 px-3.5 py-2.5 text-xs transition ${
                       toolActive
                         ? "border-accent text-accent"
                         : "border-transparent text-muted hover:border-accent/60 hover:text-fg"
@@ -125,7 +125,7 @@ export function ProjectSubNav({
                     <span className="h-4 w-4 shrink-0">{tool.icon}</span>
                     {tool.label}
                     {tool.pro && (
-                      <span className="ml-auto rounded-full bg-accent px-1.5 py-px text-[9px] tracking-widest text-bg uppercase">
+                      <span className="ml-auto rounded-full bg-accent px-1.5 py-px text-xs text-bg">
                         Pro
                       </span>
                     )}

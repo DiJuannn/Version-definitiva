@@ -91,7 +91,7 @@ export default async function ProjectLocationsPage({
                     "Sin datos"
                   }
                   trailing={
-                    <span className="flex items-center gap-3 font-mono text-xs text-muted">
+                    <span className="flex items-center gap-3 text-xs text-muted">
                       {location.latitude === null && (
                         <span className="text-warn">Sin coordenadas</span>
                       )}

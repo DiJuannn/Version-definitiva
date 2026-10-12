@@ -72,11 +72,11 @@ export default async function OrganizacionPage({
                 <div>
                         <section className="border border-line p-6">
                           <div className="flex items-center justify-between gap-3">
-                            <p className="font-mono text-xs tracking-widest text-accent uppercase">
+                            <p className="text-[13px] text-accent">
                               Plan
                             </p>
                             <span
-                              className={`rounded-full px-3 py-1 font-mono text-[10px] tracking-widest uppercase ${
+                              className={`rounded-full px-3 py-1 text-xs ${
                                 isPro(profile.organization.plan)
                                   ? "bg-accent text-bg"
                                   : "border border-line text-muted"
@@ -87,7 +87,7 @@ export default async function OrganizacionPage({
                           </div>
 
                           {isPro(profile.organization.plan) ? (
-                            <ul className="mt-4 space-y-1.5 font-mono text-xs text-muted">
+                            <ul className="mt-4 space-y-1.5 text-xs text-muted">
                               {PRO_FEATURES.map((feature) => (
                                 <li key={feature} className="flex gap-2">
                                   <span className="text-accent">✓</span>
@@ -99,10 +99,10 @@ export default async function OrganizacionPage({
                             <>
                               <div className="mt-4 grid gap-6 sm:grid-cols-2">
                                 <div>
-                                  <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                                  <p className="text-xs text-muted">
                                     Tu plan — Gratis
                                   </p>
-                                  <ul className="mt-2 space-y-1.5 font-mono text-xs text-muted">
+                                  <ul className="mt-2 space-y-1.5 text-xs text-muted">
                                     {FREE_FEATURES.map((feature) => (
                                       <li key={feature} className="flex gap-2">
                                         <span>·</span>
@@ -112,10 +112,10 @@ export default async function OrganizacionPage({
                                   </ul>
                                 </div>
                                 <div>
-                                  <p className="font-mono text-[10px] tracking-widest text-accent uppercase">
+                                  <p className="text-xs text-accent">
                                     Con PRO
                                   </p>
-                                  <ul className="mt-2 space-y-1.5 font-mono text-xs text-muted">
+                                  <ul className="mt-2 space-y-1.5 text-xs text-muted">
                                     {PRO_FEATURES.map((feature) => (
                                       <li key={feature} className="flex gap-2">
                                         <span className="text-accent">✓</span>
@@ -134,7 +134,7 @@ export default async function OrganizacionPage({
                                   <div className="border border-line p-4">
                                     <p className="font-display text-2xl font-bold">
                                       6,99€
-                                      <span className="font-mono text-xs font-normal text-muted">
+                                      <span className="text-xs font-normal text-muted">
                                         /mes
                                       </span>
                                     </p>
@@ -152,11 +152,11 @@ export default async function OrganizacionPage({
                                   <div className="border border-accent p-4">
                                     <p className="font-display text-2xl font-bold">
                                       69,99€
-                                      <span className="font-mono text-xs font-normal text-muted">
+                                      <span className="text-xs font-normal text-muted">
                                         /año
                                       </span>
                                     </p>
-                                    <p className="mt-1 font-mono text-[10px] tracking-widest text-accent uppercase">
+                                    <p className="mt-1 text-xs text-accent">
                                       2 meses gratis
                                     </p>
                                     <a
@@ -174,12 +174,12 @@ export default async function OrganizacionPage({
                                     <div className="border border-line p-4">
                                       <p className="font-display text-2xl font-bold">
                                         120€
-                                        <span className="font-mono text-xs font-normal text-muted">
+                                        <span className="text-xs font-normal text-muted">
                                           {" "}
                                           pago único
                                         </span>
                                       </p>
-                                      <p className="mt-1 font-mono text-[10px] tracking-widest text-muted uppercase">
+                                      <p className="mt-1 text-xs text-muted">
                                         Para siempre, sin renovaciones
                                       </p>
                                       <a
@@ -196,7 +196,7 @@ export default async function OrganizacionPage({
                                   )}
                                 </div>
                               ) : (
-                                <p className="mt-4 font-mono text-xs text-muted">
+                                <p className="mt-4 text-xs text-muted">
                                   El cobro todavía se está configurando — vuelve pronto.
                                 </p>
                               )}
@@ -213,7 +213,7 @@ export default async function OrganizacionPage({
               content: (
                 <div>
                         <section className="border border-line p-6">
-                          <p className="font-mono text-xs tracking-widest text-accent uppercase">
+                          <p className="text-[13px] text-accent">
                             Miembros
                           </p>
                           <div className="mt-4 divide-y divide-line">
@@ -223,11 +223,11 @@ export default async function OrganizacionPage({
                                 className="flex flex-wrap items-center justify-between gap-3 py-3"
                               >
                                 <div>
-                                  <p className="font-mono text-sm">
+                                  <p className="text-sm">
                                     {member.fullName || member.email}
                                   </p>
                                   {member.fullName && (
-                                    <p className="font-mono text-xs text-muted">{member.email}</p>
+                                    <p className="text-xs text-muted">{member.email}</p>
                                   )}
                                 </div>
                                 <form
@@ -238,7 +238,7 @@ export default async function OrganizacionPage({
                                     name="role"
                                     defaultValue={member.role}
                                     disabled={member.id === profile.id && adminCount === 1}
-                                    className="border border-line bg-transparent px-2 py-1 font-mono text-xs uppercase outline-none focus:border-accent disabled:opacity-40"
+                                    className="border border-line bg-transparent px-2 py-1 text-[13px] outline-none focus:border-accent disabled:opacity-40"
                                   >
                                     <option value="ADMIN" className="bg-bg">Admin</option>
                                     <option value="MEMBER" className="bg-bg">Miembro</option>
@@ -267,7 +267,7 @@ export default async function OrganizacionPage({
                 <div>
                         <section className="border border-line p-6">
                           <div className="flex items-center gap-1.5">
-                            <p className="font-mono text-xs tracking-widest text-accent uppercase">
+                            <p className="text-[13px] text-accent">
                               Invitar a alguien
                             </p>
                             <HelpTip text="Se genera un enlace único de un solo uso. Cópialo y mándaselo tú mismo (WhatsApp, email...) — no se envía nada automáticamente." />
@@ -282,8 +282,8 @@ export default async function OrganizacionPage({
                                   className="flex flex-wrap items-center justify-between gap-3 py-3"
                                 >
                                   <div>
-                                    <p className="font-mono text-sm">{invite.email}</p>
-                                    <p className="font-mono text-xs text-muted">
+                                    <p className="text-sm">{invite.email}</p>
+                                    <p className="text-xs text-muted">
                                       {ROLE_LABELS[invite.role]} · pendiente de aceptar
                                     </p>
                                   </div>

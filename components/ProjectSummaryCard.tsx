@@ -88,37 +88,37 @@ export function ProjectSummaryCard({
     return (
       <div className="border border-line p-5">
         <div className="flex items-center justify-between">
-          <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
+          <p className="text-xs text-muted">
             Datos del proyecto
           </p>
           <button
             type="button"
             onClick={() => setEditing(true)}
-            className="font-mono text-[10px] tracking-widest text-muted uppercase hover:text-accent"
+            className="text-xs text-muted hover:text-accent"
           >
             Editar
           </button>
         </div>
 
         {fields.length === 0 && !project.notes ? (
-          <p className="mt-4 font-mono text-sm text-muted">
+          <p className="mt-4 text-sm text-muted">
             Sin datos todavía — pulsa &ldquo;Editar&rdquo; para rellenarlos.
           </p>
         ) : (
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {fields.map((field) => (
               <div key={field.label}>
-                <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                <p className="text-xs text-muted">
                   {field.label}
                 </p>
-                <p className="mt-0.5 font-mono text-sm">{field.value}</p>
+                <p className="mt-0.5 text-sm">{field.value}</p>
               </div>
             ))}
           </div>
         )}
 
         {project.notes && (
-          <p className="mt-4 whitespace-pre-wrap font-mono text-sm text-muted">
+          <p className="mt-4 whitespace-pre-wrap text-sm text-muted">
             {project.notes}
           </p>
         )}
@@ -132,20 +132,20 @@ export function ProjectSummaryCard({
       className="grid gap-4 border border-line p-5 sm:grid-cols-2 lg:grid-cols-3"
     >
       <div className="flex items-center justify-between sm:col-span-2 lg:col-span-3">
-        <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
+        <p className="text-xs text-muted">
           Datos del proyecto
         </p>
         <button
           type="button"
           onClick={() => setEditing(false)}
-          className="font-mono text-[10px] tracking-widest text-muted uppercase hover:text-accent"
+          className="text-xs text-muted hover:text-accent"
         >
           Cancelar
         </button>
       </div>
 
       <label className="flex flex-col gap-1">
-        <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+        <span className="text-xs text-muted">
           Nombre
         </span>
         <input
@@ -157,7 +157,7 @@ export function ProjectSummaryCard({
       </label>
 
       <label className="flex flex-col gap-1">
-        <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+        <span className="text-xs text-muted">
           Tipo
         </span>
         <input
@@ -169,7 +169,7 @@ export function ProjectSummaryCard({
       </label>
 
       <div className="flex flex-col gap-1 sm:col-span-2 lg:col-span-3">
-        <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+        <span className="text-xs text-muted">
           Estado
         </span>
         <div className="flex flex-wrap gap-2">
@@ -187,7 +187,7 @@ export function ProjectSummaryCard({
       </div>
 
       <label className="flex flex-col gap-1">
-        <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+        <span className="text-xs text-muted">
           Director
         </span>
         <input
@@ -198,7 +198,7 @@ export function ProjectSummaryCard({
       </label>
 
       <label className="flex flex-col gap-1">
-        <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+        <span className="text-xs text-muted">
           Producción
         </span>
         <input
@@ -209,7 +209,7 @@ export function ProjectSummaryCard({
       </label>
 
       <label className="flex flex-col gap-1">
-        <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+        <span className="text-xs text-muted">
           Duración
         </span>
         <input
@@ -221,7 +221,7 @@ export function ProjectSummaryCard({
       </label>
 
       <label className="flex flex-col gap-1">
-        <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+        <span className="text-xs text-muted">
           Presupuesto previsto (€)
         </span>
         <input
@@ -235,7 +235,7 @@ export function ProjectSummaryCard({
       </label>
 
       <label className="flex flex-col gap-1">
-        <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+        <span className="text-xs text-muted">
           Fecha de inicio
         </span>
         <input
@@ -247,7 +247,7 @@ export function ProjectSummaryCard({
       </label>
 
       <label className="flex flex-col gap-1">
-        <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+        <span className="text-xs text-muted">
           Fecha de fin
         </span>
         <input
@@ -259,7 +259,7 @@ export function ProjectSummaryCard({
       </label>
 
       <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-3">
-        <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+        <span className="text-xs text-muted">
           Notas
         </span>
         <textarea

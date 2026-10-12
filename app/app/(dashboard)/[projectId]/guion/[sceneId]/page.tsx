@@ -80,7 +80,7 @@ export default async function SceneDetailPage({
       <form action={updateAction} className="mt-8 space-y-8">
         <div className="grid gap-4 border border-line p-5 sm:grid-cols-2 lg:grid-cols-4">
           <label className="flex flex-col gap-1">
-            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+            <span className="text-xs text-muted">
               Número
             </span>
             <input
@@ -91,7 +91,7 @@ export default async function SceneDetailPage({
             />
           </label>
           <div className="flex flex-col gap-1">
-            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+            <span className="text-xs text-muted">
               INT/EXT
             </span>
             <div className="flex flex-wrap gap-2">
@@ -108,7 +108,7 @@ export default async function SceneDetailPage({
             </div>
           </div>
           <div className="flex flex-col gap-1">
-            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+            <span className="text-xs text-muted">
               Día/Noche
             </span>
             <div className="flex flex-wrap gap-2">
@@ -125,7 +125,7 @@ export default async function SceneDetailPage({
             </div>
           </div>
           <label className="flex flex-col gap-1">
-            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+            <span className="text-xs text-muted">
               Localización
             </span>
             <select
@@ -143,7 +143,7 @@ export default async function SceneDetailPage({
               ))}
             </select>
             {locations.length === 0 && (
-              <span className="font-mono text-[10px] text-muted">
+              <span className="text-xs text-muted">
                 <Link href="/app/localizaciones" className="text-fg hover:text-accent">
                   Añadir en Localizaciones →
                 </Link>
@@ -152,7 +152,7 @@ export default async function SceneDetailPage({
           </label>
 
           <label className="flex flex-col gap-1">
-            <span className="flex items-center gap-1 font-mono text-[10px] tracking-widest text-muted uppercase">
+            <span className="flex items-center gap-1 text-xs text-muted">
               Orden en la historia
               <HelpTip text="Solo hace falta rellenarlo si esta escena no ocurre en el mismo orden en que aparece en el guion (por ejemplo, un flashback). Si se deja vacío, se usa el orden del guion tal cual." />
             </span>
@@ -166,7 +166,7 @@ export default async function SceneDetailPage({
           </label>
 
           <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-4">
-            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+            <span className="text-xs text-muted">
               Descripción
             </span>
             <textarea
@@ -177,7 +177,7 @@ export default async function SceneDetailPage({
             />
           </label>
           <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-4">
-            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+            <span className="text-xs text-muted">
               Acción
             </span>
             <textarea
@@ -188,7 +188,7 @@ export default async function SceneDetailPage({
             />
           </label>
           <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-4">
-            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+            <span className="text-xs text-muted">
               Diálogos / notas
             </span>
             <textarea
@@ -199,7 +199,7 @@ export default async function SceneDetailPage({
             />
           </label>
           <label className="flex flex-col gap-1 sm:col-span-2">
-            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+            <span className="text-xs text-muted">
               Extras
             </span>
             <textarea
@@ -210,7 +210,7 @@ export default async function SceneDetailPage({
             />
           </label>
           <label className="flex flex-col gap-1 sm:col-span-2">
-            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+            <span className="text-xs text-muted">
               Notas de producción
             </span>
             <textarea
@@ -223,11 +223,11 @@ export default async function SceneDetailPage({
         </div>
 
         <div className="border border-line p-5">
-          <span className="font-mono text-[10px] tracking-widest text-accent uppercase">
+          <span className="text-xs text-accent">
             Personajes
           </span>
           {characters.length === 0 ? (
-            <p className="mt-3 font-mono text-xs text-muted">
+            <p className="mt-3 text-xs text-muted">
               No hay personajes en el proyecto todavía.
             </p>
           ) : (
@@ -235,7 +235,7 @@ export default async function SceneDetailPage({
               {characters.map((character) => (
                 <label
                   key={character.id}
-                  className="flex items-center gap-2 font-mono text-xs"
+                  className="flex items-center gap-2 text-xs"
                 >
                   <input
                     type="checkbox"
@@ -251,12 +251,12 @@ export default async function SceneDetailPage({
         </div>
 
         <div className="border border-line p-5">
-          <span className="flex items-center gap-1.5 font-mono text-[10px] tracking-widest text-accent uppercase">
+          <span className="flex items-center gap-1.5 text-xs text-accent">
             Desglose
             <HelpTip text="El campo 'Estado' es opcional — solo rellénalo si en esta escena concreta el objeto está roto, perdido, manchado, etc. Ayuda al detector de continuidad a avisar si luego aparece intacto sin explicación." />
           </span>
           {breakdownElements.length === 0 ? (
-            <p className="mt-3 font-mono text-xs text-muted">
+            <p className="mt-3 text-xs text-muted">
               Todavía no hay elementos de desglose en el proyecto.{" "}
               <Link
                 href={`/app/${projectId}/desglose`}
@@ -271,14 +271,14 @@ export default async function SceneDetailPage({
                 .filter((group) => group.items.length > 0)
                 .map((group) => (
                   <div key={group.category}>
-                    <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                    <p className="text-xs text-muted">
                       {BREAKDOWN_CATEGORY_LABELS[group.category]}
                     </p>
                     <div className="mt-2 flex flex-col gap-1.5">
                       {group.items.map((item) => (
                         <div
                           key={item.id}
-                          className="flex items-center gap-2 font-mono text-xs"
+                          className="flex items-center gap-2 text-xs"
                         >
                           <label className="flex items-center gap-2">
                             <input
@@ -305,11 +305,11 @@ export default async function SceneDetailPage({
         </div>
 
         <div className="border border-line p-5">
-          <span className="font-mono text-[10px] tracking-widest text-accent uppercase">
+          <span className="text-xs text-accent">
             Equipo técnico
           </span>
           {crewMembers.length === 0 ? (
-            <p className="mt-3 font-mono text-xs text-muted">
+            <p className="mt-3 text-xs text-muted">
               Todavía no hay equipo técnico en el proyecto.{" "}
               <Link
                 href={`/app/${projectId}/desglose`}
@@ -323,7 +323,7 @@ export default async function SceneDetailPage({
               {crewMembers.map((member) => (
                 <label
                   key={member.id}
-                  className="flex items-center gap-2 font-mono text-xs"
+                  className="flex items-center gap-2 text-xs"
                 >
                   <input
                     type="checkbox"

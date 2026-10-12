@@ -24,7 +24,7 @@ export function InviteForm() {
       <select
         name="role"
         defaultValue="MEMBER"
-        className="border border-line bg-transparent px-3 py-2 font-mono text-xs uppercase outline-none focus:border-accent"
+        className="border border-line bg-transparent px-3 py-2 text-[13px] outline-none focus:border-accent"
       >
         <option value="MEMBER" className="bg-bg">
           Miembro
@@ -41,7 +41,7 @@ export function InviteForm() {
         Invitar
       </SubmitButton>
       {state && "error" in state && (
-        <p className="w-full font-mono text-xs text-danger">{state.error}</p>
+        <p className="w-full text-xs text-danger">{state.error}</p>
       )}
     </form>
   );

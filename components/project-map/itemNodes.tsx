@@ -27,7 +27,7 @@ function useItems(): ItemContext {
 }
 
 const FIELD = "nodrag nowheel w-full bg-transparent outline-none placeholder:opacity-50 focus:bg-white/5";
-const LABEL = "font-mono text-[9px] tracking-widest uppercase";
+const LABEL = "text-xs";
 
 // Cuatro puntos de unión (arriba, derecha, abajo, izquierda). Se ven al pasar el
 // ratón o al seleccionar la tarjeta; arrastrar desde uno crea una flecha.
@@ -222,7 +222,7 @@ function SectionItemView({ id, item, selected }: { id: string; item: MapItem; se
         placeholder={readOnly ? "" : "Título de la sección"}
         maxLength={120}
         aria-label="Título de la sección"
-        className={`${FIELD} px-3 py-2 font-mono text-xs tracking-widest uppercase`}
+        className={`${FIELD} px-3 py-2 text-[13px]`}
         style={{ color }}
       />
     </Frame>
@@ -260,7 +260,7 @@ function EntityCard({ id, item, selected }: { id: string; item: MapItem; selecte
               )}
               <p className={`font-display text-base leading-tight font-bold ${e.done ? "text-muted line-through" : ""}`}>{e.title}</p>
             </div>
-            {e.sub && <p className="font-mono text-[11px] text-muted">{e.sub}</p>}
+            {e.sub && <p className="text-xs text-muted">{e.sub}</p>}
             {e.body && <p className="line-clamp-4 min-h-0 flex-1 overflow-hidden font-sans text-xs leading-snug text-muted">{e.body}</p>}
             {e.tag && <p className={`${LABEL} text-muted`}>{e.tag}</p>}
             {!readOnly && (

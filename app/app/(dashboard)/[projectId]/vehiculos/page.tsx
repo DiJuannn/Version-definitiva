@@ -86,7 +86,7 @@ export default async function ProjectVehiclesPage({
                     "Sin datos"
                   }
                   trailing={
-                    <span className="font-mono text-xs text-muted">
+                    <span className="text-xs text-muted">
                       {vehicle._count.reservations} día
                       {vehicle._count.reservations === 1 ? "" : "s"} en este proyecto
                     </span>

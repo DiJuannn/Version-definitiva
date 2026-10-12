@@ -62,10 +62,10 @@ export function LocationsMap({ locations }: { locations: MapLocation[] }) {
 
       marker.bindPopup(
         `<div style="font-family: var(--font-jetbrains-mono), monospace; min-width:160px;">
-          <p style="margin:0 0 4px; font-weight:700; text-transform:uppercase; font-size:13px;">${escapeHtml(location.name)}</p>
+          <p style="margin:0 0 4px; font-weight:700; font-size:14px;">${escapeHtml(location.name)}</p>
           ${location.address ? `<p style="margin:0 0 4px; font-size:11px; opacity:0.7;">${escapeHtml(location.address)}</p>` : ""}
           <p style="margin:0 0 8px; font-size:11px; opacity:0.7;">${location.sceneCount} escena${location.sceneCount === 1 ? "" : "s"}</p>
-          <a href="/app/localizaciones/${location.id}" style="font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:var(--accent);">Ver ficha →</a>
+          <a href="/app/localizaciones/${location.id}" style="font-size:13px; color:var(--accent);">Ver ficha →</a>
         </div>`,
       );
 

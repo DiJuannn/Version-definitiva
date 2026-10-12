@@ -81,7 +81,7 @@ export function ScheduleAssistant({
       </p>
       <div className="mt-5 flex flex-wrap items-end gap-4">
         <label className="flex flex-col gap-1">
-          <span className="font-mono text-[10px] tracking-widest text-muted uppercase">Primer día de rodaje</span>
+          <span className="text-xs text-muted">Primer día de rodaje</span>
           <input
             type="date"
             required
@@ -94,7 +94,7 @@ export function ScheduleAssistant({
           />
         </label>
         <label className="flex flex-col gap-1">
-          <span className="font-mono text-[10px] tracking-widest text-muted uppercase">Escenas por día</span>
+          <span className="text-xs text-muted">Escenas por día</span>
           <select
             value={perDay}
             onChange={(e) => {
@@ -127,11 +127,11 @@ export function ScheduleAssistant({
         </button>
       </div>
 
-      {error && <p role="alert" className="mt-4 font-mono text-xs text-danger">{error}</p>}
+      {error && <p role="alert" className="mt-4 text-xs text-danger">{error}</p>}
 
       {proposal?.ok && (
         <div className="mt-6">
-          <p className="font-mono text-[11px] tracking-widest text-accent uppercase">
+          <p className="text-xs text-accent">
             Propuesta · {proposal.days.length} día{proposal.days.length === 1 ? "" : "s"} para {proposal.totalScenes} escena
             {proposal.totalScenes === 1 ? "" : "s"}
           </p>
@@ -142,9 +142,9 @@ export function ScheduleAssistant({
                   <p className="font-display text-sm font-bold">
                     Día {i + 1} · {formatDay(day.date)}
                   </p>
-                  <p className="font-mono text-xs text-muted">{day.locations.join(" · ")}</p>
+                  <p className="text-xs text-muted">{day.locations.join(" · ")}</p>
                 </div>
-                <p className="font-mono text-xs">Escenas {day.scenes.map((s) => s.label).join(", ")}</p>
+                <p className="text-xs">Escenas {day.scenes.map((s) => s.label).join(", ")}</p>
               </li>
             ))}
           </ol>
@@ -162,7 +162,7 @@ export function ScheduleAssistant({
   if (!hasDays) {
     return (
       <section aria-labelledby="schedule-assistant" className="mt-8 border border-accent/40 bg-bg-raised/40 p-6 sm:p-8">
-        <p className="font-mono text-[11px] tracking-widest text-accent uppercase">Te lo preparo yo</p>
+        <p className="text-xs text-accent">Te lo preparo yo</p>
         <h2 id="schedule-assistant" className="mt-1.5 font-display text-2xl font-black tracking-tight sm:text-3xl">
           Crea tu plan de rodaje
         </h2>
@@ -173,7 +173,7 @@ export function ScheduleAssistant({
 
   return (
     <details className="group mt-8 border border-line">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent [&::-webkit-details-marker]:hidden">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-xs text-muted hover:text-accent [&::-webkit-details-marker]:hidden">
         <span>
           Repartir con el asistente las {unscheduled} escena{unscheduled === 1 ? "" : "s"} sin día
         </span>

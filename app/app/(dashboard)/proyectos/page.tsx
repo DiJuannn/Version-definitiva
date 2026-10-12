@@ -27,7 +27,7 @@ export default async function ProyectosPage() {
 
       {projects.length === 0 ? (
         <div className="mx-auto mt-10 max-w-md border border-line p-6 sm:p-8">
-          <p className="text-center font-mono text-xs tracking-widest text-accent uppercase">
+          <p className="text-center text-[13px] text-accent">
             Tu primer proyecto
           </p>
           <div className="mt-4">
@@ -68,14 +68,14 @@ export default async function ProyectosPage() {
                       {project.name}
                     </span>
                     {!isOwnProject && (
-                      <span className="block font-mono text-[11px] text-muted">
+                      <span className="block text-xs text-muted">
                         Propietario: {ownerLabel}
                       </span>
                     )}
                   </span>
                   <span className="flex shrink-0 items-center gap-4">
                     <StatusPill status={project.status} />
-                    <span className="hidden font-mono text-xs text-muted sm:inline">
+                    <span className="hidden text-xs text-muted sm:inline">
                       {project.createdAt.toLocaleDateString("es-ES")}
                     </span>
                   </span>
@@ -93,7 +93,7 @@ export default async function ProyectosPage() {
       )}
 
       <div className="mt-14 border-t border-line pt-8">
-        <p className="font-mono text-[11px] tracking-widest text-accent uppercase">
+        <p className="text-xs text-accent">
           Ir directo a una herramienta
         </p>
         <p className="mt-2 max-w-xl font-sans text-sm text-muted">

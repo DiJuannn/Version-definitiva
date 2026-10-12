@@ -220,7 +220,7 @@ export default async function CalendarioPage({
             {agendaDays.map(({ day, entries }) => (
               <div key={day.toISOString()} className="flex gap-4 border-b border-line py-3">
                 <div className="w-12 shrink-0 text-center">
-                  <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                  <p className="text-xs text-muted">
                     {day.toLocaleDateString("es-ES", { weekday: "short" })}
                   </p>
                   <p
@@ -237,13 +237,13 @@ export default async function CalendarioPage({
                       <Link
                         key={entry.id}
                         href={entry.href}
-                        className="flex items-center gap-2 font-mono text-xs hover:text-accent"
+                        className="flex items-center gap-2 text-xs hover:text-accent"
                       >
                         <entry.Icon className="h-3.5 w-3.5 shrink-0 text-accent" />
                         {entry.label}
                       </Link>
                     ) : (
-                      <p key={entry.id} className="flex items-center gap-2 font-mono text-xs">
+                      <p key={entry.id} className="flex items-center gap-2 text-xs">
                         <entry.Icon className="h-3.5 w-3.5 shrink-0 text-muted" />
                         {entry.label}
                       </p>
@@ -260,7 +260,7 @@ export default async function CalendarioPage({
         {WEEKDAYS.map((day) => (
           <div
             key={day}
-            className="border-b border-r border-line bg-bg-raised px-2 py-1.5 font-mono text-[10px] tracking-widest text-muted uppercase"
+            className="border-b border-r border-line bg-bg-raised px-2 py-1.5 text-xs text-muted"
           >
             {day}
           </div>
@@ -275,20 +275,20 @@ export default async function CalendarioPage({
                 isCurrentMonth ? "" : "opacity-30"
               } ${sameDay(day, today) ? "bg-accent/10" : ""}`}
             >
-              <p className={`font-mono text-[11px] ${sameDay(day, today) ? "font-bold text-accent" : "text-muted"}`}>{day.getDate()}</p>
+              <p className={`text-xs ${sameDay(day, today) ? "font-bold text-accent" : "text-muted"}`}>{day.getDate()}</p>
               <div className="mt-1 space-y-1">
                 {entriesForDay.map((entry) =>
                   entry.href ? (
                     <Link
                       key={entry.id}
                       href={entry.href}
-                      className="flex items-center gap-1 truncate font-mono text-[10px] hover:text-accent"
+                      className="flex items-center gap-1 truncate text-xs hover:text-accent"
                     >
                       <entry.Icon className="h-2.5 w-2.5 shrink-0" />
                       <span className="truncate">{entry.label}</span>
                     </Link>
                   ) : (
-                    <p key={entry.id} className="flex items-center gap-1 truncate font-mono text-[10px]">
+                    <p key={entry.id} className="flex items-center gap-1 truncate text-xs">
                       <entry.Icon className="h-2.5 w-2.5 shrink-0" />
                       <span className="truncate">{entry.label}</span>
                     </p>
@@ -301,7 +301,7 @@ export default async function CalendarioPage({
       </div>
 
       <section className="mt-10">
-        <h2 className="font-mono text-xs tracking-widest text-accent uppercase">
+        <h2 className="text-[13px] text-accent">
           Añadir evento
         </h2>
         <form
@@ -341,7 +341,7 @@ export default async function CalendarioPage({
           </FormField>
 
           <div className="sm:col-span-2 lg:col-span-5">
-            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+            <span className="text-xs text-muted">
               Tipo
             </span>
             <div className="mt-1.5 flex flex-wrap gap-2">
@@ -377,7 +377,7 @@ export default async function CalendarioPage({
                 key={event.id}
                 className="flex items-center justify-between gap-4 border-b border-line py-3"
               >
-                <span className="flex items-center gap-2 font-mono text-sm">
+                <span className="flex items-center gap-2 text-sm">
                   <Icon className="h-4 w-4 shrink-0 text-muted" />
                   {event.date.toLocaleDateString("es-ES")} — {event.title}
                   {event.project && (

@@ -70,7 +70,7 @@ export default async function TaskDetailPage({
             type="submit"
             name="status"
             value={value}
-            className={`rounded-full border px-4 py-1.5 font-mono text-xs tracking-widest uppercase transition-colors ${
+            className={`rounded-full border px-4 py-1.5 text-[13px] transition-colors ${
               task.status === value
                 ? "border-accent bg-accent text-bg"
                 : "border-line text-muted hover:border-accent hover:text-accent"
@@ -86,7 +86,7 @@ export default async function TaskDetailPage({
         className="mt-8 grid gap-4 border border-line p-5 sm:grid-cols-2"
       >
         <label className="flex flex-col gap-1 sm:col-span-2">
-          <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+          <span className="text-xs text-muted">
             Título
           </span>
           <input
@@ -97,7 +97,7 @@ export default async function TaskDetailPage({
           />
         </label>
         <label className="flex flex-col gap-1 sm:col-span-2">
-          <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+          <span className="text-xs text-muted">
             Descripción
           </span>
           <textarea
@@ -108,7 +108,7 @@ export default async function TaskDetailPage({
           />
         </label>
         <label className="flex flex-col gap-1">
-          <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+          <span className="text-xs text-muted">
             Responsable
           </span>
           <input
@@ -118,7 +118,7 @@ export default async function TaskDetailPage({
           />
         </label>
         <label className="flex flex-col gap-1">
-          <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+          <span className="text-xs text-muted">
             Fecha límite
           </span>
           <input
@@ -129,7 +129,7 @@ export default async function TaskDetailPage({
           />
         </label>
         <label className="flex flex-col gap-1">
-          <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+          <span className="text-xs text-muted">
             Prioridad
           </span>
           <select
@@ -145,7 +145,7 @@ export default async function TaskDetailPage({
           </select>
         </label>
         <label className="flex flex-col gap-1">
-          <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+          <span className="text-xs text-muted">
             Categoría
           </span>
           <input
@@ -166,15 +166,15 @@ export default async function TaskDetailPage({
       </form>
 
       <section className="mt-10">
-        <h2 className="font-mono text-xs tracking-widest text-accent uppercase">
+        <h2 className="text-[13px] text-accent">
           Comentarios
         </h2>
         {task.comments.length > 0 && (
           <div className="mt-3 space-y-3">
             {task.comments.map((comment) => (
               <div key={comment.id} className="border-l-2 border-line pl-3">
-                <p className="font-mono text-sm">{comment.body}</p>
-                <p className="mt-0.5 font-mono text-[10px] text-muted">
+                <p className="text-sm">{comment.body}</p>
+                <p className="mt-0.5 text-xs text-muted">
                   {comment.createdAt.toLocaleString("es-ES")}
                 </p>
               </div>

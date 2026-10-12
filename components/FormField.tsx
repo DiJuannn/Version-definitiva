@@ -16,11 +16,11 @@ export function FormField({
 }) {
   return (
     <label className={`flex flex-col gap-1 ${className ?? ""}`}>
-      <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+      <span className="text-xs text-muted">
         {label}
       </span>
       {children}
-      {hint && <span className="font-mono text-[10px] text-muted">{hint}</span>}
+      {hint && <span className="text-xs text-muted">{hint}</span>}
     </label>
   );
 }

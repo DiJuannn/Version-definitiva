@@ -14,7 +14,7 @@ export function ScopeToggle({
           key={item.label}
           href={item.href}
           aria-current={item.active ? "true" : undefined}
-          className={`px-4 py-2 font-mono text-[11px] tracking-widest uppercase transition-colors ${
+          className={`px-4 py-2 text-xs transition-colors ${
             item.active ? "bg-accent/15 text-accent" : "text-muted hover:text-fg"
           }`}
         >

@@ -8,7 +8,7 @@ import { FormError } from "@/components/FormError";
 function UploadStatus() {
   const { pending } = useFormStatus();
   return pending ? (
-    <span className="font-mono text-xs text-muted">Leyendo el documento y proponiendo los planos… puede tardar un minuto.</span>
+    <span className="text-xs text-muted">Leyendo el documento y proponiendo los planos… puede tardar un minuto.</span>
   ) : null;
 }
 
@@ -27,7 +27,7 @@ export function ShotListUploadForm({
 
   return (
     <form action={formAction} className="flex flex-wrap items-center gap-3">
-      <label className="btn btn-secondary btn-sm cursor-pointer">
+      <label className="btn btn-outline btn-sm cursor-pointer">
         Importar guion técnico
         <input
           type="file"

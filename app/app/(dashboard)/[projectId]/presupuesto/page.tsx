@@ -143,15 +143,15 @@ export default async function PresupuestoPage({
 
       <div className="mt-8 grid gap-px overflow-hidden border border-line bg-line sm:grid-cols-3">
         <div className="bg-bg-raised p-5">
-          <p className="font-mono text-[10px] tracking-widest text-muted uppercase">Previsto (con IVA)</p>
+          <p className="text-xs text-muted">Previsto (con IVA)</p>
           <p className="mt-2 font-display text-3xl font-black tabular-nums">{currency(grandTotal)}</p>
-          <p className="mt-1.5 font-mono text-[11px] text-muted">
+          <p className="mt-1.5 text-xs text-muted">
             {categoriesWithTotals.length} categoría{categoriesWithTotals.length === 1 ? "" : "s"} ·{" "}
             {itemCount} partida{itemCount === 1 ? "" : "s"}
           </p>
         </div>
         <div className="bg-bg-raised p-5">
-          <p className="font-mono text-[10px] tracking-widest text-muted uppercase">Gastado</p>
+          <p className="text-xs text-muted">Gastado</p>
           <p className="mt-2 font-display text-3xl font-black tabular-nums">{currency(grandActual)}</p>
           <div className="mt-3 h-1 w-full bg-line">
             <div
@@ -159,12 +159,12 @@ export default async function PresupuestoPage({
               style={{ width: `${actualPct}%` }}
             />
           </div>
-          <p className="mt-1.5 font-mono text-[11px] text-muted">
+          <p className="mt-1.5 text-xs text-muted">
             {itemsWithActual}/{itemCount} partidas con gasto anotado
           </p>
         </div>
         <div className="bg-bg-raised p-5">
-          <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
+          <p className="text-xs text-muted">
             {target !== null ? "Disponible del objetivo" : "Objetivo"}
           </p>
           {target !== null && remaining !== null ? (
@@ -176,13 +176,13 @@ export default async function PresupuestoPage({
               >
                 {currency(remaining)}
               </p>
-              <p className="mt-1.5 font-mono text-[11px] text-muted">
+              <p className="mt-1.5 text-xs text-muted">
                 de {currency(target)} de presupuesto objetivo
                 {overTarget ? " · te has pasado" : ""}
               </p>
             </>
           ) : (
-            <p className="mt-2 font-mono text-xs text-muted">
+            <p className="mt-2 text-xs text-muted">
               Sin objetivo. Puedes fijarlo en «Datos del proyecto» para ver cuánto te queda.
             </p>
           )}
@@ -192,7 +192,7 @@ export default async function PresupuestoPage({
       {categoriesWithTotals.length === 0 ? (
         <>
           <section className="mt-8 border border-accent/40 bg-bg-raised/40 p-6 sm:p-8">
-            <p className="font-mono text-[11px] tracking-widest text-accent uppercase">Te lo preparo yo</p>
+            <p className="text-xs text-accent">Te lo preparo yo</p>
             <h2 className="mt-1.5 font-display text-2xl font-black tracking-tight sm:text-3xl">
               Empieza con las categorías de siempre
             </h2>
@@ -212,7 +212,7 @@ export default async function PresupuestoPage({
             </div>
           </section>
           <div className="mt-8">
-            <p className="mb-2 font-mono text-[10px] tracking-widest text-muted uppercase">O empieza con la tuya</p>
+            <p className="mb-2 text-xs text-muted">O empieza con la tuya</p>
             {newCategoryForm}
           </div>
         </>
@@ -226,7 +226,7 @@ export default async function PresupuestoPage({
                 <div className="flex items-center justify-between gap-4 px-5 py-4">
                   <div className="min-w-0">
                     <h2 className="font-display text-lg font-bold">{category.name}</h2>
-                    <p className="mt-0.5 font-mono text-[11px] text-muted">
+                    <p className="mt-0.5 text-xs text-muted">
                       {category.items.length} partida{category.items.length === 1 ? "" : "s"} ·{" "}
                       {Math.round(share)}% del total
                       {category.categoryActual > 0 && ` · gastado ${currency(category.categoryActual)}`}
@@ -258,23 +258,23 @@ export default async function PresupuestoPage({
                         className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-6 gap-y-2 px-5 py-3 lg:grid-cols-[minmax(0,1fr)_10rem_7rem_19rem_auto]"
                       >
                         <div className="min-w-0">
-                          <p className="font-mono text-sm">{item.description}</p>
+                          <p className="text-sm">{item.description}</p>
                           {item.linked.length > 0 && (
-                            <p className="mt-0.5 font-mono text-[11px] text-accent/80">
+                            <p className="mt-0.5 text-xs text-accent/80">
                               {item.linked.join(" · ")}
                             </p>
                           )}
-                          <p className="mt-0.5 font-mono text-[11px] text-muted tabular-nums lg:hidden">
+                          <p className="mt-0.5 text-xs text-muted tabular-nums lg:hidden">
                             {item.quantity} × {currency(item.unitPrice)}
                             {item.taxRate > 0 ? ` · IVA ${item.taxRate}%` : ""}
                           </p>
                         </div>
-                        <p className="hidden font-mono text-xs text-muted tabular-nums lg:block">
+                        <p className="hidden text-xs text-muted tabular-nums lg:block">
                           {item.quantity} × {currency(item.unitPrice)}
                           {item.taxRate > 0 ? ` · IVA ${item.taxRate}%` : ""}
                         </p>
-                        <p className="text-right font-mono text-sm tabular-nums">
-                          <span className="mr-1 font-mono text-[10px] tracking-widest text-muted uppercase lg:hidden">
+                        <p className="text-right text-sm tabular-nums">
+                          <span className="mr-1 text-xs text-muted lg:hidden">
                             Prev.
                           </span>
                           {currency(item.total)}

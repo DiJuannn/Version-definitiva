@@ -155,7 +155,7 @@ export function ShotListImportReview({
     <div className="mt-8 space-y-5">
       {possibleNumberingMismatch && (
         <div className="border border-warn/60 bg-warn/5 p-4">
-          <p className="font-mono text-[10px] tracking-widest text-warn uppercase">⚠ Revisa la numeración</p>
+          <p className="text-xs text-warn">⚠ Revisa la numeración</p>
           <p className="mt-1 text-sm text-fg">
             Ninguna de las escenas de este guion técnico coincide con las {existingSceneNumbers.length} escenas que
             ya tiene el proyecto. Para que los planos se enganchen a la escena correcta, el guion técnico debe
@@ -166,7 +166,7 @@ export function ShotListImportReview({
         </div>
       )}
 
-      <p className="font-mono text-xs text-muted">
+      <p className="text-xs text-muted">
         {totals.on} plano{totals.on === 1 ? "" : "s"} seleccionado{totals.on === 1 ? "" : "s"}
         {totals.creating > 0 && ` · ${totals.creating} nuevo${totals.creating === 1 ? "" : "s"}`}
         {totals.updating > 0 && ` · ${totals.updating} actualizará${totals.updating === 1 ? "" : "n"} uno existente`}
@@ -198,14 +198,14 @@ export function ShotListImportReview({
                   className={`${inputClass} w-24 font-display text-base font-bold`}
                 />
                 <span
-                  className={`font-mono text-[10px] font-normal tracking-widest uppercase ${
+                  className={`text-xs font-normal ${
                     isExisting ? "text-muted" : "text-warn"
                   }`}
                 >
                   {isExisting ? "(existe)" : "(se creará)"}
                 </span>
               </div>
-              <label className="flex items-center gap-1.5 font-mono text-[10px] tracking-widest text-muted uppercase">
+              <label className="flex items-center gap-1.5 text-xs text-muted">
                 <input type="checkbox" checked={allOn} onChange={(e) => toggleScene(scene.key, e.target.checked)} />
                 Todos
               </label>
@@ -225,7 +225,7 @@ export function ShotListImportReview({
                       <input
                         value={shot.number}
                         onChange={(e) => updateShot(scene.key, shot.key, { number: e.target.value })}
-                        className={`${inputClass} w-16 font-mono`}
+                        className={`${inputClass} w-16`}
                         placeholder="Nº"
                       />
                       <input
@@ -253,12 +253,12 @@ export function ShotListImportReview({
                         placeholder="Descripción"
                       />
                       {updating && (
-                        <span className="font-mono text-[10px] tracking-widest text-warn uppercase">actualiza</span>
+                        <span className="text-xs text-warn">actualiza</span>
                       )}
                       <button
                         type="button"
                         onClick={() => removeShot(scene.key, shot.key)}
-                        className="link-action font-mono text-[10px] tracking-widest uppercase"
+                        className="link-action text-xs"
                       >
                         Quitar
                       </button>

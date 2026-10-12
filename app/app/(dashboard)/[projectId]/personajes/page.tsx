@@ -142,7 +142,7 @@ export default async function PersonajesPage({
                                       {character.name}
                                     </p>
                                     {character.notes && (
-                                      <p className="font-mono text-xs text-muted">
+                                      <p className="text-xs text-muted">
                                         {character.notes}
                                       </p>
                                     )}
@@ -301,13 +301,13 @@ export default async function PersonajesPage({
                                     <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-4">
                                       <div className="min-w-0">
                                         <p className="font-display text-lg font-bold">{actor.name}</p>
-                                        <p className="font-mono text-xs text-muted">
+                                        <p className="text-xs text-muted">
                                           {details.length > 0
                                             ? details.join(" · ")
                                             : "Sin datos de contacto: pulsa para completarlos"}
                                         </p>
                                         {actor.characters.length > 0 && (
-                                          <p className="mt-1 font-mono text-[11px] text-accent">
+                                          <p className="mt-1 text-xs text-accent">
                                             Interpreta a {actor.characters.map((c) => c.name).join(", ")}
                                           </p>
                                         )}

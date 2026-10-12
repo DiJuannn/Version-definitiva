@@ -28,7 +28,7 @@ export function FeatureIntro({
 
   return (
     <div className="mt-6 flex items-start justify-between gap-4 border border-line bg-bg-raised p-4">
-      <p className="font-mono text-xs leading-relaxed text-muted">{children}</p>
+      <p className="text-xs leading-relaxed text-muted">{children}</p>
       <button
         type="button"
         onClick={() => {
@@ -37,7 +37,7 @@ export function FeatureIntro({
           } catch {}
           setDismissed(true);
         }}
-        className="shrink-0 font-mono text-[10px] tracking-widest text-muted uppercase hover:text-accent"
+        className="shrink-0 text-xs text-muted hover:text-accent"
       >
         Entendido
       </button>

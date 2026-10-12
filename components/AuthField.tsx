@@ -25,7 +25,7 @@ export function AuthField({
     <div>
       <label
         htmlFor={name}
-        className="block font-mono text-xs tracking-widest text-muted uppercase"
+        className="block text-[13px] text-muted"
       >
         {label}
       </label>

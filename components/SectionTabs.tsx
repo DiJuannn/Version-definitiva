@@ -95,7 +95,7 @@ export function SectionTabs({
             <div key={tab.id} className="contents">
               {showGroup && (
                 <p
-                  className={`hidden pb-2 font-mono text-[10px] tracking-widest text-muted uppercase lg:block ${
+                  className={`hidden pb-2 text-xs text-muted lg:block ${
                     i > 0 ? "pt-6" : ""
                   }`}
                 >
@@ -114,7 +114,7 @@ export function SectionTabs({
                 tabIndex={isActive ? 0 : -1}
                 onClick={() => select(tab.id)}
                 onKeyDown={(e) => onKeyDown(e, i)}
-                className={`relative flex shrink-0 items-center gap-2 whitespace-nowrap px-3.5 py-3 font-mono text-xs tracking-widest uppercase transition-colors ${
+                className={`relative flex shrink-0 items-center gap-2 whitespace-nowrap px-3.5 py-3 text-[13px] transition-colors ${
                   side
                     ? `-mb-px border-b-2 lg:mb-0 lg:justify-between lg:border-b-0 lg:border-l-2 lg:py-2.5 ${
                         isActive

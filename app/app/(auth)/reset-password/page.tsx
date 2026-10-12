@@ -28,16 +28,16 @@ export default function ResetPasswordPage() {
   }, []);
 
   if (status === "checking") {
-    return <p className="font-mono text-xs text-muted">Comprobando enlace…</p>;
+    return <p className="text-xs text-muted">Comprobando enlace…</p>;
   }
 
   if (status === "invalid") {
     return (
       <div>
-        <h1 className="font-display text-2xl font-bold uppercase">
+        <h1 className="font-display text-2xl font-bold">
           Enlace no válido
         </h1>
-        <p className="mt-4 font-mono text-xs text-muted">
+        <p className="mt-4 text-xs text-muted">
           Este enlace ha caducado o ya se usó.{" "}
           <Link href="/app/forgot-password" className="text-fg hover:text-accent">
             Pide uno nuevo
@@ -50,7 +50,7 @@ export default function ResetPasswordPage() {
 
   return (
     <div>
-      <h1 className="font-display text-2xl font-bold uppercase">
+      <h1 className="font-display text-2xl font-bold">
         Nueva contraseña
       </h1>
 

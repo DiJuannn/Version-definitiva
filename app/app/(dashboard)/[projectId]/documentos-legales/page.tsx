@@ -78,7 +78,7 @@ export default async function DocumentosLegalesPage({
               <p className="font-display text-lg font-bold transition-colors group-hover:text-accent">
                 {template.title}
               </p>
-              <p className="mt-1 font-mono text-xs text-muted">{template.description}</p>
+              <p className="mt-1 text-xs text-muted">{template.description}</p>
             </Link>
           ))}
         </div>

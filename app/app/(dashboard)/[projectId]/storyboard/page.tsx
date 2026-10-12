@@ -66,7 +66,7 @@ export default async function StoryboardPage({
                   );
                   return (
                     <div key={shot.id}>
-                      <p className="font-mono text-xs text-muted">
+                      <p className="text-xs text-muted">
                         Plano {scene.number}.{shot.number}
                         {shot.description ? ` — ${shot.description}` : ""}
                       </p>
@@ -84,13 +84,13 @@ export default async function StoryboardPage({
                                   className="h-full w-full object-cover"
                                 />
                               ) : (
-                                <span className="font-mono text-[10px] text-muted">
+                                <span className="text-xs text-muted">
                                   Sin imagen
                                 </span>
                               )}
                             </div>
                             {frame.description && (
-                              <p className="mt-1 w-56 font-mono text-[11px] text-muted">
+                              <p className="mt-1 w-56 text-xs text-muted">
                                 {frame.description}
                               </p>
                             )}
@@ -104,7 +104,7 @@ export default async function StoryboardPage({
                             >
                               <DeleteButton
                                 confirmMessage="¿Eliminar esta viñeta del storyboard?"
-                                className="bg-bg/80 px-2 py-1 font-mono text-[10px] tracking-widest text-muted uppercase hover:text-accent"
+                                className="bg-bg/80 px-2 py-1 text-xs text-muted hover:text-accent"
                               />
                             </form>
                           </div>
@@ -118,7 +118,7 @@ export default async function StoryboardPage({
                             type="file"
                             name="image"
                             accept="image/*"
-                            className="font-mono text-[11px] text-muted"
+                            className="text-xs text-muted"
                           />
                           <input
                             name="description"

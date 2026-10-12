@@ -150,12 +150,12 @@ export default async function ShootingDayDetailPage({
 
       {availabilityWarnings.length > 0 && (
         <div className="mt-6 border border-warn/60 p-4">
-          <p className="font-mono text-xs tracking-widest text-warn uppercase">
+          <p className="text-[13px] text-warn">
             ⚠ Posible conflicto de disponibilidad
           </p>
           <ul className="mt-2 space-y-1">
             {availabilityWarnings.map((warning) => (
-              <li key={warning.id} className="font-mono text-sm">
+              <li key={warning.id} className="text-sm">
                 {warning.personName} aparece como no disponible este día
                 {warning.note ? ` — ${warning.note}` : ""}.
               </li>
@@ -166,18 +166,18 @@ export default async function ShootingDayDetailPage({
 
       {(itemConflicts.length > 0 || vehicleConflicts.length > 0) && (
         <div className="mt-6 border border-warn/60 p-4">
-          <p className="font-mono text-xs tracking-widest text-warn uppercase">
+          <p className="text-[13px] text-warn">
             ⚠ Posible conflicto de reserva
           </p>
           <ul className="mt-2 space-y-1">
             {itemConflicts.map((conflict) => (
-              <li key={conflict.id} className="font-mono text-sm">
+              <li key={conflict.id} className="text-sm">
                 {conflict.itemName}: se necesitan {conflict.needed} pero solo hay{" "}
                 {conflict.available} — coincide en {conflict.projects.join(" y ")}.
               </li>
             ))}
             {vehicleConflicts.map((conflict) => (
-              <li key={conflict.id} className="font-mono text-sm">
+              <li key={conflict.id} className="text-sm">
                 {conflict.vehicleName} está reservado el mismo día en{" "}
                 {conflict.projects.join(" y ")}.
               </li>
@@ -191,7 +191,7 @@ export default async function ShootingDayDetailPage({
         className="mt-8 grid gap-4 border border-line p-5 sm:grid-cols-2"
       >
         <label className="flex flex-col gap-1">
-          <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+          <span className="text-xs text-muted">
             Fecha
           </span>
           <input
@@ -203,7 +203,7 @@ export default async function ShootingDayDetailPage({
           />
         </label>
         <label className="flex flex-col gap-1">
-          <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+          <span className="text-xs text-muted">
             Notas
           </span>
           <input
@@ -254,7 +254,7 @@ export default async function ShootingDayDetailPage({
               content: (
                 <div>
                             {inventoryItems.length === 0 ? (
-                              <p className="mt-4 font-mono text-sm text-muted">
+                              <p className="mt-4 text-sm text-muted">
                                 No hay material en{" "}
                                 <Link href="/app/inventario" className="text-fg hover:text-accent">
                                   Inventario
@@ -276,8 +276,8 @@ export default async function ShootingDayDetailPage({
                                         defaultChecked={reservedItemQty.has(item.id)}
                                       />
                                       <div>
-                                        <span className="font-mono text-sm">{item.name}</span>
-                                        <span className="ml-2 font-mono text-xs text-muted">
+                                        <span className="text-sm">{item.name}</span>
+                                        <span className="ml-2 text-xs text-muted">
                                           {INVENTORY_CATEGORY_LABELS[item.category]} · disponible{" "}
                                           {item.quantity}
                                         </span>
@@ -306,7 +306,7 @@ export default async function ShootingDayDetailPage({
               content: (
                 <div>
                             {vehicles.length === 0 ? (
-                              <p className="mt-4 font-mono text-sm text-muted">
+                              <p className="mt-4 text-sm text-muted">
                                 No hay vehículos en{" "}
                                 <Link href="/app/vehiculos" className="text-fg hover:text-accent">
                                   Vehículos
@@ -326,9 +326,9 @@ export default async function ShootingDayDetailPage({
                                         name={`reserve_${vehicle.id}`}
                                         defaultChecked={reservedVehicleIds.has(vehicle.id)}
                                       />
-                                      <span className="font-mono text-sm">{vehicle.name}</span>
+                                      <span className="text-sm">{vehicle.name}</span>
                                       {vehicle.type && (
-                                        <span className="font-mono text-xs text-muted">
+                                        <span className="text-xs text-muted">
                                           {vehicle.type}
                                         </span>
                                       )}
@@ -346,34 +346,34 @@ export default async function ShootingDayDetailPage({
               content: (
                 <div className="grid gap-6 sm:grid-cols-2">
                           <div className="border border-line p-5">
-                            <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                            <p className="text-xs text-muted">
                               Localizaciones ({summary.locations.length})
                             </p>
-                            <p className="mt-2 font-mono text-sm">
+                            <p className="mt-2 text-sm">
                               {summary.locations.map((l) => l.name).join(", ") || "—"}
                             </p>
                           </div>
                           <div className="border border-line p-5">
-                            <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                            <p className="text-xs text-muted">
                               Personajes ({summary.characters.length})
                             </p>
-                            <p className="mt-2 font-mono text-sm">
+                            <p className="mt-2 text-sm">
                               {summary.characters.map((c) => c.name).join(", ") || "—"}
                             </p>
                           </div>
                           <div className="border border-line p-5">
-                            <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                            <p className="text-xs text-muted">
                               Equipo técnico ({summary.crewMembers.length})
                             </p>
-                            <p className="mt-2 font-mono text-sm">
+                            <p className="mt-2 text-sm">
                               {summary.crewMembers.map((c) => c.name).join(", ") || "—"}
                             </p>
                           </div>
                           <div className="border border-line p-5">
-                            <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                            <p className="text-xs text-muted">
                               Desglose ({summary.breakdownElements.length})
                             </p>
-                            <p className="mt-2 font-mono text-sm">
+                            <p className="mt-2 text-sm">
                               {summary.breakdownElements.map((b) => b.name).join(", ") || "—"}
                             </p>
                           </div>
@@ -389,7 +389,7 @@ export default async function ShootingDayDetailPage({
           <SubmitButton pendingLabel="Guardando…" savedLabel="✓ Plan guardado" className="btn btn-primary">
             Guardar plan del día
           </SubmitButton>
-          <p className="hidden font-mono text-[11px] text-muted sm:block">
+          <p className="hidden text-xs text-muted sm:block">
             Guarda a la vez escenas, planos (con hora y orden), material y vehículos.
           </p>
         </div>

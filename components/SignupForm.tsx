@@ -11,8 +11,8 @@ export function SignupForm() {
 
   return (
     <div>
-      <h1 className="font-display text-2xl font-bold uppercase">Crear cuenta</h1>
-      <p className="mt-2 font-mono text-xs text-muted">
+      <h1 className="font-display text-2xl font-bold">Crear cuenta</h1>
+      <p className="mt-2 text-xs text-muted">
         Crea tu cuenta y la productora a la que pertenece.
       </p>
 
@@ -44,7 +44,7 @@ export function SignupForm() {
           <FormError message={state.error} />
         )}
 
-        <label className="flex items-start gap-2 font-mono text-xs text-muted">
+        <label className="flex items-start gap-2 text-xs text-muted">
           <input type="checkbox" name="acceptTerms" required className="mt-0.5" />
           <span>
             Acepto los{" "}
@@ -76,7 +76,7 @@ export function SignupForm() {
         </button>
       </form>
 
-      <div className="mt-6 text-center font-mono text-xs text-muted">
+      <div className="mt-6 text-center text-xs text-muted">
         ¿Ya tienes cuenta?{" "}
         <Link href="/app/login" className="text-fg hover:text-accent">
           Entrar

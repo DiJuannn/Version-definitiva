@@ -19,13 +19,13 @@ export function DeleteAccountCard({ soleMember }: { soleMember: boolean }) {
 
   return (
     <section className="mt-10 border border-accent/40 p-6">
-      <p className="font-mono text-xs tracking-widest text-accent uppercase">
+      <p className="text-[13px] text-accent">
         Zona de riesgo
       </p>
 
       {!open ? (
         <>
-          <p className="mt-3 font-mono text-xs text-muted">
+          <p className="mt-3 text-xs text-muted">
             Borrar tu cuenta es permanente y no se puede deshacer.
           </p>
           <button
@@ -53,7 +53,7 @@ export function DeleteAccountCard({ soleMember }: { soleMember: boolean }) {
               </>
             )}
           </p>
-          <p className="mt-4 font-mono text-[10px] tracking-widest text-muted uppercase">
+          <p className="mt-4 text-xs text-muted">
             Escribe &ldquo;{CONFIRM_PHRASE}&rdquo; para confirmar
           </p>
           <input

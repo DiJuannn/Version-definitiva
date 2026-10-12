@@ -6,7 +6,7 @@ import dynamic from "next/dynamic";
 const ProjectMapEditor = dynamic(() => import("@/components/project-map/ProjectMapEditor"), {
   ssr: false,
   loading: () => (
-    <div className="flex h-[calc(100dvh-16rem)] min-h-[520px] items-center justify-center border border-line font-mono text-xs text-muted">
+    <div className="flex h-[calc(100dvh-16rem)] min-h-[520px] items-center justify-center border border-line text-xs text-muted">
       Cargando el mapa…
     </div>
   ),

@@ -23,7 +23,7 @@ export function ExcelExport({ href }: { href: string }) {
           role="status"
           className="absolute right-0 z-30 mt-2 w-[min(22rem,calc(100vw-2rem))] border border-line bg-bg-raised p-4 shadow-lg shadow-black/40"
         >
-          <p className="font-mono text-[10px] tracking-widest text-accent uppercase">Descargando el presupuesto</p>
+          <p className="text-xs text-accent">Descargando el presupuesto</p>
           <p className="mt-2 font-sans text-sm text-muted">
             Es un archivo .xlsx con fórmulas. Ábrelo con Excel, o con Google Sheets:
           </p>

@@ -23,7 +23,7 @@ export function ListRow({
     <>
       <div className="min-w-0">
         <div className="truncate">{title}</div>
-        {meta && <div className="truncate font-mono text-xs text-muted">{meta}</div>}
+        {meta && <div className="truncate text-xs text-muted">{meta}</div>}
       </div>
       {trailing && (
         <div className="flex shrink-0 items-center gap-3">{trailing}</div>

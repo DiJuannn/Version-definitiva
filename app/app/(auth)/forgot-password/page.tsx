@@ -26,14 +26,14 @@ function ForgotPasswordForm() {
   if (sent) {
     return (
       <div>
-        <h1 className="font-display text-2xl font-bold uppercase">
+        <h1 className="font-display text-2xl font-bold">
           Revisa tu email
         </h1>
-        <p className="mt-4 font-mono text-xs text-muted">
+        <p className="mt-4 text-xs text-muted">
           Si existe una cuenta con ese email, te hemos enviado un enlace para
           crear una nueva contraseña.
         </p>
-        <div className="mt-6 text-center font-mono text-xs text-muted">
+        <div className="mt-6 text-center text-xs text-muted">
           <Link href="/app/login" className="text-fg hover:text-accent">
             Volver a entrar
           </Link>
@@ -44,10 +44,10 @@ function ForgotPasswordForm() {
 
   return (
     <div>
-      <h1 className="font-display text-2xl font-bold uppercase">
+      <h1 className="font-display text-2xl font-bold">
         Recuperar contraseña
       </h1>
-      <p className="mt-2 font-mono text-xs text-muted">
+      <p className="mt-2 text-xs text-muted">
         Te enviamos un enlace para crear una nueva.
       </p>
 
@@ -67,7 +67,7 @@ function ForgotPasswordForm() {
         </button>
       </form>
 
-      <div className="mt-6 text-center font-mono text-xs text-muted">
+      <div className="mt-6 text-center text-xs text-muted">
         <Link href="/app/login" className="text-fg hover:text-accent">
           Volver a entrar
         </Link>

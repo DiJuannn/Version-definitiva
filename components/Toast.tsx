@@ -82,7 +82,7 @@ function ToastView({ item, onDone }: { item: ToastItem; onDone: () => void }) {
       animate={{ opacity: 1, x: 0, transition: { duration: DURATION.standard, ease: EASE } }}
       exit={{ opacity: 0, x: -16, transition: { duration: DURATION.quick, ease: EASE_EXIT } }}
       role={item.kind === "error" ? "alert" : "status"}
-      className={`pointer-events-auto flex items-start gap-3 border bg-bg-raised px-4 py-3 font-mono text-xs shadow-2xl shadow-black/60 ${KIND_STYLES[item.kind]}`}
+      className={`pointer-events-auto flex items-start gap-3 border bg-bg-raised px-4 py-3 text-xs shadow-2xl shadow-black/60 ${KIND_STYLES[item.kind]}`}
     >
       <span aria-hidden className="mt-px font-bold">
         {KIND_MARK[item.kind]}

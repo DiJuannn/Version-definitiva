@@ -16,7 +16,7 @@ import { HelpTip } from "@/components/HelpTip";
 import { EmptyState } from "@/components/EmptyState";
 import { ScriptUploadForm } from "@/components/ScriptUploadForm";
 import { ActionButtonForm } from "@/components/ActionButtonForm";
-import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
+import { SceneTag, sceneStripColor } from "@/components/SceneTag";
 import { PageHeader } from "@/components/PageHeader";
 import { FileOpenLink } from "@/components/FileOpenLink";
 import { SubmitButton } from "@/components/SubmitButton";
@@ -66,6 +66,7 @@ export default async function GuionPage({
         number: true,
         intExt: true,
         dayPart: true,
+        description: true,
         location: { select: { name: true } },
         _count: { select: { characters: true } },
       },
@@ -130,7 +131,7 @@ export default async function GuionPage({
                               {scenes.length > 0 && (
                                 <DangerConfirmButton
                                   trigger="Eliminar todas"
-                                  triggerClassName="font-mono text-[10px] tracking-widest text-muted uppercase hover:text-accent"
+                                  triggerClassName="text-xs text-muted hover:text-accent"
                                   title="¿Eliminar todas las escenas?"
                                   description={`Se borrarán las ${scenes.length} escenas de este proyecto, junto con su reparto, desglose y equipo asignados a cada una. El guion subido, los personajes, las localizaciones y el desglose en sí no se tocan. Antes se guarda una copia automática que podrás restaurar desde "Copias de seguridad", más abajo.`}
                                   action={deleteAllScenes.bind(null, projectId)}
@@ -147,21 +148,25 @@ export default async function GuionPage({
                               {scenes.map((scene) => (
                                 <div
                                   key={scene.id}
-                                  className="group flex items-center justify-between gap-4 border-b border-line py-4 transition-colors hover:border-accent"
+                                  className="group flex items-center justify-between gap-4 border-b border-l-4 border-b-line py-3 pl-3 transition-colors hover:bg-accent/5"
+                                  style={{ borderLeftColor: sceneStripColor(scene.intExt, scene.dayPart) }}
                                 >
                                   <Link
                                     href={`/app/${projectId}/guion/${scene.id}`}
                                     className="min-w-0 flex-1"
                                   >
-                                    <span className="font-display text-lg font-bold transition-colors group-hover:text-accent">
-                                      Escena {scene.number}
+                                    <span className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                                      <span className="text-base font-bold transition-colors group-hover:text-accent">
+                                        Escena <span className="font-mono">{scene.number}</span>
+                                      </span>
+                                      <SceneTag intExt={scene.intExt} dayPart={scene.dayPart} />
+                                      {scene.location && <span className="text-fg/85">{scene.location.name}</span>}
                                     </span>
-                                    <p className="font-mono text-xs text-muted">
-                                      {INT_EXT_LABELS[scene.intExt]} · {DAY_PART_LABELS[scene.dayPart]}
-                                      {scene.location ? ` · ${scene.location.name}` : ""}
-                                    </p>
+                                    {scene.description && (
+                                      <span className="mt-0.5 block truncate text-sm text-muted">{scene.description}</span>
+                                    )}
                                   </Link>
-                                  <span className="shrink-0 font-mono text-xs text-muted">
+                                  <span className="shrink-0 text-[13px] text-muted">
                                     {scene._count.characters} personaje
                                     {scene._count.characters === 1 ? "" : "s"}
                                   </span>
@@ -190,7 +195,7 @@ export default async function GuionPage({
                 <div>
                           {scriptFiles.length === 0 && scenes.length === 0 ? (
                             <div className="mt-2 border border-accent/40 bg-bg-raised/40 p-6 sm:p-8">
-                              <p className="font-mono text-[11px] tracking-widest text-accent uppercase">Paso 1 de 3</p>
+                              <p className="text-xs text-accent">Paso 1 de 3</p>
                               <h2 className="mt-1.5 font-display text-2xl font-black tracking-tight sm:text-3xl">
                                 Sube tu guion
                               </h2>
@@ -200,15 +205,15 @@ export default async function GuionPage({
                               </p>
                               <ol className="mt-5 grid max-w-2xl gap-3 font-sans text-sm sm:grid-cols-3">
                                 <li className="border border-line p-3">
-                                  <span className="font-mono text-[10px] tracking-widest text-accent uppercase">1 · Subes</span>
+                                  <span className="text-xs text-accent">1 · Subes</span>
                                   <span className="mt-1 block text-muted">Tu guion tal como lo tienes.</span>
                                 </li>
                                 <li className="border border-line p-3">
-                                  <span className="font-mono text-[10px] tracking-widest text-accent uppercase">2 · La IA lo lee</span>
+                                  <span className="text-xs text-accent">2 · La IA lo lee</span>
                                   <span className="mt-1 block text-muted">Tarda menos de un minuto.</span>
                                 </li>
                                 <li className="border border-line p-3">
-                                  <span className="font-mono text-[10px] tracking-widest text-accent uppercase">3 · Tú decides</span>
+                                  <span className="text-xs text-accent">3 · Tú decides</span>
                                   <span className="mt-1 block text-muted">Revisas y confirmas; no cambia nada sin tu visto bueno.</span>
                                 </li>
                               </ol>
@@ -238,7 +243,7 @@ export default async function GuionPage({
                                   >
                                     <FileOpenLink
                                       href={file.fileUrl}
-                                      className="font-mono text-sm text-fg hover:text-accent"
+                                      className="text-sm text-fg hover:text-accent"
                                     >
                                       {file.fileName}
                                     </FileOpenLink>
@@ -254,7 +259,7 @@ export default async function GuionPage({
                                   nombre del archivo compitiendo con "Eliminar". */}
                               <div className={`mt-6 border p-5 ${scenes.length === 0 ? "border-accent/40 bg-bg-raised/40" : "border-line"}`}>
                                 {scenes.length === 0 && (
-                                  <p className="mb-3 font-mono text-[11px] tracking-widest text-accent uppercase">
+                                  <p className="mb-3 text-xs text-accent">
                                     Paso 2 de 3 · Ahora que lo lea la IA
                                   </p>
                                 )}
@@ -262,12 +267,12 @@ export default async function GuionPage({
                                   <SparkleIcon className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
                                   <div className="min-w-0 flex-1">
                                     <div className="flex items-center gap-1.5">
-                                      <p className="font-mono text-xs tracking-widest uppercase">
+                                      <p className="text-[13px]">
                                         Analizar guion
                                       </p>
                                       <HelpTip text="Se lee el PDF de tu guion y te lleva a una pantalla de revisión con lo que se propone. Tú decides qué importar de verdad — no se crea ni se cambia nada hasta que lo confirmes." />
                                     </div>
-                                    <p className="mt-1 font-mono text-xs text-muted">
+                                    <p className="mt-1 text-xs text-muted">
                                       Lee el guion y propone escenas, personajes, localizaciones
                                       y atrezzo a partir de él.{" "}
                                       {isPro
@@ -296,7 +301,7 @@ export default async function GuionPage({
                                 <Link
                                   key={analysis.id}
                                   href={`/app/${projectId}/guion/analisis/${analysis.id}`}
-                                  className="flex items-center justify-between border-b border-line py-3 font-mono text-sm hover:text-accent"
+                                  className="flex items-center justify-between border-b border-line py-3 text-sm hover:text-accent"
                                 >
                                   Análisis pendiente de revisar —{" "}
                                   {analysis.createdAt.toLocaleString("es-ES")}
@@ -315,7 +320,7 @@ export default async function GuionPage({
               content: (
                 <div>
                   <div className="flex items-start gap-1.5">
-                    <p className="font-mono text-xs text-muted">
+                    <p className="text-xs text-muted">
                       Revisa las escenas en busca de inconsistencias de vestuario, atrezzo u otros detalles.
                     </p>
                     <HelpTip text="La IA revisa personajes, atrezzo y vestuario de todas las escenas, en el orden en que ocurre la historia, y avisa de posibles inconsistencias (por ejemplo, un objeto marcado como roto que reaparece intacto). Solo señala — nunca cambia nada por su cuenta." />
@@ -345,7 +350,7 @@ export default async function GuionPage({
                                 <Link
                                   key={check.id}
                                   href={`/app/${projectId}/guion/continuidad/${check.id}`}
-                                  className="flex items-center justify-between border-b border-line py-3 font-mono text-sm hover:text-accent"
+                                  className="flex items-center justify-between border-b border-line py-3 text-sm hover:text-accent"
                                 >
                                   Revisión pendiente — {check._count.issues} alerta
                                   {check._count.issues === 1 ? "" : "s"} —{" "}
@@ -364,7 +369,7 @@ export default async function GuionPage({
 
       {backups.length > 0 && (
         <details className="group mt-10 border border-line">
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-xs text-muted hover:text-accent">
             <span>Copias de seguridad del guion ({backups.length})</span>
             <span className="transition-transform group-open:rotate-45">+</span>
           </summary>
@@ -384,7 +389,7 @@ export default async function GuionPage({
                     <p className="font-sans text-sm">
                       {BACKUP_REASON_LABELS[backup.reason] ?? "Copia automática"}
                     </p>
-                    <p className="font-mono text-xs text-muted">
+                    <p className="text-xs text-muted">
                       {backup.createdAt.toLocaleString("es-ES")} · {backup.sceneCount} escena
                       {backup.sceneCount === 1 ? "" : "s"} · {backup.shotCount} plano
                       {backup.shotCount === 1 ? "" : "s"}

@@ -66,7 +66,7 @@ export function DeliveryChecklistPanel({ projectId, tasks }: { projectId: string
 
   return (
     <div>
-      <p className="font-mono text-[11px] tracking-widest text-accent uppercase">
+      <p className="text-xs text-accent">
         {done}/{tasks.length} listos
       </p>
       <ul className="mt-3 border-t border-line">

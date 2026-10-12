@@ -93,7 +93,7 @@ export default async function PersonDetailPage({
                             name="photo"
                             accept="image/*"
                             required
-                            className="font-mono text-xs text-muted"
+                            className="text-xs text-muted"
                           />
                           <SubmitButton
                             pendingLabel="Subiendo…"
@@ -109,7 +109,7 @@ export default async function PersonDetailPage({
                           className="mt-8 grid gap-4 border border-line p-5 sm:grid-cols-2 lg:grid-cols-3"
                         >
                           <label className="flex flex-col gap-1">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                            <span className="text-xs text-muted">
                               Nombre
                             </span>
                             <input
@@ -120,7 +120,7 @@ export default async function PersonDetailPage({
                             />
                           </label>
                           <label className="flex flex-col gap-1">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                            <span className="text-xs text-muted">
                               Apellidos
                             </span>
                             <input
@@ -130,7 +130,7 @@ export default async function PersonDetailPage({
                             />
                           </label>
                           <label className="flex flex-col gap-1">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                            <span className="text-xs text-muted">
                               Rol principal
                             </span>
                             <input
@@ -140,7 +140,7 @@ export default async function PersonDetailPage({
                             />
                           </label>
                           <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-3">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                            <span className="text-xs text-muted">
                               Otros roles (separados por comas)
                             </span>
                             <input
@@ -150,7 +150,7 @@ export default async function PersonDetailPage({
                             />
                           </label>
                           <label className="flex flex-col gap-1">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                            <span className="text-xs text-muted">
                               Email
                             </span>
                             <input
@@ -160,7 +160,7 @@ export default async function PersonDetailPage({
                             />
                           </label>
                           <label className="flex flex-col gap-1">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                            <span className="text-xs text-muted">
                               Teléfono
                             </span>
                             <input
@@ -170,7 +170,7 @@ export default async function PersonDetailPage({
                             />
                           </label>
                           <label className="flex flex-col gap-1">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                            <span className="text-xs text-muted">
                               Tarifa
                             </span>
                             <input
@@ -182,7 +182,7 @@ export default async function PersonDetailPage({
                             />
                           </label>
                           <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-3">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                            <span className="text-xs text-muted">
                               Dirección
                             </span>
                             <input
@@ -192,7 +192,7 @@ export default async function PersonDetailPage({
                             />
                           </label>
                           <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-3">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                            <span className="text-xs text-muted">
                               Notas
                             </span>
                             <textarea
@@ -222,19 +222,19 @@ export default async function PersonDetailPage({
               content: (
                 <div>
                           {actorRoles.length === 0 && crewRoles.length === 0 ? (
-                            <p className="mt-3 font-mono text-sm text-muted">
+                            <p className="mt-3 text-sm text-muted">
                               Todavía no está vinculada/o a ningún proyecto.
                             </p>
                           ) : (
                             <ul className="mt-3 space-y-1.5">
                               {actorRoles.map((actor) => (
-                                <li key={actor.id} className="font-mono text-sm">
+                                <li key={actor.id} className="text-sm">
                                   {actor.project.name}{" "}
                                   <span className="text-muted">— Actor/Actriz</span>
                                 </li>
                               ))}
                               {crewRoles.map((crew) => (
-                                <li key={crew.id} className="font-mono text-sm">
+                                <li key={crew.id} className="text-sm">
                                   {crew.project.name}{" "}
                                   <span className="text-muted">
                                     — Equipo técnico{crew.role ? ` (${crew.role})` : ""}
@@ -294,7 +294,7 @@ export default async function PersonDetailPage({
                                   key={entry.id}
                                   className="flex items-center justify-between gap-4 border-b border-line py-2.5"
                                 >
-                                  <span className="font-mono text-sm">
+                                  <span className="text-sm">
                                     {entry.date.toLocaleDateString("es-ES")} —{" "}
                                     <span
                                       className={

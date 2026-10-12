@@ -90,11 +90,11 @@ export default async function EquipoPage() {
                 <span className="font-display text-lg font-bold transition-colors group-hover:text-accent">
                   {person.firstName} {person.lastName ?? ""}
                 </span>
-                <p className="font-mono text-xs text-muted">
+                <p className="text-xs text-muted">
                   {person.primaryRole ?? "Sin rol definido"}
                 </p>
               </div>
-              <span className="font-mono text-xs text-muted">
+              <span className="text-xs text-muted">
                 {person._count.actors + person._count.crewMembers} proyecto
                 {person._count.actors + person._count.crewMembers === 1 ? "" : "s"}
               </span>

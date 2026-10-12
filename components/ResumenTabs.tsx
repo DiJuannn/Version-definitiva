@@ -4,7 +4,7 @@ import Link from "next/link";
 // Son enlaces (?vista=mapa) para que el servidor solo calcule lo que se ve.
 export function ResumenTabs({ projectId, active }: { projectId: string; active: "resumen" | "mapa" }) {
   const tab = (isActive: boolean) =>
-    `-mb-px border-b-2 px-3.5 py-3 font-mono text-xs tracking-widest uppercase transition-colors ${
+    `-mb-px border-b-2 px-3.5 py-3 text-[13px] transition-colors ${
       isActive ? "border-accent text-fg" : "border-transparent text-muted hover:text-fg"
     }`;
   return (

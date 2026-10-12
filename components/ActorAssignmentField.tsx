@@ -41,7 +41,7 @@ export function ActorAssignmentField({
 
   if (pending) {
     return (
-      <span className="inline-flex items-center gap-1.5 font-mono text-xs tracking-widest text-muted uppercase opacity-70">
+      <span className="inline-flex items-center gap-1.5 text-[13px] text-muted opacity-70">
         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current" />
         Guardando…
       </span>
@@ -51,7 +51,7 @@ export function ActorAssignmentField({
   if (!editing) {
     return (
       <div className="flex items-center gap-2">
-        <span className="font-mono text-xs">{currentName}</span>
+        <span className="text-xs">{currentName}</span>
         <button
           type="button"
           onClick={() => {
@@ -100,7 +100,7 @@ export function ActorAssignmentField({
         ) : (
           <button
             type="submit"
-            className={`font-mono text-xs tracking-widest uppercase ${
+            className={`text-[13px] ${
               conflictName ? "text-warn" : "text-muted hover:text-fg"
             }`}
           >
@@ -116,7 +116,7 @@ export function ActorAssignmentField({
         </button>
       </div>
       {conflictName && (
-        <p className="font-mono text-[10px] text-warn">
+        <p className="text-xs text-warn">
           Ya interpreta a {conflictName} — pulsa Guardar dos veces si quieres
           que interprete a los dos.
         </p>

@@ -51,21 +51,21 @@ export function NextStep({
         <div className="min-w-0 flex-1">
           {next ? (
             <>
-              <p className="font-mono text-[11px] tracking-widest text-accent uppercase">
+              <p className="text-xs text-accent">
                 Siguiente paso{copy ? ` · ${copy.time}` : ""}
               </p>
               <h2 id="next-step-title" className="mt-1.5 font-display text-2xl font-black tracking-tight sm:text-3xl">
                 {next.title}
               </h2>
               <p className="mt-3 max-w-xl font-sans text-sm text-muted">{copy?.why ?? next.instruction}</p>
-              <p className="mt-1 font-mono text-xs text-muted">{next.detail}</p>
+              <p className="mt-1 text-xs text-muted">{next.detail}</p>
               <Link href={next.href} className="btn btn-primary mt-5">
                 {copy?.cta ?? next.ctaLabel} →
               </Link>
             </>
           ) : (
             <>
-              <p className="font-mono text-[11px] tracking-widest text-success uppercase">Listo para rodar</p>
+              <p className="text-xs text-success">Listo para rodar</p>
               <h2 id="next-step-title" className="mt-1.5 font-display text-2xl font-black tracking-tight sm:text-3xl">
                 Has completado lo esencial
               </h2>
@@ -90,7 +90,7 @@ export function NextStep({
       </div>
 
       <details className="group mt-6 border-t border-line pt-4">
-        <summary className="flex cursor-pointer list-none items-center justify-between font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent [&::-webkit-details-marker]:hidden">
+        <summary className="flex cursor-pointer list-none items-center justify-between text-xs text-muted hover:text-accent [&::-webkit-details-marker]:hidden">
           <span>Ver todo el camino</span>
           <span>
             {requiredDone}/{required.length} esenciales
@@ -106,8 +106,8 @@ export function NextStep({
                 </span>
                 <span className="min-w-0">
                   <span className="font-display text-sm font-bold">{s.title}</span>
-                  {!s.required && <span className="ml-2 font-mono text-[9px] tracking-widest text-muted uppercase">Opcional</span>}
-                  <span className="block font-mono text-xs text-muted">{s.detail}</span>
+                  {!s.required && <span className="ml-2 text-xs text-muted">Opcional</span>}
+                  <span className="block text-xs text-muted">{s.detail}</span>
                 </span>
               </Link>
             </li>

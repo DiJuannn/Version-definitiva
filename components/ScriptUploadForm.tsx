@@ -8,7 +8,7 @@ import { FormError } from "@/components/FormError";
 function UploadStatus() {
   const { pending } = useFormStatus();
   return pending ? (
-    <span className="font-mono text-xs text-muted">Subiendo…</span>
+    <span className="text-xs text-muted">Subiendo…</span>
   ) : null;
 }
 

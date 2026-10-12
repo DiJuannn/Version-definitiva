@@ -122,6 +122,7 @@ export async function setShotDone(projectId: string, shotId: string, done: boole
   const ok = await setShotDoneCore(projectId, shotId, done);
   if (ok) {
     revalidatePath(`/app/${projectId}/plan-de-rodaje`);
+    revalidatePath(`/app/${projectId}/shot-list`);
     revalidatePath(`/app/${projectId}`);
   }
   return ok;

@@ -34,6 +34,7 @@ export default async function PlanDeRodajePage({
       include: {
         location: true,
         shootingDayScenes: { select: { shootingDayId: true } },
+        characters: { select: { character: { select: { name: true } } } },
         shots: {
           orderBy: [{ order: "asc" }, { number: "asc" }],
           select: { id: true, number: true, shotSize: true, description: true, shootingDayId: true, done: true },
@@ -45,22 +46,35 @@ export default async function PlanDeRodajePage({
 
   const createAction = createShootingDay.bind(null, projectId);
 
-  const timelineDays = days.map((day) => ({
-    id: day.id,
-    label: day.date.toLocaleDateString("es-ES", {
-      weekday: "short",
-      day: "2-digit",
-      month: "short",
-    }),
-    conflicts: conflicts.get(day.id) ?? [],
-  }));
+  const timelineDays = days.map((day, i) => {
+    const short = day.date
+      .toLocaleDateString("es-ES", { weekday: "short", day: "numeric", month: "short", timeZone: "Europe/Madrid" })
+      .replace(/\./g, "");
+    const long = day.date.toLocaleDateString("es-ES", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      timeZone: "Europe/Madrid",
+    });
+    return {
+      id: day.id,
+      label: `Día ${i + 1} · ${short}`,
+      title: `Día ${i + 1}`,
+      dateLabel: long.charAt(0).toUpperCase() + long.slice(1),
+      conflicts: conflicts.get(day.id) ?? [],
+    };
+  });
 
   const timelineScenes = scenes.map((scene) => ({
     id: scene.id,
     number: scene.number,
+    intExt: scene.intExt,
+    dayPart: scene.dayPart,
     intExtLabel: INT_EXT_LABELS[scene.intExt],
     dayPartLabel: DAY_PART_LABELS[scene.dayPart],
     locationName: scene.location?.name ?? null,
+    description: scene.description,
+    characters: scene.characters.map((c) => c.character.name),
     dayId: scene.shootingDayScenes[0]?.shootingDayId ?? null,
     shots: scene.shots.map((shot) => ({
       id: shot.id,
@@ -103,17 +117,17 @@ export default async function PlanDeRodajePage({
         <ScheduleAssistant projectId={projectId} unscheduled={unscheduled} hasDays={days.length > 0} />
       )}
 
-      <form action={createAction} className="mt-8 flex max-w-md items-end gap-2">
-        <FormField label="Nuevo día de rodaje" className="w-full">
+      <form action={createAction} className="mt-6 flex flex-wrap items-end gap-2">
+        <FormField label="Nuevo día de rodaje">
           <input
             type="date"
             name="date"
             required
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="h-9 rounded-md border border-line bg-transparent px-3 text-sm outline-none transition-colors focus:border-accent"
           />
         </FormField>
-        <SubmitButton pendingLabel="Creando…" className="btn btn-primary shrink-0">
-          Crear día
+        <SubmitButton pendingLabel="Añadiendo…" className="btn btn-primary shrink-0">
+          + Añadir día
         </SubmitButton>
       </form>
 

@@ -108,7 +108,7 @@ export function MoodboardAiPanel({
               : "Tienes 1 sugerencia gratuita en este proyecto: úsala cuando la sinopsis y las escenas estén bien descritas."}
           </p>
           {error && (
-            <p className="mt-3 font-mono text-xs text-danger" role="alert">
+            <p className="mt-3 text-xs text-danger" role="alert">
               {error}{" "}
               {upgrade && (
                 <Link href="/app/organizacion" className="underline">
@@ -142,7 +142,7 @@ export function MoodboardAiPanel({
               <label className={row}>
                 <input type="checkbox" checked={selected.has("tone")} onChange={() => toggle("tone")} className="mt-1" />
                 <span className="min-w-0">
-                  <span className="font-mono text-[10px] tracking-widest text-accent uppercase">Tono y paleta</span>
+                  <span className="text-xs text-accent">Tono y paleta</span>
                   <span className="mt-1 block font-sans text-sm">{proposal.tone}</span>
                   <span className="mt-2 flex gap-1">
                     {proposal.palette.map((c) => (
@@ -156,7 +156,7 @@ export function MoodboardAiPanel({
               <label key={i} className={row}>
                 <input type="checkbox" checked={selected.has(`ref-${i}`)} onChange={() => toggle(`ref-${i}`)} className="mt-1" />
                 <span className="min-w-0">
-                  <span className="font-mono text-[10px] tracking-widest text-accent uppercase">{r.kind}</span>
+                  <span className="text-xs text-accent">{r.kind}</span>
                   <span className="mt-0.5 block font-display text-sm font-bold">
                     {r.title}
                     {r.year ? ` (${r.year})` : ""}
@@ -169,7 +169,7 @@ export function MoodboardAiPanel({
               <label key={i} className={row}>
                 <input type="checkbox" checked={selected.has(`idea-${i}`)} onChange={() => toggle(`idea-${i}`)} className="mt-1" />
                 <span className="min-w-0">
-                  <span className="font-mono text-[10px] tracking-widest text-accent uppercase">{idea.topic}</span>
+                  <span className="text-xs text-accent">{idea.topic}</span>
                   <span className="mt-0.5 block font-sans text-xs text-muted">{idea.text}</span>
                 </span>
               </label>

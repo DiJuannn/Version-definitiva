@@ -68,21 +68,21 @@ export default async function DashboardLayout({
           <div className="flex items-center justify-between gap-3">
             <Link href="/app" className="flex min-w-0 items-center gap-2.5">
               <AjoloteLogo className="h-6 w-auto shrink-0 text-fg" />
-              <span className="truncate font-mono text-xs tracking-[0.2em] uppercase">
+              <span className="truncate text-[13px]">
                 {profile?.organization.name ?? "Versión definitiva"}
               </span>
-              <span className="hidden border-l border-line pl-2.5 font-mono text-[10px] tracking-[0.25em] text-accent uppercase sm:inline">
+              <span className="hidden border-l border-line pl-2.5 text-xs text-accent sm:inline">
                 Taller
               </span>
             </Link>
-            <div className="flex shrink-0 items-center gap-4 font-mono text-xs text-muted sm:gap-6">
+            <div className="flex shrink-0 items-center gap-4 text-xs text-muted sm:gap-6">
               {profile && (
                 <Link
                   href="/app/organizacion"
                   className={
                     isPro(profile.organization.plan)
-                      ? "shrink-0 rounded-full bg-accent px-2.5 py-1 font-mono text-[10px] tracking-widest text-bg uppercase"
-                      : "shrink-0 rounded-full border border-accent/60 px-2.5 py-1 font-mono text-[10px] tracking-widest text-accent uppercase transition-colors hover:bg-accent hover:text-bg"
+                      ? "shrink-0 rounded-full bg-accent px-2.5 py-1 text-xs text-bg"
+                      : "shrink-0 rounded-full border border-accent/60 px-2.5 py-1 text-xs text-accent transition-colors hover:bg-accent hover:text-bg"
                   }
                 >
                   {isPro(profile.organization.plan) ? "PRO" : "Hazte PRO"}
@@ -92,7 +92,7 @@ export default async function DashboardLayout({
               <form action={signOut}>
                 <button
                   type="submit"
-                  className="tracking-widest uppercase transition-colors hover:text-fg"
+                  className="transition-colors hover:text-fg"
                 >
                   Salir
                 </button>

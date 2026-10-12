@@ -29,7 +29,7 @@ const STEPS = [
 export function ProjectWelcome({ projectId }: { projectId: string }) {
   return (
     <section aria-labelledby="welcome-title" className="mt-6 border border-accent/40 bg-accent/5 p-6 sm:p-8">
-      <p className="font-mono text-[11px] tracking-widest text-accent uppercase">Bienvenida · 30 segundos</p>
+      <p className="text-xs text-accent">Bienvenida · 30 segundos</p>
       <h2 id="welcome-title" className="mt-1.5 font-display text-2xl font-black tracking-tight sm:text-3xl">
         Así se hace un proyecto aquí
       </h2>
@@ -40,11 +40,11 @@ export function ProjectWelcome({ projectId }: { projectId: string }) {
       <ol className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {STEPS.map((step, i) => (
           <li key={step.label} className="border border-line bg-bg/60 p-4">
-            <p className="font-mono text-[10px] tracking-widest text-accent uppercase">
+            <p className="text-xs text-accent">
               {i + 1} · {step.label}
             </p>
             <p className="mt-2 font-sans text-sm">{step.what}</p>
-            <p className="mt-2 font-mono text-[11px] text-muted">{step.unlocks}</p>
+            <p className="mt-2 text-xs text-muted">{step.unlocks}</p>
           </li>
         ))}
       </ol>

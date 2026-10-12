@@ -79,7 +79,7 @@ export default async function LocationDetailPage({
       />
 
       {usageByProject.size > 0 && (
-        <p className="mt-2 font-mono text-xs text-muted">
+        <p className="mt-2 text-xs text-muted">
           Usada en:{" "}
           {[...usageByProject.values()]
             .map((entry) => `${entry.name} (${entry.count})`)
@@ -119,7 +119,7 @@ export default async function LocationDetailPage({
                           className="mt-8 grid gap-4 border border-line p-5 sm:grid-cols-2 lg:grid-cols-3"
                         >
                           <label className="flex flex-col gap-1">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                            <span className="text-xs text-muted">
                               Nombre
                             </span>
                             <input
@@ -130,7 +130,7 @@ export default async function LocationDetailPage({
                             />
                           </label>
                           <label className="flex flex-col gap-1">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                            <span className="text-xs text-muted">
                               Dirección
                             </span>
                             <input
@@ -140,7 +140,7 @@ export default async function LocationDetailPage({
                             />
                           </label>
                           <label className="flex flex-col gap-1">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                            <span className="text-xs text-muted">
                               Contacto
                             </span>
                             <input
@@ -150,7 +150,7 @@ export default async function LocationDetailPage({
                             />
                           </label>
                           <label className="flex flex-col gap-1">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                            <span className="text-xs text-muted">
                               Teléfono de contacto
                             </span>
                             <input
@@ -160,7 +160,7 @@ export default async function LocationDetailPage({
                             />
                           </label>
                           <label className="flex flex-col gap-1">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                            <span className="text-xs text-muted">
                               Disponibilidad
                             </span>
                             <input
@@ -170,7 +170,7 @@ export default async function LocationDetailPage({
                             />
                           </label>
                           <label className="flex flex-col gap-1">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                            <span className="text-xs text-muted">
                               Coste
                             </span>
                             <input
@@ -182,7 +182,7 @@ export default async function LocationDetailPage({
                             />
                           </label>
                           <label className="flex flex-col gap-1">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                            <span className="text-xs text-muted">
                               Latitud
                             </span>
                             <input
@@ -194,7 +194,7 @@ export default async function LocationDetailPage({
                             />
                           </label>
                           <label className="flex flex-col gap-1">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                            <span className="text-xs text-muted">
                               Longitud
                             </span>
                             <input
@@ -208,7 +208,7 @@ export default async function LocationDetailPage({
                           <GeocodeButton />
 
                           <div className="sm:col-span-2 lg:col-span-3">
-                            <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                            <p className="text-xs text-muted">
                               Características
                             </p>
                             <div className="mt-2 flex flex-wrap gap-2">
@@ -226,7 +226,7 @@ export default async function LocationDetailPage({
                           </div>
 
                           <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-3">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                            <span className="text-xs text-muted">
                               Permisos
                             </span>
                             <textarea
@@ -237,7 +237,7 @@ export default async function LocationDetailPage({
                             />
                           </label>
                           <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-3">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                            <span className="text-xs text-muted">
                               Restricciones
                             </span>
                             <textarea
@@ -248,7 +248,7 @@ export default async function LocationDetailPage({
                             />
                           </label>
                           <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-3">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                            <span className="text-xs text-muted">
                               Notas de producción
                             </span>
                             <textarea
@@ -259,7 +259,7 @@ export default async function LocationDetailPage({
                             />
                           </label>
                           <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-3">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                            <span className="text-xs text-muted">
                               Notas
                             </span>
                             <textarea
@@ -294,7 +294,7 @@ export default async function LocationDetailPage({
                               name="photo"
                               accept="image/*"
                               required
-                              className="font-mono text-xs text-muted"
+                              className="text-xs text-muted"
                             />
                             <SubmitButton
                               pendingLabel="Subiendo…"
@@ -316,7 +316,7 @@ export default async function LocationDetailPage({
                                   >
                                     <DeleteButton
                                       confirmMessage="¿Eliminar esta foto?"
-                                      className="w-full font-mono text-[10px] tracking-widest text-muted uppercase hover:text-accent"
+                                      className="w-full text-xs text-muted hover:text-accent"
                                     />
                                   </form>
                                 </div>
@@ -356,7 +356,7 @@ export default async function LocationDetailPage({
                                 >
                                   <FileOpenLink
                                     href={url}
-                                    className="truncate font-mono text-sm hover:text-accent"
+                                    className="truncate text-sm hover:text-accent"
                                   >
                                     {url}
                                   </FileOpenLink>

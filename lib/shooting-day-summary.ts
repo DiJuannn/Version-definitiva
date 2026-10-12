@@ -30,11 +30,16 @@ export async function getShootingDaySummary(shootingDayId: string) {
   });
   if (!shootingDay) return null;
 
-  const [castOverrides, castOverrideRows] = await Promise.all([
+  const [castOverrides, castOverrideRows, projectDays] = await Promise.all([
     prisma.shootingDaySceneCastOverride.findMany({ where: { shootingDayId }, select: { sceneId: true } }),
     prisma.shootingDaySceneCharacter.findMany({
       where: { shootingDayId },
       include: { character: { include: { actor: true } } },
+    }),
+    prisma.shootingDay.findMany({
+      where: { projectId: shootingDay.projectId },
+      orderBy: { date: "asc" },
+      select: { id: true },
     }),
   ]);
   const overriddenSceneIds = new Set(castOverrides.map((o) => o.sceneId));
@@ -126,6 +131,9 @@ export async function getShootingDaySummary(shootingDayId: string) {
 
   return {
     shootingDay,
+    // "Día 2 de 5": jornada por orden de fecha dentro del proyecto.
+    dayNumber: projectDays.findIndex((d) => d.id === shootingDayId) + 1,
+    dayCount: projectDays.length,
     sceneAssignments: shootingDay.scenes,
     charactersByAssignment,
     overriddenSceneIds,

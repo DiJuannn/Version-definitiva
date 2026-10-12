@@ -78,10 +78,10 @@ export function MapBoardTabs({
   }
 
   const tab = (isActive: boolean) =>
-    `shrink-0 border px-3 py-1.5 font-mono text-[11px] tracking-wider uppercase transition-colors ${
+    `shrink-0 border px-3 py-1.5 text-xs transition-colors ${
       isActive ? "border-accent text-accent" : "border-line text-muted hover:text-fg"
     }`;
-  const small = "font-mono text-[11px] tracking-wider text-muted uppercase hover:text-accent";
+  const small = "text-xs text-muted hover:text-accent";
 
   return (
     <div className="mb-3">
@@ -152,7 +152,7 @@ export function MapBoardTabs({
           </p>
           {link ? (
             <div className="mt-3 flex flex-wrap items-center gap-4">
-              <span className="min-w-0 max-w-full truncate font-mono text-xs text-muted" title={link}>
+              <span className="min-w-0 max-w-full truncate text-xs text-muted" title={link}>
                 {link}
               </span>
               <CopyLinkButton link={link} />
@@ -169,7 +169,7 @@ export function MapBoardTabs({
       )}
 
       {error && (
-        <p className="mt-2 font-mono text-xs text-danger" role="alert">
+        <p className="mt-2 text-xs text-danger" role="alert">
           {error.text}{" "}
           {error.upgrade && (
             <Link href="/app/organizacion" className="underline">

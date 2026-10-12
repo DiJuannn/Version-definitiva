@@ -27,12 +27,12 @@ export function ActivityFeed({ entries }: { entries: ActivityEntry[] }) {
 
   return (
     <div className="mt-6 border border-line p-4">
-      <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
+      <p className="text-xs text-muted">
         Actividad reciente
       </p>
       <div className="mt-3 space-y-2">
         {entries.map((entry) => (
-          <p key={entry.id} className="font-mono text-xs text-muted">
+          <p key={entry.id} className="text-xs text-muted">
             <span className="text-fg">{entry.userName ?? "Alguien"}</span> {entry.summary} ·{" "}
             {relativeTime(entry.createdAt)}
           </p>

@@ -91,7 +91,7 @@ export default async function DocumentosPage({
                               type="file"
                               name="file"
                               required
-                              className="font-mono text-xs text-muted sm:col-span-2 lg:col-span-1"
+                              className="text-xs text-muted sm:col-span-2 lg:col-span-1"
                             />
                             <select
                               name="actorId"
@@ -144,12 +144,12 @@ export default async function DocumentosPage({
                                 >
                                   <FileOpenLink
                                     href={doc.fileUrl}
-                                    className="font-mono text-sm hover:text-accent"
+                                    className="text-sm hover:text-accent"
                                   >
                                     {doc.fileName}
                                   </FileOpenLink>
                                   <div className="flex items-center gap-3">
-                                    <span className="font-mono text-xs text-muted">
+                                    <span className="text-xs text-muted">
                                       {[doc.actor?.name, doc.location?.name].filter(Boolean).join(" · ")}
                                     </span>
                                     <form action={deleteDocument.bind(null, projectId, doc.id)}>
@@ -173,7 +173,7 @@ export default async function DocumentosPage({
               content: (
                 <div>
                           {scriptFiles.length === 0 ? (
-                            <p className="mt-3 font-mono text-sm text-muted">
+                            <p className="mt-3 text-sm text-muted">
                               Sin guion subido todavía en{" "}
                               <Link href={`/app/${projectId}/guion`} className="text-fg hover:text-accent">
                                 Guion
@@ -186,10 +186,10 @@ export default async function DocumentosPage({
                                 <FileOpenLink
                                   key={file.id}
                                   href={file.fileUrl}
-                                  className="flex items-center justify-between border-b border-line py-3 font-mono text-sm hover:text-accent"
+                                  className="flex items-center justify-between border-b border-line py-3 text-sm hover:text-accent"
                                 >
                                   {file.fileName}
-                                  <span className="font-mono text-xs text-muted">
+                                  <span className="text-xs text-muted">
                                     {file.uploadedAt.toLocaleDateString("es-ES")}
                                   </span>
                                 </FileOpenLink>
@@ -206,7 +206,7 @@ export default async function DocumentosPage({
               content: (
                 <div>
                           {shootingDays.filter((d) => d.callSheet).length === 0 ? (
-                            <p className="mt-3 font-mono text-sm text-muted">
+                            <p className="mt-3 text-sm text-muted">
                               Sin call sheets generados todavía en{" "}
                               <Link
                                 href={`/app/${projectId}/plan-de-rodaje`}
@@ -224,7 +224,7 @@ export default async function DocumentosPage({
                                   <Link
                                     key={day.id}
                                     href={`/app/${projectId}/call-sheets/${day.id}`}
-                                    className="flex items-center justify-between border-b border-line py-3 font-mono text-sm hover:text-accent"
+                                    className="flex items-center justify-between border-b border-line py-3 text-sm hover:text-accent"
                                   >
                                     Call sheet — {day.date.toLocaleDateString("es-ES")}
                                   </Link>

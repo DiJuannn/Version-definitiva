@@ -21,7 +21,7 @@ export function RemoteCursors({ cursors }: { cursors: Record<string, RemoteCurso
               <path d="M2 1 L2 14 L5.5 10.8 L8 16 L10.4 14.9 L8 9.8 L13 9.6 Z" />
             </svg>
             <span
-              className="ml-3.5 -mt-1 inline-block rounded-sm px-1.5 py-0.5 font-mono text-[10px] whitespace-nowrap text-black"
+              className="ml-3.5 -mt-1 inline-block rounded-sm px-1.5 py-0.5 text-xs whitespace-nowrap text-black"
               style={{ background: c.color }}
             >
               {c.name}

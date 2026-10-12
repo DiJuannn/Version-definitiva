@@ -52,7 +52,7 @@ export default async function ContinuityCheckPage({
       </FeatureIntro>
 
       {check.issues.length === 0 ? (
-        <p className="mt-10 font-mono text-sm text-muted">
+        <p className="mt-10 text-sm text-muted">
           No se encontraron posibles inconsistencias con los datos actuales.
         </p>
       ) : (
@@ -61,7 +61,7 @@ export default async function ContinuityCheckPage({
             <div key={issue.id} className="border border-line p-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="font-mono text-[10px] tracking-widest text-accent uppercase">
+                  <p className="text-xs text-accent">
                     {TYPE_LABELS[issue.type] ?? issue.type}
                   </p>
                   <p className="mt-1 font-display text-base font-bold">
@@ -69,18 +69,18 @@ export default async function ContinuityCheckPage({
                   </p>
                 </div>
                 {issue.status === "CONFIRMED" && (
-                  <span className="shrink-0 font-mono text-[10px] tracking-widest text-success uppercase">
+                  <span className="shrink-0 text-xs text-success">
                     ✓ Confirmada
                   </span>
                 )}
                 {issue.status === "DISMISSED" && (
-                  <span className="shrink-0 font-mono text-[10px] tracking-widest text-muted uppercase">
+                  <span className="shrink-0 text-xs text-muted">
                     Descartada
                   </span>
                 )}
               </div>
 
-              <p className="mt-3 font-mono text-sm text-fg">
+              <p className="mt-3 text-sm text-fg">
                 {issue.description}
               </p>
 
@@ -89,7 +89,7 @@ export default async function ContinuityCheckPage({
                   {issue.sceneNumbers.map((number) => (
                     <span
                       key={number}
-                      className="border border-line px-2 py-0.5 font-mono text-[10px] text-muted"
+                      className="border border-line px-2 py-0.5 text-xs text-muted"
                     >
                       Escena {number}
                     </span>

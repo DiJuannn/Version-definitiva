@@ -48,7 +48,7 @@ export default async function CallSheetsPage({
 
       {pendingDays > 0 && (
         <section className="mt-8 border border-accent/40 bg-bg-raised/40 p-6">
-          <p className="font-mono text-[11px] tracking-widest text-accent uppercase">Te lo preparo yo</p>
+          <p className="text-xs text-accent">Te lo preparo yo</p>
           <h2 className="mt-1.5 font-display text-xl font-black tracking-tight sm:text-2xl">
             Genera las hojas de llamada de {pendingDays === 1 ? "tu día" : `tus ${pendingDays} días`} de rodaje
           </h2>
@@ -84,7 +84,7 @@ export default async function CallSheetsPage({
               className="group flex items-center gap-5 border border-line bg-bg-raised/40 p-5 transition-colors hover:border-accent/60 hover:bg-accent/5"
             >
               <div className="w-16 shrink-0 border-r border-line pr-5 text-center">
-                <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                <p className="text-xs text-muted">
                   {day.date.toLocaleDateString("es-ES", { month: "short" })}
                 </p>
                 <p className="font-display text-3xl leading-none font-black tabular-nums">
@@ -95,7 +95,7 @@ export default async function CallSheetsPage({
                 <p className="font-display text-base font-bold transition-colors group-hover:text-accent">
                   {day.date.toLocaleDateString("es-ES", { weekday: "long" })}
                 </p>
-                <p className="mt-1 font-mono text-[11px] text-muted">
+                <p className="mt-1 text-xs text-muted">
                   {day._count.scenes} escena{day._count.scenes === 1 ? "" : "s"}
                   {day.callSheet?.generalCallTime
                     ? ` · Llamada ${day.callSheet.generalCallTime}`
@@ -103,7 +103,7 @@ export default async function CallSheetsPage({
                 </p>
               </div>
               <span
-                className={`shrink-0 border px-2 py-1 font-mono text-[10px] tracking-widest uppercase ${
+                className={`shrink-0 border px-2 py-1 text-xs ${
                   day.callSheet
                     ? "border-accent/50 text-accent"
                     : "border-line text-muted"

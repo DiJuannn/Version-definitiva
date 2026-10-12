@@ -11,7 +11,7 @@ import { TOOL_GROUPS } from "@/lib/tool-groups";
 type Row = { key: string; group: string; title: string; subtitle?: string | null; href: string };
 
 const CHIP =
-  "flex min-h-9 items-center gap-1.5 rounded-full border px-3.5 py-1.5 font-mono text-[11px] tracking-widest uppercase transition active:scale-[0.97] border-line text-muted hover:border-accent/60 hover:text-fg";
+  "flex min-h-9 items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs transition active:scale-[0.97] border-line text-muted hover:border-accent/60 hover:text-fg";
 
 // Buscador del proyecto: encuentra herramientas (también por su nombre «del oficio»: «call sheet»),
 // escenas, personajes, sitios, tareas, desglose, partidas y festivales. Se abre con el botón «Buscar»,
@@ -158,7 +158,7 @@ export function ProjectSearch({ projectId }: { projectId: string }) {
                 aria-label="Buscar"
                 className="min-w-0 flex-1 bg-transparent py-4 font-sans text-base outline-none placeholder:text-muted"
               />
-              <button type="button" onClick={() => setOpen(false)} className="font-mono text-[10px] tracking-widest text-muted uppercase hover:text-fg">
+              <button type="button" onClick={() => setOpen(false)} className="text-xs text-muted hover:text-fg">
                 Esc
               </button>
             </div>
@@ -177,7 +177,7 @@ export function ProjectSearch({ projectId }: { projectId: string }) {
                 rows.map((row, i) => (
                   <div key={row.key}>
                     {(i === 0 || rows[i - 1].group !== row.group) && (
-                      <p className="px-4 pt-3 pb-1 font-mono text-[10px] tracking-widest text-accent uppercase">{row.group}</p>
+                      <p className="px-4 pt-3 pb-1 text-xs text-accent">{row.group}</p>
                     )}
                     <button
                       type="button"
@@ -190,12 +190,12 @@ export function ProjectSearch({ projectId }: { projectId: string }) {
                       }`}
                     >
                       <span className="block font-display text-sm font-bold">{row.title}</span>
-                      {row.subtitle && <span className="block truncate font-mono text-xs text-muted">{row.subtitle}</span>}
+                      {row.subtitle && <span className="block truncate text-xs text-muted">{row.subtitle}</span>}
                     </button>
                   </div>
                 ))
               )}
-              {waiting && rows.length > 0 && <p className="px-4 py-2 font-mono text-[10px] text-muted">Buscando más…</p>}
+              {waiting && rows.length > 0 && <p className="px-4 py-2 text-xs text-muted">Buscando más…</p>}
             </div>
           </div>
         </div>

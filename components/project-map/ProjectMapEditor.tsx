@@ -1020,9 +1020,9 @@ function MapBoard(props: Props) {
           : { text: "✓ Guardado", tone: "text-success" };
 
   const btn =
-    "border border-line bg-bg-raised px-2.5 py-1.5 font-mono text-[11px] tracking-wider uppercase transition-colors hover:border-accent hover:text-accent disabled:opacity-40";
+    "border border-line bg-bg-raised px-2.5 py-1.5 text-xs transition-colors hover:border-accent hover:text-accent disabled:opacity-40";
   const chip = (on: boolean) =>
-    `border px-2 py-1 font-mono text-[11px] uppercase ${on ? "border-accent text-accent" : "border-line text-muted hover:text-fg"}`;
+    `border px-2 py-1 text-xs ${on ? "border-accent text-accent" : "border-line text-muted hover:text-fg"}`;
   const popover = "absolute top-full left-0 z-20 mt-1 border border-line bg-bg-raised shadow-xl";
 
   return (
@@ -1082,12 +1082,12 @@ function MapBoard(props: Props) {
                     <div className={`${popover} w-80 p-3`}>
                       <button
                         type="button"
-                        className="w-full border border-line px-3 py-2 font-mono text-[11px] tracking-wider uppercase hover:border-accent hover:text-accent"
+                        className="w-full border border-line px-3 py-2 text-xs hover:border-accent hover:text-accent"
                         onClick={() => fileRef.current?.click()}
                       >
                         Subir desde el dispositivo
                       </button>
-                      <p className="my-2 text-center font-mono text-[10px] text-muted uppercase">o pega un enlace</p>
+                      <p className="my-2 text-center text-xs text-muted">o pega un enlace</p>
                       <div className="flex gap-1.5">
                         <input
                           value={imageUrl}
@@ -1103,7 +1103,7 @@ function MapBoard(props: Props) {
                       </div>
                       {images.length > 0 && (
                         <>
-                          <p className="mt-3 mb-1.5 font-mono text-[10px] text-muted uppercase">Del proyecto ({images.length})</p>
+                          <p className="mt-3 mb-1.5 text-xs text-muted">Del proyecto ({images.length})</p>
                           <div className="grid max-h-44 grid-cols-4 gap-1.5 overflow-y-auto">
                             {images.map((im, i) => (
                               <button
@@ -1168,7 +1168,7 @@ function MapBoard(props: Props) {
                               setProjectTab(k);
                               setProjectQuery("");
                             }}
-                            className={`shrink-0 px-2.5 py-2 font-mono text-[10px] tracking-wider uppercase ${projectTab === k ? "text-accent" : "text-muted hover:text-fg"}`}
+                            className={`shrink-0 px-2.5 py-2 text-xs ${projectTab === k ? "text-accent" : "text-muted hover:text-fg"}`}
                           >
                             {MAP_ENTITY_LABELS[k].many} ({entities[k]?.length ?? 0})
                           </button>
@@ -1205,7 +1205,7 @@ function MapBoard(props: Props) {
                                 filtered.slice(0, 60).map((e) => (
                                   <button key={e.id} type="button" onClick={() => addEntity(projectTab, e)} className="block w-full border-b border-line px-3 py-2 text-left hover:bg-white/5">
                                     <span className="block font-display text-sm font-bold">{e.title}</span>
-                                    {e.sub && <span className="block truncate font-mono text-[11px] text-muted">{e.sub}</span>}
+                                    {e.sub && <span className="block truncate text-xs text-muted">{e.sub}</span>}
                                   </button>
                                 ))
                               )}
@@ -1229,17 +1229,17 @@ function MapBoard(props: Props) {
                   </button>
                   {menu === "more" && (
                     <div className={`${popover} w-64`}>
-                      <button type="button" onClick={refresh} disabled={busy} className="block w-full border-b border-line px-3 py-2 text-left font-mono text-[11px] tracking-wider uppercase hover:bg-white/5">
+                      <button type="button" onClick={refresh} disabled={busy} className="block w-full border-b border-line px-3 py-2 text-left text-xs hover:bg-white/5">
                         {busy ? "Actualizando…" : "↻ Actualizar tarjetas"}
                       </button>
-                      <button type="button" onClick={() => void exportBoard("png")} disabled={exporting} className="block w-full border-b border-line px-3 py-2 text-left font-mono text-[11px] tracking-wider uppercase hover:bg-white/5">
+                      <button type="button" onClick={() => void exportBoard("png")} disabled={exporting} className="block w-full border-b border-line px-3 py-2 text-left text-xs hover:bg-white/5">
                         {exporting ? "Exportando…" : "Descargar imagen (PNG)"}
                       </button>
-                      <button type="button" onClick={() => void exportBoard("pdf")} disabled={exporting} className="block w-full border-b border-line px-3 py-2 text-left font-mono text-[11px] tracking-wider uppercase hover:bg-white/5">
+                      <button type="button" onClick={() => void exportBoard("pdf")} disabled={exporting} className="block w-full border-b border-line px-3 py-2 text-left text-xs hover:bg-white/5">
                         Descargar PDF
                       </button>
                       {confirmReset ? (
-                        <div className="flex items-center gap-3 border-b border-line px-3 py-2 font-mono text-[11px] uppercase">
+                        <div className="flex items-center gap-3 border-b border-line px-3 py-2 text-xs">
                           ¿Recolocar las tarjetas?
                           <button type="button" onClick={resetLayout} className="text-accent underline">
                             Sí
@@ -1249,18 +1249,18 @@ function MapBoard(props: Props) {
                           </button>
                         </div>
                       ) : (
-                        <button type="button" onClick={() => setConfirmReset(true)} className="block w-full border-b border-line px-3 py-2 text-left font-mono text-[11px] tracking-wider uppercase hover:bg-white/5">
+                        <button type="button" onClick={() => setConfirmReset(true)} className="block w-full border-b border-line px-3 py-2 text-left text-xs hover:bg-white/5">
                           Reordenar tarjetas
                         </button>
                       )}
-                      <p className="px-3 pt-2 font-mono text-[10px] tracking-wider text-muted uppercase">Tarjetas ocultas ({hidden.length})</p>
+                      <p className="px-3 pt-2 text-xs text-muted">Tarjetas ocultas ({hidden.length})</p>
                       {hidden.length === 0 ? (
                         <p className="px-3 pt-1 pb-3 font-sans text-xs text-muted">Ninguna.</p>
                       ) : (
                         hidden.map((k) => (
                           <button key={k} type="button" onClick={() => show(k)} className="flex w-full items-center justify-between border-t border-line px-3 py-2 text-left hover:bg-white/5">
                             <span className="font-display text-sm font-bold">{toolsByKey[k]?.title ?? k}</span>
-                            <span className="font-mono text-[10px] tracking-wider text-accent uppercase">Mostrar</span>
+                            <span className="text-xs text-accent">Mostrar</span>
                           </button>
                         ))
                       )}
@@ -1286,7 +1286,7 @@ function MapBoard(props: Props) {
             </Panel>
 
             <Panel position="top-right" className="m-2!">
-              <div className="flex items-center gap-3 border border-line bg-bg-raised px-3 py-1.5 font-mono text-[11px]">
+              <div className="flex items-center gap-3 border border-line bg-bg-raised px-3 py-1.5 text-xs">
                 {uniquePeers(peers).length > 0 && (
                   <span className="flex items-center gap-1" aria-label={`${uniquePeers(peers).length} personas más en la pizarra`}>
                     {uniquePeers(peers).slice(0, 5).map((p) => (

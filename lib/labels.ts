@@ -48,6 +48,25 @@ export const PROJECT_STATUS_INTENSITY: Record<ProjectStatus, number> = {
   FINISHED: 0.4,
 };
 
+// Nombre de los tamaños de plano habituales (la abreviatura es lo que se
+// escribe; el nombre ayuda a quien no se los sabe).
+export const SHOT_SIZE_NAMES: Record<string, string> = {
+  PGG: "Gran plano general",
+  GPG: "Gran plano general",
+  PG: "General",
+  PE: "Entero",
+  PA: "Americano",
+  PM: "Medio",
+  PMC: "Medio corto",
+  PML: "Medio largo",
+  PP: "Primer plano",
+  PPP: "Primerísimo primer plano",
+  GPP: "Gran primer plano",
+  PD: "Detalle",
+  PDET: "Detalle",
+  INSERT: "Inserto",
+};
+
 export const DAY_PART_LABELS: Record<DayPart, string> = {
   DAY: "Día",
   NIGHT: "Noche",

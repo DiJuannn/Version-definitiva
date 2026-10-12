@@ -107,7 +107,7 @@ export async function TasksView({
       </form>
 
       <div className="mt-8 flex items-center justify-between">
-        <p className="font-mono text-[11px] tracking-widest text-muted uppercase">
+        <p className="text-xs text-muted">
           {showCompleted ? "Todas las tareas" : "Pendientes"} · {tasks.length}
         </p>
         <Link href={completedHref} className="link-action">
@@ -134,19 +134,19 @@ export async function TasksView({
                 >
                   <span className="min-w-0">
                     <span
-                      className={`block truncate font-mono text-sm transition-colors group-hover:text-accent ${
+                      className={`block truncate text-sm transition-colors group-hover:text-accent ${
                         done ? "text-muted line-through" : ""
                       }`}
                     >
                       {task.title}
                     </span>
                     {!projectId && task.project && (
-                      <span className="block truncate font-mono text-[11px] text-muted">
+                      <span className="block truncate text-xs text-muted">
                         {task.project.name}
                       </span>
                     )}
                   </span>
-                  <span className="flex shrink-0 items-center gap-3 font-mono text-xs text-muted">
+                  <span className="flex shrink-0 items-center gap-3 text-xs text-muted">
                     {(task.priority === "URGENT" || task.priority === "HIGH") && !done && (
                       <span className={task.priority === "URGENT" ? "text-danger" : "text-warn"}>
                         {PRIORITY_LABELS[task.priority]}
@@ -168,7 +168,7 @@ export async function TasksView({
 
       {!projectId && (
         <section className="mt-14">
-          <h2 className="font-mono text-xs tracking-widest text-accent uppercase">
+          <h2 className="text-[13px] text-accent">
             Plantillas de checklist
           </h2>
           <p className="mt-2 max-w-xl font-sans text-sm text-muted">
@@ -205,7 +205,7 @@ export async function TasksView({
                     {template.items.length > 0 && (
                       <ul className="mt-3 space-y-1">
                         {template.items.map((item) => (
-                          <li key={item.id} className="font-mono text-xs text-muted">
+                          <li key={item.id} className="text-xs text-muted">
                             ☐ {item.label}
                           </li>
                         ))}

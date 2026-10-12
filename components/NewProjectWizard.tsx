@@ -25,7 +25,7 @@ export function NewProjectWizard() {
       <input type="hidden" name="type" value={type} />
       <input type="hidden" name="stage" value={stage} />
 
-      <p className="text-center font-mono text-[10px] tracking-widest text-muted uppercase">
+      <p className="text-center text-xs text-muted">
         Paso {step} de {STEPS}
       </p>
       <div className="mx-auto mt-2 flex max-w-[8rem] gap-1.5" aria-hidden>
@@ -73,7 +73,7 @@ export function NewProjectWizard() {
                 type="button"
                 aria-pressed={type === option}
                 onClick={() => setType(type === option ? "" : option)}
-                className={`border px-3 py-2 font-mono text-xs tracking-wider uppercase transition-colors ${
+                className={`border px-3 py-2 text-[13px] transition-colors ${
                   type === option
                     ? "border-accent bg-accent/10 text-accent"
                     : "border-line text-muted hover:border-accent hover:text-fg"
@@ -115,7 +115,7 @@ export function NewProjectWizard() {
           <button
             type="button"
             onClick={() => setStep(step - 1)}
-            className="font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent"
+            className="text-xs text-muted hover:text-accent"
           >
             ← Atrás
           </button>
@@ -128,7 +128,7 @@ export function NewProjectWizard() {
             <button
               type="button"
               onClick={() => setStep(step + 1)}
-              className="font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent"
+              className="text-xs text-muted hover:text-accent"
             >
               Saltar
             </button>
@@ -151,7 +151,7 @@ export function NewProjectWizard() {
       </div>
 
       {state?.error && (
-        <p className="mt-3 text-center font-mono text-xs text-danger" role="alert">
+        <p className="mt-3 text-center text-xs text-danger" role="alert">
           {state.error}
           {state.upgrade && (
             <>

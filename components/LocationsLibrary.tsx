@@ -58,7 +58,7 @@ export async function LocationsLibrary({
         </div>
       ) : (
         <div className="mt-6 flex h-[160px] items-center justify-center border border-line">
-          <p className="max-w-sm text-center font-mono text-xs text-muted">
+          <p className="max-w-sm text-center text-xs text-muted">
             Ninguna localización tiene coordenadas todavía. Añade una dirección y pulsa
             &ldquo;Buscar coordenadas&rdquo; para que aparezca aquí en el mapa.
           </p>
@@ -91,7 +91,7 @@ export async function LocationsLibrary({
           <input name="availability" className={FIELD} />
         </FormField>
         <div className="sm:col-span-2 lg:col-span-3">
-          <p className="font-mono text-[10px] tracking-widest text-muted uppercase">Características</p>
+          <p className="text-xs text-muted">Características</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {Object.values(LocationCharacteristic).map((value) => (
               <ChipOption
@@ -131,7 +131,7 @@ export async function LocationsLibrary({
                 [location.address, location.contactName].filter(Boolean).join(" · ") || "Sin datos"
               }
               trailing={
-                <span className="flex items-center gap-3 font-mono text-xs text-muted">
+                <span className="flex items-center gap-3 text-xs text-muted">
                   {location.latitude === null && <span className="text-warn">Sin coordenadas</span>}
                   {location._count.scenes} escena
                   {location._count.scenes === 1 ? "" : "s"}
