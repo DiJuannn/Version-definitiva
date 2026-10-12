@@ -49,9 +49,12 @@ export function StageFocus({
   status,
   nextShoot,
   budget,
+  embedded = false,
 }: {
   projectId: string;
   stage: 3 | 4;
+  // Dentro de la tarjeta "Ahora" de la portada: sin borde ni margen propios.
+  embedded?: boolean;
   status: ProjectStatus;
   nextShoot: NextShoot | null;
   budget: { planned: number; actual: number; target: number | null };
@@ -59,7 +62,7 @@ export function StageFocus({
   if (stage === 3) {
     const today = nextShoot ? isToday(nextShoot.date) : false;
     return (
-      <section aria-labelledby="stage-focus-title" className="mt-6 border border-accent/40 bg-bg-raised/40 p-6 sm:p-8">
+      <section aria-labelledby="stage-focus-title" className={embedded ? "p-6 sm:p-8" : "mt-6 border border-accent/40 bg-bg-raised/40 p-6 sm:p-8"}>
         <p className="font-mono text-[11px] tracking-widest text-accent uppercase">Estás rodando</p>
         {nextShoot ? (
           <>
@@ -125,7 +128,7 @@ export function StageFocus({
   const finished = status === "FINISHED";
   const spendDone = budget.actual > 0;
   return (
-    <section aria-labelledby="stage-focus-title" className="mt-6 border border-accent/40 bg-bg-raised/40 p-6 sm:p-8">
+    <section aria-labelledby="stage-focus-title" className={embedded ? "p-6 sm:p-8" : "mt-6 border border-accent/40 bg-bg-raised/40 p-6 sm:p-8"}>
       <p className={`font-mono text-[11px] tracking-widest uppercase ${finished ? "text-success" : "text-accent"}`}>
         {finished ? "Terminado" : "Recta final"}
       </p>

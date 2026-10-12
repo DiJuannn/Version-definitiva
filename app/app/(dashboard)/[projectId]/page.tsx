@@ -9,7 +9,6 @@ import { ProjectWelcome } from "@/components/ProjectWelcome";
 import { ProjectTools } from "@/components/ProjectTools";
 import { ProjectSummaryCard } from "@/components/ProjectSummaryCard";
 import { ProjectShareButton } from "@/components/ProjectShareButton";
-import { ProjectHeaderCard } from "@/components/ProjectHeaderCard";
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { PageHeader } from "@/components/PageHeader";
 import { getProjectOverview } from "@/lib/project-roadmap";
@@ -104,60 +103,68 @@ export default async function ProjectTallerPage({
         }
       />
 
-      {/* Con el proyecto vacío solo repetiría «sin nada» y los pasos: se enseña cuando ya hay datos. */}
-      {(mode === "full" || facts.scenes > 0) && (
-        <ProjectHeaderCard
-          projectId={project.id}
-          status={project.status}
-          steps={steps}
-          nextShoot={nextShoot}
-          budget={budget}
-        />
-      )}
-
       {showWelcome && <ProjectWelcome projectId={project.id} />}
-      <StageStepper stage={stage} />
-      {!showWelcome && stage === 1 && facts.scenes === 0 && (
-        <p className="mt-3 font-mono text-[11px] tracking-widest uppercase">
-          <Link href={`/app/${project.id}?ayuda=1`} className="text-muted hover:text-accent">
-            ¿Cómo funciona?
-          </Link>
-        </p>
-      )}
-      {stage >= 3 ? (
-        <StageFocus
-          projectId={project.id}
-          stage={stage as 3 | 4}
-          status={project.status}
-          nextShoot={nextShoot}
-          budget={budget}
-        />
-      ) : (
-        <NextStep
-          steps={steps}
-          startShootAction={
-            isOwnerOrg && stage === 2 ? setProjectStatus.bind(null, project.id, "PRODUCTION") : undefined
-          }
-        />
-      )}
+
+      {/* "Ahora": una sola tarjeta con la etapa del proyecto y lo único que toca
+          hacer. Antes eran cuatro bloques (cabecera con estado/progreso/rodaje/
+          dinero, barra de etapas, siguiente paso y foco de etapa) que repetían
+          lo mismo; el detalle sigue en Resumen y en cada herramienta. */}
+      <section aria-label="Ahora" className="mt-8 border border-accent/40 bg-bg-raised/40">
+        {/* Con la bienvenida abierta, sus cuatro etapas ya se ven justo encima. */}
+        {!showWelcome && (
+          <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2 border-b border-line px-6 pt-5 pb-4 sm:px-8">
+            <StageStepper stage={stage} className="min-w-0 flex-1" />
+            {stage === 1 && facts.scenes === 0 && (
+              <Link
+                href={`/app/${project.id}?ayuda=1`}
+                className="font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent"
+              >
+                ¿Cómo funciona?
+              </Link>
+            )}
+          </div>
+        )}
+        {stage >= 3 ? (
+          <StageFocus
+            projectId={project.id}
+            stage={stage as 3 | 4}
+            status={project.status}
+            nextShoot={nextShoot}
+            budget={budget}
+            embedded
+          />
+        ) : (
+          <NextStep
+            steps={steps}
+            startShootAction={
+              isOwnerOrg && stage === 2 ? setProjectStatus.bind(null, project.id, "PRODUCTION") : undefined
+            }
+            embedded
+          />
+        )}
+      </section>
 
       <ProjectTools projectId={project.id} mode={mode} access={access} toolStats={toolStats} />
 
-      <div className="mt-10">
-        <ProjectSummaryCard
-          project={{ ...project, budgetTarget }}
-          updateAction={updateAction}
+      {/* Datos del proyecto y actividad: se consultan poco, así que van
+          plegados al final en vez de alargar la portada. */}
+      <details className="group mt-10 border-t border-line pt-4">
+        <summary className="flex cursor-pointer list-none items-center justify-between py-2 font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent [&::-webkit-details-marker]:hidden">
+          <span>Datos del proyecto{activityLogs.length > 0 ? " y actividad reciente" : ""}</span>
+          <span aria-hidden className="transition-transform group-open:rotate-90">→</span>
+        </summary>
+        <div className="mt-4">
+          <ProjectSummaryCard project={{ ...project, budgetTarget }} updateAction={updateAction} />
+        </div>
+        <ActivityFeed
+          entries={activityLogs.map((log) => ({
+            id: log.id,
+            summary: log.summary,
+            createdAt: log.createdAt,
+            userName: log.user?.fullName ?? log.user?.email ?? null,
+          }))}
         />
-      </div>
-
-      <ActivityFeed
-        entries={activityLogs.map((log) => ({
-          id: log.id,
-          summary: log.summary,
-          createdAt: log.createdAt,
-          userName: log.user?.fullName ?? log.user?.email ?? null,
-        }))}
-      />
+      </details>
     </div>
   );
 }

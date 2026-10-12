@@ -1,9 +1,9 @@
 import { STAGES } from "@/lib/tool-rules";
 
 // Las cuatro etapas de un proyecto (Idea → Preparar → Rodar → Entregar) y en cuál está.
-export function StageStepper({ stage }: { stage: 1 | 2 | 3 | 4 }) {
+export function StageStepper({ stage, className = "mt-8" }: { stage: 1 | 2 | 3 | 4; className?: string }) {
   return (
-    <ol aria-label="Etapas del proyecto" className="mt-8 grid grid-cols-4 gap-2">
+    <ol aria-label="Etapas del proyecto" className={`grid grid-cols-4 gap-2 ${className}`}>
       {STAGES.map((s) => {
         const done = s.id < stage;
         const current = s.id === stage;

@@ -26,8 +26,11 @@ function Marker({ step, current }: { step: RoadmapStep; current: boolean }) {
 export function NextStep({
   steps,
   startShootAction,
+  embedded = false,
 }: {
   steps: RoadmapStep[];
+  // Dentro de la tarjeta "Ahora" de la portada: sin borde ni margen propios.
+  embedded?: boolean;
   // Si se pasa, cuando todo lo esencial está listo se ofrece pasar el proyecto a «rodaje».
   startShootAction?: () => Promise<void>;
 }) {
@@ -39,7 +42,10 @@ export function NextStep({
   const copy = focus ? COPY[focus.key] : undefined;
 
   return (
-    <section aria-labelledby="next-step-title" className="mt-6 border border-accent/40 bg-bg-raised/40 p-6 sm:p-8">
+    <section
+      aria-labelledby="next-step-title"
+      className={embedded ? "p-6 sm:p-8" : "mt-6 border border-accent/40 bg-bg-raised/40 p-6 sm:p-8"}
+    >
       <div className="flex items-start gap-5">
         <AjoloteLogo className="hidden h-16 w-auto shrink-0 sm:block" />
         <div className="min-w-0 flex-1">
