@@ -26,7 +26,7 @@ export default async function ProyectosPage() {
       />
 
       {projects.length === 0 ? (
-        <div className="mx-auto mt-10 max-w-md border border-line p-6 sm:p-8">
+        <div className="mx-auto mt-10 max-w-md border rounded-lg border-line p-6 sm:p-8">
           <p className="text-center text-[13px] text-accent">
             Tu primer proyecto
           </p>
@@ -39,7 +39,7 @@ export default async function ProyectosPage() {
           <CreateProjectForm
             action={createProject}
             formClassName="flex gap-2"
-            inputClassName="w-full border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            inputClassName="w-full border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
             buttonClassName="btn btn-primary shrink-0"
             buttonLabel="Nuevo proyecto"
           />

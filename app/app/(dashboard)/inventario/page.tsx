@@ -34,20 +34,20 @@ export default async function InventarioPage() {
 
       <form
         action={createInventoryItem}
-        className="mt-8 grid gap-3 border border-line p-5 sm:grid-cols-2 lg:grid-cols-4"
+        className="mt-8 grid gap-3 border rounded-lg border-line p-5 sm:grid-cols-2 lg:grid-cols-4"
       >
         <FormField label="Nombre">
           <input
             name="name"
             required
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
           />
         </FormField>
         <FormField label="Categoría">
           <select
             name="category"
             defaultValue="OTHER"
-            className="border border-line bg-transparent px-3 py-2 text-[13px] outline-none focus:border-accent"
+            className="border rounded-lg border-line bg-transparent px-3 py-2 text-[13px] outline-none focus:border-accent"
           >
             {Object.values(InventoryItemCategory).map((value) => (
               <option key={value} value={value} className="bg-bg">
@@ -62,13 +62,13 @@ export default async function InventarioPage() {
             type="number"
             min={1}
             defaultValue={1}
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
           />
         </FormField>
         <FormField label="Notas">
           <input
             name="notes"
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
           />
         </FormField>
         <div>

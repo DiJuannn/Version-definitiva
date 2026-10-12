@@ -26,7 +26,7 @@ export function BreakdownCategorySelect({
           action(formData);
         });
       }}
-      className="border border-line bg-transparent px-1.5 py-1 text-xs text-muted outline-none transition-colors focus:border-accent disabled:opacity-50"
+      className="border rounded-lg border-line bg-transparent px-1.5 py-1 text-xs text-muted outline-none transition-colors focus:border-accent disabled:opacity-50"
     >
       {Object.entries(BREAKDOWN_CATEGORY_LABELS).map(([value, label]) => (
         <option key={value} value={value} className="bg-bg">

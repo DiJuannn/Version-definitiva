@@ -87,18 +87,18 @@ export default async function PersonajesPage({
                 <div>
                           <form
                             action={createCharacterAction}
-                            className="grid gap-3 border border-line p-5 sm:grid-cols-2 lg:grid-cols-3"
+                            className="grid gap-3 border rounded-lg border-line p-5 sm:grid-cols-2 lg:grid-cols-3"
                           >
                             <FormField label="Nombre del personaje">
                               <input name="name"
                               required
-                              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
+                              className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
                             </FormField>
                             <FormField label="Actor">
                               <select
                               name="actorId"
                               defaultValue=""
-                              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+                              className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
                             >
                               <option value="" className="bg-bg">
                                 Sin actor asignado
@@ -112,7 +112,7 @@ export default async function PersonajesPage({
                             </FormField>
                             <FormField label="Notas">
                               <input name="notes"
-                              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
+                              className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
                             </FormField>
                             <div>
                               <SubmitButton
@@ -159,14 +159,14 @@ export default async function PersonajesPage({
                                             name="name"
                                             required
                                             defaultValue={character.name}
-                                            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+                                            className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
                                           />
                                         </FormField>
                                         <FormField label="Notas">
                                           <input
                                             name="notes"
                                             defaultValue={character.notes ?? ""}
-                                            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+                                            className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
                                           />
                                         </FormField>
                                         <div>
@@ -225,13 +225,13 @@ export default async function PersonajesPage({
                 <div>
                           <form
                             action={createActorAction}
-                            className="grid gap-3 border border-line p-5 sm:grid-cols-2 lg:grid-cols-3"
+                            className="grid gap-3 border rounded-lg border-line p-5 sm:grid-cols-2 lg:grid-cols-3"
                           >
                             <FormField label="Persona del directorio Equipo">
                               <select
                               name="personId"
                               defaultValue=""
-                              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+                              className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
                             >
                               <option value="" className="bg-bg">
                                 Persona nueva (sin usar el directorio)
@@ -245,31 +245,31 @@ export default async function PersonajesPage({
                             </FormField>
                             <FormField label="Nombre">
                               <input name="name"
-                              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+                              className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
           
                               placeholder="si no usas Equipo" />
                             </FormField>
                             <FormField label="Email de contacto">
                               <input name="email"
-                              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
+                              className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
                             </FormField>
                             <FormField label="Teléfono">
                               <input name="phone"
-                              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
+                              className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
                             </FormField>
                             <FormField label="Caché">
                               <input name="rate"
                               type="number"
                               step="0.01"
-                              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
+                              className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
                             </FormField>
                             <FormField label="Disponibilidad">
                               <input name="availability"
-                              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
+                              className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
                             </FormField>
                             <FormField label="Notas">
                               <input name="notes"
-                              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
+                              className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
                             </FormField>
                             <div>
                               <SubmitButton
@@ -325,13 +325,13 @@ export default async function PersonajesPage({
                                       className="grid gap-3 pb-5 sm:grid-cols-2 lg:grid-cols-3"
                                     >
                                       <FormField label="Nombre">
-                                        <input name="name" required defaultValue={actor.name} className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
+                                        <input name="name" required defaultValue={actor.name} className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
                                       </FormField>
                                       <FormField label="Email de contacto">
-                                        <input name="email" type="email" defaultValue={actor.email ?? ""} className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
+                                        <input name="email" type="email" defaultValue={actor.email ?? ""} className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
                                       </FormField>
                                       <FormField label="Teléfono">
-                                        <input name="phone" type="tel" defaultValue={actor.phone ?? ""} className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
+                                        <input name="phone" type="tel" defaultValue={actor.phone ?? ""} className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
                                       </FormField>
                                       <FormField label="Caché (€)">
                                         <input
@@ -339,14 +339,14 @@ export default async function PersonajesPage({
                                           type="number"
                                           step="0.01"
                                           defaultValue={actor.rate ?? ""}
-                                          className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+                                          className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
                                         />
                                       </FormField>
                                       <FormField label="Disponibilidad">
-                                        <input name="availability" defaultValue={actor.availability ?? ""} className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
+                                        <input name="availability" defaultValue={actor.availability ?? ""} className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
                                       </FormField>
                                       <FormField label="Notas">
-                                        <input name="notes" defaultValue={actor.notes ?? ""} className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
+                                        <input name="notes" defaultValue={actor.notes ?? ""} className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
                                       </FormField>
                                       <div>
                                         <SubmitButton

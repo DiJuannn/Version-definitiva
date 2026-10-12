@@ -30,7 +30,7 @@ const SHORT_LABELS: Record<BreakdownCategory, string> = {
 };
 
 const inputClass =
-  "border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent";
+  "border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent";
 
 export default async function DesglosePage({
   params,
@@ -70,7 +70,7 @@ export default async function DesglosePage({
         <div>
           <form
             action={createElementAction}
-            className="grid gap-3 border border-line p-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
+            className="grid gap-3 border rounded-lg border-line p-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
           >
             <input type="hidden" name="category" value={category} />
             <FormField label={`Añadir a ${BREAKDOWN_CATEGORY_LABELS[category].toLowerCase()}`}>

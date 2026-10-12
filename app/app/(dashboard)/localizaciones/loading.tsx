@@ -9,7 +9,7 @@ export default function LocalizacionesLoading() {
 
       <Skeleton className="mt-8 h-[160px] w-full" />
 
-      <div className="mt-8 border border-line p-5">
+      <div className="mt-8 border rounded-lg border-line p-5">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <Skeleton key={i} className="h-9 w-full" />

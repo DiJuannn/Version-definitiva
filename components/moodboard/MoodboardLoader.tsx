@@ -7,7 +7,7 @@ import dynamic from "next/dynamic";
 const MoodboardEditor = dynamic(() => import("@/components/moodboard/MoodboardEditor"), {
   ssr: false,
   loading: () => (
-    <div className="flex h-[calc(100dvh-16rem)] min-h-[520px] items-center justify-center border border-line text-xs text-muted">
+    <div className="flex h-[calc(100dvh-16rem)] min-h-[520px] items-center justify-center border rounded-lg border-line text-xs text-muted">
       Cargando el tablero…
     </div>
   ),

@@ -92,7 +92,7 @@ export function DeliveryChecklistPanel({ projectId, tasks }: { projectId: string
             name="title"
             required
             placeholder="Ej. Versión para redes sociales"
-            className="w-full border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="w-full border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
           />
           <SubmitButton pendingLabel="Añadiendo…" className="btn btn-secondary shrink-0">
             Añadir

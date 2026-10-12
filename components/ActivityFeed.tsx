@@ -26,7 +26,7 @@ export function ActivityFeed({ entries }: { entries: ActivityEntry[] }) {
   if (entries.length === 0) return null;
 
   return (
-    <div className="mt-6 border border-line p-4">
+    <div className="mt-6 border rounded-lg border-line p-4">
       <p className="text-xs text-muted">
         Actividad reciente
       </p>

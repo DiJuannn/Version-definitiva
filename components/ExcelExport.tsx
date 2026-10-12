@@ -21,7 +21,7 @@ export function ExcelExport({ href }: { href: string }) {
       {open && (
         <div
           role="status"
-          className="absolute right-0 z-30 mt-2 w-[min(22rem,calc(100vw-2rem))] border border-line bg-bg-raised p-4 shadow-lg shadow-black/40"
+          className="absolute right-0 z-30 mt-2 w-[min(22rem,calc(100vw-2rem))] border rounded-lg border-line bg-bg-raised p-4 shadow-lg shadow-black/40"
         >
           <p className="text-xs text-accent">Descargando el presupuesto</p>
           <p className="mt-2 font-sans text-sm text-muted">

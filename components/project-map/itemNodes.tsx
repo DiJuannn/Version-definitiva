@@ -155,7 +155,7 @@ function TextBlock({ id, item, selected }: { id: string; item: MapItem; selected
 function ImageItemView({ id, item, selected }: { id: string; item: MapItem; selected: boolean }) {
   const { update, readOnly } = useItems();
   return (
-    <Frame id={id} selected={selected} minW={80} minH={70} className="border border-line bg-bg-raised">
+    <Frame id={id} selected={selected} minW={80} minH={70} className="border rounded-lg border-line bg-bg-raised">
       <div className="flex h-full flex-col">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -239,7 +239,7 @@ function EntityCard({ id, item, selected }: { id: string; item: MapItem; selecte
   const heading = MAP_ENTITY_LABELS[kind].one;
 
   return (
-    <Frame id={id} selected={selected} minW={160} minH={80} className="border border-accent/50 bg-bg-raised">
+    <Frame id={id} selected={selected} minW={160} minH={80} className="border rounded-lg border-accent/50 bg-bg-raised">
       <div className="flex h-full flex-col gap-1 p-3">
         <p className={`${LABEL} text-accent`}>{heading} · del proyecto</p>
         {e ? (
@@ -251,7 +251,7 @@ function EntityCard({ id, item, selected }: { id: string; item: MapItem; selecte
                   disabled={busy || readOnly || e.done}
                   onClick={() => completeTask(e.id)}
                   aria-label={e.done ? `«${e.title}» está hecha` : `Completar «${e.title}»`}
-                  className={`nodrag mt-1 flex h-4 w-4 shrink-0 items-center justify-center border text-[10px] leading-none ${
+                  className={`nodrag mt-1 flex h-4 w-4 shrink-0 items-center justify-center border rounded-lg text-[10px] leading-none ${
                     e.done ? "border-success/60 bg-success/15 text-success" : "border-muted/60 hover:border-accent"
                   }`}
                 >

@@ -52,7 +52,7 @@ export function BudgetActualField({
         Gasto real de {description}
       </label>
       <div
-        className={`flex items-center border transition-colors focus-within:border-accent ${
+        className={`flex items-center border rounded-lg transition-colors focus-within:border-accent ${
           isDone ? "border-success/40" : "border-line"
         }`}
       >

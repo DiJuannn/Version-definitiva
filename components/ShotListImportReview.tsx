@@ -23,7 +23,7 @@ type ShotRow = ProposedShot & { key: string; on: boolean };
 type SceneRow = { key: string; number: string; shots: ShotRow[] };
 
 const inputClass =
-  "border border-line bg-transparent px-2.5 py-1.5 text-sm outline-none transition-colors focus:border-accent";
+  "border rounded-lg border-line bg-transparent px-2.5 py-1.5 text-sm outline-none transition-colors focus:border-accent";
 const nextKey = () => `r${Math.random().toString(36).slice(2, 10)}`;
 
 function initialState(proposal: Proposal): SceneRow[] {
@@ -140,7 +140,7 @@ export function ShotListImportReview({
 
   if (scenes.length === 0) {
     return (
-      <div className="mt-8 border border-line p-6">
+      <div className="mt-8 border rounded-lg border-line p-6">
         <p className="text-sm text-muted">
           La IA no encontró planos reconocibles en el documento. Puedes descartarlo y probar con otro archivo.
         </p>
@@ -154,7 +154,7 @@ export function ShotListImportReview({
   return (
     <div className="mt-8 space-y-5">
       {possibleNumberingMismatch && (
-        <div className="border border-warn/60 bg-warn/5 p-4">
+        <div className="border rounded-lg border-warn/60 bg-warn/5 p-4">
           <p className="text-xs text-warn">⚠ Revisa la numeración</p>
           <p className="mt-1 text-sm text-fg">
             Ninguna de las escenas de este guion técnico coincide con las {existingSceneNumbers.length} escenas que
@@ -186,7 +186,7 @@ export function ShotListImportReview({
         return (
           <section
             key={scene.key}
-            className={`border bg-bg-raised/40 ${isExisting ? "border-line" : "border-warn/50"}`}
+            className={`border rounded-lg bg-bg-raised/40 ${isExisting ? "border-line" : "border-warn/50"}`}
           >
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3">
               <div className="flex items-center gap-2">

@@ -28,17 +28,17 @@ function LoginForm() {
       <h1 className="font-display text-2xl font-bold">Entrar</h1>
 
       {justSignedUp && (
-        <p className="mt-4 border border-line px-3 py-2 text-xs text-muted">
+        <p className="mt-4 border rounded-lg border-line px-3 py-2 text-xs text-muted">
           Cuenta creada. Revisa tu email para confirmarla antes de entrar.
         </p>
       )}
       {justConfirmed && (
-        <p className="mt-4 border border-success/60 px-3 py-2 text-xs text-success">
+        <p className="mt-4 border rounded-lg border-success/60 px-3 py-2 text-xs text-success">
           ✓ Cuenta confirmada. Ya puedes entrar con tu contraseña.
         </p>
       )}
       {justDeleted && (
-        <p className="mt-4 border border-line px-3 py-2 text-xs text-muted">
+        <p className="mt-4 border rounded-lg border-line px-3 py-2 text-xs text-muted">
           Tu cuenta se ha borrado. Gracias por haber usado Taller.
         </p>
       )}

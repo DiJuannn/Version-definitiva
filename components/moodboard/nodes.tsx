@@ -111,7 +111,7 @@ function NoteCard({ id, card, selected }: { id: string; card: MoodboardCard; sel
 function ImageCard({ id, card, selected }: { id: string; card: MoodboardCard; selected: boolean }) {
   const { update } = useBoard();
   return (
-    <Frame id={id} selected={selected} minW={100} minH={80} className="border border-line bg-bg-raised">
+    <Frame id={id} selected={selected} minW={100} minH={80} className="border rounded-lg border-line bg-bg-raised">
       <div className="flex h-full flex-col">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -142,7 +142,7 @@ function PaletteCard({ id, card, selected }: { id: string; card: MoodboardCard; 
     update(id, { colors: colors.map((c, j) => (j === i ? value : c)) });
 
   return (
-    <Frame id={id} selected={selected} minW={160} minH={100} className="border border-line bg-bg-raised">
+    <Frame id={id} selected={selected} minW={160} minH={100} className="border rounded-lg border-line bg-bg-raised">
       <div className="flex h-full flex-col p-2.5">
         <input
           value={card.title ?? ""}
@@ -182,7 +182,7 @@ function PaletteCard({ id, card, selected }: { id: string; card: MoodboardCard; 
               type="button"
               aria-label="Añadir color"
               onClick={() => update(id, { colors: [...colors, "#888888"] })}
-              className="nodrag w-6 shrink-0 self-stretch border border-dashed border-line text-muted hover:border-accent hover:text-accent"
+              className="nodrag w-6 shrink-0 self-stretch border rounded-lg border-dashed border-line text-muted hover:border-accent hover:text-accent"
             >
               +
             </button>
@@ -197,14 +197,14 @@ function ReferenceCard({ id, card, selected }: { id: string; card: MoodboardCard
   const { update } = useBoard();
   const query = encodeURIComponent(`${card.title ?? ""} ${card.year ?? ""} ${card.kind === "Fotografía" ? "fotografía" : ""}`.trim());
   return (
-    <Frame id={id} selected={selected} minW={180} minH={110} className="border border-line bg-bg-raised">
+    <Frame id={id} selected={selected} minW={180} minH={110} className="border rounded-lg border-line bg-bg-raised">
       <div className="flex h-full flex-col gap-1.5 p-3">
         <div className="flex items-center gap-2">
           <select
             value={card.kind ?? "Otro"}
             onChange={(e) => update(id, { kind: e.target.value })}
             aria-label="Tipo de referencia"
-            className={`nodrag ${LABEL} shrink-0 border border-line bg-bg px-1 py-0.5 text-accent`}
+            className={`nodrag ${LABEL} shrink-0 border rounded-lg border-line bg-bg px-1 py-0.5 text-accent`}
           >
             {REFERENCE_KINDS.map((k) => (
               <option key={k} value={k}>
@@ -294,7 +294,7 @@ function LiveCard({ id, card, selected }: { id: string; card: MoodboardCard; sel
   }
 
   return (
-    <Frame id={id} selected={selected} minW={160} minH={90} className="border border-accent/50 bg-bg-raised">
+    <Frame id={id} selected={selected} minW={160} minH={90} className="border rounded-lg border-accent/50 bg-bg-raised">
       <div className="flex h-full flex-col gap-1 p-3">
         <p className={`${LABEL} text-accent`}>{heading} · del proyecto</p>
         {found ? (

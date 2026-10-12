@@ -36,7 +36,7 @@ export function GeocodeButton() {
             setCandidates(results);
           });
         }}
-        className="border border-line px-3 py-2 text-xs text-muted transition-colors hover:border-accent hover:text-accent disabled:opacity-50"
+        className="border rounded-lg border-line px-3 py-2 text-xs text-muted transition-colors hover:border-accent hover:text-accent disabled:opacity-50"
       >
         {pending ? "Buscando…" : "Buscar coordenadas por dirección"}
       </button>
@@ -44,7 +44,7 @@ export function GeocodeButton() {
       {message && <p className="max-w-md text-xs text-muted">{message}</p>}
 
       {candidates.length > 0 && (
-        <div className="w-full max-w-md border border-line">
+        <div className="w-full max-w-md border rounded-lg border-line">
           <p className="border-b border-line p-2 text-xs text-muted">
             Elige el resultado correcto
           </p>

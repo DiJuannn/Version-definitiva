@@ -23,7 +23,7 @@ export type FestivalSubmissionView = {
 };
 
 const INPUT =
-  "w-full border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent";
+  "w-full border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent";
 
 function currency(value: number) {
   return value.toLocaleString("es-ES", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
@@ -70,7 +70,7 @@ function Row({ projectId, submission }: { projectId: string; submission: Festiva
               name="status"
               defaultValue={submission.status}
               onChange={(e) => e.currentTarget.form?.requestSubmit()}
-              className="border border-line bg-transparent px-2 py-1.5 text-xs outline-none focus:border-accent"
+              className="border rounded-lg border-line bg-transparent px-2 py-1.5 text-xs outline-none focus:border-accent"
             >
               {Object.entries(FESTIVAL_SUBMISSION_STATUS_LABELS).map(([value, label]) => (
                 <option key={value} value={value} className="bg-bg">
@@ -102,7 +102,7 @@ export function FestivalSubmissionsPanel({
   const pending = submissions.filter((s) => s.deadline && daysUntil(s.deadline) >= 0 && daysUntil(s.deadline) <= 14 && s.status === "PLANNED");
 
   return (
-    <section className="mt-8 border border-line p-6">
+    <section className="mt-8 border rounded-lg border-line p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-xs text-accent">Tu seguimiento</p>
@@ -114,7 +114,7 @@ export function FestivalSubmissionsPanel({
       </div>
 
       {pending.length > 0 && (
-        <p className="mt-3 border border-warn/60 bg-warn/10 px-3 py-2 text-xs text-warn">
+        <p className="mt-3 border rounded-lg border-warn/60 bg-warn/10 px-3 py-2 text-xs text-warn">
           {pending.length === 1
             ? `El plazo de «${pending[0].festivalName}» se acaba pronto.`
             : `${pending.length} plazos se acaban en menos de dos semanas.`}
@@ -127,7 +127,7 @@ export function FestivalSubmissionsPanel({
             createFestivalSubmission(projectId, fd);
             setOpen(submissions.length === 0);
           }}
-          className="mt-4 grid gap-3 border border-line p-5 sm:grid-cols-2 lg:grid-cols-4"
+          className="mt-4 grid gap-3 border rounded-lg border-line p-5 sm:grid-cols-2 lg:grid-cols-4"
         >
           <FormField label="Festival" className="lg:col-span-2">
             <input name="festivalName" required placeholder="Nombre del festival" className={INPUT} />

@@ -37,7 +37,7 @@ function subscribeZone(callback: () => void) {
 
 function FestivalCard({ festival }: { festival: Festival }) {
   return (
-    <li className="border border-line bg-bg-raised/40 p-4">
+    <li className="border rounded-lg border-line bg-bg-raised/40 p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="font-display text-base font-bold">{festival.name}</p>
@@ -111,7 +111,7 @@ export function FestivalGuide({ projectType }: { projectType: string | null }) {
           <select
             value={zone}
             onChange={(e) => chooseZone(e.target.value)}
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
           >
             <option value="" className="bg-bg">
               Elige tu zona
@@ -143,7 +143,7 @@ export function FestivalGuide({ projectType }: { projectType: string | null }) {
       )}
 
       {zone && inZone.length === 0 && (
-        <p className="mt-6 max-w-xl border border-dashed border-line p-4 font-sans text-sm text-muted">
+        <p className="mt-6 max-w-xl border rounded-lg border-dashed border-line p-4 font-sans text-sm text-muted">
           No tengo todavía festivales de {zone} en la lista para este formato. Mira los del resto de {country}, los online y
           los buscadores de convocatorias de más abajo: allí están casi todos.
         </p>
@@ -163,7 +163,7 @@ export function FestivalGuide({ projectType }: { projectType: string | null }) {
         </>
       )}
 
-      <div className="mt-10 border border-accent/40 bg-bg-raised/40 p-6">
+      <div className="mt-10 border rounded-lg border-accent/40 bg-bg-raised/40 p-6">
         <p className="text-xs text-accent">Buscar convocatorias abiertas</p>
         <p className="mt-2 max-w-xl font-sans text-sm text-muted">
           Las fechas de inscripción cambian cada año y los festivales que aquí no salen son muchísimos. Estas
@@ -171,7 +171,7 @@ export function FestivalGuide({ projectType }: { projectType: string | null }) {
         </p>
         <ul className="mt-4 grid gap-3 sm:grid-cols-2">
           {SUBMISSION_PLATFORMS.map((p) => (
-            <li key={p.name} className="border border-line p-4">
+            <li key={p.name} className="border rounded-lg border-line p-4">
               <p className="font-display text-base font-bold">{p.name}</p>
               <p className="mt-1 font-sans text-sm text-muted">{p.note}</p>
               <a
@@ -188,7 +188,7 @@ export function FestivalGuide({ projectType }: { projectType: string | null }) {
         </ul>
       </div>
 
-      <div className="mt-8 border border-line p-6">
+      <div className="mt-8 border rounded-lg border-line p-6">
         <p className="text-xs text-accent">Antes de enviar</p>
         <ul className="mt-3 grid gap-2 font-sans text-sm text-muted sm:grid-cols-2">
           <li>○ El montaje final exportado, con subtítulos en inglés si puedes.</li>

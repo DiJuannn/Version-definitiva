@@ -6,6 +6,9 @@ import { CalendarEventType, ProjectStatus, TaskStatus } from "@/lib/generated/pr
 import { AjoloteLogo } from "@/components/AjoloteLogo";
 import { ClaquetaIcon } from "@/components/ToolIcons";
 import { StatusPill } from "@/components/StatusPill";
+import { SectionHeading } from "@/components/SectionHeading";
+import { SceneTag, sceneStripColor } from "@/components/SceneTag";
+import { PersonInitials } from "@/components/PersonInitials";
 import { DashboardReveal, DashboardStagger } from "@/components/DashboardMotion";
 import { deleteProject } from "@/lib/actions/projects";
 import { DeleteProjectButton } from "@/components/DeleteProjectButton";
@@ -129,9 +132,15 @@ export default async function DashboardPage() {
         id: true,
         date: true,
         projectId: true,
+        shareToken: true,
         project: { select: { name: true } },
-        callSheet: { select: { id: true } },
-        _count: { select: { scenes: true } },
+        callSheet: { select: { id: true, generalCallTime: true } },
+        scenes: {
+          orderBy: { order: "asc" },
+          select: {
+            scene: { select: { number: true, intExt: true, dayPart: true, location: { select: { name: true } } } },
+          },
+        },
       },
     }),
     prisma.shootingDay.findMany({
@@ -235,7 +244,7 @@ export default async function DashboardPage() {
       return {
         id: `sheet-${day.id}`,
         tone: "warn" as const,
-        text: `${day.project.name}: rodaje ${n === 0 ? "hoy" : n === 1 ? "mañana" : `en ${n} días`} sin call sheet`,
+        text: `${day.project.name}: rodaje ${n === 0 ? "hoy" : n === 1 ? "mañana" : `en ${n} días`} sin hoja de llamada`,
         href: `/app/${day.projectId}/call-sheets/${day.id}`,
       };
     }),
@@ -263,27 +272,37 @@ export default async function DashboardPage() {
   const heroPct =
     heroRequired.length > 0 ? Math.round((heroDone / heroRequired.length) * 100) : 0;
 
+  const todayLabel = now.toLocaleDateString("es-ES", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    timeZone: "Europe/Madrid",
+  });
+  const shootScenes = nextShoot?.scenes.map((s) => s.scene) ?? [];
+  const shootLocations = [...new Set(shootScenes.map((s) => s.location?.name).filter(Boolean))];
+  const shootIn = nextShoot ? daysUntil(nextShoot.date, now) : null;
+  const budgetPct = budgetPlanned > 0 ? Math.min(100, Math.round((budgetActual / budgetPlanned) * 100)) : 0;
+
   return (
     <div>
-      <div className="flex items-center gap-4">
-        <AjoloteLogo className="h-12 w-auto shrink-0 sm:h-14" priority />
-        <div>
-          <p className="text-[13px] text-accent">
-            {greeting(now.getHours())}
+      {/* Saludo y fecha */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+        <AjoloteLogo className="h-11 w-auto shrink-0" priority />
+        <div className="min-w-0">
+          <p className="text-[13px] text-muted">
+            {greeting(now.getHours())} · <span className="first-letter:uppercase">{todayLabel}</span>
           </p>
-          <h1 className="mt-0.5 font-display text-2xl font-bold sm:text-3xl">
+          <h1 className="mt-0.5 truncate font-display text-2xl font-bold tracking-tight sm:text-[1.75rem]">
             {profile.organization.name}
           </h1>
         </div>
       </div>
 
       {!heroProject ? (
-        <DashboardReveal className="mt-8 border border-accent/50 bg-gradient-to-br from-accent-purple/30 via-bg-raised to-bg p-8 text-center sm:p-12">
+        <DashboardReveal className="mt-8 rounded-2xl border border-accent/50 bg-gradient-to-br from-accent-purple/30 via-bg-raised to-bg p-8 text-center sm:p-12">
           <p className="text-[13px] text-accent">Empieza aquí</p>
-          <h2 className="mt-2 font-display text-2xl font-bold sm:text-3xl">
-            Crea tu primer proyecto
-          </h2>
-          <p className="mx-auto mt-3 max-w-sm font-sans text-sm text-muted">
+          <h2 className="mt-2 font-display text-2xl font-bold sm:text-3xl">Crea tu primer proyecto</h2>
+          <p className="mx-auto mt-3 max-w-sm text-sm text-muted">
             Todo en Taller —guion, presupuesto, plan de rodaje— cuelga de un proyecto. Te hacemos tres
             preguntas rápidas y entras: te guiaremos paso a paso.
           </p>
@@ -292,129 +311,173 @@ export default async function DashboardPage() {
           </div>
         </DashboardReveal>
       ) : (
-        <>
-          <div className="mt-8 grid gap-4 lg:grid-cols-[1.3fr_1fr]">
-            <DashboardReveal className="border border-line bg-bg-raised/40 p-6">
-              <p className="text-xs text-muted">
-                Próximo rodaje
-              </p>
-              {nextShoot ? (
-                <>
-                  <p className="mt-3 font-display text-4xl font-black">
-                    {relativeDay(nextShoot.date, now)}
-                  </p>
-                  <p className="mt-1 text-xs text-muted">
-                    {nextShoot.date.toLocaleDateString("es-ES", {
-                      weekday: "long",
-                      day: "numeric",
-                      month: "long",
-                    })}{" "}
-                    ·{" "}
-                    <Link
-                      href={`/app/${nextShoot.projectId}`}
-                      className="text-fg underline decoration-line underline-offset-4 hover:decoration-accent"
-                    >
-                      {nextShoot.project.name}
-                    </Link>
-                  </p>
-                  <p className="mt-2 text-xs">
-                    {nextShoot._count.scenes} escena{nextShoot._count.scenes === 1 ? "" : "s"} ·{" "}
-                    <span className={nextShoot.callSheet ? "text-success" : "text-warn"}>
-                      {nextShoot.callSheet ? "call sheet creado" : "call sheet sin crear"}
-                    </span>
-                  </p>
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    <Link
-                      href={`/app/${nextShoot.projectId}/call-sheets/${nextShoot.id}`}
-                      className="btn btn-primary btn-sm"
-                    >
-                      {nextShoot.callSheet ? "Ver call sheet" : "Crear call sheet"}
-                      <LinkPendingHint />
-                    </Link>
-                    <Link
-                      href={`/app/${nextShoot.projectId}/plan-de-rodaje/${nextShoot.id}`}
-                      className="btn btn-outline btn-sm"
-                    >
-                      Ver el día
-                    </Link>
+        <div className="mt-7 grid gap-4 lg:grid-cols-[1.4fr_1fr]">
+          {/* Próximo rodaje */}
+          <DashboardReveal className="flex flex-col rounded-2xl border border-line bg-bg-raised p-5 sm:p-6">
+            {nextShoot ? (
+              <>
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="text-[13px] text-muted">
+                      {shootIn === 0 ? "Hoy se rueda" : "Próximo rodaje"} ·{" "}
+                      <Link href={`/app/${nextShoot.projectId}`} className="text-fg hover:text-accent">
+                        {nextShoot.project.name}
+                      </Link>
+                    </p>
+                    <p className="mt-1 text-[1.75rem] leading-tight font-bold tracking-tight sm:text-[2rem]">
+                      {relativeDay(nextShoot.date, now)}
+                      <span className="ml-2 text-base font-normal text-fg/75">
+                        {nextShoot.date.toLocaleDateString("es-ES", {
+                          weekday: "long",
+                          day: "numeric",
+                          month: "long",
+                          timeZone: "Europe/Madrid",
+                        })}
+                      </span>
+                    </p>
+                    {shootLocations.length > 0 && (
+                      <p className="mt-1 truncate text-sm text-fg/85">{shootLocations.join(" · ")}</p>
+                    )}
                   </div>
-                </>
-              ) : (
-                <>
-                  <p className="mt-3 font-display text-2xl font-bold text-muted">
-                    Sin rodajes planificados
-                  </p>
-                  <p className="mt-2 font-sans text-sm text-muted">
-                    Cuando repartas las escenas en días de rodaje, aquí verás cuándo es el
-                    próximo y si su call sheet está listo.
-                  </p>
+                  {nextShoot.callSheet?.generalCallTime && (
+                    <div className="sm:text-right">
+                      <p className="text-xs text-muted">Llamada</p>
+                      <p className="font-mono text-[2.25rem] leading-none font-medium text-accent">
+                        {nextShoot.callSheet.generalCallTime}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {shootScenes.length > 0 && (
+                  <div className="mt-4">
+                    <div className="flex h-3 gap-0.5 overflow-hidden rounded" aria-hidden>
+                      {shootScenes.map((scene, i) => (
+                        <span
+                          key={i}
+                          className="flex-1"
+                          style={{ background: sceneStripColor(scene.intExt, scene.dayPart) }}
+                        />
+                      ))}
+                    </div>
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      {shootScenes.map((scene, i) => (
+                        <span key={i} className="inline-flex items-center gap-1 text-xs text-fg/80">
+                          <span className="font-mono">{scene.number}</span>
+                          <SceneTag intExt={scene.intExt} dayPart={scene.dayPart} />
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-auto flex flex-wrap items-center gap-2 pt-5">
                   <Link
-                    href={`/app/${heroProject.id}/plan-de-rodaje`}
-                    className="btn btn-outline btn-sm mt-4"
+                    href={`/app/${nextShoot.projectId}/call-sheets/${nextShoot.id}`}
+                    className="btn btn-primary btn-sm"
                   >
+                    {nextShoot.callSheet ? "Hoja de llamada" : "Crear hoja de llamada"}
+                    <LinkPendingHint />
+                  </Link>
+                  <Link
+                    href={`/app/${nextShoot.projectId}/plan-de-rodaje/${nextShoot.id}`}
+                    className="btn btn-outline btn-sm"
+                  >
+                    Plan del día
+                  </Link>
+                  <Link href={`/app/${nextShoot.projectId}/claqueta`} className="btn btn-outline btn-sm">
+                    <ClaquetaIcon className="h-4 w-4" /> Claqueta
+                  </Link>
+                  <span
+                    className={`ml-auto inline-flex h-6 items-center rounded-full px-2.5 text-xs ${
+                      !nextShoot.callSheet
+                        ? "bg-warn/15 text-warn"
+                        : nextShoot.shareToken
+                          ? "bg-success/15 text-success"
+                          : "bg-accent/15 text-fg"
+                    }`}
+                  >
+                    {!nextShoot.callSheet
+                      ? "Hoja sin crear"
+                      : nextShoot.shareToken
+                        ? "Hoja compartida con el equipo"
+                        : "Hoja creada, sin compartir"}
+                  </span>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-[13px] text-muted">Próximo rodaje</p>
+                <p className="mt-1 text-2xl font-bold text-fg/70">Sin rodajes planificados</p>
+                <p className="mt-2 max-w-md text-sm text-muted">
+                  Cuando repartas los planos en jornadas de rodaje, aquí verás la próxima, a qué hora se cita
+                  y si su hoja de llamada está lista.
+                </p>
+                <div className="mt-auto flex flex-wrap gap-2 pt-5">
+                  <Link href={`/app/${heroProject.id}/plan-de-rodaje`} className="btn btn-outline btn-sm">
                     Planificar un rodaje
                   </Link>
-                </>
-              )}
-            </DashboardReveal>
+                  <Link href={`/app/${heroProject.id}/claqueta`} className="btn btn-outline btn-sm">
+                    <ClaquetaIcon className="h-4 w-4" /> Claqueta
+                  </Link>
+                </div>
+              </>
+            )}
+          </DashboardReveal>
 
-            <DashboardReveal
-              className="border border-line bg-bg-raised/40 p-6"
-              delay={0.05}
-            >
-              <p className="text-xs text-muted">
-                Requiere atención
+          {/* Requiere atención */}
+          <DashboardReveal className="rounded-2xl border border-line bg-bg-raised/40 p-5 sm:p-6" delay={0.05}>
+            <SectionHeading
+              title="Requiere atención"
+              meta={attention.length > 0 ? `${attention.length}` : undefined}
+            />
+            {attention.length === 0 ? (
+              <p className="mt-3 flex items-start gap-2 text-sm text-fg/80">
+                <span aria-hidden className="mt-0.5 text-success">
+                  ✓
+                </span>
+                Todo en orden: sin tareas vencidas ni rodajes próximos sin hoja de llamada.
               </p>
-              {attention.length === 0 ? (
-                <p className="mt-3 flex items-start gap-2 font-sans text-sm text-muted">
-                  <span aria-hidden className="mt-0.5 text-success">
-                    ✓
-                  </span>
-                  Todo en orden: sin tareas vencidas ni rodajes próximos sin call sheet.
-                </p>
-              ) : (
-                <ul className="mt-3 space-y-2">
-                  {attention.map((item) => (
-                    <li key={item.id}>
-                      <Link
-                        href={item.href}
-                        className="group flex items-start gap-2.5 py-1 text-xs"
-                      >
-                        <span
-                          aria-hidden
-                          className={`mt-1 h-2 w-2 shrink-0 rounded-full ${
-                            item.tone === "danger" ? "bg-danger" : "bg-warn"
-                          }`}
-                        />
-                        <span className="transition-colors group-hover:text-accent">
-                          {item.text}
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </DashboardReveal>
-          </div>
+            ) : (
+              <ul className="mt-3 divide-y divide-line/70">
+                {attention.map((item) => (
+                  <li key={item.id}>
+                    <Link href={item.href} className="group flex items-start gap-2.5 py-2.5 text-sm">
+                      <span
+                        aria-hidden
+                        className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${
+                          item.tone === "danger" ? "bg-danger" : "bg-warn"
+                        }`}
+                      />
+                      <span className="transition-colors group-hover:text-accent">{item.text}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </DashboardReveal>
 
+          {/* Continuar */}
           <DashboardReveal
-            className="mt-4 border border-accent/40 bg-gradient-to-br from-accent-purple/40 via-bg-raised to-bg p-6 sm:p-8"
+            className="rounded-2xl border border-accent/40 bg-gradient-to-br from-accent-purple/40 via-bg-raised to-bg p-5 sm:p-6 lg:col-span-2"
             delay={0.1}
           >
-            <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="min-w-0">
-                <p className="text-xs text-accent">
-                  Continuar
-                </p>
-                <h2 className="mt-1 truncate font-display text-2xl font-bold sm:text-3xl">
-                  {heroProject.name}
-                </h2>
-                <p className="mt-1 text-xs text-muted">
-                  {heroCurrent
-                    ? `Siguiente: ${heroCurrent.title}`
-                    : "Listo para rodar: pasos requeridos completados"}
-                  {" · "}
-                  {heroDone}/{heroRequired.length} requeridos
+                <p className="text-[13px] text-accent">Seguir donde lo dejaste</p>
+                <h2 className="mt-0.5 truncate text-2xl font-bold tracking-tight">{heroProject.name}</h2>
+                <p className="mt-1 text-sm text-fg/80">
+                  {heroCurrent ? (
+                    <>
+                      Siguiente paso: <span className="font-semibold text-fg">{heroCurrent.title}</span>
+                    </>
+                  ) : (
+                    "Listo para rodar: pasos esenciales completados"
+                  )}
+                  <span className="text-muted">
+                    {" "}
+                    · {heroDone} de {heroRequired.length} esenciales
+                  </span>
                 </p>
               </div>
               <Link href={`/app/${heroProject.id}`} className="btn btn-primary shrink-0">
@@ -422,96 +485,66 @@ export default async function DashboardPage() {
                 <LinkPendingHint />
               </Link>
             </div>
-            <div className="mt-5 h-1.5 w-full overflow-hidden rounded-full bg-line">
+            <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-line">
               <div
                 className="h-full rounded-full bg-accent transition-[width] duration-700"
                 style={{ width: `${heroPct}%` }}
               />
             </div>
           </DashboardReveal>
-        </>
+        </div>
       )}
 
-      {/* Siempre visible, incluso sin proyectos todavía — quien es nuevo
-          también tiene que poder entrar a la Claqueta, y de ahí se le
-          ofrece crear su primer proyecto (ver /app/claqueta). */}
-      <DashboardReveal delay={0.12}>
-        <div className="group relative mt-3 flex items-center gap-3 border border-line bg-bg-raised/40 px-5 py-3.5 transition-colors hover:border-accent/60">
-          <Link
-            href={heroProject ? `/app/${heroProject.id}/claqueta` : "/app/claqueta"}
-            className="flex min-w-0 flex-1 items-center gap-3"
-          >
-            <ClaquetaIcon className="h-5 w-5 shrink-0 text-accent" />
-            <span className="min-w-0">
-              <span className="block text-[13px] transition-colors group-hover:text-accent">
-                Claqueta digital
-              </span>
-              <span className="block truncate text-xs text-muted">
-                {heroProject ? heroProject.name : "Elige o crea un proyecto"}
-              </span>
-            </span>
-          </Link>
-          <Link
-            href={heroProject ? `/app/${heroProject.id}/claqueta` : "/app/claqueta"}
-            className="link-action shrink-0"
-          >
-            Abrir →
-            <LinkPendingHint />
-          </Link>
-          {recentProjects.length > 1 && (
-            <details className="shrink-0">
-              <summary
-                aria-label="Abrir la claqueta de otro proyecto"
-                className="flex min-h-9 min-w-9 cursor-pointer list-none items-center justify-center text-muted hover:text-accent [&::-webkit-details-marker]:hidden"
-              >
-                ▾
-              </summary>
-              <div className="absolute right-0 top-full z-20 mt-1 w-56 border border-line bg-bg-raised py-1 shadow-lg">
-                <p className="px-3 py-1.5 text-xs text-muted">
-                  Abrir la claqueta de otro proyecto
-                </p>
-                {recentProjects.map((project) => (
-                  <Link
-                    key={project.id}
-                    href={`/app/${project.id}/claqueta`}
-                    className="block px-3 py-2.5 text-xs text-muted hover:bg-bg hover:text-accent"
-                  >
-                    {project.name}
-                  </Link>
-                ))}
-              </div>
-            </details>
+      {/* Cifras */}
+      <DashboardStagger className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Link
+          href="/app/proyectos"
+          className="rounded-xl border border-line p-4 transition-colors hover:border-accent/60"
+        >
+          <p className="text-xs text-muted">Proyectos activos</p>
+          <p className="mt-1 font-mono text-2xl">{activeProjectsCount}</p>
+          {!isPro(profile.organization.plan) && (
+            <p className="mt-1 text-xs text-muted">
+              Plan gratuito: máx. {FREE_ACTIVE_PROJECTS_LIMIT}
+            </p>
           )}
+        </Link>
+        <Link
+          href="/app/calendario"
+          className="rounded-xl border border-line p-4 transition-colors hover:border-accent/60"
+        >
+          <p className="text-xs text-muted">Jornadas próximas</p>
+          <p className="mt-1 font-mono text-2xl">{upcomingShootingDays.length}</p>
+          <p className="mt-1 text-xs text-muted">
+            {upcomingShootingDays[0]
+              ? `La primera: ${upcomingShootingDays[0].date.toLocaleDateString("es-ES", { day: "numeric", month: "short", timeZone: "Europe/Madrid" })}`
+              : "Ninguna planificada"}
+          </p>
+        </Link>
+        <Link
+          href="/app/tareas"
+          className="rounded-xl border border-line p-4 transition-colors hover:border-accent/60"
+        >
+          <p className="text-xs text-muted">Tareas pendientes</p>
+          <p className="mt-1 font-mono text-2xl">{pendingTasks.length}</p>
+          <p className={`mt-1 text-xs ${overdueTasks.length > 0 ? "text-danger" : "text-muted"}`}>
+            {overdueTasks.length > 0
+              ? `${overdueTasks.length} vencida${overdueTasks.length === 1 ? "" : "s"}`
+              : "Ninguna vencida"}
+          </p>
+        </Link>
+        <div className="rounded-xl border border-line p-4">
+          <p className="text-xs text-muted">Gastado</p>
+          <p className="mt-1 font-mono text-2xl">{currency(budgetActual)}</p>
+          <div className="mt-2 h-1 overflow-hidden rounded-full bg-line" aria-hidden>
+            <div className="h-full rounded-full bg-accent" style={{ width: `${budgetPct}%` }} />
+          </div>
+          <p className="mt-1 text-xs text-muted">de {currency(budgetPlanned)} previstos</p>
         </div>
-      </DashboardReveal>
+      </DashboardStagger>
 
-      <div className="mt-6 flex flex-wrap items-center gap-x-8 gap-y-3 border-y border-line py-3 sm:mt-8">
-        <div className="flex items-baseline gap-2">
-          <span className="font-display text-xl font-bold">{activeProjectsCount}</span>
-          <span className="text-xs text-muted">
-            Proyectos activos
-          </span>
-        </div>
-        <div className="flex items-baseline gap-2">
-          <span className="font-display text-xl font-bold">{currency(budgetActual)}</span>
-          <span className="text-xs text-muted">
-            Gastado de {currency(budgetPlanned)} previstos
-          </span>
-        </div>
-        {!isPro(profile.organization.plan) && (
-          <Link
-            href="/app/organizacion"
-            className="ml-auto flex items-baseline gap-2 transition-colors hover:text-accent"
-          >
-            <span className="text-xs text-muted">
-              Plan gratuito: {activeProjectsCount} de {FREE_ACTIVE_PROJECTS_LIMIT} proyectos ·
-              Ver PRO
-            </span>
-          </Link>
-        )}
-      </div>
-
-      <DashboardReveal className="mt-8" delay={0.15}>
+      {/* Proyectos */}
+      <DashboardReveal className="mt-10" delay={0.15}>
         <NewProjectPanel hasProjects={recentProjects.length > 0} />
         {recentProjects.length > 0 && (
           <DashboardStagger className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -524,33 +557,29 @@ export default async function DashboardPage() {
               return (
                 <div
                   key={project.id}
-                  className="group relative border border-line bg-bg-raised/40 p-4 transition-colors hover:border-accent/60"
+                  className="group relative rounded-xl border border-line bg-bg-raised/40 p-4 transition-[border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-accent/60"
                 >
-                  <Link href={`/app/${project.id}`} className="block pr-14">
-                    <p className="font-display text-base font-bold transition-colors group-hover:text-accent">
+                  <Link href={`/app/${project.id}`} className="block pr-16">
+                    <p className="text-base font-bold transition-colors group-hover:text-accent">
                       {project.name}
                     </p>
-                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <div className="mt-1.5 flex flex-wrap items-center gap-2">
                       <StatusPill status={project.status} />
-                      {!isOwnProject && (
-                        <span className="text-xs text-muted">
-                          Propietario: {ownerLabel}
-                        </span>
-                      )}
+                      {!isOwnProject && <span className="text-xs text-muted">Compartido por {ownerLabel}</span>}
                     </div>
                     {p && (
                       <div className="mt-3">
-                        <div className="h-1 w-full bg-line">
-                          <div className="h-full bg-accent" style={{ width: `${pct}%` }} />
+                        <div className="h-1 w-full overflow-hidden rounded-full bg-line">
+                          <div className="h-full rounded-full bg-accent" style={{ width: `${pct}%` }} />
                         </div>
-                        <p className="mt-1 text-xs text-muted">
-                          {p.done}/{p.total} pasos requeridos
+                        <p className="mt-1.5 text-xs text-muted">
+                          {p.done} de {p.total} pasos esenciales
                         </p>
                       </div>
                     )}
                   </Link>
                   {isOwnProject && (
-                    <div className="absolute right-1 top-1 flex items-center">
+                    <div className="absolute top-2 right-2 flex items-center">
                       <ProjectShareButton
                         projectId={project.id}
                         origin={origin}
@@ -574,108 +603,112 @@ export default async function DashboardPage() {
         )}
       </DashboardReveal>
 
-      <div className="mt-8 grid gap-4 sm:mt-10 lg:grid-cols-2">
-        <DashboardReveal className="border border-line bg-bg-raised/40 p-5" delay={0.18}>
-          <p className="text-xs text-accent">Agenda</p>
-          <div className="mt-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-            <div>
-              <div className="flex items-center justify-between">
-                <p className="text-xs text-muted">
-                  Tareas pendientes
-                </p>
-                <Link href="/app/tareas" className="link-action">
-                  Ver todas →
-                </Link>
-              </div>
-              {pendingTasks.length === 0 ? (
-                <p className="mt-3 font-sans text-sm text-muted">Sin tareas pendientes.</p>
-              ) : (
-                <ul className="mt-2 space-y-1">
-                  {pendingTasks.map((task) => (
-                    <li key={task.id} className="flex items-center gap-2.5">
-                      <TaskCheck taskId={task.id} done={false} title={task.title} />
-                      <Link
-                        href={`/app/tareas/${task.id}`}
-                        className="min-w-0 flex-1 truncate py-1.5 text-xs hover:text-accent"
-                      >
-                        {task.title}
-                        {task.project && (
-                          <span className="text-muted"> — {task.project.name}</span>
-                        )}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between">
-                <p className="text-xs text-muted">
-                  Próximos 14 días
-                </p>
-                <Link href="/app/calendario" className="link-action">
-                  Calendario →
-                </Link>
-              </div>
-              {upcomingEvents.length === 0 ? (
-                <p className="mt-3 font-sans text-sm text-muted">
-                  Sin eventos ni rodajes en los próximos 14 días.
-                </p>
-              ) : (
-                <ul className="mt-2 space-y-1">
-                  {upcomingEvents.map((event) => (
-                    <li key={event.id}>
-                      <Link
-                        href={event.href}
-                        className="group flex items-start gap-2 py-1.5 text-xs"
-                      >
-                        <span className="w-12 shrink-0 text-muted">
-                          {event.date
-                            .toLocaleDateString("es-ES", { day: "2-digit", month: "short" })
-                            .toUpperCase()}
-                        </span>
-                        <span className="group-hover:text-accent">
-                          <span className="text-muted">{event.typeLabel} · </span>
-                          {event.title}
-                          {event.projectName && (
-                            <span className="text-muted"> ({event.projectName})</span>
-                          )}
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
-        </DashboardReveal>
-
-        <DashboardReveal className="border border-line bg-bg-raised/40 p-5" delay={0.2}>
-          <p className="text-xs text-accent">
-            Actividad reciente
-          </p>
-          {activity.length === 0 ? (
-            <p className="mt-4 font-sans text-sm text-muted">
-              Aquí verás los cambios de tu equipo en cualquier proyecto.
-            </p>
+      {/* Agenda y actividad */}
+      <div className="mt-10 grid gap-4 lg:grid-cols-[1.4fr_1fr]">
+        <DashboardReveal className="rounded-2xl border border-line bg-bg-raised/40 p-5" delay={0.18}>
+          <SectionHeading
+            title="Próximos 14 días"
+            action={
+              <Link href="/app/calendario" className="link-action">
+                Calendario →
+              </Link>
+            }
+          />
+          {upcomingEvents.length === 0 ? (
+            <p className="mt-3 text-sm text-muted">Sin eventos ni rodajes en los próximos 14 días.</p>
           ) : (
-            <ul className="mt-4 space-y-2.5">
-              {activity.map((entry) => (
-                <li key={entry.id} className="text-xs text-muted">
-                  <span className="text-fg">
-                    {entry.user?.fullName ?? entry.user?.email ?? "Alguien"}
-                  </span>{" "}
-                  {entry.summary} en{" "}
-                  <Link
-                    href={`/app/${entry.project.id}`}
-                    className="text-fg underline decoration-line underline-offset-4 hover:decoration-accent"
-                  >
-                    {entry.project.name}
-                  </Link>{" "}
-                  · {relativeTime(entry.createdAt)}
+            <ul className="mt-3 divide-y divide-line/70">
+              {upcomingEvents.map((event) => (
+                <li key={event.id}>
+                  <Link href={event.href} className="group flex items-center gap-3 py-2.5 text-sm">
+                    <span className="w-14 shrink-0 text-center">
+                      <span className="block font-mono text-lg leading-none">
+                        {event.date.toLocaleDateString("es-ES", { day: "numeric", timeZone: "Europe/Madrid" })}
+                      </span>
+                      <span className="text-xs text-muted">
+                        {event.date
+                          .toLocaleDateString("es-ES", { month: "short", timeZone: "Europe/Madrid" })
+                          .replace(".", "")}
+                      </span>
+                    </span>
+                    <span
+                      className={`inline-flex h-6 shrink-0 items-center rounded-full px-2.5 text-xs ${
+                        event.typeLabel === "Rodaje" ? "bg-accent/20 text-fg" : "bg-line text-fg/80"
+                      }`}
+                    >
+                      {event.typeLabel}
+                    </span>
+                    <span className="min-w-0 truncate group-hover:text-accent">
+                      {event.title}
+                      {event.projectName && <span className="text-muted"> · {event.projectName}</span>}
+                    </span>
+                  </Link>
                 </li>
               ))}
+            </ul>
+          )}
+
+          <SectionHeading
+            className="mt-6"
+            title="Tareas pendientes"
+            action={
+              <Link href="/app/tareas" className="link-action">
+                Ver todas →
+              </Link>
+            }
+          />
+          {pendingTasks.length === 0 ? (
+            <p className="mt-3 text-sm text-muted">Sin tareas pendientes.</p>
+          ) : (
+            <ul className="mt-2">
+              {pendingTasks.map((task) => (
+                <li key={task.id} className="flex items-center gap-2.5">
+                  <TaskCheck taskId={task.id} done={false} title={task.title} />
+                  <Link
+                    href={`/app/tareas/${task.id}`}
+                    className="min-w-0 flex-1 truncate py-2 text-sm hover:text-accent"
+                  >
+                    {task.title}
+                    {task.project && <span className="text-muted"> · {task.project.name}</span>}
+                  </Link>
+                  {task.dueDate && (
+                    <span
+                      className={`shrink-0 text-xs ${task.dueDate < startOfToday ? "text-danger" : "text-muted"}`}
+                    >
+                      {task.dueDate.toLocaleDateString("es-ES", {
+                        day: "numeric",
+                        month: "short",
+                        timeZone: "Europe/Madrid",
+                      })}
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </DashboardReveal>
+
+        <DashboardReveal className="rounded-2xl border border-line bg-bg-raised/40 p-5" delay={0.2}>
+          <SectionHeading title="Actividad reciente" />
+          {activity.length === 0 ? (
+            <p className="mt-3 text-sm text-muted">Aquí verás los cambios de tu equipo en cualquier proyecto.</p>
+          ) : (
+            <ul className="mt-3 space-y-3">
+              {activity.map((entry) => {
+                const who = entry.user?.fullName ?? entry.user?.email ?? "Alguien";
+                return (
+                  <li key={entry.id} className="flex items-start gap-2.5 text-sm">
+                    <PersonInitials name={who} />
+                    <p className="min-w-0 text-fg/80">
+                      <span className="text-fg">{who}</span> {entry.summary} en{" "}
+                      <Link href={`/app/${entry.project.id}`} className="text-fg hover:text-accent">
+                        {entry.project.name}
+                      </Link>
+                      <span className="block text-xs text-muted">{relativeTime(entry.createdAt)}</span>
+                    </p>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </DashboardReveal>

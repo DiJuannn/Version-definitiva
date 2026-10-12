@@ -73,7 +73,7 @@ export default async function StoryboardPage({
                       <div className="mt-3 flex flex-wrap gap-4">
                         {shot.storyboard.map((frame) => (
                           <div key={frame.id} className="group relative">
-                            <div className="flex aspect-video w-56 items-center justify-center border border-line bg-bg-raised">
+                            <div className="flex aspect-video w-56 items-center justify-center border rounded-lg border-line bg-bg-raised">
                               {frame.imageUrl ? (
                                 <Image
                                   src={frame.imageUrl}
@@ -112,7 +112,7 @@ export default async function StoryboardPage({
 
                         <form
                           action={addAction}
-                          className="flex w-56 flex-col gap-2 border border-dashed border-line p-3 print:hidden"
+                          className="flex w-56 flex-col gap-2 border rounded-lg border-dashed border-line p-3 print:hidden"
                         >
                           <input
                             type="file"
@@ -123,7 +123,7 @@ export default async function StoryboardPage({
                           <input
                             name="description"
                             placeholder="Descripción"
-                            className="border border-line bg-transparent px-2 py-1 text-xs outline-none transition-colors focus:border-accent"
+                            className="border rounded-lg border-line bg-transparent px-2 py-1 text-xs outline-none transition-colors focus:border-accent"
                           />
                           <SubmitButton
                             pendingLabel="Añadiendo…"

@@ -1020,17 +1020,17 @@ function MapBoard(props: Props) {
           : { text: "✓ Guardado", tone: "text-success" };
 
   const btn =
-    "border border-line bg-bg-raised px-2.5 py-1.5 text-xs transition-colors hover:border-accent hover:text-accent disabled:opacity-40";
+    "border rounded-lg border-line bg-bg-raised px-2.5 py-1.5 text-xs transition-colors hover:border-accent hover:text-accent disabled:opacity-40";
   const chip = (on: boolean) =>
-    `border px-2 py-1 text-xs ${on ? "border-accent text-accent" : "border-line text-muted hover:text-fg"}`;
-  const popover = "absolute top-full left-0 z-20 mt-1 border border-line bg-bg-raised shadow-xl";
+    `border rounded-lg px-2 py-1 text-xs ${on ? "border-accent text-accent" : "border-line text-muted hover:text-fg"}`;
+  const popover = "absolute top-full left-0 z-20 mt-1 border rounded-lg border-line bg-bg-raised shadow-xl";
 
   return (
     <MapProvider value={mapCtx}>
       <ItemProvider value={itemCtx}>
         <div
           ref={wrapperRef}
-          className="relative h-[calc(100dvh-16rem)] min-h-[560px] border border-line"
+          className="relative h-[calc(100dvh-16rem)] min-h-[560px] border rounded-lg border-line"
           onPointerMove={onPointerMove}
           onPointerLeave={onPointerLeave}
           onDragOver={(e) => {
@@ -1082,7 +1082,7 @@ function MapBoard(props: Props) {
                     <div className={`${popover} w-80 p-3`}>
                       <button
                         type="button"
-                        className="w-full border border-line px-3 py-2 text-xs hover:border-accent hover:text-accent"
+                        className="w-full border rounded-lg border-line px-3 py-2 text-xs hover:border-accent hover:text-accent"
                         onClick={() => fileRef.current?.click()}
                       >
                         Subir desde el dispositivo
@@ -1095,7 +1095,7 @@ function MapBoard(props: Props) {
                           onKeyDown={(e) => e.key === "Enter" && void addImageFromUrl(imageUrl.trim())}
                           placeholder="https://…/imagen.jpg"
                           aria-label="Enlace de la imagen"
-                          className="min-w-0 flex-1 border border-line bg-transparent px-2 py-1.5 text-xs outline-none focus:border-accent"
+                          className="min-w-0 flex-1 border rounded-lg border-line bg-transparent px-2 py-1.5 text-xs outline-none focus:border-accent"
                         />
                         <button type="button" className={btn} onClick={() => void addImageFromUrl(imageUrl.trim())}>
                           Añadir
@@ -1112,7 +1112,7 @@ function MapBoard(props: Props) {
                                 title={im.label}
                                 aria-label={`Añadir ${im.label}`}
                                 onClick={() => void addImageFromUrl(im.url)}
-                                className="aspect-square overflow-hidden border border-line hover:border-accent"
+                                className="aspect-square overflow-hidden border rounded-lg border-line hover:border-accent"
                               >
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img src={im.url} alt="" loading="lazy" className="h-full w-full object-cover" />
@@ -1186,7 +1186,7 @@ function MapBoard(props: Props) {
                                 onChange={(e) => setProjectQuery(e.target.value)}
                                 placeholder="Buscar…"
                                 aria-label="Buscar en el proyecto"
-                                className="min-w-0 flex-1 border border-line bg-transparent px-2 py-1 text-xs outline-none focus:border-accent"
+                                className="min-w-0 flex-1 border rounded-lg border-line bg-transparent px-2 py-1 text-xs outline-none focus:border-accent"
                               />
                               <button
                                 type="button"
@@ -1286,7 +1286,7 @@ function MapBoard(props: Props) {
             </Panel>
 
             <Panel position="top-right" className="m-2!">
-              <div className="flex items-center gap-3 border border-line bg-bg-raised px-3 py-1.5 text-xs">
+              <div className="flex items-center gap-3 border rounded-lg border-line bg-bg-raised px-3 py-1.5 text-xs">
                 {uniquePeers(peers).length > 0 && (
                   <span className="flex items-center gap-1" aria-label={`${uniquePeers(peers).length} personas más en la pizarra`}>
                     {uniquePeers(peers).slice(0, 5).map((p) => (
@@ -1320,14 +1320,14 @@ function MapBoard(props: Props) {
 
             <Panel position="bottom-center" className="mb-3!">
               {selEdge ? (
-                <div className="flex flex-wrap items-center gap-2 border border-line bg-bg-raised p-2" role="toolbar" aria-label="Flecha seleccionada">
+                <div className="flex flex-wrap items-center gap-2 border rounded-lg border-line bg-bg-raised p-2" role="toolbar" aria-label="Flecha seleccionada">
                   <input
                     value={selEdge.label ?? ""}
                     onChange={(e) => updateEdge(selEdge.id, { label: e.target.value || undefined })}
                     placeholder="Texto de la flecha"
                     maxLength={80}
                     aria-label="Texto de la flecha"
-                    className="w-40 border border-line bg-transparent px-2 py-1 text-xs outline-none focus:border-accent"
+                    className="w-40 border rounded-lg border-line bg-transparent px-2 py-1 text-xs outline-none focus:border-accent"
                   />
                   <div className="flex gap-1" role="group" aria-label="Color de la flecha">
                     {MAP_COLORS.map((c) => (
@@ -1353,7 +1353,7 @@ function MapBoard(props: Props) {
                   </button>
                 </div>
               ) : selItems.length > 0 ? (
-                <div className="flex flex-wrap items-center gap-2 border border-line bg-bg-raised p-2" role="toolbar" aria-label="Elementos seleccionados">
+                <div className="flex flex-wrap items-center gap-2 border rounded-lg border-line bg-bg-raised p-2" role="toolbar" aria-label="Elementos seleccionados">
                   {selTypes.has("text") && (
                     <div className="flex gap-1" role="group" aria-label="Tamaño del texto">
                       {(["s", "m", "l"] as MapTextSize[]).map((s) => (
@@ -1393,7 +1393,7 @@ function MapBoard(props: Props) {
                   </button>
                 </div>
               ) : (
-                <p className="hidden max-w-xl border border-line bg-bg-raised/90 px-3 py-1.5 text-center font-sans text-[11px] text-muted sm:block">
+                <p className="hidden max-w-xl border rounded-lg border-line bg-bg-raised/90 px-3 py-1.5 text-center font-sans text-[11px] text-muted sm:block">
                   Arrastra desde los puntos de una tarjeta para unirla con una flecha · Mayús + arrastrar selecciona varias · Ctrl+Z deshace · Ctrl+D duplica
                 </p>
               )}
@@ -1401,7 +1401,7 @@ function MapBoard(props: Props) {
           </ReactFlow>
 
           {(notice || saveError) && (
-            <div className="absolute bottom-16 left-1/2 z-20 flex max-w-[92%] -translate-x-1/2 items-center gap-3 border border-warn/60 bg-bg-raised px-4 py-2 font-sans text-xs shadow-xl" role="alert">
+            <div className="absolute bottom-16 left-1/2 z-20 flex max-w-[92%] -translate-x-1/2 items-center gap-3 border rounded-lg border-warn/60 bg-bg-raised px-4 py-2 font-sans text-xs shadow-xl" role="alert">
               <span>{notice ?? saveError}</span>
               <button type="button" aria-label="Cerrar aviso" onClick={() => { setNotice(null); setSaveError(null); }} className="text-muted hover:text-fg">
                 ×

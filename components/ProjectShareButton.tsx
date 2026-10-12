@@ -43,7 +43,7 @@ export function ProjectShareButton({
         onClick={() => setOpen((v) => !v)}
         aria-label="Compartir proyecto"
         aria-expanded={open}
-        className={`flex h-8 w-8 items-center justify-center border transition-colors ${
+        className={`flex h-8 w-8 items-center justify-center border rounded-lg transition-colors ${
           open ? "border-accent text-accent" : "border-line text-muted hover:border-accent hover:text-accent"
         }`}
       >
@@ -51,7 +51,7 @@ export function ProjectShareButton({
       </button>
 
       {open && (
-        <div className="absolute right-0 z-20 mt-2 w-80 border border-line bg-bg p-4 shadow-lg">
+        <div className="absolute right-0 z-20 mt-2 w-80 border rounded-lg border-line bg-bg p-4 shadow-lg">
           <div className="flex items-center justify-between gap-3">
             <p className="text-xs text-accent">
               Compartir proyecto

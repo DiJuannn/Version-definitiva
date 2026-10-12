@@ -70,7 +70,7 @@ export default async function OrganizacionPage({
               label: "Plan",
               content: (
                 <div>
-                        <section className="border border-line p-6">
+                        <section className="border rounded-lg border-line p-6">
                           <div className="flex items-center justify-between gap-3">
                             <p className="text-[13px] text-accent">
                               Plan
@@ -79,7 +79,7 @@ export default async function OrganizacionPage({
                               className={`rounded-full px-3 py-1 text-xs ${
                                 isPro(profile.organization.plan)
                                   ? "bg-accent text-bg"
-                                  : "border border-line text-muted"
+                                  : "border rounded-lg border-line text-muted"
                               }`}
                             >
                               {isPro(profile.organization.plan) ? "PRO" : "Gratis"}
@@ -131,7 +131,7 @@ export default async function OrganizacionPage({
                                     checkoutUrls.lifetime ? "sm:grid-cols-3" : "sm:grid-cols-2"
                                   }`}
                                 >
-                                  <div className="border border-line p-4">
+                                  <div className="border rounded-lg border-line p-4">
                                     <p className="font-display text-2xl font-bold">
                                       6,99€
                                       <span className="text-xs font-normal text-muted">
@@ -149,7 +149,7 @@ export default async function OrganizacionPage({
                                       Pasarme a PRO
                                     </a>
                                   </div>
-                                  <div className="border border-accent p-4">
+                                  <div className="border rounded-lg border-accent p-4">
                                     <p className="font-display text-2xl font-bold">
                                       69,99€
                                       <span className="text-xs font-normal text-muted">
@@ -171,7 +171,7 @@ export default async function OrganizacionPage({
                                     </a>
                                   </div>
                                   {checkoutUrls.lifetime && (
-                                    <div className="border border-line p-4">
+                                    <div className="border rounded-lg border-line p-4">
                                       <p className="font-display text-2xl font-bold">
                                         120€
                                         <span className="text-xs font-normal text-muted">
@@ -212,7 +212,7 @@ export default async function OrganizacionPage({
               count: members.length,
               content: (
                 <div>
-                        <section className="border border-line p-6">
+                        <section className="border rounded-lg border-line p-6">
                           <p className="text-[13px] text-accent">
                             Miembros
                           </p>
@@ -238,7 +238,7 @@ export default async function OrganizacionPage({
                                     name="role"
                                     defaultValue={member.role}
                                     disabled={member.id === profile.id && adminCount === 1}
-                                    className="border border-line bg-transparent px-2 py-1 text-[13px] outline-none focus:border-accent disabled:opacity-40"
+                                    className="border rounded-lg border-line bg-transparent px-2 py-1 text-[13px] outline-none focus:border-accent disabled:opacity-40"
                                   >
                                     <option value="ADMIN" className="bg-bg">Admin</option>
                                     <option value="MEMBER" className="bg-bg">Miembro</option>
@@ -265,7 +265,7 @@ export default async function OrganizacionPage({
               alert: invites.length > 0,
               content: (
                 <div>
-                        <section className="border border-line p-6">
+                        <section className="border rounded-lg border-line p-6">
                           <div className="flex items-center gap-1.5">
                             <p className="text-[13px] text-accent">
                               Invitar a alguien

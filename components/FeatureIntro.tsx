@@ -27,7 +27,7 @@ export function FeatureIntro({
   if (dismissed) return null;
 
   return (
-    <div className="mt-6 flex items-start justify-between gap-4 border border-line bg-bg-raised p-4">
+    <div className="mt-6 flex items-start justify-between gap-4 border rounded-lg border-line bg-bg-raised p-4">
       <p className="text-xs leading-relaxed text-muted">{children}</p>
       <button
         type="button"

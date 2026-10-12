@@ -9,7 +9,7 @@ import {
 } from "@/lib/actions/schedule-assistant";
 
 const INPUT =
-  "border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent";
+  "border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent";
 
 function formatDay(key: string) {
   const text = new Date(`${key}T00:00:00Z`).toLocaleDateString("es-ES", {
@@ -161,7 +161,7 @@ export function ScheduleAssistant({
 
   if (!hasDays) {
     return (
-      <section aria-labelledby="schedule-assistant" className="mt-8 border border-accent/40 bg-bg-raised/40 p-6 sm:p-8">
+      <section aria-labelledby="schedule-assistant" className="mt-8 border rounded-lg border-accent/40 bg-bg-raised/40 p-6 sm:p-8">
         <p className="text-xs text-accent">Te lo preparo yo</p>
         <h2 id="schedule-assistant" className="mt-1.5 font-display text-2xl font-black tracking-tight sm:text-3xl">
           Crea tu plan de rodaje
@@ -172,7 +172,7 @@ export function ScheduleAssistant({
   }
 
   return (
-    <details className="group mt-8 border border-line">
+    <details className="group mt-8 border rounded-lg border-line">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-xs text-muted hover:text-accent [&::-webkit-details-marker]:hidden">
         <span>
           Repartir con el asistente las {unscheduled} escena{unscheduled === 1 ? "" : "s"} sin día

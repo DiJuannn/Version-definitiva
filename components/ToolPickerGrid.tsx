@@ -69,7 +69,7 @@ export function ToolPickerGrid({
             <CreateProjectForm
               action={createProjectAndOpenTool.bind(null, pickerTool.href)}
               formClassName="flex flex-col gap-3"
-              inputClassName="w-full border border-line bg-transparent px-3 py-2 text-sm outline-none focus:border-accent"
+              inputClassName="w-full border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none focus:border-accent"
               buttonClassName="btn btn-secondary"
               autoFocus
             />

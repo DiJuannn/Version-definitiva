@@ -54,7 +54,7 @@ export default async function ShotDetailPage({
 
       <form
         action={updateAction}
-        className="mt-8 grid gap-4 border border-line p-5 sm:grid-cols-2 lg:grid-cols-3"
+        className="mt-8 grid gap-4 border rounded-lg border-line p-5 sm:grid-cols-2 lg:grid-cols-3"
       >
         <label className="flex flex-col gap-1">
           <span className="text-xs text-muted">
@@ -64,7 +64,7 @@ export default async function ShotDetailPage({
             name="number"
             defaultValue={shot.number}
             required
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
           />
         </label>
         {fields.map(([name, label, value]) => (
@@ -75,7 +75,7 @@ export default async function ShotDetailPage({
             <input
               name={name}
               defaultValue={value}
-              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+              className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
             />
           </label>
         ))}
@@ -87,7 +87,7 @@ export default async function ShotDetailPage({
             name="fps"
             type="number"
             defaultValue={shot.fps ?? ""}
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
           />
         </label>
         <label className="flex flex-col gap-1">
@@ -98,7 +98,7 @@ export default async function ShotDetailPage({
             name="durationSec"
             type="number"
             defaultValue={shot.durationSec ?? ""}
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
           />
         </label>
         <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-3">
@@ -109,7 +109,7 @@ export default async function ShotDetailPage({
             name="description"
             defaultValue={shot.description ?? ""}
             rows={2}
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
           />
         </label>
         <label className="flex flex-col gap-1 sm:col-span-2">
@@ -119,7 +119,7 @@ export default async function ShotDetailPage({
           <input
             name="audio"
             defaultValue={shot.audio ?? ""}
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
           />
         </label>
         {shot.scene.characters.length > 0 && (
@@ -153,7 +153,7 @@ export default async function ShotDetailPage({
             name="notes"
             defaultValue={shot.notes ?? ""}
             rows={2}
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
           />
         </label>
         <div>

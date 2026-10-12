@@ -86,7 +86,7 @@ export function ProjectSummaryCard({
     ].filter((field) => field.value);
 
     return (
-      <div className="border border-line p-5">
+      <div className="border rounded-lg border-line p-5">
         <div className="flex items-center justify-between">
           <p className="text-xs text-muted">
             Datos del proyecto
@@ -129,7 +129,7 @@ export function ProjectSummaryCard({
   return (
     <form
       action={updateAction}
-      className="grid gap-4 border border-line p-5 sm:grid-cols-2 lg:grid-cols-3"
+      className="grid gap-4 border rounded-lg border-line p-5 sm:grid-cols-2 lg:grid-cols-3"
     >
       <div className="flex items-center justify-between sm:col-span-2 lg:col-span-3">
         <p className="text-xs text-muted">
@@ -152,7 +152,7 @@ export function ProjectSummaryCard({
           name="name"
           defaultValue={project.name}
           required
-          className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+          className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
         />
       </label>
 
@@ -164,7 +164,7 @@ export function ProjectSummaryCard({
           name="type"
           defaultValue={project.type ?? ""}
           placeholder="Cortometraje, spot, serie..."
-          className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+          className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
         />
       </label>
 
@@ -193,7 +193,7 @@ export function ProjectSummaryCard({
         <input
           name="director"
           defaultValue={project.director ?? ""}
-          className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+          className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
         />
       </label>
 
@@ -204,7 +204,7 @@ export function ProjectSummaryCard({
         <input
           name="producer"
           defaultValue={project.producer ?? ""}
-          className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+          className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
         />
       </label>
 
@@ -216,7 +216,7 @@ export function ProjectSummaryCard({
           name="durationLabel"
           defaultValue={project.durationLabel ?? ""}
           placeholder="12 min"
-          className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+          className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
         />
       </label>
 
@@ -230,7 +230,7 @@ export function ProjectSummaryCard({
           name="budgetTarget"
           defaultValue={project.budgetTarget ?? ""}
           placeholder="Ej. 15000"
-          className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+          className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
         />
       </label>
 
@@ -242,7 +242,7 @@ export function ProjectSummaryCard({
           type="date"
           name="startDate"
           defaultValue={toDateInputValue(project.startDate)}
-          className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+          className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
         />
       </label>
 
@@ -254,7 +254,7 @@ export function ProjectSummaryCard({
           type="date"
           name="endDate"
           defaultValue={toDateInputValue(project.endDate)}
-          className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+          className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
         />
       </label>
 
@@ -266,7 +266,7 @@ export function ProjectSummaryCard({
           name="notes"
           defaultValue={project.notes ?? ""}
           rows={3}
-          className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+          className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
         />
       </label>
 

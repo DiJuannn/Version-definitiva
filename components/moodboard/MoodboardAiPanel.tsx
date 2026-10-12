@@ -133,7 +133,7 @@ export function MoodboardAiPanel({
         </div>
       ) : (
         <div className="mt-4">
-          <p className="border border-warn/40 p-3 font-sans text-xs text-warn">
+          <p className="border rounded-lg border-warn/40 p-3 font-sans text-xs text-warn">
             ⚠ La IA puede equivocarse con títulos, años o autores. Comprueba cada referencia (el botón
             «Buscar» de la tarjeta te ayuda) antes de fiarte de ella.
           </p>

@@ -44,7 +44,7 @@ export function NextStep({
   return (
     <section
       aria-labelledby="next-step-title"
-      className={embedded ? "p-6 sm:p-8" : "mt-6 border border-accent/40 bg-bg-raised/40 p-6 sm:p-8"}
+      className={embedded ? "p-6 sm:p-8" : "mt-6 border rounded-lg border-accent/40 bg-bg-raised/40 p-6 sm:p-8"}
     >
       <div className="flex items-start gap-5">
         <AjoloteLogo className="hidden h-16 w-auto shrink-0 sm:block" />

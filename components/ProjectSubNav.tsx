@@ -107,7 +107,7 @@ export function ProjectSubNav({
                 ▾
               </span>
             </summary>
-            <div className="absolute left-0 z-20 mt-2 w-64 border border-line bg-bg-raised py-1.5 shadow-2xl shadow-black/60">
+            <div className="absolute left-0 z-20 mt-2 w-64 border rounded-lg border-line bg-bg-raised py-1.5 shadow-2xl shadow-black/60">
               {tools.map((tool) => {
                 const toolActive = isOn(toolHref(tool));
                 return (

@@ -22,7 +22,7 @@ const PRIORITY_LABELS: Record<TaskPriority, string> = {
 };
 
 const FIELD =
-  "border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent";
+  "border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent";
 
 // Lista de tareas compartida por /app/tareas (toda la organización) y
 // /app/[id]/tareas (un proyecto): mismos controles, distinto alcance.
@@ -67,7 +67,7 @@ export async function TasksView({
     <div>
       <form
         action={createTask}
-        className="mt-6 grid gap-3 border border-line p-5 sm:grid-cols-2 lg:grid-cols-5"
+        className="mt-6 grid gap-3 border rounded-lg border-line p-5 sm:grid-cols-2 lg:grid-cols-5"
       >
         {projectId && <input type="hidden" name="projectId" value={projectId} />}
         <FormField label="Nueva tarea" className="sm:col-span-2">
@@ -194,7 +194,7 @@ export async function TasksView({
               {templates.map((template) => {
                 const addItemAction = addChecklistTemplateItem.bind(null, template.id);
                 return (
-                  <div key={template.id} className="border border-line p-4">
+                  <div key={template.id} className="border rounded-lg border-line p-4">
                     <div className="flex items-center justify-between">
                       <p className="font-display text-sm font-bold">{template.name}</p>
                       <form action={deleteChecklistTemplate.bind(null, template.id)}>
@@ -221,7 +221,7 @@ export async function TasksView({
                         name="label"
                         placeholder="Añadir elemento"
                         required
-                        className="w-full border border-line bg-transparent px-2 py-1.5 text-xs outline-none transition-colors focus:border-accent"
+                        className="w-full border rounded-lg border-line bg-transparent px-2 py-1.5 text-xs outline-none transition-colors focus:border-accent"
                       />
                       <SubmitButton pendingLabel="…" className="btn btn-outline btn-sm shrink-0">
                         +
@@ -241,7 +241,7 @@ export async function TasksView({
                           id={`apply-${template.id}`}
                           name="projectId"
                           required
-                          className="border border-line bg-transparent px-2 py-1.5 text-xs outline-none transition-colors focus:border-accent"
+                          className="border rounded-lg border-line bg-transparent px-2 py-1.5 text-xs outline-none transition-colors focus:border-accent"
                         >
                           {projects.map((project) => (
                             <option key={project.id} value={project.id} className="bg-bg">

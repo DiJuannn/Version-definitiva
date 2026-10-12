@@ -8,7 +8,7 @@ const LocationsMap = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-[420px] w-full items-center justify-center border border-line">
+      <div className="flex h-[420px] w-full items-center justify-center border rounded-lg border-line">
         <p className="text-xs text-muted">Cargando mapa…</p>
       </div>
     ),

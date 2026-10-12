@@ -25,7 +25,7 @@ export type PlannerScene = {
 };
 
 const FIELD =
-  "border border-line bg-transparent px-2 py-1 text-xs outline-none transition-colors focus:border-accent";
+  "border rounded-lg border-line bg-transparent px-2 py-1 text-xs outline-none transition-colors focus:border-accent";
 
 // Planificador de un día de rodaje: se planifica por escenas y, dentro de cada
 // escena, por planos (que es como se rueda de verdad: una escena puede tener
@@ -169,7 +169,7 @@ export function DayPlanner({ dayId, scenes }: { dayId: string; scenes: PlannerSc
                         <span className="min-w-0 truncate text-xs text-muted">
                           {shot.description ?? ""}
                           {shot.otherDayLabel && !checked && (
-                            <span className="ml-2 border border-line px-1.5 py-0.5 text-[10px] text-muted">
+                            <span className="ml-2 border rounded-lg border-line px-1.5 py-0.5 text-[10px] text-muted">
                               ya en {shot.otherDayLabel}
                             </span>
                           )}

@@ -79,7 +79,7 @@ export function Modal({
         aria-labelledby={titleId}
         aria-describedby={description ? descId : undefined}
         tabIndex={-1}
-        className={`w-full max-w-sm border bg-bg p-6 outline-none ${
+        className={`w-full max-w-sm border rounded-lg bg-bg p-6 outline-none ${
           tone === "danger" ? "border-danger/70" : "border-line"
         }`}
       >

@@ -19,12 +19,12 @@ export function InviteForm() {
         type="email"
         placeholder="email@ejemplo.com"
         required
-        className="min-w-[220px] flex-1 border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+        className="min-w-[220px] flex-1 border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
       />
       <select
         name="role"
         defaultValue="MEMBER"
-        className="border border-line bg-transparent px-3 py-2 text-[13px] outline-none focus:border-accent"
+        className="border rounded-lg border-line bg-transparent px-3 py-2 text-[13px] outline-none focus:border-accent"
       >
         <option value="MEMBER" className="bg-bg">
           Miembro

@@ -36,7 +36,7 @@ export function AcceptInviteForm({
           <input
             value={email}
             disabled
-            className="mt-2 w-full border border-line bg-transparent px-3 py-2.5 text-sm text-muted outline-none"
+            className="mt-2 w-full border rounded-lg border-line bg-transparent px-3 py-2.5 text-sm text-muted outline-none"
           />
         </div>
         <AuthField label="Tu nombre" name="fullName" autoComplete="name" />

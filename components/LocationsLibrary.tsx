@@ -11,7 +11,7 @@ import { ListRow } from "@/components/ListRow";
 import { SubmitButton } from "@/components/SubmitButton";
 
 const FIELD =
-  "border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent";
+  "border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent";
 
 // Biblioteca de localizaciones de la organización (mapa, alta y listado). La
 // usan /app/localizaciones y la pestaña «Toda la biblioteca» de las
@@ -53,11 +53,11 @@ export async function LocationsLibrary({
   return (
     <>
       {mappedLocations.length > 0 ? (
-        <div className="mt-6 border border-line">
+        <div className="mt-6 border rounded-lg border-line">
           <LocationsMapClient locations={mappedLocations} />
         </div>
       ) : (
-        <div className="mt-6 flex h-[160px] items-center justify-center border border-line">
+        <div className="mt-6 flex h-[160px] items-center justify-center border rounded-lg border-line">
           <p className="max-w-sm text-center text-xs text-muted">
             Ninguna localización tiene coordenadas todavía. Añade una dirección y pulsa
             &ldquo;Buscar coordenadas&rdquo; para que aparezca aquí en el mapa.
@@ -67,7 +67,7 @@ export async function LocationsLibrary({
 
       <form
         action={createLocation}
-        className="mt-6 grid gap-3 border border-line p-5 sm:grid-cols-2 lg:grid-cols-3"
+        className="mt-6 grid gap-3 border rounded-lg border-line p-5 sm:grid-cols-2 lg:grid-cols-3"
       >
         <FormField label="Nombre">
           <input name="name" required className={FIELD} />

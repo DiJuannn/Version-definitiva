@@ -18,13 +18,13 @@ export type EditCutView = {
 };
 
 const INPUT =
-  "w-full border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent";
+  "w-full border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent";
 
 function StatusBadge({ status }: { status: string }) {
   const tone =
     status === "FINAL" ? "border-success/60 text-success" : status === "REVIEW" ? "border-warn/60 text-warn" : "border-line text-muted";
   return (
-    <span className={`shrink-0 border px-2 py-1 text-xs ${tone}`}>
+    <span className={`shrink-0 border rounded-lg px-2 py-1 text-xs ${tone}`}>
       {EDIT_CUT_STATUS_LABELS[status as keyof typeof EDIT_CUT_STATUS_LABELS] ?? status}
     </span>
   );
@@ -59,7 +59,7 @@ function CutRow({ projectId, cut }: { projectId: string; cut: EditCutView }) {
               defaultValue={cut.status}
               disabled={pending}
               onChange={(e) => e.currentTarget.form?.requestSubmit()}
-              className="border border-line bg-transparent px-2 py-1.5 text-xs outline-none focus:border-accent disabled:opacity-60"
+              className="border rounded-lg border-line bg-transparent px-2 py-1.5 text-xs outline-none focus:border-accent disabled:opacity-60"
             >
               {Object.entries(EDIT_CUT_STATUS_LABELS).map(([value, label]) => (
                 <option key={value} value={value} className="bg-bg">
@@ -101,7 +101,7 @@ export function EditCutsPanel({ projectId, cuts }: { projectId: string; cuts: Ed
             createAction(fd);
             setOpen(cuts.length === 0);
           }}
-          className="mt-4 grid gap-3 border border-line p-5 sm:grid-cols-2 lg:grid-cols-4"
+          className="mt-4 grid gap-3 border rounded-lg border-line p-5 sm:grid-cols-2 lg:grid-cols-4"
         >
           <FormField label="Nombre" className="lg:col-span-2">
             <input name="name" required placeholder="Corte 1" className={INPUT} />

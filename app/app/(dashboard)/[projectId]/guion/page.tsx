@@ -116,7 +116,7 @@ export default async function GuionPage({
                               <FormField label="Número de escena" className="w-full">
                                 <input name="number"
                                 required
-                                className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+                                className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
           
                                 placeholder="04" />
                               </FormField>
@@ -194,7 +194,7 @@ export default async function GuionPage({
               content: (
                 <div>
                           {scriptFiles.length === 0 && scenes.length === 0 ? (
-                            <div className="mt-2 border border-accent/40 bg-bg-raised/40 p-6 sm:p-8">
+                            <div className="mt-2 border rounded-lg border-accent/40 bg-bg-raised/40 p-6 sm:p-8">
                               <p className="text-xs text-accent">Paso 1 de 3</p>
                               <h2 className="mt-1.5 font-display text-2xl font-black tracking-tight sm:text-3xl">
                                 Sube tu guion
@@ -204,15 +204,15 @@ export default async function GuionPage({
                                 localizaciones para que no tengas que teclear nada.
                               </p>
                               <ol className="mt-5 grid max-w-2xl gap-3 font-sans text-sm sm:grid-cols-3">
-                                <li className="border border-line p-3">
+                                <li className="border rounded-lg border-line p-3">
                                   <span className="text-xs text-accent">1 · Subes</span>
                                   <span className="mt-1 block text-muted">Tu guion tal como lo tienes.</span>
                                 </li>
-                                <li className="border border-line p-3">
+                                <li className="border rounded-lg border-line p-3">
                                   <span className="text-xs text-accent">2 · La IA lo lee</span>
                                   <span className="mt-1 block text-muted">Tarda menos de un minuto.</span>
                                 </li>
-                                <li className="border border-line p-3">
+                                <li className="border rounded-lg border-line p-3">
                                   <span className="text-xs text-accent">3 · Tú decides</span>
                                   <span className="mt-1 block text-muted">Revisas y confirmas; no cambia nada sin tu visto bueno.</span>
                                 </li>
@@ -257,7 +257,7 @@ export default async function GuionPage({
                               {/* Tarjeta propia para Analizar — mismo peso visual que la
                                   Claqueta digital del inicio, en vez de ir apretado junto al
                                   nombre del archivo compitiendo con "Eliminar". */}
-                              <div className={`mt-6 border p-5 ${scenes.length === 0 ? "border-accent/40 bg-bg-raised/40" : "border-line"}`}>
+                              <div className={`mt-6 border rounded-lg p-5 ${scenes.length === 0 ? "border-accent/40 bg-bg-raised/40" : "border-line"}`}>
                                 {scenes.length === 0 && (
                                   <p className="mb-3 text-xs text-accent">
                                     Paso 2 de 3 · Ahora que lo lea la IA
@@ -368,7 +368,7 @@ export default async function GuionPage({
       </div>
 
       {backups.length > 0 && (
-        <details className="group mt-10 border border-line">
+        <details className="group mt-10 border rounded-lg border-line">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-xs text-muted hover:text-accent">
             <span>Copias de seguridad del guion ({backups.length})</span>
             <span className="transition-transform group-open:rotate-45">+</span>

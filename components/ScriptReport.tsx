@@ -7,7 +7,7 @@ import type { ScriptReport as Report, ScriptTake } from "@/lib/script-report";
 import { useToast } from "@/components/Toast";
 
 const FIELD =
-  "border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent";
+  "border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent";
 
 function timeOf(iso: string) {
   return new Date(iso).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Madrid" });
@@ -114,7 +114,7 @@ export function ScriptReport({ projectId, initial, today }: { projectId: string;
 
   return (
     <div>
-      <div className="grid grid-cols-2 gap-px overflow-hidden border border-line bg-line sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-px overflow-hidden border rounded-lg border-line bg-line sm:grid-cols-4">
         <div className="bg-bg px-4 py-3">
           <p className="font-display text-2xl font-black tabular-nums">{totals.takes}</p>
           <p className="mt-0.5 text-xs text-muted">Tomas</p>
@@ -150,7 +150,7 @@ export function ScriptReport({ projectId, initial, today }: { projectId: string;
               type="button"
               onClick={() => setOnlyGood(opt.v)}
               aria-pressed={onlyGood === opt.v}
-              className={`border px-3 py-1.5 text-xs transition-colors ${
+              className={`border rounded-lg px-3 py-1.5 text-xs transition-colors ${
                 onlyGood === opt.v ? "border-accent bg-accent/10 text-accent" : "border-line text-muted hover:text-fg"
               }`}
             >
@@ -176,7 +176,7 @@ export function ScriptReport({ projectId, initial, today }: { projectId: string;
       )}
 
       {report.days.length === 0 ? (
-        <div className="mt-8 border border-dashed border-line p-8 text-center">
+        <div className="mt-8 border rounded-lg border-dashed border-line p-8 text-center">
           <p className="font-display text-lg font-bold">Todavía no hay tomas</p>
           <p className="mx-auto mt-2 max-w-md text-xs text-muted">
             Marca tomas con la claqueta durante el rodaje y aparecerán aquí solas, o apúntalas a mano con
@@ -208,7 +208,7 @@ export function ScriptReport({ projectId, initial, today }: { projectId: string;
 
                 <div className="mt-4 space-y-6">
                   {scenes.map((scene) => (
-                    <div key={scene.sceneNumber} className="border border-line">
+                    <div key={scene.sceneNumber} className="border rounded-lg border-line">
                       <div className="flex flex-wrap items-baseline justify-between gap-2 bg-bg-raised px-4 py-2">
                         <p className="font-display text-sm font-bold">Escena {scene.sceneNumber}</p>
                         {scene.context && <p className="text-xs text-muted">{scene.context}</p>}
@@ -221,7 +221,7 @@ export function ScriptReport({ projectId, initial, today }: { projectId: string;
                               {shot.size && <span className="text-[13px]">{shot.size}</span>}
                               {shot.description && <span className="text-xs text-muted">{shot.description}</span>}
                               {shot.shotNumber && !shot.inShotList && (
-                                <span className="border border-line px-1.5 py-0.5 text-xs text-muted">
+                                <span className="border rounded-lg border-line px-1.5 py-0.5 text-xs text-muted">
                                   no está en la shot list
                                 </span>
                               )}
@@ -239,7 +239,7 @@ export function ScriptReport({ projectId, initial, today }: { projectId: string;
                                     onClick={() => toggleGood(take)}
                                     aria-pressed={take.good}
                                     aria-label={`Toma ${take.take}: ${take.good ? "quitar de buenas" : "marcar como buena"}`}
-                                    className={`flex h-6 w-6 items-center justify-center border text-xs transition-colors ${
+                                    className={`flex h-6 w-6 items-center justify-center border rounded-lg text-xs transition-colors ${
                                       take.good
                                         ? "border-success bg-success text-bg"
                                         : "border-line text-transparent hover:border-success hover:text-success"
@@ -265,7 +265,7 @@ export function ScriptReport({ projectId, initial, today }: { projectId: string;
                                         if (e.key === "Enter") e.currentTarget.blur();
                                         if (e.key === "Escape") setEditingNote(null);
                                       }}
-                                      className="min-w-0 border border-accent bg-transparent px-2 py-1 text-xs outline-none"
+                                      className="min-w-0 border rounded-lg border-accent bg-transparent px-2 py-1 text-xs outline-none"
                                     />
                                   ) : (
                                     <button
@@ -378,7 +378,7 @@ function ManualForm({
   }
 
   return (
-    <form onSubmit={submit} className="mt-4 grid gap-3 border border-line p-5 sm:grid-cols-2 lg:grid-cols-4">
+    <form onSubmit={submit} className="mt-4 grid gap-3 border rounded-lg border-line p-5 sm:grid-cols-2 lg:grid-cols-4">
       <label className="flex flex-col gap-1">
         <span className="text-xs text-muted">Escena</span>
         <input

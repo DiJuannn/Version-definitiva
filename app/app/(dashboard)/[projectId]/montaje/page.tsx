@@ -157,7 +157,7 @@ export default async function MontajePage({
                     </p>
                     <CopyTextButton text={creditsText} label="Copiar créditos" />
                   </div>
-                  <pre className="mt-6 max-w-2xl overflow-x-auto whitespace-pre-wrap border border-line bg-bg-raised/40 p-5 text-sm leading-relaxed">
+                  <pre className="mt-6 max-w-2xl overflow-x-auto whitespace-pre-wrap border rounded-lg border-line bg-bg-raised/40 p-5 text-sm leading-relaxed">
                     {creditsText}
                   </pre>
                 </div>

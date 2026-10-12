@@ -72,7 +72,7 @@ export function ScriptUploadForm({
           onClick={() => setPendingFileName(null)}
         >
           <div
-            className="w-full max-w-sm border border-accent bg-bg p-6"
+            className="w-full max-w-sm border rounded-lg border-accent bg-bg p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <p className="font-display text-lg font-bold">
@@ -82,7 +82,7 @@ export function ScriptUploadForm({
               Ya hay un guion subido ({existingFileName}). Si subes «
               {pendingFileName}», lo sustituirá.
             </p>
-            <p className="mt-3 border border-warn/60 p-3 font-sans text-sm text-warn">
+            <p className="mt-3 border rounded-lg border-warn/60 p-3 font-sans text-sm text-warn">
               ⚠ Al analizarlo, podrás reemplazar todo lo del guion anterior (escenas, planos, personajes y desglose):
               se borrará y se sustituirá con el nuevo. Actores, equipo, presupuesto, días de rodaje, tareas y
               documentos no se tocan. Antes de borrar nada te pediremos confirmación.

@@ -78,7 +78,7 @@ export default async function SceneDetailPage({
       />
 
       <form action={updateAction} className="mt-8 space-y-8">
-        <div className="grid gap-4 border border-line p-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 border rounded-lg border-line p-5 sm:grid-cols-2 lg:grid-cols-4">
           <label className="flex flex-col gap-1">
             <span className="text-xs text-muted">
               Número
@@ -87,7 +87,7 @@ export default async function SceneDetailPage({
               name="number"
               defaultValue={scene.number}
               required
-              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+              className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
             />
           </label>
           <div className="flex flex-col gap-1">
@@ -131,7 +131,7 @@ export default async function SceneDetailPage({
             <select
               name="locationId"
               defaultValue={scene.locationId ?? ""}
-              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+              className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
             >
               <option value="" className="bg-bg">
                 Sin localización
@@ -161,7 +161,7 @@ export default async function SceneDetailPage({
               type="number"
               placeholder={String(scene.order)}
               defaultValue={scene.storyOrder ?? ""}
-              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+              className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
             />
           </label>
 
@@ -173,7 +173,7 @@ export default async function SceneDetailPage({
               name="description"
               defaultValue={scene.description ?? ""}
               rows={2}
-              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+              className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
             />
           </label>
           <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-4">
@@ -184,7 +184,7 @@ export default async function SceneDetailPage({
               name="action"
               defaultValue={scene.action ?? ""}
               rows={2}
-              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+              className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
             />
           </label>
           <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-4">
@@ -195,7 +195,7 @@ export default async function SceneDetailPage({
               name="dialogueNotes"
               defaultValue={scene.dialogueNotes ?? ""}
               rows={2}
-              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+              className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
             />
           </label>
           <label className="flex flex-col gap-1 sm:col-span-2">
@@ -206,7 +206,7 @@ export default async function SceneDetailPage({
               name="extrasNotes"
               defaultValue={scene.extrasNotes ?? ""}
               rows={2}
-              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+              className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
             />
           </label>
           <label className="flex flex-col gap-1 sm:col-span-2">
@@ -217,12 +217,12 @@ export default async function SceneDetailPage({
               name="productionNotes"
               defaultValue={scene.productionNotes ?? ""}
               rows={2}
-              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+              className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
             />
           </label>
         </div>
 
-        <div className="border border-line p-5">
+        <div className="border rounded-lg border-line p-5">
           <span className="text-xs text-accent">
             Personajes
           </span>
@@ -250,7 +250,7 @@ export default async function SceneDetailPage({
           )}
         </div>
 
-        <div className="border border-line p-5">
+        <div className="border rounded-lg border-line p-5">
           <span className="flex items-center gap-1.5 text-xs text-accent">
             Desglose
             <HelpTip text="El campo 'Estado' es opcional — solo rellénalo si en esta escena concreta el objeto está roto, perdido, manchado, etc. Ayuda al detector de continuidad a avisar si luego aparece intacto sin explicación." />
@@ -293,7 +293,7 @@ export default async function SceneDetailPage({
                             name={`condition_${item.id}`}
                             placeholder="Estado (opcional)"
                             defaultValue={conditionByBreakdownId.get(item.id) ?? ""}
-                            className="w-36 border border-line bg-transparent px-2 py-1 text-[11px] outline-none transition-colors focus:border-accent"
+                            className="w-36 border rounded-lg border-line bg-transparent px-2 py-1 text-[11px] outline-none transition-colors focus:border-accent"
                           />
                         </div>
                       ))}
@@ -304,7 +304,7 @@ export default async function SceneDetailPage({
           )}
         </div>
 
-        <div className="border border-line p-5">
+        <div className="border rounded-lg border-line p-5">
           <span className="text-xs text-accent">
             Equipo técnico
           </span>

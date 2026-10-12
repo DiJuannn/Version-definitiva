@@ -12,7 +12,7 @@ export function EmptyState({
   actionHref?: string;
 }) {
   return (
-    <div className="mt-10 border border-dashed border-line p-8 text-center">
+    <div className="mt-10 border rounded-lg border-dashed border-line p-8 text-center">
       <p className="font-display text-sm font-bold">{title}</p>
       {description && (
         <p className="mt-2 font-sans text-sm text-muted">{description}</p>

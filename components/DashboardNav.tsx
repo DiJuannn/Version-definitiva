@@ -129,7 +129,7 @@ function GroupTab({ item, pathname }: { item: NavItem; pathname: string }) {
       {open && (
         <div
           role="menu"
-          className="absolute left-0 z-40 mt-px w-56 border border-line bg-bg-raised py-1.5 shadow-2xl shadow-black/60"
+          className="absolute left-0 z-40 mt-px w-56 border rounded-lg border-line bg-bg-raised py-1.5 shadow-2xl shadow-black/60"
         >
           {item.children?.map((child) => {
             const ChildIcon = ICONS[child.icon];

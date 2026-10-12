@@ -62,7 +62,7 @@ export function StageFocus({
   if (stage === 3) {
     const today = nextShoot ? isToday(nextShoot.date) : false;
     return (
-      <section aria-labelledby="stage-focus-title" className={embedded ? "p-6 sm:p-8" : "mt-6 border border-accent/40 bg-bg-raised/40 p-6 sm:p-8"}>
+      <section aria-labelledby="stage-focus-title" className={embedded ? "p-6 sm:p-8" : "mt-6 border rounded-lg border-accent/40 bg-bg-raised/40 p-6 sm:p-8"}>
         <p className="text-xs text-accent">Estás rodando</p>
         {nextShoot ? (
           <>
@@ -128,7 +128,7 @@ export function StageFocus({
   const finished = status === "FINISHED";
   const spendDone = budget.actual > 0;
   return (
-    <section aria-labelledby="stage-focus-title" className={embedded ? "p-6 sm:p-8" : "mt-6 border border-accent/40 bg-bg-raised/40 p-6 sm:p-8"}>
+    <section aria-labelledby="stage-focus-title" className={embedded ? "p-6 sm:p-8" : "mt-6 border rounded-lg border-accent/40 bg-bg-raised/40 p-6 sm:p-8"}>
       <p className={`text-xs ${finished ? "text-success" : "text-accent"}`}>
         {finished ? "Terminado" : "Recta final"}
       </p>
@@ -141,7 +141,7 @@ export function StageFocus({
           : "Antes de darlo por terminado: revisa el dinero real, guarda un dossier y elige dónde presentarlo."}
       </p>
       <ul className="mt-5 grid gap-3">
-        <li className="flex flex-wrap items-center justify-between gap-3 border border-line p-4">
+        <li className="flex flex-wrap items-center justify-between gap-3 border rounded-lg border-line p-4">
           <div>
             <p className="font-display text-sm font-bold">
               <span aria-hidden className="text-muted">○ </span>
@@ -153,7 +153,7 @@ export function StageFocus({
             Ir a Montaje
           </Link>
         </li>
-        <li className="flex flex-wrap items-center justify-between gap-3 border border-line p-4">
+        <li className="flex flex-wrap items-center justify-between gap-3 border rounded-lg border-line p-4">
           <div>
             <p className="font-display text-sm font-bold">
               <span aria-hidden className={spendDone ? "text-success" : "text-muted"}>{spendDone ? "✓ " : "○ "}</span>
@@ -167,7 +167,7 @@ export function StageFocus({
             Ir al presupuesto
           </Link>
         </li>
-        <li className="flex flex-wrap items-center justify-between gap-3 border border-line p-4">
+        <li className="flex flex-wrap items-center justify-between gap-3 border rounded-lg border-line p-4">
           <div>
             <p className="font-display text-sm font-bold">
               <span aria-hidden className="text-muted">○ </span>
@@ -177,7 +177,7 @@ export function StageFocus({
           </div>
           <PdfLink href={`/api/pdf/dossier/${projectId}`} label="Descargar dossier" />
         </li>
-        <li className="flex flex-wrap items-center justify-between gap-3 border border-line p-4">
+        <li className="flex flex-wrap items-center justify-between gap-3 border rounded-lg border-line p-4">
           <div>
             <p className="font-display text-sm font-bold">
               <span aria-hidden className="text-muted">○ </span>
@@ -189,7 +189,7 @@ export function StageFocus({
             Ver festivales
           </Link>
         </li>
-        <li className="flex flex-wrap items-center justify-between gap-3 border border-line p-4">
+        <li className="flex flex-wrap items-center justify-between gap-3 border rounded-lg border-line p-4">
           <div>
             <p className="font-display text-sm font-bold">
               <span aria-hidden className={finished ? "text-success" : "text-muted"}>{finished ? "✓ " : "○ "}</span>

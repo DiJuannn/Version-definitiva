@@ -149,7 +149,7 @@ export default async function ShootingDayDetailPage({
       />
 
       {availabilityWarnings.length > 0 && (
-        <div className="mt-6 border border-warn/60 p-4">
+        <div className="mt-6 border rounded-lg border-warn/60 p-4">
           <p className="text-[13px] text-warn">
             ⚠ Posible conflicto de disponibilidad
           </p>
@@ -165,7 +165,7 @@ export default async function ShootingDayDetailPage({
       )}
 
       {(itemConflicts.length > 0 || vehicleConflicts.length > 0) && (
-        <div className="mt-6 border border-warn/60 p-4">
+        <div className="mt-6 border rounded-lg border-warn/60 p-4">
           <p className="text-[13px] text-warn">
             ⚠ Posible conflicto de reserva
           </p>
@@ -188,7 +188,7 @@ export default async function ShootingDayDetailPage({
 
       <form
         action={updateDayAction}
-        className="mt-8 grid gap-4 border border-line p-5 sm:grid-cols-2"
+        className="mt-8 grid gap-4 border rounded-lg border-line p-5 sm:grid-cols-2"
       >
         <label className="flex flex-col gap-1">
           <span className="text-xs text-muted">
@@ -199,7 +199,7 @@ export default async function ShootingDayDetailPage({
             name="date"
             defaultValue={toDateInputValue(summary.shootingDay.date)}
             required
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
           />
         </label>
         <label className="flex flex-col gap-1">
@@ -209,7 +209,7 @@ export default async function ShootingDayDetailPage({
           <input
             name="notes"
             defaultValue={summary.shootingDay.notes ?? ""}
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
           />
         </label>
         <div>
@@ -289,7 +289,7 @@ export default async function ShootingDayDetailPage({
                                         aria-label={`Unidades reservadas de ${item.name}`}
                                         placeholder="Uds."
                                         defaultValue={reservedItemQty.get(item.id) ?? 1}
-                                        className="w-16 border border-line bg-transparent px-2 py-1 text-xs outline-none transition-colors focus:border-accent"
+                                        className="w-16 border rounded-lg border-line bg-transparent px-2 py-1 text-xs outline-none transition-colors focus:border-accent"
                                       />
                                     </div>
                                   ))}
@@ -345,7 +345,7 @@ export default async function ShootingDayDetailPage({
               label: "Resumen del día",
               content: (
                 <div className="grid gap-6 sm:grid-cols-2">
-                          <div className="border border-line p-5">
+                          <div className="border rounded-lg border-line p-5">
                             <p className="text-xs text-muted">
                               Localizaciones ({summary.locations.length})
                             </p>
@@ -353,7 +353,7 @@ export default async function ShootingDayDetailPage({
                               {summary.locations.map((l) => l.name).join(", ") || "—"}
                             </p>
                           </div>
-                          <div className="border border-line p-5">
+                          <div className="border rounded-lg border-line p-5">
                             <p className="text-xs text-muted">
                               Personajes ({summary.characters.length})
                             </p>
@@ -361,7 +361,7 @@ export default async function ShootingDayDetailPage({
                               {summary.characters.map((c) => c.name).join(", ") || "—"}
                             </p>
                           </div>
-                          <div className="border border-line p-5">
+                          <div className="border rounded-lg border-line p-5">
                             <p className="text-xs text-muted">
                               Equipo técnico ({summary.crewMembers.length})
                             </p>
@@ -369,7 +369,7 @@ export default async function ShootingDayDetailPage({
                               {summary.crewMembers.map((c) => c.name).join(", ") || "—"}
                             </p>
                           </div>
-                          <div className="border border-line p-5">
+                          <div className="border rounded-lg border-line p-5">
                             <p className="text-xs text-muted">
                               Desglose ({summary.breakdownElements.length})
                             </p>
@@ -385,7 +385,7 @@ export default async function ShootingDayDetailPage({
 
         {/* Barra de guardado siempre a mano: guarda a la vez escenas, material y
             vehículos, esté la pestaña que esté a la vista. */}
-        <div className="sticky bottom-24 z-20 mt-8 flex flex-wrap items-center gap-4 border border-line bg-bg-raised/95 p-3 backdrop-blur-md sm:bottom-4 sm:p-4 print:hidden">
+        <div className="sticky bottom-24 z-20 mt-8 flex flex-wrap items-center gap-4 border rounded-lg border-line bg-bg-raised/95 p-3 backdrop-blur-md sm:bottom-4 sm:p-4 print:hidden">
           <SubmitButton pendingLabel="Guardando…" savedLabel="✓ Plan guardado" className="btn btn-primary">
             Guardar plan del día
           </SubmitButton>

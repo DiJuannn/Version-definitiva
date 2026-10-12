@@ -58,7 +58,7 @@ export default async function ContinuityCheckPage({
       ) : (
         <div className="mt-8 space-y-4">
           {check.issues.map((issue) => (
-            <div key={issue.id} className="border border-line p-5">
+            <div key={issue.id} className="border rounded-lg border-line p-5">
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-xs text-accent">
@@ -89,7 +89,7 @@ export default async function ContinuityCheckPage({
                   {issue.sceneNumbers.map((number) => (
                     <span
                       key={number}
-                      className="border border-line px-2 py-0.5 text-xs text-muted"
+                      className="border rounded-lg border-line px-2 py-0.5 text-xs text-muted"
                     >
                       Escena {number}
                     </span>

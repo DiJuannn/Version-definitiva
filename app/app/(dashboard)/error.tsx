@@ -17,7 +17,7 @@ export default function DashboardError({
   }, [error]);
 
   return (
-    <div className="mx-auto max-w-md border border-danger/50 p-8 text-center">
+    <div className="mx-auto max-w-md border rounded-lg border-danger/50 p-8 text-center">
       <p className="font-display text-lg font-bold">No se pudo cargar esta pantalla</p>
       <p className="mt-2 font-sans text-sm text-muted">
         Ha habido un problema al mostrar los datos. Puede ser la conexión. Tus cambios anteriores

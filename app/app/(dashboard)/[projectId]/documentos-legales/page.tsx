@@ -73,7 +73,7 @@ export default async function DocumentosLegalesPage({
             <Link
               key={template.href}
               href={`/app/${projectId}/documentos-legales/${template.href}`}
-              className="group border border-line p-5 transition-colors hover:border-accent"
+              className="group border rounded-lg border-line p-5 transition-colors hover:border-accent"
             >
               <p className="font-display text-lg font-bold transition-colors group-hover:text-accent">
                 {template.title}

@@ -4,7 +4,7 @@ import { isProjectOwnerPro } from "@/lib/project-plan";
 import { PageHeader } from "@/components/PageHeader";
 
 const inputClass =
-  "w-full border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent";
+  "w-full border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent";
 const labelClass = "text-xs text-muted";
 
 export default async function AutorizacionMenorPage({
@@ -35,7 +35,7 @@ export default async function AutorizacionMenorPage({
         action={`/api/pdf/legal/${projectId}/autorizacion-menor`}
         method="POST"
         target="_blank"
-        className="mt-6 grid gap-4 border border-line p-5 sm:grid-cols-2"
+        className="mt-6 grid gap-4 border rounded-lg border-line p-5 sm:grid-cols-2"
       >
         <label className="flex flex-col gap-1 sm:col-span-2">
           <span className={labelClass}>Nombre completo del menor</span>

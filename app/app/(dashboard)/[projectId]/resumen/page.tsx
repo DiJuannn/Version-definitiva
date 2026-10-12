@@ -89,7 +89,7 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <details className="group border border-line">
+    <details className="group border rounded-lg border-line">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 transition-colors hover:text-accent [&::-webkit-details-marker]:hidden">
         <span className="flex items-center gap-2 font-display text-sm font-bold">
           <span className="text-muted transition-transform group-open:rotate-90">→</span>
@@ -262,7 +262,7 @@ export default async function ProjectSummaryPage({
       <ResumenTabs projectId={projectId} active="resumen" />
 
       {/* Dónde está el proyecto, en una línea */}
-      <div className="mt-6 flex items-center gap-4 border border-line px-4 py-3">
+      <div className="mt-6 flex items-center gap-4 border rounded-lg border-line px-4 py-3">
         <p className="shrink-0 font-display text-2xl font-black tabular-nums">
           {headline.percent}
           <span className="text-base text-muted">%</span>
@@ -277,15 +277,15 @@ export default async function ProjectSummaryPage({
 
       {/* Cuatro datos clave */}
       <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="border border-line p-4">
+        <div className="border rounded-lg border-line p-4">
           <p className={LABEL}>Estado</p>
           <p className="mt-1 text-sm">{PROJECT_STATUS_LABELS[project.status]}</p>
         </div>
-        <div className="border border-line p-4">
+        <div className="border rounded-lg border-line p-4">
           <p className={LABEL}>Escenas</p>
           <p className="mt-1 text-sm">{project.scenes.length}</p>
         </div>
-        <div className="border border-line p-4">
+        <div className="border rounded-lg border-line p-4">
           <p className={LABEL}>Días de rodaje</p>
           <p className="mt-1 text-sm">{project.shootingDays.length}</p>
           {nextShoot && (
@@ -295,7 +295,7 @@ export default async function ProjectSummaryPage({
             </p>
           )}
         </div>
-        <div className="border border-line p-4">
+        <div className="border rounded-lg border-line p-4">
           <p className={LABEL}>Presupuesto</p>
           <p className="mt-1 text-sm">
             {budgetTarget ? `${currency(budgetGrandTotal)} / ${currency(budgetTarget)}` : currency(budgetGrandTotal)}
@@ -309,9 +309,9 @@ export default async function ProjectSummaryPage({
       {/* Lo que falta: un solo bloque, cerrado hasta que se necesite */}
       <div className="mt-3">
         {pending.length === 0 ? (
-          <p className="border border-line px-4 py-3 text-xs text-success">✓ Todo al día: no hay nada pendiente.</p>
+          <p className="border rounded-lg border-line px-4 py-3 text-xs text-success">✓ Todo al día: no hay nada pendiente.</p>
         ) : (
-          <details className="group border border-warn/50">
+          <details className="group border rounded-lg border-warn/50">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 transition-colors hover:text-accent [&::-webkit-details-marker]:hidden">
               <span className="flex items-center gap-2 font-display text-sm font-bold">
                 <span className="text-muted transition-transform group-open:rotate-90">→</span>

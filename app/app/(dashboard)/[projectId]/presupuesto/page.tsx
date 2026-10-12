@@ -22,7 +22,7 @@ function currency(value: number) {
 }
 
 const FIELD =
-  "border border-line bg-transparent px-2 py-1.5 text-xs outline-none transition-colors focus:border-accent";
+  "border rounded-lg border-line bg-transparent px-2 py-1.5 text-xs outline-none transition-colors focus:border-accent";
 
 export default async function PresupuestoPage({
   params,
@@ -116,7 +116,7 @@ export default async function PresupuestoPage({
           name="name"
           placeholder="Ej. Localizaciones"
           required
-          className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+          className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
         />
       </FormField>
       <SubmitButton pendingLabel="Creando…" savedLabel="✓ Creada" className="btn btn-secondary shrink-0">
@@ -141,7 +141,7 @@ export default async function PresupuestoPage({
         }
       />
 
-      <div className="mt-8 grid gap-px overflow-hidden border border-line bg-line sm:grid-cols-3">
+      <div className="mt-8 grid gap-px overflow-hidden border rounded-lg border-line bg-line sm:grid-cols-3">
         <div className="bg-bg-raised p-5">
           <p className="text-xs text-muted">Previsto (con IVA)</p>
           <p className="mt-2 font-display text-3xl font-black tabular-nums">{currency(grandTotal)}</p>
@@ -191,7 +191,7 @@ export default async function PresupuestoPage({
 
       {categoriesWithTotals.length === 0 ? (
         <>
-          <section className="mt-8 border border-accent/40 bg-bg-raised/40 p-6 sm:p-8">
+          <section className="mt-8 border rounded-lg border-accent/40 bg-bg-raised/40 p-6 sm:p-8">
             <p className="text-xs text-accent">Te lo preparo yo</p>
             <h2 className="mt-1.5 font-display text-2xl font-black tracking-tight sm:text-3xl">
               Empieza con las categorías de siempre
@@ -222,7 +222,7 @@ export default async function PresupuestoPage({
             const createItemAction = createBudgetItem.bind(null, projectId, category.id);
             const share = grandTotal > 0 ? (category.categoryTotal / grandTotal) * 100 : 0;
             return (
-              <section key={category.id} className="border border-line bg-bg-raised/40">
+              <section key={category.id} className="border rounded-lg border-line bg-bg-raised/40">
                 <div className="flex items-center justify-between gap-4 px-5 py-4">
                   <div className="min-w-0">
                     <h2 className="font-display text-lg font-bold">{category.name}</h2>
@@ -363,7 +363,7 @@ export default async function PresupuestoPage({
             );
           })}
 
-          <div className="grid gap-px border border-accent/40 bg-accent/20 sm:grid-cols-2">
+          <div className="grid gap-px border rounded-lg border-accent/40 bg-accent/20 sm:grid-cols-2">
             <div className="flex items-center justify-between bg-bg px-5 py-4">
               <span className="font-display text-lg font-bold">Total previsto</span>
               <span className="font-display text-2xl font-black tabular-nums text-accent">

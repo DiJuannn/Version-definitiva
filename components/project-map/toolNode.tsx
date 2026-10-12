@@ -49,7 +49,7 @@ export function ToolNodeView({ data, selected }: NodeProps<ToolNode>) {
         </>
       )}
       <div
-        className={`flex h-full w-full flex-col gap-1 overflow-hidden border bg-bg-raised p-3 ${
+        className={`flex h-full w-full flex-col gap-1 overflow-hidden border rounded-lg bg-bg-raised p-3 ${
           card.key === "proyecto" ? "border-accent/60" : "border-line"
         }`}
       >
@@ -85,7 +85,7 @@ export function ToolNodeView({ data, selected }: NodeProps<ToolNode>) {
               disabled={busy || readOnly}
               onChange={(e) => changeStatus(e.target.value)}
               aria-label="Estado del proyecto"
-              className="mt-1 w-full border border-line bg-bg px-2 py-1.5 text-xs"
+              className="mt-1 w-full border rounded-lg border-line bg-bg px-2 py-1.5 text-xs"
             >
               {card.project.options.map((o) => (
                 <option key={o.value} value={o.value}>
@@ -108,7 +108,7 @@ export function ToolNodeView({ data, selected }: NodeProps<ToolNode>) {
                     disabled={busy || readOnly}
                     onClick={() => completeTask(t.id)}
                     aria-label={`Completar «${t.title}»`}
-                    className="nodrag mt-0.5 h-4 w-4 shrink-0 border border-muted/60 hover:border-accent"
+                    className="nodrag mt-0.5 h-4 w-4 shrink-0 border rounded-lg border-muted/60 hover:border-accent"
                   />
                   <span className="min-w-0 font-sans text-xs leading-snug">
                     {t.title}

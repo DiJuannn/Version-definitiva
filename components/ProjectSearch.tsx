@@ -144,7 +144,7 @@ export function ProjectSearch({ projectId }: { projectId: string }) {
             if (e.target === e.currentTarget) setOpen(false);
           }}
         >
-          <div role="dialog" aria-modal="true" aria-label="Buscar en el proyecto" className="w-full max-w-xl border border-accent/50 bg-bg shadow-2xl shadow-black/70">
+          <div role="dialog" aria-modal="true" aria-label="Buscar en el proyecto" className="w-full max-w-xl border rounded-lg border-accent/50 bg-bg shadow-2xl shadow-black/70">
             <div className="flex items-center gap-3 border-b border-line px-4">
               <input
                 ref={inputRef}

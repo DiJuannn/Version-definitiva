@@ -47,30 +47,30 @@ export function ToolCard({
 
   if (variant === "row") {
     const inner = (
-      <div className="flex h-full items-start gap-3.5 border border-line bg-bg-raised/40 p-4 transition duration-300 group-hover:border-accent/60 group-hover:bg-accent/5 group-active:scale-[0.99] max-sm:p-3">
-        <div className="h-7 w-7 shrink-0 text-muted transition duration-300 group-hover:-translate-y-0.5 group-hover:text-accent">
-          {icon}
+      <div className="flex h-full items-start gap-3.5 rounded-xl border border-line bg-bg-raised/40 p-4 transition duration-200 group-hover:-translate-y-0.5 group-hover:border-accent/60 group-hover:bg-accent/5 group-active:scale-[0.99] max-sm:p-3">
+        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-accent/10 text-accent transition-colors duration-200 group-hover:bg-accent/20">
+          <span className="h-5 w-5">{icon}</span>
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="font-display text-sm font-bold">{label}</span>
+            <span className="text-[0.9375rem] font-semibold">{label}</span>
             {badgePill}
             {href && <LinkPendingHint />}
           </div>
           {stat && (
-            <p className={`mt-1 text-xs ${STAT_TONE[stat.tone ?? "none"]}`}>
+            <p className={`mt-0.5 text-[13px] font-medium ${STAT_TONE[stat.tone ?? "none"]}`}>
               {stat.text}
             </p>
           )}
           {description && (
-            <p className="mt-1 line-clamp-1 text-xs leading-relaxed text-muted sm:line-clamp-none">
+            <p className="mt-1 line-clamp-2 text-[13px] leading-snug text-muted">
               {description}
             </p>
           )}
         </div>
         <span
           aria-hidden
-          className="shrink-0 self-center text-xs text-accent opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100"
+          className="shrink-0 self-center text-sm text-accent opacity-0 transition-[opacity,transform] duration-200 group-hover:translate-x-0.5 group-hover:opacity-100 group-focus-visible:opacity-100"
         >
           →
         </span>
@@ -94,7 +94,7 @@ export function ToolCard({
   );
 
   const inner = (
-    <div className="relative flex aspect-square flex-col items-center justify-center gap-2.5 overflow-hidden border border-line p-4 text-center transition duration-300 group-hover:border-accent group-hover:text-accent group-focus-visible:border-accent group-active:scale-[0.97]">
+    <div className="relative flex aspect-square flex-col items-center justify-center gap-2.5 overflow-hidden border rounded-lg border-line p-4 text-center transition duration-300 group-hover:border-accent group-hover:text-accent group-focus-visible:border-accent group-active:scale-[0.97]">
       {badge && <span className="absolute top-2 right-2">{badgePill}</span>}
       {iconBlock}
       <span className="flex items-center font-display text-sm font-bold">

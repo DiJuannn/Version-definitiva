@@ -66,7 +66,7 @@ export function ProjectBreadcrumb({
         {open && others.length > 0 && (
           <div
             role="menu"
-            className="absolute left-0 z-30 mt-1 max-h-72 w-64 overflow-y-auto border border-line bg-bg-raised py-1.5 shadow-2xl shadow-black/60"
+            className="absolute left-0 z-30 mt-1 max-h-72 w-64 overflow-y-auto border rounded-lg border-line bg-bg-raised py-1.5 shadow-2xl shadow-black/60"
           >
             <p className="px-3.5 pb-1.5 text-[10px] text-muted">Cambiar de proyecto</p>
             {others.map((project) => (

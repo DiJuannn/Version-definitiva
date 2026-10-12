@@ -83,7 +83,7 @@ export default async function TaskDetailPage({
 
       <form
         action={updateAction}
-        className="mt-8 grid gap-4 border border-line p-5 sm:grid-cols-2"
+        className="mt-8 grid gap-4 border rounded-lg border-line p-5 sm:grid-cols-2"
       >
         <label className="flex flex-col gap-1 sm:col-span-2">
           <span className="text-xs text-muted">
@@ -93,7 +93,7 @@ export default async function TaskDetailPage({
             name="title"
             defaultValue={task.title}
             required
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
           />
         </label>
         <label className="flex flex-col gap-1 sm:col-span-2">
@@ -104,7 +104,7 @@ export default async function TaskDetailPage({
             name="description"
             defaultValue={task.description ?? ""}
             rows={3}
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
           />
         </label>
         <label className="flex flex-col gap-1">
@@ -114,7 +114,7 @@ export default async function TaskDetailPage({
           <input
             name="assignedTo"
             defaultValue={task.assignedTo ?? ""}
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
           />
         </label>
         <label className="flex flex-col gap-1">
@@ -125,7 +125,7 @@ export default async function TaskDetailPage({
             type="date"
             name="dueDate"
             defaultValue={task.dueDate ? task.dueDate.toISOString().slice(0, 10) : ""}
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
           />
         </label>
         <label className="flex flex-col gap-1">
@@ -135,7 +135,7 @@ export default async function TaskDetailPage({
           <select
             name="priority"
             defaultValue={task.priority}
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
           >
             {Object.values(TaskPriority).map((value) => (
               <option key={value} value={value} className="bg-bg">
@@ -151,7 +151,7 @@ export default async function TaskDetailPage({
           <input
             name="category"
             defaultValue={task.category ?? ""}
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
           />
         </label>
         <div>
@@ -186,7 +186,7 @@ export default async function TaskDetailPage({
             name="body"
             placeholder="Añadir comentario"
             required
-            className="w-full border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="w-full border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
           />
           <SubmitButton
             pendingLabel="Enviando…"

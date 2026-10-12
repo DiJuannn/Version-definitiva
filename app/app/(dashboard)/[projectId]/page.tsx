@@ -109,7 +109,7 @@ export default async function ProjectTallerPage({
           hacer. Antes eran cuatro bloques (cabecera con estado/progreso/rodaje/
           dinero, barra de etapas, siguiente paso y foco de etapa) que repetían
           lo mismo; el detalle sigue en Resumen y en cada herramienta. */}
-      <section aria-label="Ahora" className="mt-8 border border-accent/40 bg-bg-raised/40">
+      <section aria-label="Ahora" className="mt-8 border rounded-lg border-accent/40 bg-bg-raised/40">
         {/* Con la bienvenida abierta, sus cuatro etapas ya se ven justo encima. */}
         {!showWelcome && (
           <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-2 border-b border-line px-6 pt-5 pb-4 sm:px-8">

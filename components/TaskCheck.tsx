@@ -11,7 +11,7 @@ function CheckButton({ done, title }: { done: boolean; title: string }) {
       type="submit"
       disabled={pending}
       aria-label={done ? `Marcar «${title}» como pendiente` : `Completar «${title}»`}
-      className={`flex h-6 w-6 shrink-0 items-center justify-center border transition-colors ${
+      className={`flex h-6 w-6 shrink-0 items-center justify-center border rounded-lg transition-colors ${
         done
           ? "border-success/60 bg-success/15 text-success"
           : "border-muted/60 text-transparent hover:border-accent hover:text-accent"

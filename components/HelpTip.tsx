@@ -20,7 +20,7 @@ export function HelpTip({ text }: { text: string }) {
       {open && (
         <span
           role="tooltip"
-          className="absolute bottom-full left-1/2 z-20 mb-2 w-48 -translate-x-1/2 border border-line bg-bg-raised p-2.5 text-xs leading-relaxed text-fg shadow-lg"
+          className="absolute bottom-full left-1/2 z-20 mb-2 w-48 -translate-x-1/2 border rounded-lg border-line bg-bg-raised p-2.5 text-xs leading-relaxed text-fg shadow-lg"
         >
           {text}
         </span>

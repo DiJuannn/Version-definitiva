@@ -306,13 +306,13 @@ export default async function CalendarioPage({
         </h2>
         <form
           action={createCalendarEvent}
-          className="mt-4 grid gap-2 border border-line p-4 sm:grid-cols-2 lg:grid-cols-5"
+          className="mt-4 grid gap-2 border rounded-lg border-line p-4 sm:grid-cols-2 lg:grid-cols-5"
         >
           <FormField label="Título" className="sm:col-span-2">
             <input
               name="title"
               required
-              className="border border-line bg-transparent px-2 py-1.5 text-sm outline-none transition-colors focus:border-accent"
+              className="border rounded-lg border-line bg-transparent px-2 py-1.5 text-sm outline-none transition-colors focus:border-accent"
             />
           </FormField>
           <FormField label="Fecha">
@@ -320,14 +320,14 @@ export default async function CalendarioPage({
               type="date"
               name="date"
               required
-              className="border border-line bg-transparent px-2 py-1.5 text-sm outline-none transition-colors focus:border-accent"
+              className="border rounded-lg border-line bg-transparent px-2 py-1.5 text-sm outline-none transition-colors focus:border-accent"
             />
           </FormField>
           <FormField label="Proyecto">
           <select
             name="projectId"
             defaultValue=""
-            className="border border-line bg-transparent px-2 py-1.5 text-sm outline-none transition-colors focus:border-accent"
+            className="border rounded-lg border-line bg-transparent px-2 py-1.5 text-sm outline-none transition-colors focus:border-accent"
           >
             <option value="" className="bg-bg">
               Sin proyecto

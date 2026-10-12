@@ -8,7 +8,7 @@ import { SubmitButton } from "@/components/SubmitButton";
 import { FormField } from "@/components/FormField";
 
 const inputClass =
-  "border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent";
+  "border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent";
 
 export default async function EquipoPage({
   params,
@@ -54,7 +54,7 @@ export default async function EquipoPage({
 
       <form
         action={createCrewAction}
-        className="mt-8 grid gap-3 border border-line p-4 sm:grid-cols-2 xl:grid-cols-3"
+        className="mt-8 grid gap-3 border rounded-lg border-line p-4 sm:grid-cols-2 xl:grid-cols-3"
       >
         <FormField label="Persona del directorio Equipo" className="sm:col-span-2 xl:col-span-3">
           <select name="personId" defaultValue="" className={inputClass}>

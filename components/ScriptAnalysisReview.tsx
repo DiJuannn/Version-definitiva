@@ -50,9 +50,9 @@ type SceneRow = {
 type State = { characters: Row[]; locations: Row[]; props: Row[]; scenes: SceneRow[] };
 
 const inputClass =
-  "w-full border border-line bg-transparent px-2.5 py-1.5 text-sm outline-none transition-colors focus:border-accent";
+  "w-full border rounded-lg border-line bg-transparent px-2.5 py-1.5 text-sm outline-none transition-colors focus:border-accent";
 const smallSelect =
-  "border border-line bg-transparent px-2 py-1.5 text-xs text-fg outline-none transition-colors focus:border-accent";
+  "border rounded-lg border-line bg-transparent px-2 py-1.5 text-xs text-fg outline-none transition-colors focus:border-accent";
 const CATEGORY_KEYS = Object.keys(BREAKDOWN_CATEGORY_LABELS);
 
 // Aleatoria (no un contador): las claves se guardan en el borrador y no deben chocar con las nuevas.
@@ -317,7 +317,7 @@ export function ScriptAnalysisReview({
           ["2", "Corrige", "Cambia nombres y categorías, edita las escenas, quita lo que sobre o añade lo que falte."],
           ["3", "Importa", "Al final se crea solo lo marcado. Lo que ya existe en el proyecto se omite."],
         ].map(([n, title, text]) => (
-          <li key={n} className="flex gap-3 border border-line p-4">
+          <li key={n} className="flex gap-3 border rounded-lg border-line p-4">
             <span className="font-display text-2xl leading-none font-black text-accent">{n}</span>
             <div>
               <p className="text-[13px]">{title}</p>
@@ -330,7 +330,7 @@ export function ScriptAnalysisReview({
       {impact && (
         <section
           aria-label="Guion anterior"
-          className={`mt-6 border p-5 ${replace ? "border-warn/70" : "border-line"}`}
+          className={`mt-6 border rounded-lg p-5 ${replace ? "border-warn/70" : "border-line"}`}
         >
           <p className="text-[13px]">Ya hay un guion en este proyecto</p>
           <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Qué hacer con el guion anterior">
@@ -338,7 +338,7 @@ export function ScriptAnalysisReview({
               href="?modo=reemplazar"
               replace
               aria-current={replace ? "true" : undefined}
-              className={`border px-3 py-2 text-xs transition-colors ${
+              className={`border rounded-lg px-3 py-2 text-xs transition-colors ${
                 replace ? "border-warn bg-warn/10 text-warn" : "border-line text-muted hover:text-fg"
               }`}
             >
@@ -348,7 +348,7 @@ export function ScriptAnalysisReview({
               href="?modo=anadir"
               replace
               aria-current={!replace ? "true" : undefined}
-              className={`border px-3 py-2 text-xs transition-colors ${
+              className={`border rounded-lg px-3 py-2 text-xs transition-colors ${
                 !replace ? "border-accent bg-accent/10 text-accent" : "border-line text-muted hover:text-fg"
               }`}
             >
@@ -410,7 +410,7 @@ export function ScriptAnalysisReview({
       )}
 
       {restored && (
-        <p className="mt-4 flex flex-wrap items-center gap-3 border border-line px-4 py-2.5 text-xs text-muted">
+        <p className="mt-4 flex flex-wrap items-center gap-3 border rounded-lg border-line px-4 py-2.5 text-xs text-muted">
           Se han recuperado tus correcciones anteriores.
           <button type="button" onClick={reset} className="link-action">
             Volver a la propuesta original
@@ -502,7 +502,7 @@ export function ScriptAnalysisReview({
       </div>
 
       {/* Barra de importación: resumen vivo de lo que se creará. */}
-      <div className="sticky bottom-24 z-20 mt-10 flex items-center justify-between gap-4 border border-line bg-bg-raised/95 p-3 backdrop-blur-md sm:bottom-4 sm:gap-6 sm:p-4">
+      <div className="sticky bottom-24 z-20 mt-10 flex items-center justify-between gap-4 border rounded-lg border-line bg-bg-raised/95 p-3 backdrop-blur-md sm:bottom-4 sm:gap-6 sm:p-4">
         <div className="min-w-0">
           <p className="hidden text-xs text-muted sm:block">Se importará</p>
           <p className="font-sans text-xs sm:mt-1 sm:text-sm">
@@ -572,7 +572,7 @@ function Badge({ kind }: { kind: "nuevo" | "existe" | "repetido" | "actualiza" }
   } as const;
   const [label, cls] = map[kind];
   return (
-    <span className={`shrink-0 border px-1.5 py-0.5 text-xs ${cls}`}>
+    <span className={`shrink-0 border rounded-lg px-1.5 py-0.5 text-xs ${cls}`}>
       {label}
     </span>
   );
@@ -622,7 +622,7 @@ function RowsTab({
             onChange={(e) => setQuery(e.target.value)}
             placeholder={`Buscar ${noun}…`}
             aria-label={`Buscar ${noun}`}
-            className="w-full border border-line bg-transparent px-2.5 py-1.5 text-sm outline-none focus:border-accent sm:w-56"
+            className="w-full border rounded-lg border-line bg-transparent px-2.5 py-1.5 text-sm outline-none focus:border-accent sm:w-56"
           />
         )}
         <button type="button" onClick={() => onAllOn(true)} className="link-action">
@@ -717,7 +717,7 @@ function ChipPicker({
       <p className="text-xs text-muted">{label}</p>
       <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
         {selected.map((name, i) => (
-          <span key={`${name}-${i}`} className="inline-flex items-center gap-1.5 border border-line px-2 py-1 text-xs">
+          <span key={`${name}-${i}`} className="inline-flex items-center gap-1.5 border rounded-lg border-line px-2 py-1 text-xs">
             {name}
             <button
               type="button"
@@ -802,7 +802,7 @@ function ScenesTab({
           const isOpen = open === s.key;
           const updates = existingNumbers.includes(s.number.trim());
           return (
-            <li key={s.key} className={`border p-4 ${s.on ? "border-line" : "border-line opacity-60"}`}>
+            <li key={s.key} className={`border rounded-lg p-4 ${s.on ? "border-line" : "border-line opacity-60"}`}>
               <div className="flex flex-wrap items-start gap-3">
                 <input
                   type="checkbox"

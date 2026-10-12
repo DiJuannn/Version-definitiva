@@ -47,7 +47,7 @@ export default async function CallSheetsPage({
       />
 
       {pendingDays > 0 && (
-        <section className="mt-8 border border-accent/40 bg-bg-raised/40 p-6">
+        <section className="mt-8 border rounded-lg border-accent/40 bg-bg-raised/40 p-6">
           <p className="text-xs text-accent">Te lo preparo yo</p>
           <h2 className="mt-1.5 font-display text-xl font-black tracking-tight sm:text-2xl">
             Genera las hojas de llamada de {pendingDays === 1 ? "tu día" : `tus ${pendingDays} días`} de rodaje
@@ -81,7 +81,7 @@ export default async function CallSheetsPage({
             <Link
               key={day.id}
               href={`/app/${projectId}/call-sheets/${day.id}`}
-              className="group flex items-center gap-5 border border-line bg-bg-raised/40 p-5 transition-colors hover:border-accent/60 hover:bg-accent/5"
+              className="group flex items-center gap-5 border rounded-lg border-line bg-bg-raised/40 p-5 transition-colors hover:border-accent/60 hover:bg-accent/5"
             >
               <div className="w-16 shrink-0 border-r border-line pr-5 text-center">
                 <p className="text-xs text-muted">
@@ -103,7 +103,7 @@ export default async function CallSheetsPage({
                 </p>
               </div>
               <span
-                className={`shrink-0 border px-2 py-1 text-xs ${
+                className={`shrink-0 border rounded-lg px-2 py-1 text-xs ${
                   day.callSheet
                     ? "border-accent/50 text-accent"
                     : "border-line text-muted"

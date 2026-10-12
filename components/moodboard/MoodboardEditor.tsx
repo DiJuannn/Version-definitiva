@@ -518,7 +518,7 @@ function Board(props: Props) {
           : { text: "✓ Guardado", tone: "text-success" };
 
   const btn =
-    "border border-line bg-bg-raised px-2.5 py-1.5 text-xs transition-colors hover:border-accent hover:text-accent disabled:opacity-50";
+    "border rounded-lg border-line bg-bg-raised px-2.5 py-1.5 text-xs transition-colors hover:border-accent hover:text-accent disabled:opacity-50";
 
   const projectItems =
     projectTab === "scenes"
@@ -531,7 +531,7 @@ function Board(props: Props) {
     <BoardProvider value={ctx}>
       <div
         ref={wrapperRef}
-        className="relative h-[calc(100dvh-16rem)] min-h-[520px] border border-line"
+        className="relative h-[calc(100dvh-16rem)] min-h-[520px] border rounded-lg border-line"
         onPointerMove={onPointerMove}
         onPointerLeave={onPointerLeave}
         onDragOver={(e) => {
@@ -571,10 +571,10 @@ function Board(props: Props) {
                   + Imagen{uploading > 0 ? " …" : ""}
                 </button>
                 {menu === "image" && (
-                  <div className="absolute top-full left-0 z-20 mt-1 w-72 border border-line bg-bg-raised p-3 shadow-xl">
+                  <div className="absolute top-full left-0 z-20 mt-1 w-72 border rounded-lg border-line bg-bg-raised p-3 shadow-xl">
                     <button
                       type="button"
-                      className="w-full border border-line px-3 py-2 text-xs hover:border-accent hover:text-accent"
+                      className="w-full border rounded-lg border-line px-3 py-2 text-xs hover:border-accent hover:text-accent"
                       onClick={() => fileRef.current?.click()}
                     >
                       Subir desde el dispositivo
@@ -587,7 +587,7 @@ function Board(props: Props) {
                         onKeyDown={(e) => e.key === "Enter" && void addImageUrl()}
                         placeholder="https://…/imagen.jpg"
                         aria-label="Enlace de la imagen"
-                        className="min-w-0 flex-1 border border-line bg-transparent px-2 py-1.5 text-xs outline-none focus:border-accent"
+                        className="min-w-0 flex-1 border rounded-lg border-line bg-transparent px-2 py-1.5 text-xs outline-none focus:border-accent"
                       />
                       <button type="button" className={btn} onClick={() => void addImageUrl()}>
                         Añadir
@@ -608,7 +608,7 @@ function Board(props: Props) {
                   + Del proyecto
                 </button>
                 {menu === "project" && (
-                  <div className="absolute top-full left-0 z-20 mt-1 w-72 border border-line bg-bg-raised shadow-xl">
+                  <div className="absolute top-full left-0 z-20 mt-1 w-72 border rounded-lg border-line bg-bg-raised shadow-xl">
                     <div className="flex border-b border-line" role="tablist">
                       {(
                         [
@@ -670,7 +670,7 @@ function Board(props: Props) {
           </Panel>
 
           <Panel position="top-right" className="m-2!">
-            <div className="flex items-center gap-3 border border-line bg-bg-raised px-3 py-1.5 text-xs">
+            <div className="flex items-center gap-3 border rounded-lg border-line bg-bg-raised px-3 py-1.5 text-xs">
               {uniquePeers(peers).length > 0 && (
                 <span className="flex items-center gap-1" aria-label={`${uniquePeers(peers).length} personas más en el moodboard`}>
                   {uniquePeers(peers).slice(0, 5).map((p) => (
@@ -715,7 +715,7 @@ function Board(props: Props) {
         )}
 
         {(notice || saveError) && (
-          <div className="absolute bottom-3 left-1/2 z-20 flex max-w-[92%] -translate-x-1/2 items-center gap-3 border border-warn/60 bg-bg-raised px-4 py-2 font-sans text-xs shadow-xl" role="alert">
+          <div className="absolute bottom-3 left-1/2 z-20 flex max-w-[92%] -translate-x-1/2 items-center gap-3 border rounded-lg border-warn/60 bg-bg-raised px-4 py-2 font-sans text-xs shadow-xl" role="alert">
             <span>{notice ?? saveError}</span>
             {!isPro && (notice ?? saveError ?? "").includes("gratuito") && (
               <Link href="/app/organizacion" className="text-xs text-accent underline">

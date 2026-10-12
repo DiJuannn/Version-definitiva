@@ -37,7 +37,7 @@ export function AuthField({
           required={required}
           autoComplete={autoComplete}
           defaultValue={defaultValue}
-          className={`w-full border border-line bg-transparent px-3 py-2.5 text-sm text-fg outline-none transition-colors focus:border-accent ${
+          className={`w-full border rounded-lg border-line bg-transparent px-3 py-2.5 text-sm text-fg outline-none transition-colors focus:border-accent ${
             isPassword ? "pr-10" : ""
           }`}
         />

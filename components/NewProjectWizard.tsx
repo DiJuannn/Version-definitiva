@@ -55,7 +55,7 @@ export function NewProjectWizard() {
             placeholder="Ej. Noche en el Neón"
             autoFocus
             maxLength={120}
-            className="mt-4 w-full border border-line bg-transparent px-3 py-2.5 text-sm outline-none transition-colors focus:border-accent"
+            className="mt-4 w-full border rounded-lg border-line bg-transparent px-3 py-2.5 text-sm outline-none transition-colors focus:border-accent"
           />
           <p className="mt-2 text-center font-sans text-xs text-muted">
             Puedes cambiarlo cuando quieras.
@@ -73,7 +73,7 @@ export function NewProjectWizard() {
                 type="button"
                 aria-pressed={type === option}
                 onClick={() => setType(type === option ? "" : option)}
-                className={`border px-3 py-2 text-[13px] transition-colors ${
+                className={`border rounded-lg px-3 py-2 text-[13px] transition-colors ${
                   type === option
                     ? "border-accent bg-accent/10 text-accent"
                     : "border-line text-muted hover:border-accent hover:text-fg"
@@ -96,7 +96,7 @@ export function NewProjectWizard() {
                 type="button"
                 aria-pressed={stage === option.id}
                 onClick={() => setStage(stage === option.id ? "" : option.id)}
-                className={`border px-4 py-3 text-left transition-colors ${
+                className={`border rounded-lg px-4 py-3 text-left transition-colors ${
                   stage === option.id
                     ? "border-accent bg-accent/10"
                     : "border-line hover:border-accent"

@@ -78,7 +78,7 @@ export function MapBoardTabs({
   }
 
   const tab = (isActive: boolean) =>
-    `shrink-0 border px-3 py-1.5 text-xs transition-colors ${
+    `shrink-0 border rounded-lg px-3 py-1.5 text-xs transition-colors ${
       isActive ? "border-accent text-accent" : "border-line text-muted hover:text-fg"
     }`;
   const small = "text-xs text-muted hover:text-accent";
@@ -133,7 +133,7 @@ export function MapBoardTabs({
             maxLength={60}
             autoFocus
             aria-label="Nombre de la pizarra"
-            className="min-w-0 flex-1 border border-line bg-transparent px-3 py-2 text-sm outline-none focus:border-accent"
+            className="min-w-0 flex-1 border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none focus:border-accent"
           />
           <button type="submit" disabled={pending} className="btn btn-secondary disabled:opacity-60">
             {pending ? "…" : mode === "new" ? "Crear" : "Guardar"}
@@ -142,7 +142,7 @@ export function MapBoardTabs({
       )}
 
       {mode === "share" && (
-        <div className="mt-3 max-w-2xl border border-line p-4">
+        <div className="mt-3 max-w-2xl border rounded-lg border-line p-4">
           <p className="font-sans text-sm text-muted">
             {link
               ? "Cualquiera con este enlace puede ver esta pizarra, sin cuenta y solo en lectura."

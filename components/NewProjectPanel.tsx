@@ -13,17 +13,15 @@ export function NewProjectPanel({ hasProjects }: { hasProjects: boolean }) {
 
   return (
     <>
-      <div className="flex items-center justify-between">
-        <p className="text-xs text-accent">
-          Proyectos recientes
-        </p>
-        <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-[1.0625rem] font-bold">Tus proyectos</h2>
+        <div className="flex items-center gap-3">
           {hasProjects && (
             <button
               type="button"
               onClick={() => setOpen((v) => !v)}
               aria-expanded={open}
-              className="flex items-center gap-1.5 text-xs text-muted transition hover:text-accent"
+              className="btn btn-outline btn-sm"
             >
               <span
                 className={`inline-block text-sm leading-none transition-transform ${open ? "rotate-45" : ""}`}
@@ -33,21 +31,18 @@ export function NewProjectPanel({ hasProjects }: { hasProjects: boolean }) {
               Nuevo proyecto
             </button>
           )}
-          <Link
-            href="/app/proyectos"
-            className="text-xs text-muted hover:text-accent"
-          >
+          <Link href="/app/proyectos" className="link-action">
             Ver todos →
           </Link>
         </div>
       </div>
       {open && hasProjects && (
-        <div className="mt-4 border border-line p-4 sm:p-5">
+        <div className="mt-4 border rounded-lg border-line p-4 sm:p-5">
           <CreateProjectForm
             action={createProject}
             formClassName="flex flex-col gap-3 sm:flex-row sm:items-center"
-            inputClassName="w-full border border-line bg-transparent px-3 py-2.5 text-sm outline-none transition-colors focus:border-accent"
-            buttonClassName="shrink-0 rounded-full bg-accent px-6 py-2.5 text-[13px] text-bg transition-opacity hover:opacity-90 disabled:opacity-70"
+            inputClassName="w-full border rounded-lg border-line bg-transparent px-3 py-2.5 text-sm outline-none transition-colors focus:border-accent"
+            buttonClassName="btn btn-primary shrink-0"
             autoFocus
           />
         </div>

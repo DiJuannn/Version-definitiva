@@ -8,7 +8,7 @@ export function ScopeToggle({
   items: { label: string; href: string; active: boolean }[];
 }) {
   return (
-    <div role="group" aria-label="Ámbito" className="inline-flex flex-wrap border border-line">
+    <div role="group" aria-label="Ámbito" className="inline-flex flex-wrap border rounded-lg border-line">
       {items.map((item) => (
         <Link
           key={item.label}

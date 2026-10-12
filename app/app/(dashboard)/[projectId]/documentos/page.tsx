@@ -85,7 +85,7 @@ export default async function DocumentosPage({
                 <div>
                           <form
                             action={uploadAction}
-                            className="grid gap-2 border border-line p-4 sm:grid-cols-2 lg:grid-cols-4"
+                            className="grid gap-2 border rounded-lg border-line p-4 sm:grid-cols-2 lg:grid-cols-4"
                           >
                             <input
                               type="file"
@@ -96,7 +96,7 @@ export default async function DocumentosPage({
                             <select
                               name="actorId"
                               defaultValue=""
-                              className="border border-line bg-transparent px-2 py-1.5 text-xs outline-none transition-colors focus:border-accent"
+                              className="border rounded-lg border-line bg-transparent px-2 py-1.5 text-xs outline-none transition-colors focus:border-accent"
                             >
                               <option value="" className="bg-bg">
                                 Sin actor
@@ -110,7 +110,7 @@ export default async function DocumentosPage({
                             <select
                               name="locationId"
                               defaultValue=""
-                              className="border border-line bg-transparent px-2 py-1.5 text-xs outline-none transition-colors focus:border-accent"
+                              className="border rounded-lg border-line bg-transparent px-2 py-1.5 text-xs outline-none transition-colors focus:border-accent"
                             >
                               <option value="" className="bg-bg">
                                 Sin localización

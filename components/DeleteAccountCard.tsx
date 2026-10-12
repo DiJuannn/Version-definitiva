@@ -18,7 +18,7 @@ export function DeleteAccountCard({ soleMember }: { soleMember: boolean }) {
   const canSubmit = confirmText.trim().toUpperCase() === CONFIRM_PHRASE;
 
   return (
-    <section className="mt-10 border border-accent/40 p-6">
+    <section className="mt-10 border rounded-lg border-accent/40 p-6">
       <p className="text-[13px] text-accent">
         Zona de riesgo
       </p>
@@ -59,7 +59,7 @@ export function DeleteAccountCard({ soleMember }: { soleMember: boolean }) {
           <input
             value={confirmText}
             onChange={(e) => setConfirmText(e.target.value)}
-            className="mt-2 w-full max-w-sm border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="mt-2 w-full max-w-sm border rounded-lg border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
             autoComplete="off"
           />
 
