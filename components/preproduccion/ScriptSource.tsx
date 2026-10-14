@@ -3,7 +3,8 @@ import { courierPrime } from "@/lib/screenplay/font";
 import { COVER_SHADOW } from "@/components/screenplay/cover-shadow";
 import { SyncScenesButton } from "@/components/preproduccion/SyncScenesButton";
 import { SubmitButton } from "@/components/SubmitButton";
-import { linkScriptToProject, syncProjectScriptScenes, writeProjectScript } from "@/lib/actions/screenplays";
+import { importUploadedScriptToGuiones, linkScriptToProject, syncProjectScriptScenes, writeProjectScript } from "@/lib/actions/screenplays";
+import { ActionButtonForm } from "@/components/ActionButtonForm";
 import type { ScenePlan } from "@/lib/screenplay-scenes";
 
 const relative = new Intl.RelativeTimeFormat("es", { numeric: "auto" });
@@ -50,9 +51,12 @@ export function ScriptSource({
   plan,
   candidates,
   hasScenes,
+  uploadedFile = null,
 }: {
   projectId: string;
   plan: ScenePlan | null;
+  // El último guion subido con el sistema de antes (PDF/Word), si lo hay.
+  uploadedFile?: { name: string; uploadedAt: Date } | null;
   // Guiones de la organización sin proyecto, para vincular uno.
   candidates: { id: string; title: string }[];
   hasScenes: boolean;
@@ -60,7 +64,9 @@ export function ScriptSource({
   const sync = syncProjectScriptScenes.bind(null, projectId);
 
   if (plan) {
-    const { screenplay, added, changed, gone } = plan;
+    const { screenplay, added, changed, gone, adopting } = plan;
+    // Recién pasado a Guiones: las escenas de aquí aún no están unidas a las del guion.
+    const firstLink = adopting > 0 && adopting === changed.length;
     const href = `/app/guiones/${screenplay.id}`;
     const pending = added.length + changed.length;
     return (
@@ -94,7 +100,17 @@ export function ScriptSource({
               </span>
             </p>
           ) : (
-            <div className="mt-4 border-l-2 border-warn py-1 pl-4">
+            <div className={`mt-4 border-l-2 py-1 pl-4 ${firstLink ? "border-accent" : "border-warn"}`}>
+              {firstLink ? (
+                <p className="font-sans text-[15px]">
+                  <strong className="font-semibold">Une las escenas del guion con las que ya tienes aquí.</strong>{" "}
+                  <span className="text-muted">
+                    {plural(adopting, "escena se reconoce", "escenas se reconocen")} por su número
+                    {added.length ? ` y ${plural(added.length, "es nueva", "son nuevas")}` : ""}. Se conservan sus planos, desglose y
+                    días de rodaje; a partir de ahí, cada cambio del guion llega aquí con un clic.
+                  </span>
+                </p>
+              ) : (
               <p className="font-sans text-[15px]">
                 <strong className="font-semibold">
                   {hasScenes ? "El guion ha cambiado desde la última vez." : "Las escenas del guion aún no están en producción."}
@@ -109,6 +125,7 @@ export function ScriptSource({
                   . Los planos, el desglose y los días de rodaje de cada escena se conservan.
                 </span>
               </p>
+              )}
             </div>
           )}
 
@@ -123,7 +140,7 @@ export function ScriptSource({
             <Link href={href} className={`btn ${pending ? "btn-outline" : "btn-primary"}`}>
               Abrir el guion →
             </Link>
-            {pending > 0 && <SyncScenesButton action={sync} />}
+            {pending > 0 && <SyncScenesButton action={sync} label={firstLink ? "Unir las escenas" : undefined} />}
           </div>
         </div>
       </section>
@@ -134,6 +151,52 @@ export function ScriptSource({
   // estando más abajo (primeros pasos o «Archivo del guion»).
   const write = writeProjectScript.bind(null, projectId);
   const link = linkScriptToProject.bind(null, projectId);
+
+  // El guion ya está subido (sistema de antes): lo primero es pasarlo a
+  // Guiones, no empezar uno vacío.
+  if (uploadedFile) {
+    const isPdf = /\.pdf$/i.test(uploadedFile.name);
+    return (
+      <section aria-labelledby="guion-fuente" className="mt-9 flex flex-col gap-6 sm:flex-row sm:items-center sm:gap-8">
+        <div
+          aria-hidden
+          className={`sp-cover block w-28 shrink-0 ${courierPrime.variable}`}
+        >
+          <span className={`sp-cover-sheet flex flex-col items-center justify-center px-[10%] text-center text-[#1c1b19] ${COVER_SHADOW}`}>
+            <span className="font-[family-name:var(--font-courier)] text-[9px] font-bold uppercase">{isPdf ? "PDF" : "DOC"}</span>
+            <span className="mt-2 line-clamp-4 font-[family-name:var(--font-courier)] text-[7px] break-all text-[#4a4842]">{uploadedFile.name}</span>
+          </span>
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="eyebrow text-accent">Tu guion · subido el {uploadedFile.uploadedAt.toLocaleDateString("es-ES", { day: "numeric", month: "long", timeZone: "Europe/Madrid" })}</p>
+          <h2 id="guion-fuente" className="mt-1.5 font-display text-2xl font-black tracking-tight">
+            Pásalo a Guiones y tenlo vivo
+          </h2>
+          <p className="mt-1 max-w-2xl font-sans text-sm leading-relaxed text-muted">
+            Ahora es un archivo. En Guiones se convierte en un guion de verdad: se lee con formato, se sigue escribiendo y, cuando
+            cambie, las escenas nuevas llegan aquí con un clic. Las escenas que ya tienes se reconocen por su número y conservan
+            planos, desglose y días de rodaje.
+          </p>
+          {isPdf ? (
+            <div className="mt-5 flex flex-wrap items-start gap-x-5 gap-y-3">
+              <ActionButtonForm
+                action={importUploadedScriptToGuiones.bind(null, projectId)}
+                pendingLabel="Leyendo el PDF y pasándolo…"
+                className="btn btn-primary"
+              >
+                Pasar mi guion a Guiones
+              </ActionButtonForm>
+            </div>
+          ) : (
+            <p className="mt-4 border-l-2 border-warn py-1 pl-4 font-sans text-sm">
+              Está en Word: expórtalo a PDF y súbelo de nuevo (abajo, en «Archivo del guion») para poder pasarlo.
+            </p>
+          )}
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section aria-labelledby="guion-fuente" className={hasScenes ? "mt-9 border-l-2 border-line py-1 pl-4" : "mt-10"}>
       <h2 id="guion-fuente" className={hasScenes ? "font-sans text-[15px] font-semibold" : "font-display text-2xl font-black tracking-tight"}>

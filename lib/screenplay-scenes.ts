@@ -39,6 +39,9 @@ export type ScenePlan = {
   changed: ScriptScene[];
   // Escenas de producción que venían del guion y ya no están en él.
   gone: { id: string; number: string }[];
+  // De las "changed", cuántas son escenas que ya estaban aquí (hechas a mano
+  // o desde el PDF) y solo hay que unir con las del guion, no cambios reales.
+  adopting: number;
 };
 
 function intExtOf(prefix: string): IntExt {
@@ -116,6 +119,7 @@ export async function planScreenplayScenes(projectId: string, organizationId: st
 
   const added: ScriptScene[] = [];
   const changed: ScriptScene[] = [];
+  let adopting = 0;
   for (const scene of scenes) {
     const current = bySid.get(scene.sid) ?? unlinkedByNumber.get(scene.number);
     if (!current) added.push(scene);
@@ -126,8 +130,10 @@ export async function planScreenplayScenes(projectId: string, organizationId: st
       current.dayPart !== scene.dayPart ||
       (current.description ?? null) !== scene.description ||
       current.order !== scene.order
-    )
+    ) {
       changed.push(scene);
+      if (!current.scriptSid) adopting += 1;
+    }
   }
   const sids = new Set(scenes.map((s) => s.sid));
   const gone = existing
@@ -136,7 +142,7 @@ export async function planScreenplayScenes(projectId: string, organizationId: st
 
   const { ydoc: _ydoc, ...meta } = screenplay;
   void _ydoc;
-  return { screenplay: meta, scenes, added, changed, gone };
+  return { screenplay: meta, scenes, added, changed, gone, adopting };
 }
 
 export type SceneSyncResult =

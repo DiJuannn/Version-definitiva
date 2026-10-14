@@ -48,3 +48,16 @@ export async function deleteProjectFile(url: string) {
   const supabase = createAdminClient();
   await supabase.storage.from(BUCKET).remove([path]);
 }
+
+// Descarga un archivo del almacén del proyecto a partir de su URL pública
+// (solo de nuestro bucket: nunca se descarga una URL cualquiera).
+export async function downloadProjectFile(url: string): Promise<Uint8Array | null> {
+  const marker = `/object/public/${BUCKET}/`;
+  const index = url.indexOf(marker);
+  if (index === -1) return null;
+  const path = decodeURIComponent(url.slice(index + marker.length));
+  const supabase = createAdminClient();
+  const { data, error } = await supabase.storage.from(BUCKET).download(path);
+  if (error || !data) return null;
+  return new Uint8Array(await data.arrayBuffer());
+}

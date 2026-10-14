@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentProfile } from "@/lib/current-user";
 import { optionalString } from "@/lib/form-utils";
-import { uploadProjectFile } from "@/lib/storage";
+import { downloadProjectFile, uploadProjectFile } from "@/lib/storage";
 import { parseScreenplayPdf } from "@/lib/screenplay/pdf-import";
 import type { ScreenplayBlock } from "@/lib/screenplay/blocks";
 import { syncScreenplayToProjectCore, type SyncResult } from "@/lib/screenplay-taller";
@@ -182,6 +182,51 @@ export async function writeProjectScript(projectId: string): Promise<void> {
   revalidatePath("/app/guiones");
   revalidatePath(`/app/${projectId}/guion`);
   redirect(`/app/guiones/${result.id}?paso=guion`);
+}
+
+export type ImportUploadedState = { error: string } | undefined;
+
+// «Pasar mi guion a Guiones»: el último PDF que se subió al proyecto (el
+// sistema de antes) se convierte en un guion editable de Guiones, ya
+// vinculado. Las escenas que ya hay en Taller se reconocen por su número al
+// pasar las escenas, así que conservan planos, desglose y días.
+export async function importUploadedScriptToGuiones(projectId: string): Promise<ImportUploadedState> {
+  const own = await ownProject(projectId);
+  if (!own) return { error: "No tienes acceso a este proyecto." };
+  const { profile, project } = own;
+
+  const already = await prisma.screenplay.findFirst({ where: { projectId, organizationId: profile.organizationId }, select: { id: true } });
+  if (already) redirect(`/app/${projectId}/guion`);
+
+  const file = await prisma.scriptFile.findFirst({ where: { projectId }, orderBy: { uploadedAt: "desc" } });
+  if (!file) return { error: "Este proyecto no tiene ningún guion subido." };
+  if (!/\.pdf$/i.test(file.fileName)) {
+    return { error: "Solo se puede pasar un guion en PDF. Si lo tienes en Word, expórtalo a PDF y súbelo de nuevo." };
+  }
+  const bytes = await downloadProjectFile(file.fileUrl);
+  if (!bytes) return { error: "No se ha podido abrir el PDF subido. Súbelo de nuevo y vuelve a intentarlo." };
+  if (bytes.byteLength > FOUNTAIN_MAX_BYTES * 20) return { error: "El PDF es demasiado grande para pasarlo." };
+
+  let imported: { title: string | null; author: string | null; blocks: ScreenplayBlock[] };
+  try {
+    imported = await parseScreenplayPdf(bytes);
+  } catch {
+    return { error: "No se ha podido leer el PDF (¿es un escaneo?). Prueba a exportarlo de nuevo desde tu programa de guion." };
+  }
+
+  const type = (project.type ?? "").toLowerCase();
+  const result = await createScreenplayCore(profile.organizationId, profile.id, {
+    title: project.name,
+    format: type.includes("largo") ? "FEATURE" : type.includes("serie") ? "SERIES_EPISODE" : "SHORT",
+    logline: null,
+    author: null,
+    imported,
+  });
+  if ("error" in result) return result;
+  await prisma.screenplay.update({ where: { id: result.id }, data: { projectId } });
+  revalidatePath("/app/guiones");
+  revalidateProjectScript(projectId);
+  redirect(`/app/${projectId}/guion?importado=1`);
 }
 
 // «Vincular un guion de Guiones» desde Taller.

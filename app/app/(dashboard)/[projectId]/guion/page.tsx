@@ -307,7 +307,13 @@ export default async function GuionPage({
 
       {/* ------------------------------------------------ de dónde sale */}
       {ownProject && (
-        <ScriptSource projectId={projectId} plan={scriptPlan} candidates={candidates} hasScenes={scenes.length > 0} />
+        <ScriptSource
+          projectId={projectId}
+          plan={scriptPlan}
+          candidates={candidates}
+          hasScenes={scenes.length > 0}
+          uploadedFile={currentFile ? { name: currentFile.fileName, uploadedAt: currentFile.uploadedAt } : null}
+        />
       )}
 
       {/* ------------------------------------------------ pendiente */}
