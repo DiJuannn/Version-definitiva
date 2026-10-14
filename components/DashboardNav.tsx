@@ -14,6 +14,7 @@ import {
   TaskIcon,
   VehicleIcon,
   ScriptIcon,
+  PenIcon,
 } from "@/components/ToolIcons";
 import { useClickOutside } from "@/lib/use-click-outside";
 
@@ -28,6 +29,7 @@ type IconKey =
   | "vehicle"
   | "org"
   | "web"
+  | "pen"
   | "more";
 
 function MoreIcon({ className }: { className?: string }) {
@@ -51,6 +53,7 @@ const ICONS: Record<IconKey, ComponentType<{ className?: string }>> = {
   vehicle: VehicleIcon,
   org: OrganizationIcon,
   web: ScriptIcon,
+  pen: PenIcon,
   more: MoreIcon,
 };
 
@@ -72,6 +75,7 @@ const GLOBAL_SEGMENTS = new Set([
   "vehiculos",
   "organizacion",
   "claqueta",
+  "guiones",
 ]);
 
 function isProjectPath(pathname: string) {

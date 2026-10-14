@@ -287,3 +287,160 @@ input[type="radio"] {
     scroll-behavior: auto !important;
   }
 }
+
+/* ------------------------------------------------------------------ Guiones
+   La página del editor reproduce el folio impreso: Courier 12, 1/6" por
+   línea, márgenes estándar y sangrías por tipo de bloque (las mismas que
+   lib/screenplay/layout.ts usa para el PDF). --u es una pulgada en pantalla. */
+.sp-desk {
+  --u: 96px;
+  display: flex;
+  justify-content: center;
+  overflow-x: auto;
+  padding: 24px 0 64px;
+}
+@media (max-width: 900px) {
+  .sp-desk {
+    --u: calc((100vw - 32px) / 8.27);
+  }
+}
+.sp-paper {
+  width: calc(var(--u) * 8.27);
+  min-height: calc(var(--u) * 11.69);
+  padding: var(--u) var(--u) var(--u) calc(var(--u) * 1.5);
+  background: #fbfaf6;
+  color: #1c1b19;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.04),
+    0 30px 60px -20px rgba(0, 0, 0, 0.7);
+  font-family: var(--font-courier), "Courier New", Courier, monospace;
+  font-size: calc(var(--u) * 12 / 72);
+  line-height: calc(var(--u) / 6);
+  cursor: text;
+}
+.sp-doc {
+  outline: none;
+  min-height: calc(var(--u) * 9);
+  caret-color: #4c1d95;
+}
+.sp-doc ::selection {
+  background: rgba(160, 143, 208, 0.45);
+}
+.sp-block {
+  position: relative;
+  margin: calc(var(--u) / 6) 0 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.sp-doc > .sp-block:first-child,
+.sp-pagebreak + .sp-block {
+  margin-top: 0;
+}
+.sp-sceneHeading {
+  margin-top: calc(var(--u) / 3);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.sp-character {
+  margin-left: calc(var(--u) * 2.2);
+  max-width: calc(var(--u) * 3.8);
+  text-transform: uppercase;
+}
+.sp-parenthetical {
+  margin: 0 0 0 calc(var(--u) * 1.6);
+  max-width: calc(var(--u) * 2.6);
+}
+.sp-dialogue {
+  margin: 0 0 0 calc(var(--u) * 1);
+  max-width: calc(var(--u) * 3.5);
+}
+.sp-transition {
+  text-align: right;
+  text-transform: uppercase;
+}
+.sp-shot {
+  text-transform: uppercase;
+}
+.sp-note {
+  margin-left: calc(var(--u) * -0.25);
+  padding: 2px calc(var(--u) * 0.25);
+  border-left: 3px solid #e3b25c;
+  background: #fbf0cf;
+  color: #6a5313;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 0.85em;
+}
+.sp-block.is-empty::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  color: #b9b4a8;
+  pointer-events: none;
+}
+.sp-transition.is-empty::before {
+  float: right;
+}
+.sp-ghost {
+  color: #b3ada0;
+  pointer-events: none;
+}
+.sp-scene-num {
+  position: absolute;
+  top: 0;
+  color: #8f897c;
+  font-weight: 700;
+  user-select: none;
+}
+.sp-scene-num-left {
+  left: calc(var(--u) * -0.75);
+}
+.sp-scene-num-right {
+  right: calc(var(--u) * -0.6);
+}
+.sp-pagebreak {
+  position: relative;
+  height: 0;
+  margin: calc(var(--u) / 3) calc(var(--u) * -1) calc(var(--u) / 3) calc(var(--u) * -1.5);
+  border-top: 1px dashed #d6d1c4;
+  user-select: none;
+}
+.sp-pagebreak::after {
+  content: attr(data-page);
+  position: absolute;
+  top: 4px;
+  right: calc(var(--u) * 1);
+  color: #8f897c;
+}
+.sp-kbd {
+  border: 1px solid var(--line);
+  border-bottom-width: 2px;
+  padding: 0 4px;
+  color: var(--fg);
+  font-size: 10px;
+}
+/* Cursores de las demás personas (TipTap CollaborationCaret). */
+.collaboration-carets__caret {
+  position: relative;
+  margin-left: -1px;
+  margin-right: -1px;
+  border-left: 1px solid;
+  border-right: 1px solid;
+  word-break: normal;
+  pointer-events: none;
+}
+.collaboration-carets__label {
+  position: absolute;
+  top: -1.35em;
+  left: -1px;
+  padding: 1px 5px;
+  border-radius: 3px 3px 3px 0;
+  color: #0d0d0d;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: normal;
+  text-transform: none;
+  white-space: nowrap;
+  user-select: none;
+}

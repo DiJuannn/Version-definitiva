@@ -356,3 +356,12 @@ export function EditIcon({ className }: IconProps) {
     </svg>
   );
 }
+
+export function PenIcon({ className }: IconProps) {
+  return (
+    <svg {...shared} className={className}>
+      <path d="M15.5 4.5l4 4L9 19l-5 1 1-5L15.5 4.5Z" stroke="currentColor" strokeLinejoin="round" />
+      <path d="M13 7l4 4" stroke="currentColor" />
+    </svg>
+  );
+}

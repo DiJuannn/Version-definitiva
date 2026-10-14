@@ -16,6 +16,7 @@ export const metadata: Metadata = {
 const NAV: NavItem[] = [
   { href: "/app", label: "Inicio", icon: "home" },
   { href: "/app/proyectos", label: "Proyectos", icon: "projects" },
+  { href: "/app/guiones", label: "Guiones", icon: "pen" },
   { href: "/app/calendario", label: "Calendario", icon: "calendar" },
   { href: "/app/tareas", label: "Tareas", icon: "tasks" },
   {

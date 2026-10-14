@@ -11,6 +11,7 @@ const WIDE = [
   /^\/app\/[^/]+\/plan-de-rodaje$/,
   /^\/app\/[^/]+\/shot-list$/,
   /^\/app\/[^/]+\/storyboard$/,
+  /^\/app\/guiones\/[^/]+$/,
 ];
 const NARROW = [
   /^\/app\/[^/]+\/guion\/[^/]+$/,
