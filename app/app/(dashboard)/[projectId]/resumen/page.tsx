@@ -459,7 +459,7 @@ export default async function ProjectSummaryPage({
                           {day.shots.length > 0
                             ? ` · ${plural(day.shots.length, "plano", "planos")}${doneShots > 0 ? ` (${doneShots} rodados)` : ""}`
                             : ""}{" "}
-                          · {day.callSheet ? "con call sheet" : "sin call sheet"}
+                          · {day.callSheet ? "con hoja de llamada" : "sin hoja de llamada"}
                         </span>
                       </div>
                       <p className="mt-1 font-sans text-xs text-muted">

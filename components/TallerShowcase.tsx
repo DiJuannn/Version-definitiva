@@ -47,11 +47,11 @@ const STAGES = [
   {
     num: "05",
     title: "Rueda",
-    text: "El call sheet de cada día se genera desde el plan de rodaje y se exporta a PDF. Y la claqueta digital, en el propio set.",
-    tools: ["Call sheets", "Claqueta"],
+    text: "La hoja de llamada de cada día sale del plan de rodaje y se exporta a PDF. Y la claqueta digital, en el propio set.",
+    tools: ["Hojas de llamada", "Claqueta"],
     image: "/images/taller/rueda.jpg" as string | null,
-    frameLabel: "Taller / Call sheet",
-    imageLabel: "Captura — call sheet y claqueta",
+    frameLabel: "Taller / Hoja de llamada",
+    imageLabel: "Captura — hoja de llamada y claqueta",
   },
 ];
 

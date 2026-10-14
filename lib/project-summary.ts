@@ -407,10 +407,10 @@ export function buildProjectHighlights(
   if (days.length > 0) {
     progress.push({
       key: "call-sheets",
-      label: "Call sheets",
+      label: "Hojas de llamada",
       done: days.filter((d) => d.callSheet).length,
       total: days.length,
-      hint: "días con call sheet",
+      hint: "días con hoja de llamada",
       tool: "call-sheets",
     });
   }
@@ -446,7 +446,7 @@ export function buildProjectHighlights(
   const daysWithoutSheet = upcoming.filter((d) => !d.callSheet).length;
   if (daysWithoutSheet > 0) {
     pending.push({
-      text: `${plural(daysWithoutSheet, "próximo día sin call sheet", "próximos días sin call sheet")}`,
+      text: `${plural(daysWithoutSheet, "próximo día sin hoja de llamada", "próximos días sin hoja de llamada")}`,
       tool: "call-sheets",
     });
   }

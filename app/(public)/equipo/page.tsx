@@ -5,15 +5,6 @@ export const metadata = {
   title: "Equipo",
 };
 
-// Ejemplo de partida — se muestra solo si nadie ha cargado equipamiento real
-// todavía desde /admin, para que la sección no quede vacía mientras tanto.
-const DEFAULT_EQUIPMENT = [
-  { category: "Cámara", detail: "Por confirmar — añade la vuestra desde /admin." },
-  { category: "Ópticas", detail: "Por confirmar — añade las vuestras desde /admin." },
-  { category: "Iluminación", detail: "Por confirmar — añade la vuestra desde /admin." },
-  { category: "Flujo de trabajo", detail: "Por confirmar — formatos y códecs de entrega." },
-];
-
 export default async function EquipoPage() {
   const site = await prisma.siteContent.findFirst({
     where: { organization: { isPlatformOwner: true } },
@@ -23,8 +14,10 @@ export default async function EquipoPage() {
     },
   });
   const teamMembers = site?.teamMembers ?? [];
-  const equipmentItems =
-    site && site.equipmentItems.length > 0 ? site.equipmentItems : DEFAULT_EQUIPMENT;
+  // Sin equipamiento cargado desde /admin, la sección no sale (antes salían
+  // textos de ejemplo tipo «Por confirmar — añade la vuestra desde /admin»
+  // que veía cualquier visitante).
+  const equipmentItems = site?.equipmentItems ?? [];
 
   return (
     <section className="px-6 py-32">
@@ -90,6 +83,7 @@ export default async function EquipoPage() {
           </div>
         )}
 
+        {equipmentItems.length > 0 && (
         <div className="mt-24 border-t border-line pt-16">
           <Reveal>
             <span className="font-mono text-xs tracking-widest text-accent-purple-soft uppercase">
@@ -111,6 +105,7 @@ export default async function EquipoPage() {
             ))}
           </div>
         </div>
+        )}
       </div>
     </section>
   );

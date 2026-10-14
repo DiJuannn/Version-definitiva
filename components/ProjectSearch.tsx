@@ -166,7 +166,7 @@ export function ProjectSearch({ projectId }: { projectId: string }) {
             <div className="max-h-[55vh] overflow-y-auto" role="listbox" aria-label="Resultados">
               {q.length < 2 ? (
                 <p className="px-4 py-6 font-sans text-sm text-muted">
-                  Escribe al menos dos letras. Prueba con «presupuesto», «call sheet», el nombre de un personaje o de un
+                  Escribe al menos dos letras. Prueba con «presupuesto», «hoja de llamada», el nombre de un personaje o de un
                   sitio.
                 </p>
               ) : rows.length === 0 ? (

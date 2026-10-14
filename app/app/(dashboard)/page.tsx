@@ -238,7 +238,7 @@ export default async function DashboardPage() {
       return {
         id: `sheet-${day.id}`,
         tone: "warn" as const,
-        text: `${day.project.name}: rodaje ${n === 0 ? "hoy" : n === 1 ? "mañana" : `en ${n} días`} sin call sheet`,
+        text: `${day.project.name}: rodaje ${n === 0 ? "hoy" : n === 1 ? "mañana" : `en ${n} días`} sin hoja de llamada`,
         href: `/app/${day.projectId}/call-sheets/${day.id}`,
       };
     }),

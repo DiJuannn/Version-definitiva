@@ -42,7 +42,7 @@ const HERRAMIENTAS = [
   },
   {
     icon: <DocumentIcon />,
-    label: "Call sheets",
+    label: "Hojas de llamada",
     description: "La hoja de convocatoria de cada día, generada sola.",
   },
   {
@@ -68,7 +68,7 @@ const HERRAMIENTAS = [
 ];
 
 const EJEMPLOS = [
-  { label: "Call sheet", category: "Documento de rodaje" },
+  { label: "Hoja de llamada", category: "Documento de rodaje" },
   { label: "Plan de rodaje", category: "Planificación" },
   { label: "Presupuesto", category: "Producción" },
   { label: "Storyboard", category: "Preproducción" },
@@ -80,7 +80,7 @@ const FLUJO = [
   "Guion",
   "Desglose",
   "Plan de rodaje",
-  "Call sheet",
+  "Hoja de llamada",
   "Shot list",
   "Storyboard",
   "Documentación",
@@ -126,7 +126,7 @@ export default function TallerMarketingPage() {
                   <span className="h-1.5 w-1.5 rounded-full bg-accent" />
                   Producto — Taller
                 </div>
-                <h1 className="max-w-3xl font-display text-6xl leading-[0.95] font-black tracking-tight text-fg uppercase sm:text-7xl">
+                <h1 className="max-w-3xl font-display text-[2.5rem] leading-[0.95] font-black tracking-tight text-fg uppercase min-[420px]:text-5xl sm:text-6xl md:text-7xl">
                   El taller de tu
                   <br />
                   próxima producción.
@@ -134,8 +134,8 @@ export default function TallerMarketingPage() {
                 <p className="mt-6 max-w-xl font-mono text-sm text-muted">
                   Taller es nuestro espacio digital de producción
                   audiovisual, diseñado para organizar un proyecto desde el
-                  guion hasta el rodaje. Guion, desglose, planificación, call
-                  sheets, shot list y storyboard, todo conectado en un mismo
+                  guion hasta el rodaje. Guion, desglose, planificación,
+                  hojas de llamada, lista de planos y storyboard, todo conectado en un mismo
                   sitio.
                 </p>
                 <div className="mt-10 flex flex-wrap items-center gap-4">
@@ -214,7 +214,7 @@ export default function TallerMarketingPage() {
             <p className="mt-8 max-w-2xl font-mono text-sm text-muted">
               La información se reutiliza entre herramientas: la escena que
               desglosas es la misma que asignas a un día de rodaje, y el mismo
-              día genera el call sheet automáticamente. Una sola fuente de
+              día genera la hoja de llamada automáticamente. Una sola fuente de
               datos, sin volver a escribir nada dos veces.
             </p>
           </Reveal>

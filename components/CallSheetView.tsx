@@ -567,8 +567,8 @@ function RunOrder({ summary, edit }: { summary: ShootingDaySummary; edit?: EditC
   const ROW = "grid grid-cols-[3.25rem_minmax(0,1fr)] gap-x-4 py-2.5 sm:grid-cols-[3.75rem_minmax(0,1fr)]";
   return (
     <section className="pt-7" aria-labelledby="cs-orden">
-      <div className="flex flex-wrap items-end justify-between gap-x-4">
-        <div className="min-w-0 flex-1">
+      <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-1">
+        <div className="min-w-0 flex-1 basis-56">
           <BlockTitle id="cs-orden">
             Orden de rodaje · {shotCount} {shotCount === 1 ? "plano" : "planos"}
           </BlockTitle>
@@ -624,22 +624,23 @@ function RunOrder({ summary, edit }: { summary: ShootingDaySummary; edit?: EditC
                 </p>
               </div>
               {block.shots.length > 0 && (
-                <ol className="mb-1.5 ml-[4.25rem] border-l border-line sm:ml-[4.75rem]">
+                <ol className="mb-1.5 ml-1 border-l border-line sm:ml-[4.75rem]">
                   {block.shots.map((shot) => (
                     <li
                       key={shot.id}
-                      className="grid grid-cols-[3rem_3.25rem_2.75rem_minmax(0,1fr)] gap-x-3 py-1.5 pl-3 font-sans text-[13px] sm:grid-cols-[3rem_3.25rem_2.75rem_minmax(0,1fr)_minmax(0,11rem)]"
+                      className="grid grid-cols-[2.6rem_2.4rem_minmax(0,1fr)] gap-x-2 py-1.5 pl-2.5 font-sans text-[13px] sm:grid-cols-[3rem_3.25rem_2.75rem_minmax(0,1fr)_minmax(0,11rem)] sm:gap-x-3 sm:pl-3"
                     >
                       <span className="font-mono text-muted tabular-nums">{formatHHMM(shot.start)}</span>
                       <span className="font-mono font-semibold">
                         {shot.sceneNumber}.{shot.number}
                       </span>
-                      <span className="font-mono text-muted">{shot.shotSize ?? ""}</span>
+                      <span className="hidden font-mono text-muted sm:block">{shot.shotSize ?? ""}</span>
                       <span className="min-w-0">
+                        {shot.shotSize && <span className="mr-1.5 font-mono text-xs text-muted sm:hidden">{shot.shotSize}</span>}
                         {shot.description ?? ""}
                         {shot.done && <span className="ml-2 text-success">✓ rodado</span>}
                       </span>
-                      <span className="col-start-4 text-muted sm:col-start-auto">{people(shot.characterIds)}</span>
+                      <span className="col-start-3 text-xs text-muted sm:col-start-auto sm:text-[13px]">{people(shot.characterIds)}</span>
                     </li>
                   ))}
                 </ol>

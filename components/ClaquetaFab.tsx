@@ -9,7 +9,9 @@ import { LinkPendingHint } from "@/components/LinkPendingHint";
 // proyecto activo (este componente cuelga del layout de [projectId], que no
 // envuelve las páginas generales de la app). Se oculta en la propia pantalla
 // de la claqueta: no tiene sentido un atajo hacia donde ya estás, y en el
-// moodboard, donde taparía el lienzo.
+// moodboard, donde taparía el lienzo. Solo en móvil y tableta: en escritorio
+// la claqueta está en el menú del proyecto y el botón tapaba la columna de la
+// derecha de las tablas (estado de los planos, actor de cada personaje…).
 export function ClaquetaFab({ projectId }: { projectId: string }) {
   const pathname = usePathname();
   const claquetaHref = `/app/${projectId}/claqueta`;
@@ -23,7 +25,7 @@ export function ClaquetaFab({ projectId }: { projectId: string }) {
     <Link
       href={claquetaHref}
       aria-label="Abrir claqueta digital"
-      className="fixed right-5 bottom-5 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-bg shadow-lg shadow-accent/30 ring-1 ring-fg/10 transition-transform hover:scale-105 active:scale-95 print:hidden sm:right-6 sm:bottom-6"
+      className="fixed right-5 bottom-5 z-40 flex h-14 w-14 lg:hidden items-center justify-center rounded-full bg-accent text-bg shadow-lg shadow-accent/30 ring-1 ring-fg/10 transition-transform hover:scale-105 active:scale-95 print:hidden sm:right-6 sm:bottom-6"
     >
       <ClaquetaIcon className="h-6 w-6" />
       <LinkPendingHint className="absolute top-1.5 right-1.5" />

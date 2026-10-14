@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { isProjectOwnerPro } from "@/lib/project-plan";
@@ -15,7 +15,8 @@ export default async function CesionImagenPage({
 
   const project = await getProjectForCurrentUser(projectId);
   if (!project) notFound();
-  if (!(await isProjectOwnerPro(project.organizationId))) notFound();
+  // Sin PRO, a la lista de plantillas, que explica qué es y cómo tenerlo.
+  if (!(await isProjectOwnerPro(project.organizationId))) redirect(`/app/${projectId}/documentos-legales`);
   const organization = await prisma.organization.findUnique({
     where: { id: project.organizationId },
     select: { name: true },

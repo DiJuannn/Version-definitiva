@@ -399,7 +399,7 @@ export function ScriptAnalysisReview({
                     </li>
                     <li>El equipo técnico, el presupuesto, las tareas y los documentos</li>
                     <li>
-                      Los {impact.shootingDays} día{impact.shootingDays === 1 ? "" : "s"} de rodaje y sus call sheets (se
+                      Los {impact.shootingDays} día{impact.shootingDays === 1 ? "" : "s"} de rodaje y sus hojas de llamada (se
                       quedan sin escenas)
                     </li>
                     <li>

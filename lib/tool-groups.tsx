@@ -102,7 +102,7 @@ export const TOOL_GROUPS: { label: string; tools: ToolDefinition[] }[] = [
         icon: <CallSheetIcon />,
         label: "Hojas de llamada",
         href: "call-sheets",
-        description: "La hoja de convocatoria (call sheet): quién va, dónde y a qué hora, cada día.",
+        description: "Quién va, dónde y a qué hora cada día de rodaje. Sale del plan de rodaje.",
       },
       {
         icon: <BudgetIcon />,

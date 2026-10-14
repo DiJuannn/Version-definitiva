@@ -222,7 +222,7 @@ export default async function ProjectPage({
                 Este proyecto se organizó con Taller.
               </p>
               <div className="mt-6 flex flex-wrap items-center gap-3 font-mono text-xs tracking-widest uppercase">
-                {["Guion", "Shot list", "Plan de rodaje", "Call sheet", "Fotograma final"].map(
+                {["Guion", "Shot list", "Plan de rodaje", "Hoja de llamada", "Fotograma final"].map(
                   (step, i, arr) => (
                     <span key={step} className="flex items-center gap-3">
                       <span className="border border-line px-3 py-1.5">{step}</span>

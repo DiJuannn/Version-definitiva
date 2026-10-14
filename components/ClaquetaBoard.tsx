@@ -783,6 +783,8 @@ export function ClaquetaBoard({
                 <input
                   type="number"
                   min={1}
+                  inputMode="numeric"
+                  aria-label="Número de toma"
                   value={take}
                   onChange={(e) =>
                     setTake(Math.max(1, Number(e.target.value) || 1))

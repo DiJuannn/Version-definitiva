@@ -562,10 +562,12 @@ export default function ScreenplayEditor({
   return (
     <WorkspaceProvider value={workspace}>
       <header className="sp-chrome sticky top-0 z-30 border-b border-[var(--line)]">
-        <div className="flex h-16 items-center gap-4 px-4 lg:px-7">
+        <div className="flex h-16 items-center gap-2 px-3 sm:gap-4 sm:px-4 lg:px-7">
           <Link href="/app/guiones" className="flex shrink-0 items-center gap-2.5 text-muted hover:text-fg" title="Volver a Guiones">
             <AjoloteLogo className="h-5 w-auto text-fg" />
-            <span className="font-mono text-[11px] tracking-[0.2em] uppercase">← Guiones</span>
+            <span className="font-mono text-[11px] tracking-[0.2em] uppercase">
+              ←<span className="hidden sm:inline"> Guiones</span>
+            </span>
           </Link>
           <button
             type="button"
@@ -584,16 +586,17 @@ export default function ScreenplayEditor({
                   type="button"
                   onClick={() => setStep(s.id)}
                   aria-current={step === s.id ? "step" : undefined}
+                  aria-label={s.label}
                   className={`sp-step ${i < stepIndex ? "sp-step-done" : ""}`}
                 >
                   <span className="sp-step-num">{i + 1}</span>
-                  {s.label}
+                  <span className={step === s.id ? "" : "hidden sm:inline"}>{s.label}</span>
                 </button>
               </span>
             ))}
           </nav>
 
-          <div className="flex shrink-0 items-center gap-3 text-[13px]">
+          <div className="flex shrink-0 items-center gap-2 text-[13px] sm:gap-3">
             <ul className="hidden -space-x-1.5 sm:flex" aria-label="Escribiendo ahora">
               <li
                 title={`${userName} (tú)`}
@@ -618,7 +621,10 @@ export default function ScreenplayEditor({
               {status.label}
             </span>
             <details className="relative">
-              <summary className="sp-btn cursor-pointer list-none">Exportar</summary>
+              <summary className="sp-btn cursor-pointer list-none" aria-label="Exportar">
+                <span aria-hidden className="sm:hidden">⤓</span>
+                <span className="hidden sm:inline">Exportar</span>
+              </summary>
               <div className="absolute right-0 z-40 mt-1 w-44 overflow-hidden rounded-lg border border-[var(--line)] bg-[#131313] py-1 shadow-lg">
                 {(
                   [
@@ -642,7 +648,8 @@ export default function ScreenplayEditor({
               </div>
             </details>
             <button type="button" onClick={() => (assistantOpen ? setAssistantOpen(false) : openAssistant())} className="sp-ai-btn">
-              Asistente IA
+              <span className="hidden sm:inline">Asistente IA</span>
+              <span className="sm:hidden">IA</span>
               {pendingCount > 0 && <span className="rounded-full bg-[var(--ai)] px-1.5 text-[11px] text-white">{pendingCount}</span>}
             </button>
           </div>

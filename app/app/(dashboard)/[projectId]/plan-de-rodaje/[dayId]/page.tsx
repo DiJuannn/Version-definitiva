@@ -136,12 +136,12 @@ export default async function ShootingDayDetailPage({
         actions={
           summary.shootingDay.callSheet ? (
             <Link href={`/app/${projectId}/call-sheets/${dayId}`} className="btn btn-primary btn-sm">
-              Ver call sheet
+              Ver hoja de llamada
             </Link>
           ) : (
             <form action={generateAction}>
               <SubmitButton pendingLabel="Generando…" className="btn btn-primary btn-sm">
-                Generar call sheet
+                Generar hoja de llamada
               </SubmitButton>
             </form>
           )

@@ -250,7 +250,7 @@ export default async function PersonajesPage({
                   <span className="text-success">Reparto completo.</span>
                 ) : (
                   <>
-                    Faltan <span className="text-fg">{plural(missing.length, "personaje", "personajes")}</span> por repartir.
+                    {missing.length === 1 ? "Falta" : "Faltan"} <span className="text-fg">{plural(missing.length, "personaje", "personajes")}</span> por repartir.
                   </>
                 )}
               </p>

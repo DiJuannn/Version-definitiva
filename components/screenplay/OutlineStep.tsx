@@ -277,7 +277,7 @@ function SceneRow({
         e.preventDefault();
         onDrop();
       }}
-      className={`group grid grid-cols-[18px_30px_minmax(0,300px)_minmax(0,1fr)] items-start gap-x-4 gap-y-2 border-b border-[var(--line)] py-3.5 transition-colors md:grid-cols-[18px_30px_minmax(0,300px)_minmax(0,1fr)_120px_70px] ${
+      className={`group grid grid-cols-[18px_30px_minmax(0,1fr)] items-start gap-x-3 gap-y-2 sm:grid-cols-[18px_30px_minmax(0,300px)_minmax(0,1fr)] sm:gap-x-4 border-b border-[var(--line)] py-3.5 transition-colors md:grid-cols-[18px_30px_minmax(0,300px)_minmax(0,1fr)_120px_70px] ${
         dragging ? "opacity-40" : ""
       } ${dropTarget ? "shadow-[inset_0_2px_0_var(--accent)]" : "hover:bg-white"}`}
     >
@@ -308,9 +308,9 @@ function SceneRow({
         value={m.synopsis ?? ""}
         onSave={(v) => updateSceneMeta(maps, s.sid, { synopsis: v })}
         placeholder={s.firstAction ? s.firstAction.slice(0, 110) : "De qué va esta escena…"}
-        className="text-[14.5px] leading-snug"
+        className="col-start-3 text-[14.5px] leading-snug sm:col-start-auto"
       />
-      <div className="col-span-2 col-start-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-muted md:col-span-1 md:col-start-auto md:block">
+      <div className="col-start-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-muted sm:col-span-2 md:col-span-1 md:col-start-auto md:block">
         <p className="truncate">{s.present.join(" · ") || "—"}</p>
         <div className="mt-1.5 flex gap-[2px]" role="group" aria-label={`Tensión de la escena ${s.number}`}>
           {Array.from({ length: 10 }, (_, i) => i + 1).map((v) => (

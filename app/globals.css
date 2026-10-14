@@ -679,6 +679,53 @@ input[type="radio"] {
   right: calc(var(--u) * 1);
   color: #8f897c;
 }
+/* En el móvil la página A4 a escala dejaba el texto en ~7 px: aquí el folio
+   ocupa el ancho de la pantalla con Courier a 13 px y las sangrías del
+   formato en proporción (el PDF y la paginación no cambian). */
+@media (max-width: 640px) {
+  .sp-desk {
+    --u: 78px;
+    padding: 12px 0 48px;
+  }
+  .sp-paper {
+    width: calc(100vw - 16px);
+    min-height: 70vh;
+    padding: 20px 12px 48px 30px;
+  }
+  .sp-character {
+    margin-left: 28%;
+    max-width: 70%;
+  }
+  .sp-parenthetical {
+    margin-left: 20%;
+    max-width: 62%;
+  }
+  .sp-dialogue {
+    margin-left: 10%;
+    max-width: 86%;
+  }
+  .sp-scene-num-left {
+    left: -24px;
+  }
+  .sp-scene-num-right {
+    display: none;
+  }
+  .sp-note {
+    margin-left: -6px;
+    padding: 2px 6px;
+  }
+  .sp-pagebreak {
+    margin-left: -30px;
+    margin-right: -12px;
+  }
+  .sp-pagebreak::after {
+    right: 12px;
+  }
+  .sp-step {
+    gap: 6px;
+    padding: 5px 9px 5px 5px;
+  }
+}
 .sp-kbd {
   border: 1px solid var(--line);
   border-bottom-width: 2px;
