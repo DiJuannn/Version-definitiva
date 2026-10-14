@@ -21,10 +21,10 @@ export default async function SignupPage({
   if (!invite || invite.status !== "PENDING") {
     return (
       <div>
-        <h1 className="font-display text-2xl font-bold uppercase">
+        <h1 className="font-display text-2xl font-bold">
           Invitación no válida
         </h1>
-        <p className="mt-2 font-mono text-xs text-muted">
+        <p className="mt-2 text-xs text-muted">
           Este enlace de invitación ya no funciona — puede que ya se haya
           usado o que te lo hayan revocado. Pide uno nuevo a quien te invitó.
         </p>

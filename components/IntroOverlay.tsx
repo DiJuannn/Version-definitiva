@@ -3,8 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { AjoloteLogo } from "@/components/AjoloteLogo";
+import { EASE, EASE_IN_OUT } from "@/lib/motion";
 
-const DISPLAY_MS = 1900;
+// Corta a propósito: es una firma de marca, no algo que haga esperar para
+// ver la web.
+const DISPLAY_MS = 1000;
 const SESSION_KEY = "vd-intro-seen";
 
 export function IntroOverlay() {
@@ -19,6 +22,8 @@ export function IntroOverlay() {
     startedRef.current = true;
     if (sessionStorage.getItem(SESSION_KEY)) return;
     sessionStorage.setItem(SESSION_KEY, "1");
+    // Con "reducir movimiento" no se enseña: es solo decoración.
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     // sessionStorage solo existe en el cliente: el estado inicial debe ser
     // `false` (igual que en el servidor) para no desajustar la hidratación,
     // así que esta primera activación tiene que hacerse en un efecto.
@@ -28,16 +33,17 @@ export function IntroOverlay() {
 
   // Efecto separado: se dispara cuando `show` pasa a true (una transición de
   // estado posterior al montaje inicial, no la duplica Strict Mode), así el
-  // temporizador que oculta el intro no se cancela antes de tiempo.
+  // temporizador que oculta el intro no se cancela antes de tiempo. No
+  // bloquea el scroll, y cualquier tecla, toque o rueda lo quita al momento.
   useEffect(() => {
     if (!show) return;
-    document.body.style.overflow = "hidden";
-    const timer = setTimeout(() => {
-      setShow(false);
-    }, DISPLAY_MS);
+    const hide = () => setShow(false);
+    const timer = setTimeout(hide, DISPLAY_MS);
+    const events = ["keydown", "pointerdown", "wheel", "touchstart"] as const;
+    for (const e of events) window.addEventListener(e, hide, { passive: true });
     return () => {
       clearTimeout(timer);
-      document.body.style.overflow = "";
+      for (const e of events) window.removeEventListener(e, hide);
     };
   }, [show]);
 
@@ -45,15 +51,16 @@ export function IntroOverlay() {
     <AnimatePresence>
       {show && (
         <motion.div
+          aria-hidden
           className="fixed inset-0 z-[100] flex items-center justify-center bg-bg"
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.6, ease: [0.65, 0, 0.35, 1] }}
+          transition={{ duration: 0.4, ease: EASE_IN_OUT }}
         >
           <motion.div
             className="flex flex-col items-center gap-5"
             initial={{ opacity: 0, scale: 0.88 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.7, ease: EASE }}
           >
             <AjoloteLogo className="h-16 w-auto text-fg" priority />
             <motion.span

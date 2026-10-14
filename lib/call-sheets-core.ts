@@ -16,11 +16,17 @@ export async function upsertCallSheetCore(
   const day = await prisma.shootingDay.findFirst({ where: { id: shootingDayId, projectId } });
   if (!day) return false;
 
-  await prisma.callSheet.upsert({
-    where: { shootingDayId },
-    create: { shootingDayId, ...data },
-    update: data,
-  });
+  // La hora de llamada es una sola para la jornada: la del Plan de rodaje
+  // (ShootingDay.callTime) y la de la hoja van siempre juntas. Una hoja
+  // nueva sin hora hereda la del plan.
+  const callTime = data.generalCallTime?.trim() || day.callTime || null;
+  const row = { ...data, generalCallTime: callTime };
+  await prisma.$transaction([
+    prisma.callSheet.upsert({ where: { shootingDayId }, create: { shootingDayId, ...row }, update: row }),
+    ...(callTime !== day.callTime
+      ? [prisma.shootingDay.update({ where: { id: shootingDayId }, data: { callTime, planUpdatedAt: new Date() } })]
+      : []),
+  ]);
   return true;
 }
 
@@ -33,14 +39,14 @@ const LIGHT_ORDER = ["DAWN", "DAY", "DUSK", "NIGHT"];
 export async function generateAllCallSheetsCore(projectId: string): Promise<number> {
   const days = await prisma.shootingDay.findMany({
     where: { projectId, callSheet: null, scenes: { some: {} } },
-    select: { id: true, scenes: { select: { scene: { select: { dayPart: true } } } } },
+    select: { id: true, callTime: true, scenes: { select: { scene: { select: { dayPart: true } } } } },
   });
   for (const day of days) {
     const earliest = day.scenes
       .map((s) => s.scene.dayPart as string)
       .sort((a, b) => LIGHT_ORDER.indexOf(a) - LIGHT_ORDER.indexOf(b))[0];
     await upsertCallSheetCore(projectId, day.id, {
-      generalCallTime: SUGGESTED_CALL_TIME[earliest] ?? null,
+      generalCallTime: day.callTime ?? SUGGESTED_CALL_TIME[earliest] ?? null,
       transportNotes: null,
       cateringNotes: null,
       additionalNotes: null,

@@ -11,7 +11,7 @@ import { CallSheetView } from "@/components/CallSheetView";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Call sheet",
+  title: "Hoja de llamada",
   robots: { index: false, follow: false },
 };
 
@@ -33,9 +33,9 @@ export default async function PublicCallSheetPage({
   if (!summary) notFound();
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
+    <main id="contenido" className="palette-taller taller-ui mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12">
       <CallSheetView projectName={day.project.name} summary={summary} />
-      <p className="mt-6 text-center font-mono text-[11px] tracking-widest text-muted uppercase">
+      <p className="mt-6 text-center text-xs text-muted">
         Hecho con Taller · Versión definitiva
       </p>
     </main>

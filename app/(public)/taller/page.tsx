@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { PlaceholderFrame } from "@/components/PlaceholderFrame";
 import { Reveal } from "@/components/Reveal";
+import { TallerJourney } from "@/components/TallerJourney";
 import { FREE_FEATURES, PRO_FEATURES } from "@/lib/plan-features";
 import {
   BudgetIcon,
@@ -156,6 +157,8 @@ export default function TallerMarketingPage() {
           </div>
         </PlaceholderFrame>
       </section>
+
+      <TallerJourney />
 
       <section className="border-t border-line px-6 py-24">
         <div className="mx-auto max-w-6xl">

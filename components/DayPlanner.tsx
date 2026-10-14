@@ -25,7 +25,7 @@ export type PlannerScene = {
 };
 
 const FIELD =
-  "field px-2 py-1 text-xs";
+  "border rounded-lg border-line bg-transparent px-2 py-1 text-xs outline-none transition-colors focus:border-accent";
 
 // Planificador de un día de rodaje: se planifica por escenas y, dentro de cada
 // escena, por planos (que es como se rueda de verdad: una escena puede tener
@@ -85,7 +85,7 @@ export function DayPlanner({ dayId, scenes }: { dayId: string; scenes: PlannerSc
     <div className="mt-4">
       <input type="hidden" name="planner" value="1" />
 
-      <p className="font-mono text-[11px] text-muted">
+      <p className="text-xs text-muted">
         Hoy: <span className="text-fg">{totals.sceneCount}</span> escena{totals.sceneCount === 1 ? "" : "s"} ·{" "}
         <span className="text-fg">{totals.shotCount}</span> plano{totals.shotCount === 1 ? "" : "s"}
       </p>
@@ -93,7 +93,7 @@ export function DayPlanner({ dayId, scenes }: { dayId: string; scenes: PlannerSc
       <div className="mt-3 border-t border-line">
         <div
           aria-hidden
-          className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 border-b border-line py-2 font-mono text-[10px] tracking-widest text-muted uppercase"
+          className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 border-b border-line py-2 text-xs text-muted"
         >
           <span className="w-4" />
           <span>Escena</span>
@@ -116,14 +116,14 @@ export function DayPlanner({ dayId, scenes }: { dayId: string; scenes: PlannerSc
                   aria-label={`Incluir la escena ${scene.number} en este día`}
                 />
                 <div className="min-w-0">
-                  <span className="font-mono text-sm">Escena {scene.number}</span>
-                  <span className="ml-2 font-mono text-xs text-muted">{scene.context}</span>
+                  <span className="text-sm">Escena {scene.number}</span>
+                  <span className="ml-2 text-xs text-muted">{scene.context}</span>
                   {scene.shots.length > 0 && (
                     <button
                       type="button"
                       onClick={() => setOpen((prev) => ({ ...prev, [scene.id]: !isOpen }))}
                       aria-expanded={isOpen}
-                      className="ml-3 inline-flex items-center gap-1 font-mono text-[11px] text-accent hover:underline"
+                      className="ml-3 inline-flex items-center gap-1 text-xs text-accent hover:underline"
                     >
                       {todayShots} de {scene.shots.length} plano{scene.shots.length === 1 ? "" : "s"} hoy
                       <span aria-hidden>{isOpen ? "▴" : "▾"}</span>
@@ -164,18 +164,18 @@ export function DayPlanner({ dayId, scenes }: { dayId: string; scenes: PlannerSc
                           onChange={(e) => toggleShot(scene, shot, e.target.checked)}
                           aria-label={`Rodar el plano ${shot.label} este día`}
                         />
-                        <span className="font-mono text-xs text-accent">{shot.label}</span>
-                        <span className="font-mono text-xs uppercase">{shot.size ?? "—"}</span>
-                        <span className="min-w-0 truncate font-mono text-xs text-muted">
+                        <span className="text-xs text-accent">{shot.label}</span>
+                        <span className="text-[13px]">{shot.size ?? "—"}</span>
+                        <span className="min-w-0 truncate text-xs text-muted">
                           {shot.description ?? ""}
                           {shot.otherDayLabel && !checked && (
-                            <span className="ml-2 border border-line px-1.5 py-0.5 text-[10px] text-muted">
+                            <span className="ml-2 border rounded-lg border-line px-1.5 py-0.5 text-[10px] text-muted">
                               ya en {shot.otherDayLabel}
                             </span>
                           )}
                         </span>
                         {checked ? (
-                          <label className="flex items-center gap-1.5 font-mono text-[11px] text-muted">
+                          <label className="flex items-center gap-1.5 text-xs text-muted">
                             <input
                               type="checkbox"
                               name={`done_${shot.id}`}
@@ -197,7 +197,7 @@ export function DayPlanner({ dayId, scenes }: { dayId: string; scenes: PlannerSc
         })}
       </div>
 
-      <p className="mt-3 font-mono text-[11px] text-muted">
+      <p className="mt-3 text-xs text-muted">
         Marca la escena para rodarla entera o abre sus planos y elige solo los de hoy. Un plano que ya está en
         otro día se mueve aquí si lo marcas.
       </p>

@@ -113,7 +113,10 @@ export async function syncShotDone(
     select: { shotNumber: true },
   });
   const hasGood = goodTakes.some((t) => (t.shotNumber ?? "").trim().toLowerCase() === shotNo.toLowerCase());
-  await prisma.shot.update({ where: { id: shot.id }, data: { done: hasGood } });
+  await prisma.shot.update({
+    where: { id: shot.id },
+    data: hasGood ? { done: true, retake: false, retakeNote: null } : { done: false },
+  });
 }
 
 export type ManualTakeInput = {

@@ -18,12 +18,12 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
     <div className="flex min-h-screen flex-col items-center justify-center px-6 py-16">
       <Link href="/" className="mb-10 flex items-center gap-2.5">
         <AjoloteLogo className="h-8 w-auto text-fg" />
-        <span className="font-mono text-xs tracking-[0.2em] uppercase">
+        <span className="text-[13px]">
           Versión definitiva
         </span>
       </Link>
-      <div className="w-full max-w-sm">{children}</div>
-      <nav className="mt-12 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 font-mono text-[11px] tracking-widest text-muted uppercase">
+      <main id="contenido" className="w-full max-w-sm">{children}</main>
+      <nav className="mt-12 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs text-muted">
         {LEGAL_LINKS.map((item) => (
           <Link key={item.href} href={item.href} className="hover:text-accent">
             {item.label}

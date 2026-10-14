@@ -1,5 +1,15 @@
 import type { Prisma } from "@/lib/generated/prisma";
 import { prisma } from "@/lib/prisma";
+import { syncProjectSchedule } from "@/lib/schedule-core";
+
+// Tras cualquier cambio "antiguo" de días (pantalla del día, asistente, app
+// del móvil): el orden de rodaje por bloques se pone al día y las jornadas
+// tocadas quedan marcadas como cambiadas (hoja de llamada desactualizada).
+async function afterDayChange(projectId: string, dayIds: (string | null | undefined)[]) {
+  await syncProjectSchedule(projectId);
+  const ids = [...new Set(dayIds.filter((d): d is string => Boolean(d)))];
+  if (ids.length > 0) await prisma.shootingDay.updateMany({ where: { id: { in: ids } }, data: { planUpdatedAt: new Date() } });
+}
 
 export async function createShootingDayCore(
   projectId: string,
@@ -159,6 +169,7 @@ export async function updateDaySceneAssignmentsCore(
 
     await reconcileSceneDays(tx, [...touched]);
   });
+  await afterDayChange(projectId, [shootingDayId, ...shots.filter((sh) => sh.shootingDayId).map((sh) => sh.shootingDayId)]);
   return true;
 }
 
@@ -190,6 +201,7 @@ export async function moveSceneChunkCore(
         await tx.shootingDayScene.create({ data: { shootingDayId: toDayId, sceneId, order } });
       }
     });
+    await afterDayChange(projectId, [fromDayId, toDayId]);
     return true;
   }
 
@@ -200,6 +212,7 @@ export async function moveSceneChunkCore(
     });
     await reconcileSceneDays(tx, [sceneId]);
   });
+  await afterDayChange(projectId, [fromDayId, toDayId]);
   return true;
 }
 
@@ -220,17 +233,20 @@ export async function assignShotToDayCore(
     if (!day) return null;
   }
 
+  const before = await prisma.shot.findUnique({ where: { id: shotId }, select: { shootingDayId: true } });
   await prisma.$transaction(async (tx) => {
     await tx.shot.update({ where: { id: shotId }, data: { shootingDayId, done: false } });
     await reconcileSceneDays(tx, [shot.sceneId]);
   });
+  await afterDayChange(projectId, [before?.shootingDayId, shootingDayId]);
   return { sceneId: shot.sceneId };
 }
 
 export async function setShotDoneCore(projectId: string, shotId: string, done: boolean): Promise<boolean> {
   const result = await prisma.shot.updateMany({
     where: { id: shotId, scene: { projectId }, ...(done ? { shootingDayId: { not: null } } : {}) },
-    data: { done },
+    // Rodado de verdad: si estaba "a repetir", deja de estarlo.
+    data: done ? { done, retake: false, retakeNote: null } : { done },
   });
   return result.count > 0;
 }

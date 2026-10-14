@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "motion/react";
+import { DURATION, EASE, ENTER } from "@/lib/motion";
 import { AjoloteLogo } from "@/components/AjoloteLogo";
 import { HelpTip } from "@/components/HelpTip";
 import { FeatureIntro } from "@/components/FeatureIntro";
@@ -57,19 +58,19 @@ export function ProjectRoadmap({ steps }: { steps: RoadmapStep[] }) {
 
   return (
     <motion.section
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: ENTER.taller.y }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      className="mt-6 border border-line bg-bg-raised/30 p-6"
+      transition={{ duration: ENTER.taller.duration, ease: EASE }}
+      className="mt-6 border rounded-lg border-line bg-bg-raised/30 p-6"
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-1.5">
-          <p className="font-mono text-[11px] tracking-widest text-accent uppercase">
+          <p className="text-xs text-accent">
             Hoja de ruta
           </p>
           <HelpTip text="El camino recomendado para dejar el rodaje listo. Los pasos marcados como opcionales mejoran el proyecto pero no bloquean nada: «listo para rodar» depende solo de los requeridos." />
         </div>
-        <p className="font-mono text-[11px] text-muted">
+        <p className="text-xs text-muted">
           Requeridos {requiredDone}/{required.length} · Total {doneTotal}/{steps.length}
         </p>
       </div>
@@ -84,7 +85,7 @@ export function ProjectRoadmap({ steps }: { steps: RoadmapStep[] }) {
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: DURATION.slow, ease: EASE }}
           className="hidden sm:block"
         >
           <AjoloteLogo className="h-14 w-auto shrink-0" />
@@ -107,12 +108,12 @@ export function ProjectRoadmap({ steps }: { steps: RoadmapStep[] }) {
           </div>
         ) : (
           <div className="min-w-0 flex-1">
-            <p className="font-mono text-[11px] tracking-widest text-muted uppercase">
+            <p className="text-xs text-muted">
               Siguiente paso · {requiredDone + 1} de {required.length} requeridos
             </p>
             <p className="mt-1 font-display text-xl font-bold">{currentRequired.title}</p>
             <p className="mt-2 font-sans text-sm text-muted">{currentRequired.instruction}</p>
-            <p className="mt-1 font-mono text-xs text-muted">{currentRequired.detail}</p>
+            <p className="mt-1 text-xs text-muted">{currentRequired.detail}</p>
             <Link href={currentRequired.href} className="btn btn-primary mt-4">
               {currentRequired.ctaLabel} →
             </Link>
@@ -127,10 +128,10 @@ export function ProjectRoadmap({ steps }: { steps: RoadmapStep[] }) {
           return (
             <div key={phase}>
               <div className="flex items-center justify-between">
-                <p className="font-mono text-[11px] tracking-widest text-fg uppercase">
+                <p className="text-xs text-fg">
                   {PHASE_LABELS[phase]}
                 </p>
-                <p className="font-mono text-[11px] text-muted">
+                <p className="text-xs text-muted">
                   {done}/{phaseSteps.length}
                 </p>
               </div>
@@ -156,24 +157,24 @@ export function ProjectRoadmap({ steps }: { steps: RoadmapStep[] }) {
                       </span>
                       <span className="min-w-0 flex-1">
                         <span
-                          className={`flex items-center gap-2 font-mono text-xs ${
+                          className={`flex items-center gap-2 text-xs ${
                             step.isDone ? "text-muted" : "text-fg"
                           }`}
                         >
                           {step.title}
                           {!step.required && (
-                            <span className="border border-line px-1.5 py-px text-[9px] tracking-widest text-muted uppercase">
+                            <span className="border rounded-lg border-line px-1.5 py-px text-xs text-muted">
                               Opcional
                             </span>
                           )}
                         </span>
-                        <span className="mt-0.5 block font-mono text-[11px] text-muted">
+                        <span className="mt-0.5 block text-xs text-muted">
                           {step.detail}
                         </span>
                       </span>
                       <span
                         aria-hidden
-                        className="mt-0.5 font-mono text-xs text-accent opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
+                        className="mt-0.5 text-xs text-accent opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100"
                       >
                         →
                       </span>

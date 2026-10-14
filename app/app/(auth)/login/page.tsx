@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { AuthField } from "@/components/AuthField";
 import { logIn } from "@/lib/actions/auth";
+import { FormError } from "@/components/FormError";
 
 export default function LoginPage() {
   return (
@@ -24,27 +25,34 @@ function LoginForm() {
 
   return (
     <div>
-      <h1 className="font-display text-2xl font-bold uppercase">Entrar</h1>
+      <h1 className="font-display text-2xl font-bold">Entrar</h1>
 
       {justSignedUp && (
-        <p className="mt-4 border border-line px-3 py-2 font-mono text-xs text-muted">
+        <p className="mt-4 border rounded-lg border-line px-3 py-2 text-xs text-muted">
           Cuenta creada. Revisa tu email para confirmarla antes de entrar.
         </p>
       )}
       {justConfirmed && (
-        <p className="mt-4 border border-success/60 px-3 py-2 font-mono text-xs text-success">
+        <p className="mt-4 border rounded-lg border-success/60 px-3 py-2 text-xs text-success">
           ✓ Cuenta confirmada. Ya puedes entrar con tu contraseña.
         </p>
       )}
       {justDeleted && (
-        <p className="mt-4 border border-line px-3 py-2 font-mono text-xs text-muted">
+        <p className="mt-4 border rounded-lg border-line px-3 py-2 text-xs text-muted">
           Tu cuenta se ha borrado. Gracias por haber usado Taller.
         </p>
       )}
 
       <form action={formAction} className="mt-8 space-y-4">
         {next && <input type="hidden" name="next" value={next} />}
-        <AuthField label="Email" name="email" type="email" required autoComplete="email" />
+        <AuthField
+          label="Email"
+          name="email"
+          type="email"
+          required
+          autoComplete="email"
+          defaultValue={state?.values?.email}
+        />
         <AuthField
           label="Contraseña"
           name="password"
@@ -54,7 +62,7 @@ function LoginForm() {
         />
 
         {state?.error && (
-          <p className="font-mono text-xs text-danger">{state.error}</p>
+          <FormError message={state.error} />
         )}
 
         <button
@@ -66,7 +74,7 @@ function LoginForm() {
         </button>
       </form>
 
-      <div className="mt-6 flex items-center justify-between font-mono text-xs text-muted">
+      <div className="mt-6 flex items-center justify-between text-xs text-muted">
         <Link href="/app/forgot-password" className="hover:text-accent">
           ¿Olvidaste tu contraseña?
         </Link>

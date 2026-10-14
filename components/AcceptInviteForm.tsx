@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import Link from "next/link";
 import { AuthField } from "@/components/AuthField";
 import { acceptInvite } from "@/lib/actions/auth";
+import { FormError } from "@/components/FormError";
 
 export function AcceptInviteForm({
   token,
@@ -19,23 +20,23 @@ export function AcceptInviteForm({
 
   return (
     <div>
-      <h1 className="font-display text-2xl font-bold uppercase">
+      <h1 className="font-display text-2xl font-bold">
         Únete a {organizationName}
       </h1>
-      <p className="mt-2 font-mono text-xs text-muted">
+      <p className="mt-2 text-xs text-muted">
         Te han invitado a colaborar en el Taller. Crea tu contraseña para
         entrar.
       </p>
 
       <form action={formAction} className="mt-8 space-y-4">
         <div>
-          <label className="block font-mono text-xs tracking-widest text-muted uppercase">
+          <label className="block text-[13px] text-muted">
             Email
           </label>
           <input
             value={email}
             disabled
-            className="mt-2 w-full border border-line bg-transparent px-3 py-2.5 text-sm text-muted outline-none"
+            className="mt-2 w-full border rounded-lg border-line bg-transparent px-3 py-2.5 text-sm text-muted outline-none"
           />
         </div>
         <AuthField label="Tu nombre" name="fullName" autoComplete="name" />
@@ -48,10 +49,10 @@ export function AcceptInviteForm({
         />
 
         {state?.error && (
-          <p className="font-mono text-xs text-danger">{state.error}</p>
+          <FormError message={state.error} />
         )}
 
-        <label className="flex items-start gap-2 font-mono text-xs text-muted">
+        <label className="flex items-start gap-2 text-xs text-muted">
           <input type="checkbox" name="acceptTerms" required className="mt-0.5" />
           <span>
             Acepto los{" "}
@@ -83,7 +84,7 @@ export function AcceptInviteForm({
         </button>
       </form>
 
-      <div className="mt-6 text-center font-mono text-xs text-muted">
+      <div className="mt-6 text-center text-xs text-muted">
         ¿Ya tienes cuenta?{" "}
         <Link href="/app/login" className="text-fg hover:text-accent">
           Entrar

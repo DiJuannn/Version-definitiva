@@ -15,6 +15,14 @@
   --success: #6dbf8b;
   --warn: #e3b25c;
   --danger: #ef6b62;
+  /* Tiras de escena de Taller: el código de color clásico del plan de
+     rodaje (interior/exterior, día/noche; naranja para amanecer y
+     atardecer), aclarado para fondo oscuro. */
+  --strip-int-day: #e9e6dc;
+  --strip-ext-day: #f2cf5b;
+  --strip-int-night: #6f9cf0;
+  --strip-ext-night: #6cc58d;
+  --strip-twilight: #f29a6b;
 }
 
 /* Paleta de la web de la productora (home, equipo, legal, cabecera). */
@@ -32,6 +40,14 @@
   --accent-purple: #4c1d95;
   --bg-raised: #120e1c;
   --line: #2a2536;
+}
+
+/* La herramienta (/app y la hoja compartida), no la página /taller: aquí se
+   leen datos, así que texto normal, números alineados en columnas y un gris
+   secundario algo más claro. */
+.taller-ui {
+  --muted: #9a9993;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Taller: mesa y papel. El marco (cabecera, menús, cabecera del proyecto) es
@@ -207,9 +223,73 @@ body:has(.taller-desk) > div[aria-hidden].fixed {
   --color-success: var(--success);
   --color-warn: var(--warn);
   --color-danger: var(--danger);
+  --color-strip-int-day: var(--strip-int-day);
+  --color-strip-ext-day: var(--strip-ext-day);
+  --color-strip-int-night: var(--strip-int-night);
+  --color-strip-ext-night: var(--strip-ext-night);
   --font-display: var(--font-archivo);
   --font-mono: var(--font-jetbrains-mono);
   --font-sans: var(--font-archivo);
+}
+
+/* Entrada del hero (components/HeroReveal.tsx). */
+@keyframes hero-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.hero-reveal {
+  animation: hero-reveal 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+}
+
+/* Cada línea del titular sube desde una máscara (su contenedor recorta). */
+@keyframes hero-line {
+  from {
+    transform: translateY(105%);
+  }
+  to {
+    transform: none;
+  }
+}
+.hero-line {
+  animation: hero-line 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+/* "Del guion a la pantalla" (components/TallerJourney.tsx) en su versión fija:
+   solo cuando GSAP añade .is-pinned (escritorio y con movimiento). Sin esa
+   clase es una lista normal. */
+.taller-journey.is-pinned .journey-pin {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-top: 6rem;
+  padding-bottom: 3rem;
+}
+.taller-journey.is-pinned .journey-rail {
+  display: block;
+}
+.taller-journey.is-pinned .journey-stages {
+  position: relative;
+  height: 22rem;
+}
+.taller-journey.is-pinned .journey-stage {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+}
+
+/* Con "reducir movimiento", el hero aparece tal cual desde el principio
+   (sin los retrasos encadenados de las líneas). */
+@media (prefers-reduced-motion: reduce) {
+  .hero-line,
+  .hero-reveal {
+    animation: none;
+  }
 }
 
 @keyframes credits-scroll {
@@ -275,6 +355,11 @@ body {
 .custom-cursor-active,
 .custom-cursor-active * {
   cursor: none !important;
+}
+/* Más específico que la regla de arriba: en los campos vuelve el cursor del
+   sistema (el de escribir). */
+.custom-cursor-active :is(input, textarea, select, [contenteditable="true"]) {
+  cursor: auto !important;
 }
 
 /* Tiñe las teselas de OpenStreetMap (gratis, sin API key) al negro de la
@@ -342,6 +427,26 @@ body {
 
 .vd-dark-map .leaflet-control-attribution a {
   color: var(--muted);
+}
+
+/* "Saltar al contenido": invisible hasta que recibe el foco con el teclado
+   (es lo primero que se alcanza con Tab). */
+.skip-link {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 200;
+  transform: translateY(-200%);
+  background: var(--accent);
+  color: var(--bg);
+  padding: 0.6rem 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.skip-link:focus {
+  transform: none;
 }
 
 /* Anillo de foco visible para teclado en todo lo interactivo (antes casi

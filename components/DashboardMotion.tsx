@@ -2,17 +2,16 @@
 
 import { Children, type ReactNode } from "react";
 import { motion } from "motion/react";
-
-const EASE = [0.16, 1, 0.3, 1] as const;
+import { EASE, ENTER, STAGGER } from "@/lib/motion";
 
 const container = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.08 } },
+  show: { transition: { staggerChildren: STAGGER.taller } },
 };
 
 const item = {
-  hidden: { opacity: 0, y: 10 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: EASE } },
+  hidden: { opacity: 0, y: ENTER.taller.y },
+  show: { opacity: 1, y: 0, transition: { duration: ENTER.taller.duration, ease: EASE } },
 };
 
 export function DashboardStagger({
@@ -25,7 +24,7 @@ export function DashboardStagger({
   return (
     <motion.div className={className} initial="hidden" animate="show" variants={container}>
       {Children.map(children, (child) => (
-        <motion.div className="contents" variants={item}>
+        <motion.div data-reveal className="contents" variants={item}>
           {child}
         </motion.div>
       ))}
@@ -44,10 +43,11 @@ export function DashboardReveal({
 }) {
   return (
     <motion.div
+      data-reveal
       className={className}
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: ENTER.taller.y }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, ease: EASE, delay }}
+      transition={{ duration: ENTER.taller.duration, ease: EASE, delay }}
     >
       {children}
     </motion.div>

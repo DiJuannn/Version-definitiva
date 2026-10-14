@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Archivo, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { MotionProvider } from "@/components/MotionProvider";
 
 const archivo = Archivo({
   variable: "--font-archivo",
@@ -54,6 +55,15 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${archivo.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-bg text-fg font-sans relative">
+        {/* Primer elemento con foco: con teclado o lector de pantalla se salta la navegación. */}
+        <a href="#contenido" className="skip-link">
+          Saltar al contenido
+        </a>
+        {/* Sin JavaScript, lo que aparece con una animación de entrada
+            (Reveal, Dashboard*) se quedaría invisible: se enseña tal cual. */}
+        <noscript>
+          <style>{"[data-reveal]{opacity:1!important;transform:none!important}"}</style>
+        </noscript>
         <div
           aria-hidden
           className="pointer-events-none fixed inset-0 z-50 opacity-[0.06] mix-blend-screen"
@@ -62,7 +72,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
           }}
         />
-        {children}
+        <MotionProvider>{children}</MotionProvider>
       </body>
     </html>
   );

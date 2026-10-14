@@ -3,6 +3,7 @@ import { colors, pdfStyles } from "@/lib/pdf/styles";
 import { PdfHeader, PdfFooter, SectionTitle, Watermark, rowStyle } from "@/lib/pdf/components";
 import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
 import type { ShootingDaySummary } from "@/lib/shooting-day-summary";
+import { formatHHMM } from "@/lib/schedule-plan";
 
 export function CallSheetDocument({
   projectName,
@@ -22,15 +23,18 @@ export function CallSheetDocument({
     characters,
     crewMembers,
     breakdownElements,
+    runOrder,
   } = summary;
   const callSheet = shootingDay.callSheet;
+  const hasRun = runOrder.blocks.length > 0;
+  const characterName = new Map(characters.map((c) => [c.id, c.name]));
 
   return (
     <Document>
       <Page size="A4" style={pdfStyles.page}>
         {watermark && <Watermark />}
         <PdfHeader
-          eyebrow="Call Sheet"
+          eyebrow="Hoja de llamada"
           title={projectName}
           meta={shootingDay.date.toLocaleDateString("es-ES", {
             weekday: "long",
@@ -43,7 +47,7 @@ export function CallSheetDocument({
         <View style={[pdfStyles.section, pdfStyles.grid2, { marginBottom: 22 }]}>
           <View style={pdfStyles.col}>
             <Text style={pdfStyles.sectionLabel}>Hora general de llamada</Text>
-            <Text style={pdfStyles.value}>{callSheet?.generalCallTime ?? "—"}</Text>
+            <Text style={pdfStyles.value}>{runOrder.callTime ?? callSheet?.generalCallTime ?? "—"}</Text>
           </View>
           <View style={pdfStyles.col}>
             <Text style={pdfStyles.sectionLabel}>Localizaciones</Text>
@@ -60,6 +64,52 @@ export function CallSheetDocument({
           </View>
         </View>
 
+        {hasRun && (
+          <View style={[pdfStyles.section, { marginBottom: 22 }]}>
+            <SectionTitle>Orden de rodaje{runOrder.wrap ? ` · fin previsto ${runOrder.wrap}` : ""}</SectionTitle>
+            <View style={[rowStyle(0), { paddingVertical: 6 }]}>
+              <Text style={[pdfStyles.td, { width: 50 }]}>{runOrder.callTime ?? "—"}</Text>
+              <Text style={[pdfStyles.td, { flex: 1 }]}>Llamada general · preparación {runOrder.prepMin} min</Text>
+            </View>
+            {runOrder.blocks.map((block, i) => (
+              <View key={block.id} wrap={false} style={{ marginBottom: 4 }}>
+                <View style={[rowStyle(i + 1), { paddingVertical: 6 }]}>
+                  <Text style={[pdfStyles.td, { width: 50 }]}>{formatHHMM(block.start)}</Text>
+                  <Text style={[pdfStyles.td, { flex: 1, fontWeight: 700 }]}>
+                    {block.kind === "SCENE" && block.scene
+                      ? `${block.label.split(" · ")[0]} · Escena ${block.scene.number} entera${block.location ? ` · ${block.location}` : ""}`
+                      : block.label}
+                    {block.kind !== "SHOTS" && block.kind !== "SCENE" && block.minutes > 0 ? ` · ${block.minutes} min` : ""}
+                  </Text>
+                </View>
+                {block.shots.map((shot) => (
+                  <View
+                    key={shot.id}
+                    style={{ flexDirection: "row", marginLeft: 50, paddingLeft: 8, paddingVertical: 3, borderLeftWidth: 1.5, borderLeftColor: colors.line }}
+                  >
+                    <Text style={[pdfStyles.td, { width: 36, color: colors.muted }]}>{formatHHMM(shot.start)}</Text>
+                    <Text style={[pdfStyles.td, { width: 32 }]}>
+                      {shot.sceneNumber}.{shot.number}
+                    </Text>
+                    <Text style={[pdfStyles.td, { width: 32, color: colors.muted }]}>{shot.shotSize ?? ""}</Text>
+                    <Text style={[pdfStyles.td, { flex: 1 }]}>{shot.description ?? ""}</Text>
+                    <Text style={[pdfStyles.td, { width: 110, color: colors.muted }]}>
+                      {shot.characterIds.map((id) => characterName.get(id)).filter(Boolean).join(", ")}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            ))}
+            {runOrder.wrap && (
+              <View style={[rowStyle(runOrder.blocks.length + 1), { paddingVertical: 6 }]}>
+                <Text style={[pdfStyles.td, { width: 50 }]}>{runOrder.wrap}</Text>
+                <Text style={[pdfStyles.td, { flex: 1 }]}>Fin de rodaje previsto</Text>
+              </View>
+            )}
+          </View>
+        )}
+
+        {!hasRun && (
         <View style={[pdfStyles.section, { marginBottom: 22 }]}>
           <SectionTitle>Escenas</SectionTitle>
           <View style={pdfStyles.tableHeader}>
@@ -118,13 +168,19 @@ export function CallSheetDocument({
             ))
           )}
         </View>
+        )}
 
         <View style={[pdfStyles.section, pdfStyles.grid3, { marginBottom: 22 }]}>
           <View style={pdfStyles.col}>
             <Text style={pdfStyles.sectionLabel}>Cast</Text>
             <Text style={pdfStyles.value}>
               {characters
-                .map((c) => `${c.name}${c.actor ? ` (${c.actor.name})` : ""}`)
+                .map(
+                  (c) =>
+                    `${c.name}${c.actor ? ` (${c.actor.name})` : ""}${
+                      runOrder.castCalls[c.id] ? ` · citación ${runOrder.castCalls[c.id].call}` : ""
+                    }`,
+                )
                 .join(", ") || "—"}
             </Text>
           </View>

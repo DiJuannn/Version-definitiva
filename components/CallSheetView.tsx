@@ -1,6 +1,7 @@
 import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
 import type { ShootingDaySummary } from "@/lib/shooting-day-summary";
 import { stripTone } from "@/lib/stripboard";
+import { formatHHMM } from "@/lib/schedule-plan";
 import { ChipOption } from "@/components/ChipOption";
 import { SubmitButton } from "@/components/SubmitButton";
 import {
@@ -91,6 +92,13 @@ export function CallSheetView({
         a.character.name.localeCompare(b.character.name),
     );
 
+  // Con orden de rodaje (bloques del Plan de rodaje) las horas salen de ahí:
+  // la hoja y el plan nunca dicen cosas distintas. La tabla por escenas queda
+  // para corregir a mano quién sale.
+  const run = summary.runOrder;
+  const hasRun = run.blocks.length > 0;
+  const generalCall = run.callTime ?? callSheet?.generalCallTime ?? null;
+
   const notes = [
     ["Transporte", callSheet?.transportNotes],
     ["Catering", callSheet?.cateringNotes],
@@ -131,10 +139,13 @@ export function CallSheetView({
         <div className="sm:border-r sm:border-line sm:pr-8">
           <p className="eyebrow">Citación general</p>
           <p className="mt-1 font-display text-5xl leading-none font-black tabular-nums sm:text-6xl">
-            {callSheet?.generalCallTime ?? (
-              <span className="text-muted">—:—</span>
-            )}
+            {generalCall ?? <span className="text-muted">—:—</span>}
           </p>
+          {hasRun && run.wrap && (
+            <p className="mt-2 font-sans text-sm text-muted">
+              Fin previsto <span className="font-mono text-fg tabular-nums">{run.wrap}</span>
+            </p>
+          )}
         </div>
         <div className="min-w-0">
           <p className="eyebrow">
@@ -167,11 +178,17 @@ export function CallSheetView({
         </div>
       </div>
 
-      {/* Escenas del día, en tabla. */}
-      <section className="pt-7" aria-labelledby="cs-escenas">
+      {hasRun && <RunOrder summary={summary} edit={edit} />}
+
+      {/* Escenas del día, en tabla. Con orden de rodaje, solo para corregir. */}
+      {(!hasRun || edit) && (
+      <ScenesWrapper hasRun={hasRun}>
+      <section className={hasRun ? "pt-3" : "pt-7"} aria-labelledby="cs-escenas">
+        {!hasRun && (
         <BlockTitle id="cs-escenas">
           Escenas del día · {summary.sceneAssignments.length}
         </BlockTitle>
+        )}
         {summary.sceneAssignments.length === 0 ? (
           <p className="py-4 font-sans text-sm text-muted">
             Sin escenas asignadas todavía.
@@ -364,6 +381,8 @@ export function CallSheetView({
           </>
         )}
       </section>
+      </ScenesWrapper>
+      )}
 
       {/* Reparto con horas y equipo técnico, lado a lado. */}
       <div className="mt-8 grid gap-x-10 gap-y-8 lg:grid-cols-2">
@@ -377,7 +396,10 @@ export function CallSheetView({
             </p>
           ) : (
             <ul className="divide-y divide-line">
-              {castRows.map(({ character, scenes, first }) => (
+              {castRows.map(({ character, scenes, first: firstScene }) => {
+                const planned = hasRun ? run.castCalls[character.id] : undefined;
+                const first = planned?.call ?? firstScene;
+                return (
                 <li
                   key={character.id}
                   className="grid grid-cols-[3.5rem_minmax(0,1fr)_auto] items-baseline gap-x-3 py-2.5"
@@ -396,11 +418,13 @@ export function CallSheetView({
                       </span>
                     )}
                   </span>
-                  <span className="font-mono text-[11px] text-muted">
+                  <span className="text-right font-mono text-[11px] text-muted">
                     Esc. {scenes.join(", ") || "—"}
+                    {planned && <span className="block">hasta {planned.until}</span>}
                   </span>
                 </li>
-              ))}
+                );
+              })}
             </ul>
           )}
         </section>
@@ -514,5 +538,122 @@ export function CallSheetView({
         </dl>
       </section>
     </article>
+  );
+}
+
+function ScenesWrapper({ hasRun, children }: { hasRun: boolean; children: React.ReactNode }) {
+  if (!hasRun) return <>{children}</>;
+  return (
+    <details className="group mt-4 print:hidden">
+      <summary className="link-action cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+        <span aria-hidden className="mr-1.5">✎</span> Corregir a mano quién sale en cada escena
+      </summary>
+      {children}
+    </details>
+  );
+}
+
+const EVENT_ICON: Record<string, string> = { MEAL: "Comida", MOVE: "Traslado", NOTE: "Nota" };
+
+// Orden de rodaje con horas, sacado del Plan de rodaje: llamada, bloques de
+// planos (o escenas enteras), comidas, traslados y fin previsto.
+function RunOrder({ summary, edit }: { summary: ShootingDaySummary; edit?: EditContext }) {
+  const run = summary.runOrder;
+  const names = new Map(summary.characters.map((c) => [c.id, c.name]));
+  for (const a of summary.sceneAssignments)
+    for (const c of summary.charactersByAssignment.get(a.id) ?? []) names.set(c.character.id, c.character.name);
+  const people = (ids: string[]) => ids.map((id) => names.get(id)).filter(Boolean).join(", ");
+  const shotCount = run.blocks.reduce((n, b) => n + b.shots.length, 0);
+  const ROW = "grid grid-cols-[3.25rem_minmax(0,1fr)] gap-x-4 py-2.5 sm:grid-cols-[3.75rem_minmax(0,1fr)]";
+  return (
+    <section className="pt-7" aria-labelledby="cs-orden">
+      <div className="flex flex-wrap items-end justify-between gap-x-4">
+        <div className="min-w-0 flex-1">
+          <BlockTitle id="cs-orden">
+            Orden de rodaje · {shotCount} {shotCount === 1 ? "plano" : "planos"}
+          </BlockTitle>
+        </div>
+        {edit && (
+          <a
+            href={`/app/${edit.projectId}/plan-de-rodaje?dia=${edit.shootingDayId}`}
+            className="link-action mb-1 print:hidden"
+          >
+            Cambiar el orden en Plan de rodaje →
+          </a>
+        )}
+      </div>
+      <ol>
+        <li className={`${ROW} border-b border-line`}>
+          <span className="font-mono text-sm tabular-nums">{run.callTime ?? "—"}</span>
+          <span className="font-sans text-sm">
+            <b>Llamada general</b> <span className="text-muted">· preparación {run.prepMin} min</span>
+          </span>
+        </li>
+        {run.blocks.map((block) => {
+          const time = formatHHMM(block.start);
+          if (block.kind === "MEAL" || block.kind === "MOVE" || block.kind === "NOTE") {
+            return (
+              <li key={block.id} className={`${ROW} border-b border-line bg-fg/[0.04]`}>
+                <span className="font-mono text-sm tabular-nums">{time}</span>
+                <span className="font-sans text-sm">
+                  <span className="eyebrow mr-2">{EVENT_ICON[block.kind]}</span>
+                  <b>{block.label}</b>
+                  {block.minutes > 0 && <span className="text-muted"> · {block.minutes} min</span>}
+                </span>
+              </li>
+            );
+          }
+          const scene = block.scene;
+          const tone = scene ? stripTone(scene.intExt, scene.dayPart) : block.shots[0] ? stripTone(block.shots[0].intExt, block.shots[0].dayPart) : null;
+          return (
+            <li key={block.id} className="border-b-2 border-fg/80 py-1 last:border-b-0">
+              <div className={ROW}>
+                <span className="font-mono text-sm font-semibold tabular-nums">{time}</span>
+                <p className="flex flex-wrap items-center gap-x-2.5 gap-y-1 font-sans text-sm">
+                  {tone && (
+                    <span
+                      className="rounded px-1.5 py-0.5 font-mono text-[10px] font-semibold tracking-wider uppercase"
+                      style={{ background: tone.bg, color: tone.fg }}
+                    >
+                      {scene ? `${INT_EXT_LABELS[scene.intExt]} · ${DAY_PART_LABELS[scene.dayPart]}` : tone.label}
+                    </span>
+                  )}
+                  <b>{scene ? `Escena ${scene.number} entera` : block.label.split(" · ")[0]}</b>
+                  {block.location && <span className="text-muted">{block.location}</span>}
+                  {scene && people(scene.characterIds) && <span className="text-muted">· {people(scene.characterIds)}</span>}
+                </p>
+              </div>
+              {block.shots.length > 0 && (
+                <ol className="mb-1.5 ml-[4.25rem] border-l border-line sm:ml-[4.75rem]">
+                  {block.shots.map((shot) => (
+                    <li
+                      key={shot.id}
+                      className="grid grid-cols-[3rem_3.25rem_2.75rem_minmax(0,1fr)] gap-x-3 py-1.5 pl-3 font-sans text-[13px] sm:grid-cols-[3rem_3.25rem_2.75rem_minmax(0,1fr)_minmax(0,11rem)]"
+                    >
+                      <span className="font-mono text-muted tabular-nums">{formatHHMM(shot.start)}</span>
+                      <span className="font-mono font-semibold">
+                        {shot.sceneNumber}.{shot.number}
+                      </span>
+                      <span className="font-mono text-muted">{shot.shotSize ?? ""}</span>
+                      <span className="min-w-0">
+                        {shot.description ?? ""}
+                        {shot.done && <span className="ml-2 text-success">✓ rodado</span>}
+                      </span>
+                      <span className="col-start-4 text-muted sm:col-start-auto">{people(shot.characterIds)}</span>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </li>
+          );
+        })}
+        {run.wrap && (
+          <li className={`${ROW} border-t border-line`}>
+            <span className="font-mono text-sm tabular-nums">{run.wrap}</span>
+            <span className="font-sans text-sm font-semibold">Fin de rodaje previsto</span>
+          </li>
+        )}
+      </ol>
+    </section>
   );
 }

@@ -1,16 +1,14 @@
-"use client";
-
 import type { ReactNode } from "react";
-import { motion } from "motion/react";
 
-export function HeroReveal({ children }: { children: ReactNode }) {
+// Entrada del hero con CSS puro (clase .hero-reveal en globals.css), no con
+// Motion: así arranca con la propia página, sin esperar a que cargue el
+// JavaScript — antes el titular estaba invisible hasta entonces, justo lo
+// primero que se ve. La regla de "reducir movimiento" de globals.css la deja
+// instantánea. `delay` (s) para encadenarla tras el titular.
+export function HeroReveal({ children, delay = 0.15 }: { children: ReactNode; delay?: number }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 18 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.7, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-    >
+    <div className="hero-reveal" style={{ animationDelay: `${delay}s` }}>
       {children}
-    </motion.div>
+    </div>
   );
 }

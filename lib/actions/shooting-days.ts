@@ -36,7 +36,7 @@ export async function createShootingDay(projectId: string, formData: FormData) {
   );
 
   revalidatePath(`/app/${projectId}/plan-de-rodaje`);
-  redirect(`/app/${projectId}/plan-de-rodaje/${result.id}`);
+  redirect(`/app/${projectId}/plan-de-rodaje?dia=${result.id}`);
 }
 
 export async function updateShootingDay(
@@ -122,6 +122,7 @@ export async function setShotDone(projectId: string, shotId: string, done: boole
   const ok = await setShotDoneCore(projectId, shotId, done);
   if (ok) {
     revalidatePath(`/app/${projectId}/plan-de-rodaje`);
+    revalidatePath(`/app/${projectId}/shot-list`);
     revalidatePath(`/app/${projectId}`);
   }
   return ok;

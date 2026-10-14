@@ -25,7 +25,7 @@ export default function PersonajesLoading() {
         <Skeleton className="h-3 w-24" />
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="border border-line p-4">
+            <div key={i} className="border rounded-lg border-line p-4">
               <Skeleton className="h-4 w-24" />
               <Skeleton className="mt-2 h-3 w-full" />
               <Skeleton className="mt-1 h-3 w-3/4" />
