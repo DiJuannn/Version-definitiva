@@ -293,3 +293,10 @@ como el papel, y en tres pasos que no son obligatorios:
   volver; el indicador muestra "Sin conexión — se guardará al volver".
 - **Dos pestañas del mismo usuario:** cada pestaña es un cliente Yjs distinto,
   no hay conflicto.
+
+## Guion de Taller unido a Guiones ✅
+
+- La herramienta Guion de cada proyecto enseña arriba su guion de Guiones (portada, páginas, escenas, última edición) con «Abrir el guion» y su estado frente a producción.
+- «Pasar a producción» trae las escenas nuevas y los cambios (número, INT/EXT, momento del día, qué pasa, quién sale). Cada escena de Taller guarda `scriptSid` (migración `20261015090000_scene_script_sid`), así que insertar o reordenar escenas en el guion no mueve planos ni días de rodaje a otra escena. La localización solo se pone si la escena aún no tiene. Nunca se borra nada: lo que ya no está en el guion se avisa.
+- Al vincular un guion a un proyecto (desde Guiones o desde Taller) sus escenas pasan solas la primera vez.
+- Sin guion vinculado: escribirlo en Guiones (se crea ya vinculado), vincular uno existente o subir el PDF como antes.

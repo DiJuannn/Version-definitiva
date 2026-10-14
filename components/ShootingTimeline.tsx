@@ -5,8 +5,8 @@ import Link from "next/link";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { assignSceneToDay, assignShotToDay } from "@/lib/actions/shooting-days";
+import { FeatureIntro } from "@/components/FeatureIntro";
 import { useToast } from "@/components/Toast";
-import { DAY_STRIP, STRIP_LEGEND, stripTone } from "@/lib/stripboard";
 
 export type TimelineShot = {
   id: string;
@@ -20,17 +20,9 @@ export type TimelineShot = {
 export type TimelineScene = {
   id: string;
   number: string;
-  intExt: string;
-  dayPart: string;
   intExtLabel: string;
   dayPartLabel: string;
   locationName: string | null;
-  // Lo que pasa en la escena (encabezado corto de la tira).
-  heading: string | null;
-  characters: string[];
-  // Días en los que la escena consta como asignada (solo para avisar en la
-  // tira cuando la escena tiene día pero sus planos aún no).
-  sceneDayIds: string[];
   // Día de la escena cuando NO tiene planos. Con planos, cada plano lleva su día.
   dayId: string | null;
   shots: TimelineShot[];
@@ -39,12 +31,10 @@ export type TimelineScene = {
 export type TimelineDay = {
   id: string;
   label: string;
-  longLabel: string;
-  callTime: string | null;
   conflicts: { personName: string; reason: string }[];
 };
 
-// Lo que se ve en una tira: una escena entera, o el trozo de escena (sus
+// Lo que se ve en una columna: una escena entera, o el trozo de escena (sus
 // planos) que se rueda ese día.
 type Chunk = {
   key: string;
@@ -72,40 +62,22 @@ type MovePayload = {
   senderId: string | null;
 };
 
-function applyMove(
-  scenes: TimelineScene[],
-  payload: { sceneId: string; shotIds?: string[]; dayId: string | null },
-) {
+function applyMove(scenes: TimelineScene[], payload: { sceneId: string; shotIds?: string[]; dayId: string | null }) {
   return scenes.map((scene) => {
     if (scene.id !== payload.sceneId) return scene;
     if (!payload.shotIds) return { ...scene, dayId: payload.dayId };
     const ids = new Set(payload.shotIds);
     return {
       ...scene,
-      shots: scene.shots.map((shot) =>
-        ids.has(shot.id)
-          ? { ...shot, dayId: payload.dayId, done: false }
-          : shot,
-      ),
+      shots: scene.shots.map((shot) => (ids.has(shot.id) ? { ...shot, dayId: payload.dayId, done: false } : shot)),
     };
   });
 }
 
-const plural = (n: number, one: string, many: string) =>
-  `${n} ${n === 1 ? one : many}`;
-
-// Controles dentro de una tira de color: el texto es oscuro sobre fondo claro
-// fijo, así que no usan los tokens de la mesa sino el color de la tira.
-const STRIP_SELECT =
-  "min-w-0 rounded-md border border-black/20 bg-black/[0.06] px-2 py-1 font-sans text-xs text-current outline-none transition-colors hover:border-black/40 focus-visible:border-black/60 focus-visible:ring-2 focus-visible:ring-black/40";
-
-// Una tira del tablero: una escena (o sus planos de ese día) a lo ancho, con
-// el color de INT/EXT y DÍA/NOCHE. Se coge y se suelta en otra jornada.
-function Strip({
+function ChunkCard({
   chunk,
   projectId,
   columns,
-  dayNumberById,
   onMove,
   onMoveShot,
   isPressing,
@@ -117,7 +89,6 @@ function Strip({
   chunk: Chunk;
   projectId: string;
   columns: { id: string; label: string }[];
-  dayNumberById: Map<string, number>;
   onMove: (columnId: string) => void;
   onMoveShot: (shotId: string, columnId: string) => void;
   isPressing: boolean;
@@ -128,186 +99,105 @@ function Strip({
 }) {
   const { scene, shots } = chunk;
   const [showShots, setShowShots] = useState(false);
-  const tone = stripTone(scene.intExt, scene.dayPart);
   const totalShots = scene.shots.length;
   const doneShots = shots.filter((s) => s.done).length;
-  const heading = [scene.locationName, scene.heading]
-    .filter(Boolean)
-    .join(" — ");
-  // Escena con día en el plan pero cuyos planos siguen sin repartir.
-  const markedDays =
-    chunk.columnId === UNASSIGNED && totalShots > 0
-      ? scene.sceneDayIds
-          .map((id) => dayNumberById.get(id))
-          .filter((n): n is number => n !== undefined)
-      : [];
-  const stop = (e: React.PointerEvent) => e.stopPropagation();
 
   return (
-    <li>
-      <div
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
-        style={{
-          touchAction: isDragging ? "none" : "auto",
-          backgroundColor: tone.bg,
-          color: tone.fg,
-        }}
-        className={
-          "group/strip grid cursor-grab grid-cols-[3.25rem_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1.5 rounded-md py-2 pr-2 pl-1 transition-[transform,opacity,box-shadow] duration-150 select-none active:cursor-grabbing motion-reduce:transition-none sm:grid-cols-[1rem_3.5rem_7.5rem_minmax(0,1fr)_5.5rem_minmax(0,11rem)_8.5rem_auto] sm:gap-x-4 sm:py-1.5 sm:pl-2 " +
-          (isDragging
-            ? "opacity-30"
-            : "hover:-translate-y-px hover:shadow-lg") +
-          (isPressing ? " scale-[0.98] ring-2 ring-accent" : "")
-        }
-      >
-        {/* Asa: solo decorativa; arrastra la tira entera. */}
-        <span
-          aria-hidden
-          className="hidden font-mono text-xs leading-none opacity-40 group-hover/strip:opacity-80 sm:block"
-        >
-          ⋮⋮
-        </span>
-        <p className="col-start-1 row-span-3 row-start-1 text-center font-display text-2xl leading-none font-black tabular-nums sm:col-start-auto sm:row-span-1 sm:row-start-auto sm:text-left">
-          <span className="sr-only">Escena </span>
-          {scene.number}
-        </p>
-        <p className="col-start-2 row-start-1 min-w-0 truncate font-mono text-[11px] font-semibold tracking-wider uppercase sm:col-start-auto sm:row-start-auto sm:text-[10px]">
-          {scene.intExtLabel} · {scene.dayPartLabel}
-        </p>
-        <p
-          className="col-span-2 col-start-2 row-start-2 min-w-0 truncate font-sans text-sm font-medium sm:col-span-1 sm:col-start-auto sm:row-start-auto"
-          title={heading || undefined}
-        >
-          {heading || <span className="opacity-50">Sin localización</span>}
-          {markedDays.length > 0 && (
-            <span className="ml-2 font-mono text-[10px] font-normal opacity-70">
-              en el día {markedDays.join(" y ")} · planos sin repartir
+    <div
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerUp}
+      style={{ touchAction: isDragging ? "none" : "auto" }}
+      className={
+        "cursor-grab border border-l-2 border-line border-l-accent/70 bg-bg p-3 transition-[transform,opacity,border-color] duration-150 select-none hover:border-accent/40 hover:border-l-accent active:cursor-grabbing " +
+        (isDragging ? "opacity-30" : "") +
+        (isPressing ? " scale-95 border-accent" : "")
+      }
+    >
+      <p className="font-display text-sm font-bold">Escena {scene.number}</p>
+      <p className="mt-1 font-mono text-[10px] leading-relaxed text-muted">
+        {scene.intExtLabel} · {scene.dayPartLabel}
+        {scene.locationName ? ` · ${scene.locationName}` : ""}
+      </p>
+
+      {totalShots > 0 && (
+        <div onPointerDown={(e) => e.stopPropagation()}>
+          <button
+            type="button"
+            onClick={() => setShowShots((v) => !v)}
+            aria-expanded={showShots}
+            className="mt-2 flex w-full items-center justify-between gap-2 border border-line px-2 py-1 font-mono text-[10px] text-accent hover:border-accent/60"
+          >
+            <span>
+              {shots.length === totalShots
+                ? `${totalShots} plano${totalShots === 1 ? "" : "s"}`
+                : `${shots.length} de ${totalShots} planos`}
+              {doneShots > 0 ? ` · ${doneShots} rodado${doneShots === 1 ? "" : "s"}` : ""}
             </span>
+            <span aria-hidden>{showShots ? "▴" : "▾"}</span>
+          </button>
+
+          {showShots && (
+            <ul className="mt-2 space-y-1.5">
+              {shots.map((shot) => (
+                <li key={shot.id} className="border border-line/70 p-1.5">
+                  <p className="flex items-baseline gap-1.5 font-mono text-[10px]">
+                    <span className="text-accent">{shot.label}</span>
+                    <span className="uppercase">{shot.size ?? ""}</span>
+                    {shot.done && <span className="text-success">✓ rodado</span>}
+                  </p>
+                  {shot.description && (
+                    <p className="mt-0.5 line-clamp-2 font-mono text-[10px] text-muted">{shot.description}</p>
+                  )}
+                  <label className="sr-only" htmlFor={`shot-move-${shot.id}`}>
+                    Día del plano {shot.label}
+                  </label>
+                  <select
+                    id={`shot-move-${shot.id}`}
+                    value={chunk.columnId}
+                    onChange={(e) => onMoveShot(shot.id, e.target.value)}
+                    className="field mt-1 w-full px-1 py-0.5 font-mono text-[10px] text-muted"
+                  >
+                    {columns.map((column) => (
+                      <option key={column.id} value={column.id} className="bg-bg">
+                        {column.label}
+                      </option>
+                    ))}
+                  </select>
+                </li>
+              ))}
+            </ul>
           )}
-        </p>
-
-        {/* En el móvil, planos y personajes comparten la segunda línea; en
-            escritorio son columnas propias (sm:contents). */}
-        <div className="col-start-2 row-start-3 flex min-w-0 items-baseline gap-3 sm:contents">
-          {/* Planos: abre la lista para mover planos sueltos. */}
-          <div onPointerDown={stop} className="shrink-0">
-            {totalShots > 0 ? (
-              <button
-                type="button"
-                onClick={() => setShowShots((v) => !v)}
-                aria-expanded={showShots}
-                aria-label={`Planos de la escena ${scene.number}`}
-                className="inline-flex items-center gap-1 rounded font-mono text-[11px] whitespace-nowrap underline decoration-black/25 underline-offset-2 hover:decoration-black/70 focus-visible:outline-2 focus-visible:outline-black/60"
-              >
-                {shots.length === totalShots
-                  ? plural(totalShots, "plano", "planos")
-                  : `${shots.length}/${totalShots} pl.`}
-                {doneShots > 0 ? ` · ${doneShots}✓` : ""}
-                <span aria-hidden>{showShots ? "▴" : "▾"}</span>
-              </button>
-            ) : (
-              <span className="font-mono text-[11px] opacity-50">
-                sin planos
-              </span>
-            )}
-          </div>
-
-          <p
-            className="min-w-0 truncate font-sans text-xs"
-            title={scene.characters.join(", ") || undefined}
-          >
-            {scene.characters.length > 0 ? (
-              <>
-                <span className="sr-only">Personajes: </span>
-                {scene.characters.join(", ")}
-              </>
-            ) : (
-              <span className="opacity-50">Sin personajes</span>
-            )}
-          </p>
         </div>
+      )}
 
-        {/* Alternativa al arrastre: sirve con teclado y en táctil sin pulsación larga. */}
-        <div
-          onPointerDown={stop}
-          className="col-start-3 row-start-1 flex items-center sm:col-start-auto sm:row-start-auto"
+      {/* Alternativa al arrastre: sirve con teclado y en táctil sin pulsación larga. */}
+      <div className="mt-2 flex items-center gap-2" onPointerDown={(e) => e.stopPropagation()}>
+        <label className="sr-only" htmlFor={`move-${chunk.key}`}>
+          Mover {totalShots > 0 ? "los planos de " : ""}la escena {scene.number} a otro día
+        </label>
+        <select
+          id={`move-${chunk.key}`}
+          value={chunk.columnId}
+          onChange={(e) => onMove(e.target.value)}
+          className="field min-w-0 flex-1 px-1.5 py-1 font-mono text-[10px] text-muted"
         >
-          <label className="sr-only" htmlFor={`move-${chunk.key}`}>
-            Mover {totalShots > 0 ? "los planos de " : ""}la escena{" "}
-            {scene.number} a otro día
-          </label>
-          <select
-            id={`move-${chunk.key}`}
-            value={chunk.columnId}
-            onChange={(e) => onMove(e.target.value)}
-            className={STRIP_SELECT + " w-[7.5rem] sm:w-full"}
-          >
-            {columns.map((column) => (
-              <option key={column.id} value={column.id}>
-                {column.label}
-              </option>
-            ))}
-          </select>
-        </div>
+          {columns.map((column) => (
+            <option key={column.id} value={column.id} className="bg-bg">
+              {column.label}
+            </option>
+          ))}
+        </select>
         <Link
           href={`/app/${projectId}/guion/${scene.id}`}
-          onPointerDown={stop}
           aria-label={`Abrir la escena ${scene.number}`}
-          className="col-start-3 row-start-3 justify-self-end rounded px-1 font-mono text-[10px] tracking-widest uppercase opacity-60 hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-black/60 sm:col-start-auto sm:row-start-auto"
+          className="shrink-0 px-1 font-mono text-[11px] text-muted hover:text-accent"
         >
-          Abrir →
+          →
         </Link>
       </div>
-
-      {showShots && totalShots > 0 && (
-        <ul
-          className="mt-1 mb-2 ml-4 divide-y divide-line border-l-4 pl-4 sm:ml-8"
-          style={{ borderColor: tone.bg }}
-        >
-          {shots.map((shot) => (
-            <li
-              key={shot.id}
-              className="grid grid-cols-[3.5rem_minmax(0,1fr)] items-center gap-x-3 gap-y-1.5 py-2 sm:grid-cols-[3.5rem_3rem_minmax(0,1fr)_9rem]"
-            >
-              <span className="font-mono text-xs text-accent">
-                {shot.label}
-              </span>
-              <span className="font-mono text-[11px] uppercase">
-                {shot.size ?? "—"}
-                {shot.done && (
-                  <span className="ml-1.5 text-success normal-case">
-                    ✓ rodado
-                  </span>
-                )}
-              </span>
-              <span className="col-span-2 min-w-0 truncate font-sans text-sm text-muted sm:col-span-1">
-                {shot.description ?? ""}
-              </span>
-              <span className="col-span-2 sm:col-span-1">
-                <label className="sr-only" htmlFor={`shot-move-${shot.id}`}>
-                  Día del plano {shot.label}
-                </label>
-                <select
-                  id={`shot-move-${shot.id}`}
-                  value={chunk.columnId}
-                  onChange={(e) => onMoveShot(shot.id, e.target.value)}
-                  className="field w-full px-2 py-1 text-xs"
-                >
-                  {columns.map((column) => (
-                    <option key={column.id} value={column.id}>
-                      {column.label}
-                    </option>
-                  ))}
-                </select>
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </li>
+    </div>
   );
 }
 
@@ -325,9 +215,7 @@ export function ShootingTimeline({
   const [scenes, setScenes] = useState(initialScenes);
   const [dragOverId, setDragOverId] = useState<string | null>(null);
   const [dragState, setDragState] = useState<DragState | null>(null);
-  const [ghostPos, setGhostPos] = useState<{ x: number; y: number } | null>(
-    null,
-  );
+  const [ghostPos, setGhostPos] = useState<{ x: number; y: number } | null>(null);
   const [pressingKey, setPressingKey] = useState<string | null>(null);
   const [, startTransition] = useTransition();
   const { toast } = useToast();
@@ -376,12 +264,7 @@ export function ShootingTimeline({
     const list: Chunk[] = [];
     for (const scene of scenes) {
       if (scene.shots.length === 0) {
-        list.push({
-          key: `${scene.id}:${scene.dayId ?? UNASSIGNED}`,
-          scene,
-          columnId: scene.dayId ?? UNASSIGNED,
-          shots: [],
-        });
+        list.push({ key: `${scene.id}:${scene.dayId ?? UNASSIGNED}`, scene, columnId: scene.dayId ?? UNASSIGNED, shots: [] });
         continue;
       }
       const groups = new Map<string, TimelineShot[]>();
@@ -390,12 +273,7 @@ export function ShootingTimeline({
         groups.set(column, [...(groups.get(column) ?? []), shot]);
       }
       for (const [column, shots] of groups) {
-        list.push({
-          key: `${scene.id}:${column}`,
-          scene,
-          columnId: column,
-          shots,
-        });
+        list.push({ key: `${scene.id}:${column}`, scene, columnId: column, shots });
       }
     }
     return list;
@@ -415,16 +293,14 @@ export function ShootingTimeline({
 
   const columns = useMemo(
     () => [
-      { id: UNASSIGNED, label: "Sin día" },
+      { id: UNASSIGNED, label: "Sin asignar" },
       ...days.map((day) => ({ id: day.id, label: day.label })),
     ],
     [days],
   );
 
   function labelOf(columnId: string) {
-    return columnId === UNASSIGNED
-      ? "Sin día"
-      : (days.find((d) => d.id === columnId)?.label ?? "el día");
+    return columnId === UNASSIGNED ? "Sin asignar" : (days.find((d) => d.id === columnId)?.label ?? "el día");
   }
 
   function broadcast(payload: Omit<MovePayload, "senderId">) {
@@ -440,23 +316,15 @@ export function ShootingTimeline({
     if (chunk.columnId === targetColumn) return;
     const targetDayId = targetColumn === UNASSIGNED ? null : targetColumn;
     const fromDayId = chunk.columnId === UNASSIGNED ? null : chunk.columnId;
-    const shotIds =
-      chunk.scene.shots.length > 0 ? chunk.shots.map((s) => s.id) : undefined;
+    const shotIds = chunk.scene.shots.length > 0 ? chunk.shots.map((s) => s.id) : undefined;
 
-    setScenes((prev) =>
-      applyMove(prev, { sceneId: chunk.scene.id, shotIds, dayId: targetDayId }),
-    );
+    setScenes((prev) => applyMove(prev, { sceneId: chunk.scene.id, shotIds, dayId: targetDayId }));
     broadcast({ sceneId: chunk.scene.id, shotIds, dayId: targetDayId });
 
     startTransition(async () => {
       let ok = false;
       try {
-        ok = await assignSceneToDay(
-          projectId,
-          chunk.scene.id,
-          targetDayId,
-          fromDayId,
-        );
+        ok = await assignSceneToDay(projectId, chunk.scene.id, targetDayId, fromDayId);
       } catch {
         ok = false;
       }
@@ -469,13 +337,7 @@ export function ShootingTimeline({
         );
       } else {
         // Vuelve a su sitio para que la pantalla no mienta sobre lo guardado.
-        setScenes((prev) =>
-          applyMove(prev, {
-            sceneId: chunk.scene.id,
-            shotIds,
-            dayId: fromDayId,
-          }),
-        );
+        setScenes((prev) => applyMove(prev, { sceneId: chunk.scene.id, shotIds, dayId: fromDayId }));
         broadcast({ sceneId: chunk.scene.id, shotIds, dayId: fromDayId });
         toast("error", "No se pudo mover. Se ha dejado donde estaba.");
       }
@@ -489,18 +351,8 @@ export function ShootingTimeline({
     const fromDayId = chunk.columnId === UNASSIGNED ? null : chunk.columnId;
     const shot = chunk.shots.find((s) => s.id === shotId);
 
-    setScenes((prev) =>
-      applyMove(prev, {
-        sceneId: chunk.scene.id,
-        shotIds: [shotId],
-        dayId: targetDayId,
-      }),
-    );
-    broadcast({
-      sceneId: chunk.scene.id,
-      shotIds: [shotId],
-      dayId: targetDayId,
-    });
+    setScenes((prev) => applyMove(prev, { sceneId: chunk.scene.id, shotIds: [shotId], dayId: targetDayId }));
+    broadcast({ sceneId: chunk.scene.id, shotIds: [shotId], dayId: targetDayId });
 
     startTransition(async () => {
       let ok = false;
@@ -510,23 +362,10 @@ export function ShootingTimeline({
         ok = false;
       }
       if (ok) {
-        toast(
-          "success",
-          `Plano ${shot?.label ?? ""} → ${labelOf(targetColumn)}`,
-        );
+        toast("success", `Plano ${shot?.label ?? ""} → ${labelOf(targetColumn)}`);
       } else {
-        setScenes((prev) =>
-          applyMove(prev, {
-            sceneId: chunk.scene.id,
-            shotIds: [shotId],
-            dayId: fromDayId,
-          }),
-        );
-        broadcast({
-          sceneId: chunk.scene.id,
-          shotIds: [shotId],
-          dayId: fromDayId,
-        });
+        setScenes((prev) => applyMove(prev, { sceneId: chunk.scene.id, shotIds: [shotId], dayId: fromDayId }));
+        broadcast({ sceneId: chunk.scene.id, shotIds: [shotId], dayId: fromDayId });
         toast("error", "No se pudo mover el plano. Se ha dejado donde estaba.");
       }
     });
@@ -540,18 +379,9 @@ export function ShootingTimeline({
     setPressingKey(null);
   }
 
-  function beginDrag(
-    key: string,
-    target: HTMLElement,
-    clientX: number,
-    clientY: number,
-  ) {
+  function beginDrag(key: string, target: HTMLElement, clientX: number, clientY: number) {
     const rect = target.getBoundingClientRect();
-    setDragState({
-      chunkKey: key,
-      offsetX: clientX - rect.left,
-      offsetY: clientY - rect.top,
-    });
+    setDragState({ chunkKey: key, offsetX: clientX - rect.left, offsetY: clientY - rect.top });
     setGhostPos({ x: clientX, y: clientY });
   }
 
@@ -561,10 +391,7 @@ export function ShootingTimeline({
     return column?.dataset.columnId ?? null;
   }
 
-  function handlePointerDown(
-    e: React.PointerEvent<HTMLDivElement>,
-    key: string,
-  ) {
+  function handlePointerDown(e: React.PointerEvent<HTMLDivElement>, key: string) {
     if (e.pointerType === "mouse" && e.button !== 0) return;
     try {
       e.currentTarget.setPointerCapture(e.pointerId);
@@ -589,10 +416,7 @@ export function ShootingTimeline({
     }
   }
 
-  function handlePointerMove(
-    e: React.PointerEvent<HTMLDivElement>,
-    key: string,
-  ) {
+  function handlePointerMove(e: React.PointerEvent<HTMLDivElement>, key: string) {
     if (dragState?.chunkKey === key) {
       e.preventDefault();
       setGhostPos({ x: e.clientX, y: e.clientY });
@@ -601,10 +425,7 @@ export function ShootingTimeline({
     }
 
     if (!startPosRef.current) return;
-    const distance = Math.hypot(
-      e.clientX - startPosRef.current.x,
-      e.clientY - startPosRef.current.y,
-    );
+    const distance = Math.hypot(e.clientX - startPosRef.current.x, e.clientY - startPosRef.current.y);
 
     if (e.pointerType === "touch") {
       if (distance > MOVE_CANCEL_PX) clearPress();
@@ -618,10 +439,7 @@ export function ShootingTimeline({
     }
   }
 
-  function handlePointerUp(
-    e: React.PointerEvent<HTMLDivElement>,
-    chunk: Chunk,
-  ) {
+  function handlePointerUp(e: React.PointerEvent<HTMLDivElement>, chunk: Chunk) {
     clearPress();
     startPosRef.current = null;
 
@@ -634,18 +452,11 @@ export function ShootingTimeline({
     }
   }
 
-  const draggedChunk = dragState
-    ? chunks.find((c) => c.key === dragState.chunkKey)
-    : null;
+  const draggedChunk = dragState ? chunks.find((c) => c.key === dragState.chunkKey) : null;
 
-  const dayNumberById = useMemo(
-    () => new Map(days.map((day, index) => [day.id, index + 1])),
-    [days],
-  );
-
-  function renderStrip(chunk: Chunk) {
+  function renderCard(chunk: Chunk) {
     return (
-      <Strip
+      <ChunkCard
         key={chunk.key}
         chunk={chunk}
         isPressing={pressingKey === chunk.key}
@@ -655,194 +466,112 @@ export function ShootingTimeline({
         onPointerUp={(e) => handlePointerUp(e, chunk)}
         projectId={projectId}
         columns={columns}
-        dayNumberById={dayNumberById}
         onMove={(columnId) => commitMove(chunk, columnId)}
-        onMoveShot={(shotId, columnId) =>
-          commitShotMove(chunk, shotId, columnId)
-        }
+        onMoveShot={(shotId, columnId) => commitShotMove(chunk, shotId, columnId)}
       />
     );
   }
 
-  // Totales de una jornada: escenas que se ruedan ese día y, si hay shot list, sus planos.
-  function totals(list: Chunk[]) {
+  // En los contadores de columna: escenas que se ruedan ese día y, si hay shot list, sus planos.
+  function counter(list: Chunk[]) {
     const shotCount = list.reduce((n, c) => n + c.shots.length, 0);
-    const doneCount = list.reduce(
-      (n, c) => n + c.shots.filter((s) => s.done).length,
-      0,
-    );
-    return [
-      plural(list.length, "escena", "escenas"),
-      shotCount > 0 ? plural(shotCount, "plano", "planos") : null,
-      doneCount > 0 ? `${doneCount} rodado${doneCount === 1 ? "" : "s"}` : null,
-    ]
-      .filter(Boolean)
-      .join(" · ");
+    return shotCount > 0 ? `${list.length} · ${shotCount} pl.` : String(list.length);
   }
 
-  const unassigned = byColumn.get(UNASSIGNED) ?? [];
-
-  // Cada jornada es una zona donde soltar; al arrastrar encima se tiñe de acento.
-  const zoneClass = (id: string) =>
-    "-mx-2 rounded-lg px-2 pb-2 transition-colors motion-reduce:transition-none " +
-    (dragOverId === id ? "bg-accent/10 ring-1 ring-accent/40" : "");
-
   return (
-    <div className="mt-10">
-      {/* Leyenda de colores: la convención de producción, a la vista. */}
-      <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-3">
-        <ul
-          aria-label="Colores de las tiras"
-          className="flex flex-wrap gap-x-4 gap-y-2"
-        >
-          {STRIP_LEGEND.map((tone) => (
-            <li
-              key={tone.key}
-              className="flex items-center gap-1.5 font-mono text-[10px] tracking-widest text-muted uppercase"
-            >
-              <span
-                aria-hidden
-                className="h-3 w-5 rounded-sm"
-                style={{ backgroundColor: tone.bg }}
-              />
-              {tone.label}
-            </li>
-          ))}
-        </ul>
-        {otherViewers.length > 0 && (
-          <p className="flex items-center gap-2 font-mono text-[11px] text-muted">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent motion-reduce:animate-none" />
-            Viendo ahora: {otherViewers.join(", ")}
-          </p>
-        )}
-      </div>
+    <div className="mt-8">
+      <FeatureIntro featureId="shooting-timeline">
+        Mantén pulsada una escena (o arrástrala con el ratón) para cambiarla de día de rodaje — se guarda sola, sin
+        formularios. Si la escena tiene planos, abre &ldquo;planos&rdquo; en la tarjeta para repartirlos entre días:
+        una escena puede rodarse en varios. La columna &ldquo;Sin asignar&rdquo; son las escenas o planos que
+        todavía no tienen día. Si alguien más tiene esta pantalla abierta a la vez, los cambios se ven al instante en
+        las dos pantallas.
+      </FeatureIntro>
 
-      {/* Por repartir: arriba, como el montón de tiras que aún no tienen sitio. */}
-      <section
-        data-column-id={UNASSIGNED}
-        aria-labelledby="strip-unassigned"
-        className={"mt-6 " + zoneClass(UNASSIGNED)}
-      >
-        <div className="flex items-baseline justify-between gap-4 border-b border-line py-3">
-          <h2
-            id="strip-unassigned"
-            className="font-display text-lg font-bold tracking-tight"
-          >
-            Por repartir
-          </h2>
-          <p className="font-mono text-[11px] text-muted">
-            {unassigned.length > 0 ? totals(unassigned) : ""}
-          </p>
+      {otherViewers.length > 0 && (
+        <div className="mt-4 flex items-center gap-2 font-mono text-[10px] text-muted">
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
+          Viendo ahora: {otherViewers.join(", ")}
         </div>
-        {unassigned.length === 0 ? (
-          <p className="py-4 font-sans text-sm text-success">
-            ✓ Todas las escenas tienen día.
-          </p>
-        ) : (
-          <ul className="mt-2 space-y-1">{unassigned.map(renderStrip)}</ul>
-        )}
-      </section>
+      )}
 
-      <div className="mt-8 space-y-6">
-        {days.map((day, index) => {
-          const list = byColumn.get(day.id) ?? [];
-          return (
-            <section
-              key={day.id}
-              data-column-id={day.id}
-              aria-label={`Día ${index + 1}, ${day.longLabel}`}
-              className={zoneClass(day.id)}
-            >
-              {/* La tira de día: negra, con la fecha y los totales de la jornada. */}
+      <div className="mt-4 flex gap-4 overflow-x-auto pb-4">
+        <div
+          data-column-id={UNASSIGNED}
+          className={
+            "flex w-64 shrink-0 flex-col gap-3 border border-dashed bg-bg-raised/20 p-4 transition-colors " +
+            (dragOverId === UNASSIGNED ? "border-accent" : "border-line")
+          }
+        >
+          <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
+            Sin asignar ({counter(byColumn.get(UNASSIGNED) ?? [])})
+          </p>
+          <div className="flex flex-col gap-2">
+            {(byColumn.get(UNASSIGNED) ?? []).map(renderCard)}
+            {(byColumn.get(UNASSIGNED) ?? []).length === 0 && (
+              <p className="font-mono text-[10px] text-muted">Todo asignado.</p>
+            )}
+          </div>
+        </div>
+
+        {days.map((day) => (
+          <div
+            key={day.id}
+            data-column-id={day.id}
+            className={
+              "flex w-64 shrink-0 flex-col gap-3 border bg-bg-raised/50 p-4 transition-colors " +
+              (dragOverId === day.id ? "border-accent" : "border-line")
+            }
+          >
+            <div className="flex items-center justify-between border-b border-line pb-3">
               <Link
                 href={`/app/${projectId}/plan-de-rodaje/${day.id}`}
-                style={{ backgroundColor: DAY_STRIP.bg, color: DAY_STRIP.fg }}
-                className="group flex flex-wrap items-baseline gap-x-4 gap-y-1 rounded-md px-3 py-2.5 ring-1 ring-white/10 transition-shadow hover:ring-accent/60 focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none sm:px-4"
+                className="font-display text-sm font-bold transition-colors hover:text-accent"
               >
-                <span className="font-mono text-[11px] tracking-widest text-accent uppercase">
-                  Día {index + 1}
-                </span>
-                <span className="font-display text-base font-black tracking-tight uppercase sm:text-lg">
-                  {day.longLabel}
-                </span>
-                {day.callTime && (
-                  <span className="font-mono text-[11px] opacity-70">
-                    Llamada {day.callTime}
-                  </span>
-                )}
-                <span className="ml-auto flex items-baseline gap-3 font-mono text-[11px] opacity-70">
-                  {totals(list)}
-                  <span
-                    aria-hidden
-                    className="transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none"
-                  >
-                    →
-                  </span>
-                </span>
+                {day.label}
               </Link>
-
-              {day.conflicts.length > 0 && (
-                <div className="mt-2 space-y-1 border-l-2 border-warn pl-3">
-                  {day.conflicts.map((c, i) => (
-                    <p
-                      key={i}
-                      className="font-sans text-xs leading-snug text-warn"
-                    >
-                      {c.personName}: {c.reason}
-                    </p>
-                  ))}
-                </div>
-              )}
-
-              {list.length === 0 ? (
-                <p className="px-1 pt-3 font-sans text-sm text-muted">
-                  Jornada vacía: suelta aquí una tira o elige este día en su
-                  selector.
-                </p>
-              ) : (
-                <ul className="mt-1 space-y-1">{list.map(renderStrip)}</ul>
-              )}
-            </section>
-          );
-        })}
-      </div>
-
-      {dragState &&
-        ghostPos &&
-        draggedChunk &&
-        (() => {
-          const tone = stripTone(
-            draggedChunk.scene.intExt,
-            draggedChunk.scene.dayPart,
-          );
-          return (
-            <div
-              className="pointer-events-none fixed z-50 flex w-80 rotate-1 items-center gap-3 rounded-md px-3 py-2 shadow-2xl ring-2 ring-accent"
-              style={{
-                left: ghostPos.x - dragState.offsetX,
-                top: ghostPos.y - dragState.offsetY,
-                backgroundColor: tone.bg,
-                color: tone.fg,
-              }}
-            >
-              <span className="font-display text-2xl leading-none font-black">
-                {draggedChunk.scene.number}
+              <span className="rounded-full border border-line px-2 py-0.5 font-mono text-[10px] text-muted">
+                {counter(byColumn.get(day.id) ?? [])}
               </span>
-              <span className="min-w-0 truncate font-mono text-[11px] font-semibold uppercase">
-                {draggedChunk.scene.intExtLabel} ·{" "}
-                {draggedChunk.scene.dayPartLabel}
-                {draggedChunk.scene.locationName
-                  ? ` · ${draggedChunk.scene.locationName}`
-                  : ""}
-              </span>
-              {draggedChunk.shots.length > 0 && (
-                <span className="ml-auto font-mono text-[11px]">
-                  {draggedChunk.shots.length} pl.
-                </span>
+            </div>
+
+            {day.conflicts.length > 0 && (
+              <div className="border border-warn/60 p-2">
+                {day.conflicts.map((c, i) => (
+                  <p key={i} className="font-mono text-[10px] text-warn">
+                    ⚠ {c.personName} — {c.reason}
+                  </p>
+                ))}
+              </div>
+            )}
+
+            <div className="flex flex-col gap-2">
+              {(byColumn.get(day.id) ?? []).map(renderCard)}
+              {(byColumn.get(day.id) ?? []).length === 0 && (
+                <p className="font-mono text-[10px] text-muted">Mantén pulsada una escena y suéltala aquí.</p>
               )}
             </div>
-          );
-        })()}
+          </div>
+        ))}
+      </div>
+
+      {dragState && ghostPos && draggedChunk && (
+        <div
+          className="pointer-events-none fixed z-50 w-52 scale-105 border border-accent bg-bg p-2.5 shadow-lg shadow-black/50"
+          style={{ left: ghostPos.x - dragState.offsetX, top: ghostPos.y - dragState.offsetY }}
+        >
+          <p className="font-mono text-xs font-bold">Escena {draggedChunk.scene.number}</p>
+          <p className="mt-0.5 font-mono text-[10px] text-muted">
+            {draggedChunk.scene.intExtLabel} · {draggedChunk.scene.dayPartLabel}
+            {draggedChunk.scene.locationName ? ` · ${draggedChunk.scene.locationName}` : ""}
+          </p>
+          {draggedChunk.shots.length > 0 && (
+            <p className="mt-0.5 font-mono text-[10px] text-accent">
+              {draggedChunk.shots.length} plano{draggedChunk.shots.length === 1 ? "" : "s"}
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

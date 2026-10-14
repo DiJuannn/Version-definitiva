@@ -36,6 +36,8 @@ import { SparkleIcon } from "@/components/ToolIcons";
 import { CreateDialog } from "@/components/CreateDialog";
 import { NextTool, SceneSlug } from "@/components/preproduccion/SceneSlug";
 import { STRIP_LEGEND, stripColor } from "@/components/preproduccion/palette";
+import { ScriptSource } from "@/components/preproduccion/ScriptSource";
+import { planScreenplayScenes } from "@/lib/screenplay-scenes";
 
 // El análisis de guion y la revisión de continuidad llaman a Mistral y
 // pueden tardar más de los 10s que Vercel da por defecto a una función —
@@ -114,6 +116,20 @@ export default async function GuionPage({
       include: { _count: { select: { issues: true } } },
     }),
   ]);
+
+  // El guion de Guiones vinculado (si lo hay) y, si no, los que se podrían
+  // vincular. Solo para proyectos de la propia organización.
+  const ownProject = project.organizationId === profile.organizationId;
+  const [scriptPlan, candidates] = ownProject
+    ? await Promise.all([
+        planScreenplayScenes(projectId, profile.organizationId),
+        prisma.screenplay.findMany({
+          where: { organizationId: profile.organizationId, projectId: null },
+          orderBy: { updatedAt: "desc" },
+          select: { id: true, title: true },
+        }),
+      ])
+    : [null, []];
 
   const uploadAction = uploadScript.bind(null, projectId);
   const createSceneAction = createScene.bind(null, projectId);
@@ -251,7 +267,7 @@ export default async function GuionPage({
       <PageHeader
         eyebrow="Preproducción"
         title="Guion"
-        description="Las escenas de tu película en orden, como tiras de un guion. Abre una para decir dónde se rueda, quién sale y qué se necesita."
+        description="Las escenas de tu película en orden, sacadas del guion. Abre una para decir dónde se rueda, quién sale y qué se necesita."
         actions={
           scenes.length > 0 ? (
             <CreateDialog
@@ -287,6 +303,11 @@ export default async function GuionPage({
             </div>
           ))}
         </dl>
+      )}
+
+      {/* ------------------------------------------------ de dónde sale */}
+      {ownProject && (
+        <ScriptSource projectId={projectId} plan={scriptPlan} candidates={candidates} hasScenes={scenes.length > 0} />
       )}
 
       {/* ------------------------------------------------ pendiente */}
@@ -385,9 +406,12 @@ export default async function GuionPage({
         </ul>
       )}
 
-      {scenes.length === 0 ? (
+      {scenes.length === 0 && scriptPlan ? null : scenes.length === 0 ? (
         /* ------------------------------------------------ primeros pasos */
-        <section className="mt-10" aria-label="Primeros pasos">
+        <section className="mt-12" aria-label="Primeros pasos">
+          {!currentFile && (
+            <p className="eyebrow mb-3">O súbelo en PDF o Word</p>
+          )}
           <div className="sheet px-6 py-8 sm:px-10 sm:py-10">
             {currentFile ? (
               <>
@@ -480,13 +504,9 @@ export default async function GuionPage({
           </div>
 
           <div className="mt-10 max-w-md">
-            <h2 className={SECTION_TITLE}>¿Aún no tienes guion?</h2>
+            <h2 className={SECTION_TITLE}>¿Prefieres ir a mano?</h2>
             <p className={SECTION_TEXT}>
-              Escríbelo en{" "}
-              <Link href="/app/guiones" className="text-accent hover:underline">
-                Guiones
-              </Link>{" "}
-              y vincúlalo a este proyecto, o crea las escenas a mano y sube el guion cuando lo tengas.
+              Crea las escenas una a una y conecta el guion cuando lo tengas.
             </p>
             <div className="mt-4">{newSceneForm}</div>
           </div>

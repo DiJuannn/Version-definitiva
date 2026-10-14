@@ -695,6 +695,10 @@ model Scene {
   productionNotes String?
   order           Int      @default(0)
   storyOrder      Int?
+  // Id de la escena en el guion de Guiones del que viene (atributo sid del
+  // encabezado). Así un guion que se sigue escribiendo actualiza su escena
+  // aunque cambie de número, sin mover planos ni días de rodaje a otra.
+  scriptSid       String?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -710,6 +714,7 @@ model Scene {
 
   @@index([projectId])
   @@index([locationId])
+  @@index([projectId, scriptSid])
 }
 
 model SceneCharacter {

@@ -9,6 +9,8 @@ import { uploadProjectFile } from "@/lib/storage";
 import { parseScreenplayPdf } from "@/lib/screenplay/pdf-import";
 import type { ScreenplayBlock } from "@/lib/screenplay/blocks";
 import { syncScreenplayToProjectCore, type SyncResult } from "@/lib/screenplay-taller";
+import { syncScreenplayScenesCore, type SceneSyncResult } from "@/lib/screenplay-scenes";
+import { getProjectForProfile } from "@/lib/project-access";
 import {
   FOUNTAIN_MAX_BYTES,
   SCREENPLAY_TITLE_MAX,
@@ -129,9 +131,65 @@ export async function linkScreenplayProject(id: string, projectId: string | null
   revalidatePath(`/app/guiones/${id}`);
   if (!projectId) return { ok: true, characters: 0, cards: 0 };
   const res = await syncScreenplayToProjectCore(id, profile.organizationId);
-  revalidatePath(`/app/${projectId}/personajes`);
-  revalidatePath(`/app/${projectId}/moodboard`);
+  // Al vincular, las escenas del guion pasan también a producción.
+  if (res.ok) await syncScreenplayScenesCore(projectId, profile.organizationId);
+  revalidateProjectScript(projectId);
   return res;
+}
+
+function revalidateProjectScript(projectId: string) {
+  for (const tool of ["guion", "personajes", "moodboard", "desglose", "plan-de-rodaje", "shot-list", "storyboard"]) {
+    revalidatePath(`/app/${projectId}/${tool}`);
+  }
+  revalidatePath(`/app/${projectId}`);
+}
+
+// Solo los guiones de la propia organización: un proyecto compartido desde
+// otra se ve, pero su guion no es de quien lo mira.
+async function ownProject(projectId: string) {
+  const profile = await getCurrentProfile();
+  if (!profile) return null;
+  const project = await getProjectForProfile(profile, projectId);
+  if (!project || project.organizationId !== profile.organizationId) return null;
+  return { profile, project };
+}
+
+// Desde la herramienta Guion de Taller: pasa a producción lo que ha cambiado
+// en el guion (escenas nuevas, renumeradas o reescritas, y quién sale).
+export async function syncProjectScriptScenes(projectId: string): Promise<SceneSyncResult> {
+  const own = await ownProject(projectId);
+  if (!own) return { ok: false, error: "No tienes acceso a este proyecto." };
+  const res = await syncScreenplayScenesCore(projectId, own.profile.organizationId);
+  revalidateProjectScript(projectId);
+  return res;
+}
+
+// «Escribir el guion»: crea un guion en Guiones ya vinculado al proyecto y
+// abre el editor.
+export async function writeProjectScript(projectId: string): Promise<void> {
+  const own = await ownProject(projectId);
+  if (!own) redirect(`/app/${projectId}/guion`);
+  const { profile, project } = own;
+  const type = (project.type ?? "").toLowerCase();
+  const result = await createScreenplayCore(profile.organizationId, profile.id, {
+    title: project.name,
+    format: type.includes("largo") ? "FEATURE" : type.includes("serie") ? "SERIES_EPISODE" : "SHORT",
+    logline: null,
+    author: profile.fullName,
+  });
+  if ("error" in result) redirect(`/app/${projectId}/guion`);
+  await prisma.screenplay.update({ where: { id: result.id }, data: { projectId } });
+  revalidatePath("/app/guiones");
+  revalidatePath(`/app/${projectId}/guion`);
+  redirect(`/app/guiones/${result.id}?paso=guion`);
+}
+
+// «Vincular un guion de Guiones» desde Taller.
+export async function linkScriptToProject(projectId: string, formData: FormData): Promise<void> {
+  const own = await ownProject(projectId);
+  const screenplayId = String(formData.get("screenplayId") ?? "");
+  if (!own || !screenplayId) return;
+  await linkScreenplayProject(screenplayId, projectId);
 }
 
 // La llama el editor (con calma, unos segundos después de cambiar fichas o

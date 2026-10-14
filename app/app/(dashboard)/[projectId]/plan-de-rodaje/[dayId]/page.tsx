@@ -11,19 +11,13 @@ import { generateCallSheetAndOpen } from "@/lib/actions/call-sheets";
 import { getShootingDaySummary } from "@/lib/shooting-day-summary";
 import { getAvailabilityWarnings } from "@/lib/availability-warnings";
 import { getReservationConflicts } from "@/lib/reservation-conflicts";
-import {
-  DAY_PART_LABELS,
-  INT_EXT_LABELS,
-  INVENTORY_CATEGORY_LABELS,
-} from "@/lib/labels";
+import { DAY_PART_LABELS, INT_EXT_LABELS, INVENTORY_CATEGORY_LABELS } from "@/lib/labels";
 import { SubmitButton } from "@/components/SubmitButton";
 import { PageHeader } from "@/components/PageHeader";
 import { DeleteButton } from "@/components/DeleteButton";
 import { EmptyState } from "@/components/EmptyState";
 import { SectionTabs } from "@/components/SectionTabs";
 import { DayPlanner, type PlannerScene } from "@/components/DayPlanner";
-import { FormField } from "@/components/FormField";
-import { stripTone } from "@/lib/stripboard";
 
 function toDateInputValue(date: Date): string {
   return date.toISOString().slice(0, 10);
@@ -42,62 +36,47 @@ export default async function ShootingDayDetailPage({
   const project = await getProjectForCurrentUser(projectId);
   if (!project) notFound();
 
-  const [
-    summary,
-    allScenes,
-    projectDays,
-    inventoryItems,
-    vehicles,
-    dayItemReservations,
-    dayVehicleReservations,
-  ] = await Promise.all([
-    getShootingDaySummary(dayId),
-    prisma.scene.findMany({
-      where: { projectId },
-      orderBy: [{ order: "asc" }, { number: "asc" }],
-      select: {
-        id: true,
-        number: true,
-        intExt: true,
-        dayPart: true,
-        location: { select: { name: true } },
-        shots: {
-          orderBy: [{ order: "asc" }, { number: "asc" }],
-          select: {
-            id: true,
-            number: true,
-            shotSize: true,
-            description: true,
-            shootingDayId: true,
-            done: true,
+  const [summary, allScenes, projectDays, inventoryItems, vehicles, dayItemReservations, dayVehicleReservations] =
+    await Promise.all([
+      getShootingDaySummary(dayId),
+      prisma.scene.findMany({
+        where: { projectId },
+        orderBy: [{ order: "asc" }, { number: "asc" }],
+        select: {
+          id: true,
+          number: true,
+          intExt: true,
+          dayPart: true,
+          location: { select: { name: true } },
+          shots: {
+            orderBy: [{ order: "asc" }, { number: "asc" }],
+            select: { id: true, number: true, shotSize: true, description: true, shootingDayId: true, done: true },
           },
         },
-      },
-    }),
-    prisma.shootingDay.findMany({
-      where: { projectId },
-      orderBy: { date: "asc" },
-      select: { id: true, date: true },
-    }),
-    prisma.inventoryItem.findMany({
-      where: { organizationId: project.organizationId },
-      orderBy: { name: "asc" },
-    }),
-    prisma.vehicle.findMany({
-      where: { organizationId: project.organizationId },
-      orderBy: { name: "asc" },
-    }),
-    prisma.itemReservation.findMany({ where: { shootingDayId: dayId } }),
-    prisma.vehicleReservation.findMany({ where: { shootingDayId: dayId } }),
-  ]);
+      }),
+      prisma.shootingDay.findMany({
+        where: { projectId },
+        orderBy: { date: "asc" },
+        select: { id: true, date: true },
+      }),
+      prisma.inventoryItem.findMany({
+        where: { organizationId: project.organizationId },
+        orderBy: { name: "asc" },
+      }),
+      prisma.vehicle.findMany({
+        where: { organizationId: project.organizationId },
+        orderBy: { name: "asc" },
+      }),
+      prisma.itemReservation.findMany({ where: { shootingDayId: dayId } }),
+      prisma.vehicleReservation.findMany({ where: { shootingDayId: dayId } }),
+    ]);
 
   if (!summary || summary.shootingDay.projectId !== projectId) notFound();
 
-  const [availabilityWarnings, { itemConflicts, vehicleConflicts }] =
-    await Promise.all([
-      getAvailabilityWarnings(summary),
-      getReservationConflicts(project.organizationId, summary.shootingDay.date),
-    ]);
+  const [availabilityWarnings, { itemConflicts, vehicleConflicts }] = await Promise.all([
+    getAvailabilityWarnings(summary),
+    getReservationConflicts(project.organizationId, summary.shootingDay.date),
+  ]);
 
   const assignedByScene = new Map(
     summary.sceneAssignments.map((a) => [a.sceneId, a]),
@@ -105,9 +84,7 @@ export default async function ShootingDayDetailPage({
   const reservedItemQty = new Map(
     dayItemReservations.map((r) => [r.inventoryItemId, r.quantity]),
   );
-  const reservedVehicleIds = new Set(
-    dayVehicleReservations.map((r) => r.vehicleId),
-  );
+  const reservedVehicleIds = new Set(dayVehicleReservations.map((r) => r.vehicleId));
 
   const dayLabels = new Map(
     projectDays.map((d) => [
@@ -141,94 +118,101 @@ export default async function ShootingDayDetailPage({
     };
   });
   const dayShotCount = allScenes.reduce(
-    (n, scene) =>
-      n + scene.shots.filter((shot) => shot.shootingDayId === dayId).length,
+    (n, scene) => n + scene.shots.filter((shot) => shot.shootingDayId === dayId).length,
     0,
   );
 
   const updateDayAction = updateShootingDay.bind(null, projectId, dayId);
   const saveDayAction = saveDayPlan.bind(null, projectId, dayId);
   const generateAction = generateCallSheetAndOpen.bind(null, projectId, dayId);
-  const dayNumber = projectDays.findIndex((d) => d.id === dayId) + 1;
-  const hasWarnings =
-    availabilityWarnings.length > 0 ||
-    itemConflicts.length > 0 ||
-    vehicleConflicts.length > 0;
-  const missingTimes = summary.sceneAssignments
-    .filter((a) => !a.callTime)
-    .map((a) => a.scene.number);
-  const summaryRows = [
-    ["Localizaciones", summary.locations.map((l) => l.name)],
-    ["Personajes", summary.characters.map((c) => c.name)],
-    ["Equipo técnico", summary.crewMembers.map((c) => c.name)],
-    ["Desglose", summary.breakdownElements.map((b) => b.name)],
-  ] as const;
 
   return (
     <div>
       <PageHeader
         backHref={`/app/${projectId}/plan-de-rodaje`}
         backLabel="← Plan de rodaje"
-        eyebrow={
-          dayNumber > 0
-            ? `Día ${dayNumber} de ${projectDays.length} · Plan de rodaje`
-            : "Plan de rodaje"
-        }
-        title={summary.shootingDay.date.toLocaleDateString("es-ES", {
-          weekday: "long",
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-        })}
-        description={summary.shootingDay.notes ?? undefined}
+        eyebrow="Producción"
+        title={`${summary.shootingDay.date.toLocaleDateString("es-ES", { weekday: "long", day: "2-digit", month: "long", year: "numeric", })}`}
         actions={
           summary.shootingDay.callSheet ? (
-            <Link
-              href={`/app/${projectId}/call-sheets/${dayId}`}
-              className="btn btn-outline"
-            >
-              Ver hoja de llamada
+            <Link href={`/app/${projectId}/call-sheets/${dayId}`} className="btn btn-primary btn-sm">
+              Ver call sheet
             </Link>
           ) : (
             <form action={generateAction}>
-              <SubmitButton
-                pendingLabel="Generando…"
-                className="btn btn-outline"
-              >
-                Generar hoja de llamada
+              <SubmitButton pendingLabel="Generando…" className="btn btn-primary btn-sm">
+                Generar call sheet
               </SubmitButton>
             </form>
           )
         }
       />
 
-      {/* Fecha y notas: se cambian poco, así que van plegadas tras un enlace. */}
-      <details className="group mt-4">
-        <summary className="link-action list-none hover:text-accent [&::-webkit-details-marker]:hidden">
-          <span className="group-open:hidden">Cambiar fecha o notas</span>
-          <span className="hidden group-open:inline">Cerrar</span>
-        </summary>
-        <form
-          action={updateDayAction}
-          className="mt-3 flex max-w-3xl flex-wrap items-end gap-x-5 gap-y-3"
-        >
-          <FormField label="Fecha">
-            <input
-              type="date"
-              name="date"
-              defaultValue={toDateInputValue(summary.shootingDay.date)}
-              required
-              className="field"
-            />
-          </FormField>
-          <FormField label="Notas del día" className="min-w-[16rem] flex-1">
-            <input
-              name="notes"
-              defaultValue={summary.shootingDay.notes ?? ""}
-              placeholder="Dónde, a qué hora sale el sol, avisos…"
-              className="field w-full"
-            />
-          </FormField>
+      {availabilityWarnings.length > 0 && (
+        <div className="mt-6 border border-warn/60 p-4">
+          <p className="font-mono text-xs tracking-widest text-warn uppercase">
+            ⚠ Posible conflicto de disponibilidad
+          </p>
+          <ul className="mt-2 space-y-1">
+            {availabilityWarnings.map((warning) => (
+              <li key={warning.id} className="font-mono text-sm">
+                {warning.personName} aparece como no disponible este día
+                {warning.note ? ` — ${warning.note}` : ""}.
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {(itemConflicts.length > 0 || vehicleConflicts.length > 0) && (
+        <div className="mt-6 border border-warn/60 p-4">
+          <p className="font-mono text-xs tracking-widest text-warn uppercase">
+            ⚠ Posible conflicto de reserva
+          </p>
+          <ul className="mt-2 space-y-1">
+            {itemConflicts.map((conflict) => (
+              <li key={conflict.id} className="font-mono text-sm">
+                {conflict.itemName}: se necesitan {conflict.needed} pero solo hay{" "}
+                {conflict.available} — coincide en {conflict.projects.join(" y ")}.
+              </li>
+            ))}
+            {vehicleConflicts.map((conflict) => (
+              <li key={conflict.id} className="font-mono text-sm">
+                {conflict.vehicleName} está reservado el mismo día en{" "}
+                {conflict.projects.join(" y ")}.
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <form
+        action={updateDayAction}
+        className="mt-8 grid gap-4 border border-line p-5 sm:grid-cols-2"
+      >
+        <label className="flex flex-col gap-1">
+          <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+            Fecha
+          </span>
+          <input
+            type="date"
+            name="date"
+            defaultValue={toDateInputValue(summary.shootingDay.date)}
+            required
+            className="field px-3 py-2 text-sm"
+          />
+        </label>
+        <label className="flex flex-col gap-1">
+          <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+            Notas
+          </span>
+          <input
+            name="notes"
+            defaultValue={summary.shootingDay.notes ?? ""}
+            className="field px-3 py-2 text-sm"
+          />
+        </label>
+        <div>
           <SubmitButton
             pendingLabel="Guardando…"
             savedLabel="✓ Guardado"
@@ -236,165 +220,10 @@ export default async function ShootingDayDetailPage({
           >
             Guardar
           </SubmitButton>
-        </form>
-      </details>
-
-      {/* Cómo voy: el estado del día en una línea. */}
-      <p className="mt-6 font-sans text-[15px] text-muted">
-        {summary.shootingDay.callSheet ? (
-          <span className="font-semibold text-success">
-            ✓ Hoja de llamada creada
-          </span>
-        ) : (
-          <span className="font-semibold text-fg">
-            Hoja de llamada sin crear
-          </span>
-        )}
-        {" · "}
-        {summary.sceneAssignments.length === 0
-          ? "aún no hay escenas este día"
-          : missingTimes.length === 0
-            ? "todas las escenas tienen hora"
-            : `falta la hora de ${missingTimes.length === 1 ? "la escena" : "las escenas"} ${missingTimes.join(", ")}`}
-        .
-      </p>
-
-      {/* Avisos: una línea con barra de color, no un recuadro. */}
-      {hasWarnings && (
-        <div className="mt-8 space-y-5">
-          {availabilityWarnings.length > 0 && (
-            <div className="border-l-2 border-warn pl-4">
-              <p className="font-sans text-[15px] font-semibold text-warn">
-                Puede faltar gente este día
-              </p>
-              <ul className="mt-1 space-y-0.5 font-sans text-sm">
-                {availabilityWarnings.map((warning) => (
-                  <li key={warning.id}>
-                    {warning.personName} figura como no disponible
-                    {warning.note ? ` (${warning.note})` : ""}.
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {(itemConflicts.length > 0 || vehicleConflicts.length > 0) && (
-            <div className="border-l-2 border-warn pl-4">
-              <p className="font-sans text-[15px] font-semibold text-warn">
-                Material o vehículos ya reservados
-              </p>
-              <ul className="mt-1 space-y-0.5 font-sans text-sm">
-                {itemConflicts.map((conflict) => (
-                  <li key={conflict.id}>
-                    {conflict.itemName}: se necesitan {conflict.needed} y solo
-                    hay {conflict.available}; coincide con{" "}
-                    {conflict.projects.join(" y ")}.
-                  </li>
-                ))}
-                {vehicleConflicts.map((conflict) => (
-                  <li key={conflict.id}>
-                    {conflict.vehicleName} está reservado el mismo día en{" "}
-                    {conflict.projects.join(" y ")}.
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
         </div>
-      )}
+      </form>
 
-      {/* El horario del día en papel: lo que se leerá en la hoja de llamada,
-          en el orden en que se rueda. Se edita abajo, en las pestañas. */}
-      <section
-        aria-labelledby="horario"
-        className="paper mt-10 max-w-4xl px-5 py-6 sm:px-8 sm:py-7"
-      >
-        <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3 border-b-2 border-fg pb-4">
-          <div>
-            <h2 id="horario" className="eyebrow text-accent">
-              Horario del día
-            </h2>
-            <p className="mt-1 font-display text-xl font-black tracking-tight">
-              {summary.sceneAssignments.length === 0
-                ? "Sin escenas todavía"
-                : `${summary.sceneAssignments.length} ${summary.sceneAssignments.length === 1 ? "escena" : "escenas"}${dayShotCount > 0 ? ` · ${dayShotCount} ${dayShotCount === 1 ? "plano" : "planos"}` : ""}`}
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="eyebrow">Llamada general</p>
-            <p className="font-display text-3xl leading-none font-black tabular-nums">
-              {summary.shootingDay.callSheet?.generalCallTime ?? (
-                <span className="text-muted">—</span>
-              )}
-            </p>
-          </div>
-        </div>
-        {summary.sceneAssignments.length === 0 ? (
-          <p className="pt-5 font-sans text-sm text-muted">
-            Marca abajo, en «Escenas y planos», qué se rueda este día y a qué
-            hora; aquí verás el horario tal y como saldrá en la hoja de llamada.
-          </p>
-        ) : (
-          <ol className="divide-y divide-line">
-            {summary.sceneAssignments.map((assignment) => {
-              const scene = assignment.scene;
-              const tone = stripTone(scene.intExt, scene.dayPart);
-              const cast =
-                summary.charactersByAssignment.get(assignment.id) ?? [];
-              return (
-                <li
-                  key={assignment.id}
-                  className="grid grid-cols-[3.75rem_minmax(0,1fr)] items-baseline gap-x-4 gap-y-1 py-3.5 sm:grid-cols-[4.5rem_6rem_minmax(0,1fr)_minmax(0,14rem)]"
-                >
-                  <span className="font-mono text-lg tabular-nums">
-                    {assignment.callTime ?? (
-                      <span className="text-muted">—:—</span>
-                    )}
-                  </span>
-                  <span className="flex items-center gap-2">
-                    <span
-                      aria-hidden
-                      className="h-3 w-3 shrink-0 rounded-sm ring-1 ring-black/25"
-                      style={{ backgroundColor: tone.bg }}
-                    />
-                    <span className="font-display text-lg font-black">
-                      Esc. {scene.number}
-                    </span>
-                  </span>
-                  <span className="col-start-2 min-w-0 sm:col-start-auto">
-                    <span className="font-mono text-[11px] tracking-wider uppercase">
-                      {INT_EXT_LABELS[scene.intExt]} ·{" "}
-                      {DAY_PART_LABELS[scene.dayPart]}
-                    </span>
-                    <span className="block truncate font-sans text-sm">
-                      {[scene.location?.name, scene.description]
-                        .filter(Boolean)
-                        .join(" — ") || (
-                        <span className="text-muted">Sin localización</span>
-                      )}
-                    </span>
-                  </span>
-                  <span className="col-start-2 min-w-0 font-sans text-sm text-muted sm:col-start-auto">
-                    {cast.length > 0
-                      ? cast.map((c) => c.character.name).join(", ")
-                      : "Sin personajes"}
-                    {scene.shots.length > 0 && (
-                      <span className="block font-mono text-[11px]">
-                        {scene.shots.length}{" "}
-                        {scene.shots.length === 1 ? "plano" : "planos"}
-                      </span>
-                    )}
-                  </span>
-                </li>
-              );
-            })}
-          </ol>
-        )}
-      </section>
-
-      <form
-        action={saveDayAction}
-        className="mt-12 lg:[&_[role=tabpanel]]:pt-6"
-      >
+      <form action={saveDayAction} className="mt-10">
         <SectionTabs
           ariaLabel="Plan del día"
           initial={tab}
@@ -402,150 +231,153 @@ export default async function ShootingDayDetailPage({
             {
               id: "escenas",
               label: "Escenas y planos",
-              count:
-                dayShotCount > 0
-                  ? `${summary.sceneAssignments.length} · ${dayShotCount} pl.`
-                  : summary.sceneAssignments.length,
-              content:
-                allScenes.length === 0 ? (
-                  <EmptyState
-                    title="No hay escenas creadas todavía"
-                    description="Créalas en Guion para poder asignarlas a este día."
-                    actionLabel="Ir a Guion"
-                    actionHref={`/app/${projectId}/guion`}
-                  />
-                ) : (
-                  <div className="sheet px-5 py-5 sm:px-8 sm:py-7">
+              count: dayShotCount > 0 ? `${summary.sceneAssignments.length} · ${dayShotCount} pl.` : summary.sceneAssignments.length,
+              content: (
+                <div>
+                  {allScenes.length === 0 ? (
+                    <EmptyState
+                      title="No hay escenas creadas todavía"
+                      description="Créalas en Guion para poder asignarlas a este día."
+                      actionLabel="Ir a Guion"
+                      actionHref={`/app/${projectId}/guion`}
+                    />
+                  ) : (
                     <DayPlanner dayId={dayId} scenes={plannerScenes} />
-                  </div>
-                ),
+                  )}
+                </div>
+              ),
             },
             {
               id: "material",
               label: "Material",
               count: reservedItemQty.size,
-              content:
-                inventoryItems.length === 0 ? (
-                  <p className="py-10 text-center font-sans text-sm text-muted">
-                    No hay material en{" "}
-                    <Link
-                      href="/app/inventario"
-                      className="text-accent hover:underline"
-                    >
-                      Inventario
-                    </Link>
-                    . Cuando lo añadas, lo reservas aquí para este día.
-                  </p>
-                ) : (
-                  <div className="sheet px-5 py-2 sm:px-8">
-                    <p className="eyebrow pt-4 pb-2">
-                      Marca lo que se lleva este día y cuántas unidades
-                    </p>
-                    <div className="divide-y divide-line">
-                      {inventoryItems.map((item) => (
-                        <div
-                          key={item.id}
-                          className="grid grid-cols-[auto_1fr_auto] items-center gap-4 py-3"
-                        >
-                          <input
-                            type="checkbox"
-                            name={`reserve_${item.id}`}
-                            aria-label={`Reservar ${item.name}`}
-                            defaultChecked={reservedItemQty.has(item.id)}
-                            className="h-4 w-4"
-                          />
-                          <div className="min-w-0">
-                            <p className="font-sans text-[15px]">{item.name}</p>
-                            <p className="font-mono text-[11px] text-muted">
-                              {INVENTORY_CATEGORY_LABELS[item.category]} ·{" "}
-                              {item.quantity} en inventario
-                            </p>
-                          </div>
-                          <input
-                            name={`qty_${item.id}`}
-                            type="number"
-                            min={1}
-                            aria-label={`Unidades reservadas de ${item.name}`}
-                            placeholder="Uds."
-                            defaultValue={reservedItemQty.get(item.id) ?? 1}
-                            className="field w-20 px-2 py-1.5 text-center"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ),
+              content: (
+                <div>
+                            {inventoryItems.length === 0 ? (
+                              <p className="mt-4 font-mono text-sm text-muted">
+                                No hay material en{" "}
+                                <Link href="/app/inventario" className="text-fg hover:text-accent">
+                                  Inventario
+                                </Link>
+                                .
+                              </p>
+                            ) : (
+                              <div className="mt-4">
+                                <div className="border-t border-line">
+                                  {inventoryItems.map((item) => (
+                                    <div
+                                      key={item.id}
+                                      className="grid grid-cols-[auto_1fr_auto] items-center gap-3 border-b border-line py-3"
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        name={`reserve_${item.id}`}
+                                        aria-label={`Reservar ${item.name}`}
+                                        defaultChecked={reservedItemQty.has(item.id)}
+                                      />
+                                      <div>
+                                        <span className="font-mono text-sm">{item.name}</span>
+                                        <span className="ml-2 font-mono text-xs text-muted">
+                                          {INVENTORY_CATEGORY_LABELS[item.category]} · disponible{" "}
+                                          {item.quantity}
+                                        </span>
+                                      </div>
+                                      <input
+                                        name={`qty_${item.id}`}
+                                        type="number"
+                                        min={1}
+                                        aria-label={`Unidades reservadas de ${item.name}`}
+                                        placeholder="Uds."
+                                        defaultValue={reservedItemQty.get(item.id) ?? 1}
+                                        className="field w-16 px-2 py-1 text-xs"
+                                      />
+                                    </div>
+                                  ))}
+                                </div>
+                                </div>
+                            )}
+                </div>
+              ),
             },
             {
               id: "vehiculos",
               label: "Vehículos",
               count: reservedVehicleIds.size,
-              content:
-                vehicles.length === 0 ? (
-                  <p className="py-10 text-center font-sans text-sm text-muted">
-                    No hay vehículos en{" "}
-                    <Link
-                      href="/app/vehiculos"
-                      className="text-accent hover:underline"
-                    >
-                      Vehículos
-                    </Link>
-                    . Cuando los añadas, los reservas aquí para este día.
-                  </p>
-                ) : (
-                  <div className="sheet px-5 py-2 sm:px-8">
-                    <p className="eyebrow pt-4 pb-2">
-                      Marca los vehículos que se usan este día
-                    </p>
-                    <div className="divide-y divide-line">
-                      {vehicles.map((vehicle) => (
-                        <label
-                          key={vehicle.id}
-                          className="flex cursor-pointer items-center gap-4 py-3"
-                        >
-                          <input
-                            type="checkbox"
-                            name={`reserve_${vehicle.id}`}
-                            defaultChecked={reservedVehicleIds.has(vehicle.id)}
-                            className="h-4 w-4"
-                          />
-                          <span className="font-sans text-[15px]">
-                            {vehicle.name}
-                          </span>
-                          {vehicle.type && (
-                            <span className="font-mono text-[11px] text-muted">
-                              {vehicle.type}
-                            </span>
-                          )}
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                ),
+              content: (
+                <div>
+                            {vehicles.length === 0 ? (
+                              <p className="mt-4 font-mono text-sm text-muted">
+                                No hay vehículos en{" "}
+                                <Link href="/app/vehiculos" className="text-fg hover:text-accent">
+                                  Vehículos
+                                </Link>
+                                .
+                              </p>
+                            ) : (
+                              <div className="mt-4">
+                                <div className="border-t border-line">
+                                  {vehicles.map((vehicle) => (
+                                    <label
+                                      key={vehicle.id}
+                                      className="flex items-center gap-3 border-b border-line py-3"
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        name={`reserve_${vehicle.id}`}
+                                        defaultChecked={reservedVehicleIds.has(vehicle.id)}
+                                      />
+                                      <span className="font-mono text-sm">{vehicle.name}</span>
+                                      {vehicle.type && (
+                                        <span className="font-mono text-xs text-muted">
+                                          {vehicle.type}
+                                        </span>
+                                      )}
+                                    </label>
+                                  ))}
+                                </div>
+                                </div>
+                            )}
+                </div>
+              ),
             },
             {
               id: "resumen",
               label: "Resumen del día",
               content: (
-                <dl className="sheet divide-y divide-line px-5 sm:px-8">
-                  {summaryRows.map(([label, names]) => (
-                    <div
-                      key={label}
-                      className="grid gap-1 py-4 sm:grid-cols-[12rem_1fr] sm:gap-6"
-                    >
-                      <dt className="eyebrow pt-0.5">
-                        {label} <span className="text-fg">{names.length}</span>
-                      </dt>
-                      <dd className="font-sans text-[15px] leading-relaxed">
-                        {names.length > 0 ? (
-                          names.join(", ")
-                        ) : (
-                          <span className="text-muted">Nadie todavía</span>
-                        )}
-                      </dd>
-                    </div>
-                  ))}
-                </dl>
+                <div className="grid gap-6 sm:grid-cols-2">
+                          <div className="border border-line p-5">
+                            <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                              Localizaciones ({summary.locations.length})
+                            </p>
+                            <p className="mt-2 font-mono text-sm">
+                              {summary.locations.map((l) => l.name).join(", ") || "—"}
+                            </p>
+                          </div>
+                          <div className="border border-line p-5">
+                            <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                              Personajes ({summary.characters.length})
+                            </p>
+                            <p className="mt-2 font-mono text-sm">
+                              {summary.characters.map((c) => c.name).join(", ") || "—"}
+                            </p>
+                          </div>
+                          <div className="border border-line p-5">
+                            <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                              Equipo técnico ({summary.crewMembers.length})
+                            </p>
+                            <p className="mt-2 font-mono text-sm">
+                              {summary.crewMembers.map((c) => c.name).join(", ") || "—"}
+                            </p>
+                          </div>
+                          <div className="border border-line p-5">
+                            <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                              Desglose ({summary.breakdownElements.length})
+                            </p>
+                            <p className="mt-2 font-mono text-sm">
+                              {summary.breakdownElements.map((b) => b.name).join(", ") || "—"}
+                            </p>
+                          </div>
+                </div>
               ),
             },
           ]}
@@ -553,42 +385,26 @@ export default async function ShootingDayDetailPage({
 
         {/* Barra de guardado siempre a mano: guarda a la vez escenas, material y
             vehículos, esté la pestaña que esté a la vista. */}
-        <div className="sheet sticky bottom-24 z-20 mt-8 flex flex-wrap items-center gap-4 px-4 py-3 shadow-xl sm:bottom-4 sm:px-5 print:hidden">
-          <SubmitButton
-            pendingLabel="Guardando…"
-            savedLabel="✓ Plan guardado"
-            className="btn btn-primary"
-          >
+        <div className="sticky bottom-24 z-20 mt-8 flex flex-wrap items-center gap-4 border border-line bg-bg-raised/95 p-3 backdrop-blur-md sm:bottom-4 sm:p-4 print:hidden">
+          <SubmitButton pendingLabel="Guardando…" savedLabel="✓ Plan guardado" className="btn btn-primary">
             Guardar plan del día
           </SubmitButton>
-          <p className="hidden font-sans text-sm text-muted sm:block">
-            Guarda a la vez escenas, planos (con hora y orden), material y
-            vehículos.
+          <p className="hidden font-mono text-[11px] text-muted sm:block">
+            Guarda a la vez escenas, planos (con hora y orden), material y vehículos.
           </p>
         </div>
       </form>
 
-      <p className="mt-16 font-sans text-sm text-muted">
-        Siguiente:{" "}
-        <Link
-          href={`/app/${projectId}/call-sheets/${dayId}`}
-          className="font-medium text-fg underline decoration-accent/50 underline-offset-4 transition-colors hover:text-accent hover:decoration-accent"
-        >
-          Hoja de llamada de este día →
-        </Link>
-      </p>
-
-      <form
-        action={deleteShootingDay.bind(null, projectId, dayId)}
-        className="mt-6 border-t border-line pt-4"
-      >
-        <DeleteButton
-          confirmMessage="¿Eliminar este día de rodaje?"
-          className="link-action hover:!text-danger"
-        >
-          Eliminar este día
-        </DeleteButton>
-      </form>
+      <div className="mt-10 border-t border-line pt-6">
+        <form action={deleteShootingDay.bind(null, projectId, dayId)}>
+          <DeleteButton
+            confirmMessage="¿Eliminar este día de rodaje?"
+            className="link-action"
+          >
+            Eliminar día
+          </DeleteButton>
+        </form>
+      </div>
     </div>
   );
 }
