@@ -513,6 +513,9 @@ model Character {
   // se escribe en Guiones y aquí se ve. `notes` sigue siendo de Taller.
   screenplayId String?
   profile      Json?
+  // Ficha de Taller (tipo de papel, edad, aspecto, vestuario, casting…):
+  // se edita aquí y no la pisa la sincronización con el guion.
+  sheet        Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

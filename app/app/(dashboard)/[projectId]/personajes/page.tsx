@@ -3,7 +3,9 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { createActor, deleteActor, updateActor } from "@/lib/actions/actors";
-import { createCharacter, deleteCharacter, updateCharacter, updateCharacterActor } from "@/lib/actions/characters";
+import { createCharacter, deleteCharacter, updateCharacter, updateCharacterActor, updateCharacterSheet } from "@/lib/actions/characters";
+import { CASTING_STATUS, ROLE_TYPES, sheetOf } from "@/lib/character-sheet";
+import { sceneStripColor } from "@/components/SceneTag";
 import { colorFor } from "@/components/canvas/presence";
 import { ActorAssignmentField } from "@/components/ActorAssignmentField";
 import { CreateDialog, DialogCancel } from "@/components/CreateDialog";
@@ -341,14 +343,35 @@ export default async function PersonajesPage({
           <ol className="divide-y divide-line">
             {rows.map((r, index) => {
               const { c, p, actor } = r;
-              const traits = [
-                ["Quiere", p?.want],
-                ["Necesita", p?.need],
-                ["Teme", p?.fear],
-                ["Oculta", p?.secret],
-                ["Arco", p?.arc],
-              ].filter((t): t is [string, string] => Boolean(t[1]));
+              const sheet = sheetOf(c.sheet);
+              // "Por dentro": si viene de un guion, lo que dice el guion; si no, lo de la ficha de Taller.
+              const inner = (
+                c.screenplayId
+                  ? [
+                      ["Quiere", p?.want],
+                      ["Necesita", p?.need],
+                      ["Teme", p?.fear],
+                      ["Oculta", p?.secret],
+                      ["Arco", p?.arc],
+                    ]
+                  : [
+                      ["Quiere", sheet.want],
+                      ["Teme", sheet.fear],
+                      ["Arco", sheet.arc],
+                    ]
+              ).filter((t): t is [string, string] => Boolean(t[1]));
+              const production = (
+                [
+                  ["Aspecto", sheet.look],
+                  ["Vestuario", sheet.wardrobe],
+                  ["Maquillaje y peluquería", sheet.makeup],
+                  ["Atrezzo personal", sheet.props],
+                  ["Necesidades especiales", sheet.special],
+                  ["Referencias de casting", sheet.castingNotes],
+                ] as [string, string | undefined][]
+              ).filter((t): t is [string, string] => Boolean(t[1]));
               const scenesIn = sceneRows.filter((s) => r.sceneIds.has(s.id));
+              const scenesWithDay = scenesIn.filter((s) => s.shootingDayScenes.length > 0).length;
               return (
                 <li key={c.id} id={`pj-${c.id}`} className="scroll-mt-40">
                   <details className="group" open={ficha === c.id}>
@@ -461,65 +484,185 @@ export default async function PersonajesPage({
                         </div>
                       </div>
 
-                      {/* Quién es y dónde sale */}
+                      {/* Ficha del personaje */}
                       <div className="min-w-0">
-                        <p className={LABEL}>{c.screenplayId ? `Del guion${p?.screenplayTitle ? ` «${p.screenplayTitle}»` : ""}` : "Personaje"}</p>
+                        <p className={LABEL}>{c.screenplayId ? `Del guion${p?.screenplayTitle ? ` «${p.screenplayTitle}»` : ""}` : "Ficha de personaje"}</p>
                         <h3 className="mt-1 hidden font-display text-3xl font-black tracking-tight uppercase md:block">{c.name}</h3>
-                        {traits.length > 0 ? (
-                          <dl className="mt-5 grid gap-x-8 gap-y-4 sm:grid-cols-2">
-                            {traits.map(([k, v]) => (
-                              <div key={k}>
-                                <dt className={LABEL}>{k}</dt>
-                                <dd className="mt-1 font-sans text-[15px] leading-relaxed">{v}</dd>
-                              </div>
-                            ))}
-                          </dl>
-                        ) : (
-                          <p className="mt-4 max-w-md font-sans text-sm leading-relaxed text-muted">
-                            {c.screenplayId
-                              ? "La ficha del guion aún está vacía: qué quiere, qué teme, su arco…"
-                              : "Sin ficha de guion. Si el personaje viene de un guion de Guiones, aquí verás qué quiere, qué teme y su arco."}
+                        {(sheet.role || sheet.age || sheet.casting) && (
+                          <p className="mt-3 flex flex-wrap items-center gap-2">
+                            {sheet.role && (
+                              <span className="rounded-full bg-fg/[0.08] px-2.5 py-0.5 font-sans text-xs font-semibold">{ROLE_TYPES[sheet.role]}</span>
+                            )}
+                            {sheet.age && <span className="font-sans text-sm text-muted">{sheet.age} años</span>}
+                            {sheet.casting && (
+                              <span
+                                className={`rounded-full px-2.5 py-0.5 font-sans text-xs ${
+                                  sheet.casting === "CONFIRMED"
+                                    ? "bg-success/15 text-success"
+                                    : sheet.casting === "OPEN"
+                                      ? "bg-warn/15 text-warn"
+                                      : "bg-accent/15 text-fg"
+                                }`}
+                              >
+                                Casting: {CASTING_STATUS[sheet.casting]}
+                              </span>
+                            )}
                           </p>
                         )}
-                        {c.screenplayId && (
-                          <Link href={`/app/guiones/${c.screenplayId}?paso=idea`} className="mt-4 inline-block font-sans text-sm text-accent hover:underline">
-                            Editar la ficha en el guion →
-                          </Link>
+                        {sheet.description && <p className="mt-4 max-w-xl font-sans text-[15px] leading-relaxed">{sheet.description}</p>}
+
+                        {inner.length > 0 && (
+                          <div className="mt-7">
+                            <p className={LABEL}>Por dentro</p>
+                            <dl className="mt-3 grid gap-x-8 gap-y-4 sm:grid-cols-2">
+                              {inner.map(([k, v]) => (
+                                <div key={k}>
+                                  <dt className="font-sans text-xs font-semibold text-muted">{k}</dt>
+                                  <dd className="mt-0.5 font-sans text-[15px] leading-relaxed">{v}</dd>
+                                </div>
+                              ))}
+                            </dl>
+                            {c.screenplayId && (
+                              <Link href={`/app/guiones/${c.screenplayId}?paso=idea`} className="mt-3 inline-block font-sans text-sm text-accent hover:underline">
+                                Editar en el guion →
+                              </Link>
+                            )}
+                          </div>
                         )}
 
+                        {production.length > 0 && (
+                          <div className="mt-7">
+                            <p className={LABEL}>Para el rodaje</p>
+                            <dl className="mt-3 grid gap-x-8 gap-y-4 sm:grid-cols-2">
+                              {production.map(([k, v]) => (
+                                <div key={k}>
+                                  <dt className="font-sans text-xs font-semibold text-muted">{k}</dt>
+                                  <dd className="mt-0.5 font-sans text-[15px] leading-relaxed whitespace-pre-line">{v}</dd>
+                                </div>
+                              ))}
+                            </dl>
+                          </div>
+                        )}
+
+                        {!sheet.description && !sheet.role && inner.length === 0 && production.length === 0 && (
+                          <p className="mt-4 max-w-md font-sans text-sm leading-relaxed text-muted">
+                            La ficha está vacía. Rellena el tipo de papel, la edad, cómo es y lo que necesitan vestuario, maquillaje y
+                            casting{c.screenplayId ? "; lo que quiere, teme y su arco llegan solos desde el guion" : ""}.
+                          </p>
+                        )}
+
+                        {/* Escenas, en una línea: el detalle está en la tira de arriba y en el Plan de rodaje */}
                         <div className="mt-8 border-t border-line pt-5">
-                          <p className={LABEL}>
-                            Sale en {r.sceneCount > 0 ? plural(r.sceneCount, "escena", "escenas") : "ninguna escena"}
+                          <p className="font-sans text-sm">
+                            <span className="font-semibold">
+                              Sale en {r.sceneCount > 0 ? plural(r.sceneCount, "escena", "escenas") : "ninguna escena"}
+                            </span>
+                            {scenesIn.length > 0 && (
+                              <span className="text-muted">
+                                {" "}
+                                · {scenesWithDay} con jornada
+                                {r.days[0] &&
+                                  ` · primera: ${r.days[0].toLocaleDateString("es-ES", { day: "numeric", month: "short", timeZone: "Europe/Madrid" })}`}
+                              </span>
+                            )}
                           </p>
                           {scenesIn.length > 0 ? (
-                            <ul className="mt-3 divide-y divide-line">
-                              {scenesIn.map((s) => {
-                                const day = s.shootingDayScenes[0]?.shootingDay.date;
-                                return (
-                                  <li key={s.id} className="grid grid-cols-[2.25rem_minmax(0,1fr)_auto] items-baseline gap-3 py-2">
-                                    <span className="font-display text-lg font-black tabular-nums">{s.number}</span>
-                                    <span className="min-w-0">
-                                      <span className="block font-mono text-[10px] tracking-widest text-muted uppercase">
-                                        {INT_EXT_LABELS[s.intExt]} · {DAY_PART_LABELS[s.dayPart]}
-                                        {s.location ? ` · ${s.location.name}` : ""}
-                                      </span>
-                                      {s.description && <span className="block truncate font-sans text-sm">{s.description}</span>}
-                                    </span>
-                                    <span className={`font-mono text-[10px] whitespace-nowrap ${day ? "text-fg" : "text-muted"}`}>
-                                      {day ? day.toLocaleDateString("es-ES", { day: "numeric", month: "short" }) : "sin día"}
-                                    </span>
-                                  </li>
-                                );
-                              })}
-                            </ul>
+                            <p className="mt-2.5 flex flex-wrap gap-1" aria-label={`Escenas: ${scenesIn.map((s) => s.number).join(", ")}`}>
+                              {scenesIn.map((s) => (
+                                <span
+                                  key={s.id}
+                                  title={`Escena ${s.number} · ${INT_EXT_LABELS[s.intExt]} ${DAY_PART_LABELS[s.dayPart]}${s.location ? ` · ${s.location.name}` : ""}${s.shootingDayScenes.length ? "" : " · sin jornada"}`}
+                                  className={`grid h-6 min-w-7 place-items-center rounded px-1.5 font-mono text-[11px] font-semibold text-[#0a0a0a] tabular-nums ${
+                                    s.shootingDayScenes.length ? "" : "opacity-45"
+                                  }`}
+                                  style={{ background: sceneStripColor(s.intExt, s.dayPart) }}
+                                >
+                                  {s.number}
+                                </span>
+                              ))}
+                            </p>
                           ) : (
-                            <p className="mt-2 font-sans text-sm text-muted">
+                            <p className="mt-1 font-sans text-sm text-muted">
                               {r.sceneCount > 0
                                 ? "Las escenas están en el guion; en cuanto pasen al Desglose verás cuáles son y qué día se ruedan."
                                 : "Márcalo en las escenas del Desglose para saber cuándo hay que citarlo."}
                             </p>
                           )}
+                          {scenesIn.length > 0 && (
+                            <p className="mt-2 font-sans text-xs text-muted">Color = interior/exterior y día/noche · apagadas = aún sin jornada.</p>
+                          )}
                         </div>
+
+                        {/* Editar la ficha */}
+                        <details className="group/edit mt-6">
+                          <summary className="btn btn-outline btn-sm cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                            {Object.keys(sheet).length > 0 ? "Editar ficha" : "Rellenar ficha"}
+                          </summary>
+                          <form action={updateCharacterSheet.bind(null, projectId, c.id)} className="mt-4 grid gap-4 sm:grid-cols-3">
+                            <FormField label="Tipo de papel">
+                              <select name="role" defaultValue={sheet.role ?? ""} className="field">
+                                <option value="">Sin decidir</option>
+                                {Object.entries(ROLE_TYPES).map(([k, v]) => (
+                                  <option key={k} value={k}>
+                                    {v}
+                                  </option>
+                                ))}
+                              </select>
+                            </FormField>
+                            <FormField label="Edad aparente">
+                              <input name="age" defaultValue={sheet.age ?? ""} placeholder="30-35" className="field" />
+                            </FormField>
+                            <FormField label="Casting">
+                              <select name="casting" defaultValue={sheet.casting ?? ""} className="field">
+                                <option value="">—</option>
+                                {Object.entries(CASTING_STATUS).map(([k, v]) => (
+                                  <option key={k} value={k}>
+                                    {v}
+                                  </option>
+                                ))}
+                              </select>
+                            </FormField>
+                            <FormField label="Quién es" className="sm:col-span-3">
+                              <textarea name="description" defaultValue={sheet.description ?? ""} rows={2} placeholder="Fotógrafo en crisis que vuelve al pueblo…" className="field" />
+                            </FormField>
+                            {!c.screenplayId && (
+                              <>
+                                <FormField label="Qué quiere">
+                                  <textarea name="want" defaultValue={sheet.want ?? ""} rows={2} className="field" />
+                                </FormField>
+                                <FormField label="Qué teme">
+                                  <textarea name="fear" defaultValue={sheet.fear ?? ""} rows={2} className="field" />
+                                </FormField>
+                                <FormField label="Su arco">
+                                  <textarea name="arc" defaultValue={sheet.arc ?? ""} rows={2} className="field" />
+                                </FormField>
+                              </>
+                            )}
+                            <FormField label="Aspecto" className="sm:col-span-3">
+                              <textarea name="look" defaultValue={sheet.look ?? ""} rows={2} placeholder="Delgado, barba de días, gafas de pasta" className="field" />
+                            </FormField>
+                            <FormField label="Vestuario">
+                              <textarea name="wardrobe" defaultValue={sheet.wardrobe ?? ""} rows={3} placeholder="Cambio 1: chaqueta vaquera…" className="field" />
+                            </FormField>
+                            <FormField label="Maquillaje y peluquería">
+                              <textarea name="makeup" defaultValue={sheet.makeup ?? ""} rows={3} className="field" />
+                            </FormField>
+                            <FormField label="Atrezzo personal">
+                              <textarea name="props" defaultValue={sheet.props ?? ""} rows={3} placeholder="Cámara analógica, cuaderno" className="field" />
+                            </FormField>
+                            <FormField label="Necesidades especiales" hint="Dobles, especialistas, menor, desnudo, animales…" className="sm:col-span-2">
+                              <textarea name="special" defaultValue={sheet.special ?? ""} rows={2} className="field" />
+                            </FormField>
+                            <FormField label="Referencias de casting">
+                              <textarea name="castingNotes" defaultValue={sheet.castingNotes ?? ""} rows={2} placeholder="Tipo Luis Tosar joven" className="field" />
+                            </FormField>
+                            <div className="sm:col-span-3">
+                              <SubmitButton pendingLabel="Guardando…" savedLabel="✓ Ficha guardada" className="btn btn-primary btn-sm">
+                                Guardar ficha
+                              </SubmitButton>
+                            </div>
+                          </form>
+                        </details>
                       </div>
 
                       {/* Actor y producción */}

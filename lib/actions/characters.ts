@@ -1,5 +1,8 @@
 "use server";
 
+import { Prisma } from "@/lib/generated/prisma";
+import { sheetFromForm } from "@/lib/character-sheet";
+
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
@@ -51,6 +54,18 @@ export async function updateCharacter(
     notes: optionalString(formData.get("notes")),
   });
 
+  revalidatePath(`/app/${projectId}/personajes`);
+}
+
+// Guarda la ficha de Taller del personaje (papel, edad, aspecto, vestuario, casting…).
+export async function updateCharacterSheet(projectId: string, characterId: string, formData: FormData) {
+  const project = await getProjectForCurrentUser(projectId);
+  if (!project) return;
+  const sheet = sheetFromForm(formData);
+  await prisma.character.updateMany({
+    where: { id: characterId, projectId },
+    data: { sheet: Object.keys(sheet).length > 0 ? (sheet as Prisma.InputJsonValue) : Prisma.DbNull },
+  });
   revalidatePath(`/app/${projectId}/personajes`);
 }
 
