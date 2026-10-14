@@ -22,6 +22,11 @@ export const FOUNTAIN_MAX_BYTES = 900 * 1024;
 // pocos KB. El tope evita que alguien llene la base de datos de golpe.
 export const UPDATE_MAX_BYTES = 700 * 1024;
 
+// "DISTORSIÓN" → "Distorsión" (las portadas suelen ir en mayúsculas).
+function titleCase(s: string): string {
+  return s === s.toUpperCase() ? s.charAt(0) + s.slice(1).toLowerCase() : s;
+}
+
 export function parseFormat(v: unknown): ScreenplayFormat {
   return v === "FEATURE" || v === "SERIES_EPISODE" || v === "OTHER" ? v : "SHORT";
 }
@@ -54,6 +59,8 @@ export type CreateScreenplayInput = {
   logline: string | null;
   author: string | null;
   fountain?: string | null;
+  // Guion ya leído de otro formato (PDF).
+  imported?: { title: string | null; author?: string | null; blocks: ScreenplayBlock[] } | null;
 };
 
 export async function createScreenplayCore(
@@ -65,7 +72,12 @@ export async function createScreenplayCore(
   let author = input.author?.trim() || null;
   let blocks: ScreenplayBlock[] = [];
 
-  if (input.fountain) {
+  if (input.imported) {
+    blocks = input.imported.blocks;
+    if (!title && input.imported.title) title = titleCase(input.imported.title).slice(0, SCREENPLAY_TITLE_MAX);
+    if (!author && input.imported.author) author = input.imported.author;
+    if (!blocks.length) return { error: "No se ha encontrado texto de guion en el PDF (¿es un escaneo?)." };
+  } else if (input.fountain) {
     const parsed = parseFountain(input.fountain);
     blocks = parsed.blocks;
     if (!title && parsed.titlePage.title) title = parsed.titlePage.title.split("\n")[0].slice(0, SCREENPLAY_TITLE_MAX);

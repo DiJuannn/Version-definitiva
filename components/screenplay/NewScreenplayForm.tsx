@@ -29,7 +29,7 @@ export function NewScreenplayForm({
         {(
           [
             ["blank", "Empezar en blanco"],
-            ["import", "Importar Fountain"],
+            ["import", "Importar PDF o Fountain"],
           ] as const
         ).map(([value, label]) => (
           <button
@@ -93,12 +93,12 @@ export function NewScreenplayForm({
       )}
 
       {mode === "import" && (
-        <FormField label="Archivo Fountain" hint="De Highland, WriterSolo, Beat, Fade In… Si no pones título, se usa el del archivo.">
+        <FormField label="Archivo del guion" hint="PDF (de Final Draft, Celtx, Word, Google Docs…) o Fountain. Si no pones título, se usa el de la portada.">
           <input
             type="file"
             name="file"
             required
-            accept=".fountain,.spmd,.txt,text/plain"
+            accept=".pdf,application/pdf,.fountain,.spmd,.txt,text/plain"
             className="font-mono text-xs text-muted file:mr-3 file:border file:border-line file:bg-transparent file:px-3 file:py-2 file:font-mono file:text-xs file:text-fg"
           />
         </FormField>

@@ -19,6 +19,9 @@ import {
   referenceId,
   scenesFromBlocks,
   type ReferenceAnchor,
+  REVIEW_KINDS,
+  type ReviewItem,
+  type ReviewKind,
   type StoryReading,
   type Suggestion,
 } from "@/lib/screenplay/story";
@@ -55,6 +58,41 @@ function scriptText(blocks: ScreenplayBlock[]): string {
     })
     .join("\n\n")
     .slice(0, FULL_TEXT_MAX);
+}
+
+// La historia entera en pocas líneas: una por escena (sinopsis del equipo si
+// la hay, si no el arranque de la escena) — para cuando el foco es una sola
+// escena o un personaje y la IA necesita saber qué pasa en todo el guion.
+function outlineText(doc: Y.Doc, blocks: ScreenplayBlock[]): string {
+  const meta = storyMaps(doc).scenes;
+  return scenesFromBlocks(blocks)
+    .map((s) => {
+      const synopsis = meta.get(s.sid)?.synopsis?.trim();
+      const start = blocks
+        .slice(s.start + 1, s.end)
+        .filter((b) => b.type === "action" || b.type === "dialogue")
+        .map((b) => b.text)
+        .join(" ")
+        .slice(0, 220);
+      return `${s.number}. ${s.heading} [${s.present.join(", ") || "—"}]: ${synopsis || start}`;
+    })
+    .join("\n");
+}
+
+// Una escena entera con la anterior y la siguiente, para que la IA sepa de
+// dónde viene y a dónde va.
+function sceneWithNeighbours(blocks: ScreenplayBlock[], sid: string): { number: number; text: string } | null {
+  const scenes = scenesFromBlocks(blocks);
+  const i = scenes.findIndex((s) => s.sid === sid);
+  if (i === -1) return null;
+  const part = (k: number, label: string) => {
+    const s = scenes[k];
+    return s ? `${label} (escena ${s.number}):\n${toFountain(blocks.slice(s.start, s.end)).slice(0, 6000)}` : "";
+  };
+  return {
+    number: scenes[i].number,
+    text: [part(i - 1, "ESCENA ANTERIOR"), part(i, "ESCENA EN FOCO"), part(i + 1, "ESCENA SIGUIENTE")].filter(Boolean).join("\n\n"),
+  };
 }
 
 function readingText(r: StoryReading | null): string {
@@ -319,10 +357,10 @@ export async function suggestReferences(doc: Y.Doc, ctx: Context, scope: Suggest
   let focus = "FOCO: la historia completa.";
   let anchor: ReferenceAnchor = { type: "script" };
   if (scope.type === "scene") {
-    const scene = scenes.find((s) => s.sid === scope.sid);
-    if (scene) {
-      anchor = { type: "scene", sid: scene.sid };
-      focus = `FOCO: la escena ${scene.number}. Referencias para ESTA escena (situación, atmósfera, puesta en escena, montaje):\n${toFountain(blocks.slice(scene.start, scene.end))}`;
+    const around = sceneWithNeighbours(blocks, scope.sid);
+    if (around) {
+      anchor = { type: "scene", sid: scope.sid };
+      focus = `FOCO: la escena ${around.number}. Referencias para ESTA escena (situación, atmósfera, puesta en escena, montaje), teniendo en cuenta de dónde viene y a dónde va:\n${around.text}`;
     }
   } else if (scope.type === "character") {
     const name = characterName(scope.name);
@@ -340,7 +378,7 @@ export async function suggestReferences(doc: Y.Doc, ctx: Context, scope: Suggest
     charactersText(doc),
     existing.length ? `REFERENCIAS YA PUESTAS:\n${existing.join("\n")}` : "",
     focus,
-    scope.type === "script" ? `GUION:\n${scriptText(blocks)}` : `CONTEXTO DEL GUION:\n${scriptText(blocks).slice(0, 12_000)}`,
+    scope.type === "script" ? `GUION:\n${scriptText(blocks)}` : `LA HISTORIA ENTERA, ESCENA A ESCENA:\n${outlineText(doc, blocks)}`,
   ]
     .filter(Boolean)
     .join("\n\n");
@@ -390,8 +428,9 @@ export async function askQuestions(doc: Y.Doc, ctx: Context, sid: string | null)
   const blocks = blocksFromYDoc(doc);
   const scenes = scenesFromBlocks(blocks);
   const scene = sid ? scenes.find((s) => s.sid === sid) : undefined;
-  const focus = scene
-    ? `FOCO: quien escribe está atascado en la escena ${scene.number}:\n${toFountain(blocks.slice(scene.start, scene.end))}`
+  const around = scene ? sceneWithNeighbours(blocks, scene.sid) : null;
+  const focus = scene && around
+    ? `FOCO: quien escribe está atascado en la escena ${scene.number}:\n${around.text}`
     : "FOCO: quien escribe no sabe cómo seguir la historia a partir de donde está ahora (el final del texto).";
   const user = [header(ctx), devText(doc), readingText(readReading(doc)), charactersText(doc), focus, `GUION:\n${scriptText(blocks)}`]
     .filter(Boolean)
@@ -401,4 +440,71 @@ export async function askQuestions(doc: Y.Doc, ctx: Context, sid: string | null)
     scope: scene ? `Escena ${scene.number} · ${scene.heading}` : "Cómo seguir la historia",
     items: strList(raw.preguntas, 300, 6),
   };
+}
+
+// ------------------------------------------------------------------ 4. revisar el guion
+
+const REVIEW_SCHEMA = {
+  type: "object",
+  properties: {
+    dudas: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          tipo: { type: "string", enum: Object.keys(REVIEW_KINDS) },
+          escena: { type: "integer" },
+          texto: { type: "string" },
+        },
+        required: ["tipo", "escena", "texto"],
+      },
+    },
+  },
+  required: ["dudas"],
+};
+
+const REVIEW_SYSTEM = `Eres un editor de guion (script doctor) que revisa un borrador con mucha atención y respeto. Lees el guion entero y señalas DUDAS concretas: cosas que el público podría no entender, cabos sueltos o incoherencias.
+
+${GUARDRAIL}
+
+Tipos (campo "tipo"):
+- setup: algo que se planta (un objeto, una frase, un dato) y no se vuelve a usar o no se resuelve.
+- character: un personaje que desaparece sin explicación, cambia sin motivo o cuyo deseo no se ve.
+- continuity: contradicciones de tiempo, lugar, vestuario, objetos o hechos entre escenas.
+- motivation: acciones que no se entienden por lo que el personaje quiere o sabe.
+- clarity: momentos confusos de leer o de entender en pantalla.
+- rhythm: escenas que no cambian nada en la historia o que repiten información.
+- other: cualquier otra duda importante.
+
+Reglas:
+- Entre 5 y 10 dudas, las más importantes primero.
+- "escena": el número de la escena donde se ve el problema (el de la lista de escenas); 0 si es de toda la historia.
+- "texto": una observación o pregunta corta y concreta, nombrando personajes, objetos y escenas. Nunca propongas cómo reescribirlo ni redactes texto del guion.
+- Si algo parece intencionado (un misterio, un salto en el tiempo), pregúntalo en vez de darlo por error.
+- Escribe en español. Responde solo con el JSON pedido.`;
+
+export async function reviewScript(doc: Y.Doc, ctx: Context): Promise<ReviewItem[]> {
+  const blocks = blocksFromYDoc(doc);
+  const scenes = scenesFromBlocks(blocks);
+  const user = [
+    header(ctx),
+    devText(doc),
+    readingText(readReading(doc)),
+    charactersText(doc),
+    `LISTA DE ESCENAS:\n${scenes.map((s) => `${s.number}. ${s.heading}`).join("\n")}`,
+    `GUION:\n${scriptText(blocks)}`,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+  const raw = await callJson("revision_guion", REVIEW_SYSTEM, user, REVIEW_SCHEMA, 0.3);
+  return (Array.isArray(raw.dudas) ? raw.dudas : [])
+    .map((d) => {
+      const o = (d ?? {}) as Record<string, unknown>;
+      const n = typeof o.escena === "number" ? Math.round(o.escena) : Number(o.escena);
+      const scene = Number.isFinite(n) && n > 0 ? scenes.find((s) => s.number === n) ?? null : null;
+      const kind = typeof o.tipo === "string" && o.tipo in REVIEW_KINDS ? (o.tipo as ReviewKind) : "other";
+      return { id: referenceId(), kind, scene: scene?.number ?? null, sid: scene?.sid ?? null, text: str(o.texto, 400) };
+    })
+    .filter((d) => d.text)
+    .slice(0, 12);
 }

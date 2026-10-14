@@ -6,6 +6,8 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentProfile } from "@/lib/current-user";
 import { optionalString } from "@/lib/form-utils";
 import { uploadProjectFile } from "@/lib/storage";
+import { parseScreenplayPdf } from "@/lib/screenplay/pdf-import";
+import type { ScreenplayBlock } from "@/lib/screenplay/blocks";
 import { syncScreenplayToProjectCore, type SyncResult } from "@/lib/screenplay-taller";
 import {
   FOUNTAIN_MAX_BYTES,
@@ -26,13 +28,21 @@ export async function createScreenplay(
   if (!profile) return { error: "No se pudo crear el guion." };
 
   let fountain: string | null = null;
+  let imported: { title: string | null; author: string | null; blocks: ScreenplayBlock[] } | null = null;
   const file = formData.get("file");
   if (file instanceof File && file.size > 0) {
     if (file.size > FOUNTAIN_MAX_BYTES) return { error: "El archivo pesa más de 900 KB." };
-    if (!/\.(fountain|spmd|txt)$/i.test(file.name)) {
-      return { error: "Solo se pueden importar archivos Fountain (.fountain o .txt)." };
+    if (/\.pdf$/i.test(file.name) || file.type === "application/pdf") {
+      try {
+        imported = await parseScreenplayPdf(new Uint8Array(await file.arrayBuffer()));
+      } catch {
+        return { error: "No se ha podido leer el PDF. Prueba a exportarlo de nuevo o súbelo en Fountain." };
+      }
+    } else if (/\.(fountain|spmd|txt)$/i.test(file.name)) {
+      fountain = await file.text();
+    } else {
+      return { error: "Se pueden importar guiones en PDF o Fountain (.fountain, .txt)." };
     }
-    fountain = await file.text();
   }
 
   const result = await createScreenplayCore(profile.organizationId, profile.id, {
@@ -40,15 +50,16 @@ export async function createScreenplay(
     format: parseFormat(formData.get("format")),
     logline: optionalString(formData.get("logline")),
     // Al importar, manda el autor del archivo; en blanco, quien lo crea.
-    author: optionalString(formData.get("author")) ?? (fountain ? null : profile.fullName),
+    author: optionalString(formData.get("author")) ?? (fountain || imported ? null : profile.fullName),
     fountain,
+    imported,
   });
   if ("error" in result) return result;
 
   revalidatePath("/app/guiones");
   // Por dónde empieza: la idea, la escaleta o directamente el guion.
   const start = String(formData.get("start") ?? "");
-  const step = fountain ? "guion" : start === "idea" || start === "escaleta" ? start : "guion";
+  const step = fountain || imported ? "guion" : start === "idea" || start === "escaleta" ? start : "guion";
   redirect(`/app/guiones/${result.id}?paso=${step}`);
 }
 

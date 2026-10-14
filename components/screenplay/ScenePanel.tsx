@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { askQuestionsAction, suggestReferencesAction } from "@/lib/actions/screenplay-ai";
 import { useYMap } from "@/lib/screenplay/use-ymap";
-import { formatEighths, type Questions, type Reference, type SceneMeta } from "@/lib/screenplay/story";
+import { REVIEW_KINDS, formatEighths, type Questions, type Reference, type Review, type SceneMeta } from "@/lib/screenplay/story";
 import {
   AiButton,
   InlineText,
@@ -36,6 +36,12 @@ export function ScenePanel() {
   const suggestions = suggestionsOf(ai).filter((s) => anchorKey(s.anchor) === key);
   const questions = ai[`q:${scene?.sid ?? "script"}`] as Questions | undefined;
   const pendingElsewhere = suggestionsOf(ai).filter((s) => anchorKey(s.anchor) !== key).length;
+  const review = ai.review as Review | undefined;
+  const doubts = scene ? (review?.items ?? []).filter((d) => d.sid === scene.sid) : [];
+  const resolve = (id: string) => {
+    const r = maps.ai.get("review") as Review | undefined;
+    if (r) maps.ai.set("review", { ...r, items: r.items.filter((x) => x.id !== id) });
+  };
 
   return (
     <div className="space-y-8 text-[14px]">
@@ -69,6 +75,23 @@ export function ScenePanel() {
           <p className="mt-2 leading-relaxed text-muted">Escribe un encabezado («INT.» o «EXT.») y aquí verás todo lo de esa escena.</p>
         )}
       </section>
+
+      {doubts.length > 0 && (
+        <section>
+          <h3 className="sp-label">Dudas de la revisión · {doubts.length}</h3>
+          <ul className="mt-2 space-y-2.5">
+            {doubts.map((d) => (
+              <li key={d.id} className="border-l-2 border-dashed border-[var(--ai)] pl-3 leading-relaxed">
+                <span className="text-[12px] text-muted">{REVIEW_KINDS[d.kind]}</span>
+                <p>{d.text}</p>
+                <button type="button" onClick={() => resolve(d.id)} className="text-[12.5px] text-muted hover:text-fg">
+                  Resuelta
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section>
         <div className="flex items-baseline justify-between">

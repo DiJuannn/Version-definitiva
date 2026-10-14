@@ -29,10 +29,11 @@ import {
   screenplayNodes,
   setPageBreaks,
 } from "@/lib/screenplay/editor-extensions";
-import { characterNames, scenesFromBlocks, type Reference } from "@/lib/screenplay/story";
+import { characterNames, scenesFromBlocks, type Reference, type Review } from "@/lib/screenplay/story";
 import { storyMaps } from "@/lib/screenplay/story-doc";
 import { useYMap } from "@/lib/screenplay/use-ymap";
 import Link from "next/link";
+import { AjoloteLogo } from "@/components/AjoloteLogo";
 import { newSceneId } from "@/lib/screenplay/blocks";
 import { suggestReferencesAction } from "@/lib/actions/screenplay-ai";
 import { syncScreenplayToProject } from "@/lib/actions/screenplays";
@@ -317,6 +318,10 @@ export default function ScreenplayEditor({
   const refs = useYMap<Reference>(maps.refs);
   const ai = useYMap<unknown>(maps.ai);
   const pendingCount = Array.isArray(ai.suggestions) ? ai.suggestions.length : 0;
+  const doubtScenes = useMemo(() => {
+    const items = (ai.review as Review | undefined)?.items ?? [];
+    return new Set(items.map((d) => d.sid).filter(Boolean));
+  }, [ai.review]);
   const sceneRefs = useMemo(() => {
     const m = new Map<string, number>();
     for (const r of Object.values(refs)) if (r.anchor.type === "scene") m.set(r.anchor.sid, (m.get(r.anchor.sid) ?? 0) + 1);
@@ -556,10 +561,11 @@ export default function ScreenplayEditor({
 
   return (
     <WorkspaceProvider value={workspace}>
-      <header className="sticky top-0 z-30 border-b border-[var(--line)] bg-[#f5f5f3]/95 backdrop-blur">
+      <header className="sp-chrome sticky top-0 z-30 border-b border-[var(--line)]">
         <div className="flex h-16 items-center gap-4 px-4 lg:px-7">
-          <Link href="/app/guiones" className="shrink-0 text-[13px] text-muted hover:text-fg">
-            ← Guiones
+          <Link href="/app/guiones" className="flex shrink-0 items-center gap-2.5 text-muted hover:text-fg" title="Volver a Guiones">
+            <AjoloteLogo className="h-5 w-auto text-fg" />
+            <span className="font-mono text-[11px] tracking-[0.2em] uppercase">← Guiones</span>
           </Link>
           <button
             type="button"
@@ -591,7 +597,7 @@ export default function ScreenplayEditor({
             <ul className="hidden -space-x-1.5 sm:flex" aria-label="Escribiendo ahora">
               <li
                 title={`${userName} (tú)`}
-                className="grid h-7 w-7 place-items-center rounded-full border-2 border-[#f5f5f3] text-[11px] font-bold text-[#111]"
+                className="grid h-7 w-7 place-items-center rounded-full border-2 border-[#0a0a0a] text-[11px] font-bold text-[#111]"
                 style={{ background: myColor }}
               >
                 {userName.slice(0, 1).toUpperCase()}
@@ -600,7 +606,7 @@ export default function ScreenplayEditor({
                 <li
                   key={p.clientId}
                   title={p.name}
-                  className="grid h-7 w-7 place-items-center rounded-full border-2 border-[#f5f5f3] text-[11px] font-bold text-[#111]"
+                  className="grid h-7 w-7 place-items-center rounded-full border-2 border-[#0a0a0a] text-[11px] font-bold text-[#111]"
                   style={{ background: p.color }}
                 >
                   {p.name.slice(0, 1).toUpperCase()}
@@ -613,7 +619,7 @@ export default function ScreenplayEditor({
             </span>
             <details className="relative">
               <summary className="sp-btn cursor-pointer list-none">Exportar</summary>
-              <div className="absolute right-0 z-40 mt-1 w-44 overflow-hidden rounded-lg border border-[var(--line)] bg-white py-1 shadow-lg">
+              <div className="absolute right-0 z-40 mt-1 w-44 overflow-hidden rounded-lg border border-[var(--line)] bg-[#131313] py-1 shadow-lg">
                 {(
                   [
                     ["PDF (A4)", `/api/pdf/guion/${screenplayId}?size=A4`],
@@ -628,7 +634,7 @@ export default function ScreenplayEditor({
                       (e.currentTarget.closest("details") as HTMLDetailsElement).open = false;
                       exportTo(href);
                     }}
-                    className="block w-full px-3.5 py-2 text-left hover:bg-[#f5f5f3]"
+                    className="block w-full px-3.5 py-2 text-left hover:bg-white/5"
                   >
                     {label}
                   </button>
@@ -641,15 +647,23 @@ export default function ScreenplayEditor({
             </button>
           </div>
         </div>
-        {syncNote && <p className="border-t border-[var(--line)] bg-white px-7 py-1.5 text-[12.5px] text-warn">{syncNote}</p>}
+        {syncNote && <p className="border-t border-[var(--line)] px-7 py-1.5 text-[12.5px] text-[var(--ai)]">{syncNote}</p>}
       </header>
 
-      {step === "idea" && <IdeaStep title={title} subtitle={subtitle} />}
-      {step === "escaleta" && <OutlineStep />}
+      {step === "idea" && (
+        <div key="idea" className="sp-enter">
+          <IdeaStep title={title} subtitle={subtitle} />
+        </div>
+      )}
+      {step === "escaleta" && (
+        <div key="escaleta" className="sp-enter">
+          <OutlineStep />
+        </div>
+      )}
 
       {/* El guion nunca se desmonta: el editor y su conexión siguen vivos en
           los otros pasos (la escaleta mueve y crea escenas a través de él). */}
-      <div className={step === "guion" ? "grid gap-6 px-4 pb-24 lg:px-7 xl:grid-cols-[220px_minmax(0,1fr)_300px]" : "hidden"}>
+      <div className={step === "guion" ? "sp-enter grid gap-6 px-4 pb-24 lg:px-7 xl:grid-cols-[220px_minmax(0,1fr)_300px]" : "hidden"}>
         <aside className="order-2 pt-6 xl:order-1">
           <div className="xl:sticky xl:top-24">
             <p className="sp-label px-2.5">Escenas</p>
@@ -671,6 +685,9 @@ export default function ScreenplayEditor({
                     >
                       <span className="w-4 shrink-0 text-right font-[family-name:var(--font-courier)] font-bold text-[var(--accent)]">{s.number}</span>
                       <span className="line-clamp-2 flex-1 font-[family-name:var(--font-courier)]">{s.heading}</span>
+                      {doubtScenes.has(s.sid) && (
+                        <span title="Tiene dudas de la revisión" className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--ai)]" />
+                      )}
                       {sceneRefs.get(s.sid) ? (
                         <span title={`${sceneRefs.get(s.sid)} referencias`} className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent)]" />
                       ) : null}

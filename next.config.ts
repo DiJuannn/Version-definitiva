@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs/config";
 
 const nextConfig: NextConfig = {
+  // Lector de PDF (importar guiones): se usa tal cual en el servidor.
+  serverExternalPackages: ["pdfjs-dist"],
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "*.supabase.co", pathname: "/storage/v1/object/public/**" },

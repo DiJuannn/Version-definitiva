@@ -1,4 +1,4 @@
-import { ScreenplayProfile } from "@/components/screenplay/ScreenplayProfile";
+import { CastBoard } from "@/components/CastBoard";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
@@ -14,7 +14,6 @@ import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
 import { SubmitButton } from "@/components/SubmitButton";
 import { FormField } from "@/components/FormField";
-import { ActorAssignmentField } from "@/components/ActorAssignmentField";
 import { SectionTabs } from "@/components/SectionTabs";
 
 export default async function PersonajesPage({
@@ -50,7 +49,8 @@ export default async function PersonajesPage({
     }),
     prisma.character.findMany({
       where: { projectId },
-      orderBy: { createdAt: "desc" },
+      orderBy: { createdAt: "asc" },
+      include: { _count: { select: { scenes: true } } },
     }),
     prisma.person.findMany({
       where: { organizationId: project.organizationId },
@@ -72,7 +72,7 @@ export default async function PersonajesPage({
         backLabel={`← ${project.name}`}
         eyebrow="Preproducción"
         title="Personajes"
-        description="El reparto: qué actor interpreta a cada personaje."
+        description="El reparto: quién es cada personaje, qué actor lo interpreta y en cuántas escenas sale."
       />
 
       <div className="mt-8">
@@ -86,136 +86,41 @@ export default async function PersonajesPage({
               count: characters.length,
               content: (
                 <div>
-                          <form
-                            action={createCharacterAction}
-                            className="grid gap-3 border border-line p-5 sm:grid-cols-2 lg:grid-cols-3"
-                          >
-                            <FormField label="Nombre del personaje">
-                              <input name="name"
-                              required
-                              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
-                            </FormField>
-                            <FormField label="Actor">
-                              <select
-                              name="actorId"
-                              defaultValue=""
-                              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
-                            >
-                              <option value="" className="bg-bg">
-                                Sin actor asignado
-                              </option>
-                              {actors.map((actor) => (
-                                <option key={actor.id} value={actor.id} className="bg-bg">
-                                  {actor.name}
-                                </option>
-                              ))}
-                            </select>
-                            </FormField>
-                            <FormField label="Notas">
-                              <input name="notes"
-                              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
-                            </FormField>
-                            <div>
-                              <SubmitButton
-                                pendingLabel="Añadiendo…"
-                                savedLabel="✓ Añadido"
-                                className="btn btn-secondary"
-                              >
-                                Añadir personaje
-                              </SubmitButton>
-                            </div>
-                          </form>
+                  <form action={createCharacterAction} className="flex flex-wrap items-end gap-3">
+                    <FormField label="Nuevo personaje" className="min-w-[200px] flex-1">
+                      <input name="name" required placeholder="Nombre" className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
+                    </FormField>
+                    <FormField label="Actor" className="min-w-[180px]">
+                      <select name="actorId" defaultValue="" className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent">
+                        <option value="" className="bg-bg">
+                          Sin actor
+                        </option>
+                        {actors.map((actor) => (
+                          <option key={actor.id} value={actor.id} className="bg-bg">
+                            {actor.name}
+                          </option>
+                        ))}
+                      </select>
+                    </FormField>
+                    <SubmitButton pendingLabel="Añadiendo…" savedLabel="✓ Añadido" className="btn btn-secondary">
+                      Añadir
+                    </SubmitButton>
+                  </form>
 
-                          {characters.length === 0 ? (
-                            <EmptyState
-                              title="Todavía no hay personajes"
-                              description="Añade el primero con el formulario de arriba."
-                            />
-                          ) : (
-                            <div className="mt-6 border-t border-line">
-                              {characters.map((character) => (
-                                <div
-                                  key={character.id}
-                                  className="flex flex-wrap items-center justify-between gap-4 border-b border-line py-4"
-                                >
-                                  <div>
-                                    <p className="font-display text-lg font-bold">
-                                      {character.name}
-                                    </p>
-                                    {character.notes && (
-                                      <p className="font-mono text-xs text-muted">
-                                        {character.notes}
-                                      </p>
-                                    )}
-                                    <ScreenplayProfile profile={character.profile} screenplayId={character.screenplayId} />
-                                    <details className="mt-2">
-                                      <summary className="link-action inline-block cursor-pointer list-none">
-                                        Editar nombre y notas
-                                      </summary>
-                                      <form
-                                        action={updateCharacter.bind(null, projectId, character.id)}
-                                        className="mt-3 grid gap-3 sm:grid-cols-2"
-                                      >
-                                        <FormField label="Nombre del personaje">
-                                          <input
-                                            name="name"
-                                            required
-                                            defaultValue={character.name}
-                                            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
-                                          />
-                                        </FormField>
-                                        <FormField label="Notas">
-                                          <input
-                                            name="notes"
-                                            defaultValue={character.notes ?? ""}
-                                            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
-                                          />
-                                        </FormField>
-                                        <div>
-                                          <SubmitButton
-                                            pendingLabel="Guardando…"
-                                            savedLabel="✓ Guardado"
-                                            className="btn btn-secondary"
-                                          >
-                                            Guardar
-                                          </SubmitButton>
-                                        </div>
-                                      </form>
-                                    </details>
-                                  </div>
-
-                                  <div className="flex items-center gap-4">
-                                    <form
-                                      action={updateCharacterActor.bind(
-                                        null,
-                                        projectId,
-                                        character.id,
-                                      )}
-                                    >
-                                      <ActorAssignmentField
-                                        actors={actors}
-                                        defaultActorId={character.actorId ?? ""}
-                                        conflicts={Object.fromEntries(
-                                          characters
-                                            .filter((c) => c.id !== character.id && c.actorId)
-                                            .map((c) => [c.actorId as string, c.name]),
-                                        )}
-                                      />
-                                    </form>
-
-                                    <form
-                                      action={deleteCharacter.bind(null, projectId, character.id)}
-                                    >
-                                      <DeleteButton
-                                        confirmMessage="¿Eliminar este personaje?"
-                                        className="link-action"
-                                      />
-                                    </form>
-                                  </div>
-                                </div>
-                              ))}
-                            </div>
-                          )}
+                  {characters.length === 0 ? (
+                    <EmptyState
+                      title="Todavía no hay personajes"
+                      description="Añádelos arriba, o vincula un guion desde Guiones y aparecerán solos con su ficha."
+                    />
+                  ) : (
+                    <CastBoard
+                      characters={characters}
+                      actors={actors}
+                      update={(id) => updateCharacter.bind(null, projectId, id)}
+                      updateActor={(id) => updateCharacterActor.bind(null, projectId, id)}
+                      remove={(id) => deleteCharacter.bind(null, projectId, id)}
+                    />
+                  )}
                 </div>
               ),
             },

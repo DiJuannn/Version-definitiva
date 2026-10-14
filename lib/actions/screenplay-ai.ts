@@ -11,12 +11,13 @@ import { SCREENPLAY_FORMAT_LABELS } from "@/lib/screenplay-core";
 import {
   aiConfigured,
   askQuestions,
+  reviewScript,
   hasEnoughText,
   readStory,
   suggestReferences,
   type SuggestScope,
 } from "@/lib/screenplay-ai";
-import type { Questions, StoryReading, Suggestion } from "@/lib/screenplay/story";
+import type { Questions, Review, StoryReading, Suggestion } from "@/lib/screenplay/story";
 
 type Fail = { ok: false; error: string; upgrade?: boolean };
 
@@ -121,4 +122,14 @@ export async function askQuestionsAction(id: string, sid: string | null): Promis
     return { ok: false, error: "La IA no ha devuelto preguntas esta vez. Inténtalo de nuevo." };
   }
   return { ok: true, questions: { ...res.value, at: Date.now() } };
+}
+
+export async function reviewScriptAction(id: string): Promise<{ ok: true; review: Review } | Fail> {
+  const res = await run(id, ({ doc, ctx }) => reviewScript(doc, ctx));
+  if (!res.ok) return res;
+  if (!res.value.length) {
+    await refund(id);
+    return { ok: false, error: "La IA no ha devuelto dudas esta vez. Inténtalo de nuevo." };
+  }
+  return { ok: true, review: { items: res.value, at: Date.now() } };
 }

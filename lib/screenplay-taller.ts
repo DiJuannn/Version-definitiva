@@ -13,10 +13,10 @@ import { isProjectOwnerPro } from "@/lib/project-plan";
 import type { MoodboardCard } from "@/lib/moodboard-types";
 import { characterName } from "@/lib/screenplay/blocks";
 import { blocksFromYDoc } from "@/lib/screenplay/ydoc";
-import { characterNames, REFERENCE_KINDS, type CharacterMeta, type Reference } from "@/lib/screenplay/story";
+import { characterNames, scenesFromBlocks, REFERENCE_KINDS, type CharacterMeta, type Reference } from "@/lib/screenplay/story";
 import { storyMaps } from "@/lib/screenplay/story-doc";
 
-export type CharacterProfile = CharacterMeta & { screenplayTitle: string };
+export type CharacterProfile = CharacterMeta & { screenplayTitle: string; sceneCount?: number };
 
 // Prefijo de las tarjetas que pone este guion en el Moodboard.
 const cardPrefix = (screenplayId: string) => `gs-${screenplayId.slice(-10)}-`;
@@ -28,11 +28,15 @@ const MOODBOARD_KIND: Partial<Record<Reference["kind"], string>> = {
   art: "Fotografía",
 };
 
-export function screenplayCharacters(doc: Y.Doc): { name: string; meta: CharacterMeta }[] {
+export function screenplayCharacters(doc: Y.Doc): { name: string; meta: CharacterMeta; scenes: number }[] {
   const maps = storyMaps(doc);
-  const names = new Set(characterNames(blocksFromYDoc(doc)).map((c) => c.name));
+  const blocks = blocksFromYDoc(doc);
+  const scenes = scenesFromBlocks(blocks);
+  const names = new Set(characterNames(blocks).map((c) => c.name));
   for (const key of maps.characters.keys()) names.add(characterName(key));
-  return [...names].filter(Boolean).map((name) => ({ name, meta: maps.characters.get(name) ?? {} }));
+  return [...names]
+    .filter(Boolean)
+    .map((name) => ({ name, meta: maps.characters.get(name) ?? {}, scenes: scenes.filter((s) => s.present.includes(name)).length }));
 }
 
 export type SyncResult = { ok: true; characters: number; cards: number; warning?: string } | { ok: false; error: string };
@@ -69,8 +73,8 @@ async function syncCore(screenplayId: string, organizationId: string): Promise<S
     select: { id: true, name: true },
   });
   const byName = new Map(existing.map((c) => [c.name.trim().toUpperCase(), c.id]));
-  for (const { name, meta } of characters) {
-    const profile: CharacterProfile = { ...meta, screenplayTitle: screenplay.title };
+  for (const { name, meta, scenes } of characters) {
+    const profile: CharacterProfile = { ...meta, screenplayTitle: screenplay.title, sceneCount: scenes };
     const id = byName.get(name);
     const data = { screenplayId: screenplay.id, profile: profile as unknown as Prisma.InputJsonValue };
     if (id) await prisma.character.update({ where: { id }, data });

@@ -96,6 +96,23 @@ export type Suggestion = Omit<Reference, "source" | "by"> & { source: "ai" };
 
 export type Questions = { scope: string; items: string[]; at: number };
 
+// Revisión del guion por la IA: dudas concretas, ancladas a una escena.
+export const REVIEW_KINDS = {
+  setup: "Siembra sin recoger",
+  character: "Personaje",
+  continuity: "Continuidad",
+  motivation: "Motivación",
+  clarity: "Claridad",
+  rhythm: "Ritmo",
+  other: "Otra",
+} as const;
+
+export type ReviewKind = keyof typeof REVIEW_KINDS;
+export type ReviewItem = { id: string; kind: ReviewKind; scene: number | null; sid: string | null; text: string };
+
+
+export type Review = { items: ReviewItem[]; at: number };
+
 export const ACT_TEMPLATES = {
   three: { label: "3 actos", acts: ["Acto I", "Acto II", "Acto III"] },
   five: { label: "5 actos", acts: ["Acto I", "Acto II", "Acto III", "Acto IV", "Acto V"] },
@@ -144,14 +161,19 @@ export function scenesFromBlocks(blocks: ScreenplayBlock[], size: PageSize = "A4
     .filter(({ b }) => b.type === "sceneHeading" && b.text.trim() && b.id);
   if (!headings.length) return scenes;
 
-  // Líneas impresas por bloque, para medir cada escena en octavos.
-  const linesByBlock = new Map<number, number>();
-  for (const page of layoutScreenplay(blocks, { size })) {
-    for (const line of page.lines) {
-      if (line.block !== undefined) linesByBlock.set(line.block, (linesByBlock.get(line.block) ?? 0) + 1);
-    }
-  }
+  // Dónde empieza cada bloque en el guion impreso (página y línea), para
+  // medir cada escena en octavos desde su inicio hasta el de la siguiente:
+  // así la suma de las escenas cuadra con las páginas del guion.
   const perPage = linesPerPage(size);
+  const startAt = new Map<number, number>();
+  let endAt = 0;
+  for (const page of layoutScreenplay(blocks, { size })) {
+    page.lines.forEach((line, i) => {
+      const at = (page.number - 1) * perPage + i;
+      if (line.block !== undefined && !startAt.has(line.block)) startAt.set(line.block, at);
+      endAt = at + 1;
+    });
+  }
 
   const allSpeakers = new Set(
     blocks.filter((b) => b.type === "character" && b.text.trim()).map((b) => characterName(b.text)),
@@ -168,8 +190,10 @@ export function scenesFromBlocks(blocks: ScreenplayBlock[], size: PageSize = "A4
     const mentioned = [...allSpeakers].filter(
       (name) => !speakers.includes(name) && new RegExp(`(^|[^\\p{L}])${escapeRegExp(name)}([^\\p{L}]|$)`, "iu").test(actionText),
     );
-    let lines = 0;
-    for (let k = i; k < end; k++) lines += linesByBlock.get(k) ?? 0;
+    const from = startAt.get(i) ?? 0;
+    const nextHeading = headings[n + 1]?.i;
+    const to = nextHeading !== undefined ? (startAt.get(nextHeading) ?? endAt) : endAt;
+    const lines = Math.max(0, to - from);
     const { place, time } = parseSceneHeading(b.text);
     scenes.push({
       sid: b.id!,

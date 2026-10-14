@@ -207,6 +207,22 @@ como el papel, y en tres pasos que no son obligatorios:
 - **Proveedor de IA intercambiable:** Mistral (por defecto), Gemini o Groq
   con `SCREENPLAY_AI_PROVIDER`.
 
+### Importar, revisar y reparto ✅
+
+- **Importar PDF** sin IA: escenas (también numeradas, "3.EXT."), personajes,
+  acotaciones y diálogos (aunque estén centrados), transiciones; quita las
+  cabeceras y pies repetidos y toma la autoría de un "Grup:/Autor:" repetido.
+  Probado con *Distorsión* (17 págs.): 10 escenas y 4 personajes.
+- **Revisar mi guion** (IA): dudas concretas por escena (siembras sin recoger,
+  continuidad, motivación, claridad, ritmo, personajes). Salen en el Asistente,
+  en el panel de cada escena y como marca en la lista de escenas.
+- **Más contexto para la IA:** las ayudas de una escena leen la escena entera,
+  la anterior, la siguiente y la historia resumida escena a escena.
+- **Mesa de guiones:** cada guion es su portada en papel; la cabecera del
+  editor mantiene el estilo de Taller para que entrar no sea un salto.
+- **Personajes de Taller como reparto:** retrato por personaje, actor, escenas
+  en las que sale y lo esencial de su ficha del guion.
+
 ### Fase 3 — Oficio y desbloqueo
 
 - **Siembra y recogida:** marcar un detalle como siembra y enlazar su pago;

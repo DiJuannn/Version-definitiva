@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import { askQuestionsAction, readStoryAction } from "@/lib/actions/screenplay-ai";
+import { askQuestionsAction, readStoryAction, reviewScriptAction } from "@/lib/actions/screenplay-ai";
 import { useYMap } from "@/lib/screenplay/use-ymap";
-import type { Questions, StoryReading } from "@/lib/screenplay/story";
+import { REVIEW_KINDS, type Questions, type Review, type StoryReading } from "@/lib/screenplay/story";
 import {
   AiButton,
   InlineText,
@@ -20,11 +20,16 @@ const dateFmt = new Intl.DateTimeFormat("es-ES", { day: "numeric", month: "short
 // (corregible), preguntas para seguir y las propuestas pendientes de revisar.
 // La IA nunca escribe en el guion.
 export function AssistantDrawer({ onClose }: { onClose: () => void }) {
-  const { screenplayId, maps, scenes, userName } = useWorkspace();
+  const { screenplayId, maps, scenes, userName, goToScene, setStep } = useWorkspace();
   const ai = useYMap<unknown>(maps.ai);
   const reading = ai.reading as StoryReading | undefined;
   const questions = ai["q:script"] as Questions | undefined;
   const pending = suggestionsOf(ai);
+  const review = ai.review as Review | undefined;
+  const resolve = (id: string) => {
+    const r = maps.ai.get("review") as Review | undefined;
+    if (r) maps.ai.set("review", { ...r, items: r.items.filter((x) => x.id !== id) });
+  };
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -131,6 +136,59 @@ export function AssistantDrawer({ onClose }: { onClose: () => void }) {
             run={async () => {
               const res = await readStoryAction(screenplayId);
               if (res.ok) maps.ai.set("reading", res.reading);
+              return res;
+            }}
+          />
+        </section>
+
+        <section>
+          <h3 className="sp-label">Revisión del guion</h3>
+          {review && review.items.length > 0 ? (
+            <ol className="mt-3 divide-y divide-[var(--line)] border-y border-[var(--line)]">
+              {review.items.map((d) => (
+                <li key={d.id} className="py-3 text-[14px] leading-relaxed">
+                  <p className="text-[12px] text-muted">
+                    {REVIEW_KINDS[d.kind]}
+                    {d.sid ? (
+                      <>
+                        {" · "}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onClose();
+                            setStep("guion");
+                            goToScene(d.sid!);
+                          }}
+                          className="font-medium text-[var(--accent)] hover:underline"
+                        >
+                          Escena {scenes.find((x) => x.sid === d.sid)?.number ?? d.scene}
+                        </button>
+                      </>
+                    ) : (
+                      " · Toda la historia"
+                    )}
+                  </p>
+                  <p className="mt-0.5">{d.text}</p>
+                  <button type="button" onClick={() => resolve(d.id)} className="mt-1 text-[12.5px] text-muted hover:text-fg">
+                    Resuelta
+                  </button>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p className="mt-2 text-[14px] leading-relaxed text-muted">
+              {review
+                ? "No queda ninguna duda abierta."
+                : "La IA lee el guion entero y te señala dudas: cabos sueltos, personajes que desaparecen, contradicciones, motivaciones que no se entienden. Solo señala; las decisiones son tuyas."}
+            </p>
+          )}
+          <AiButton
+            className="mt-4"
+            label={review ? "Volver a revisar" : "Revisar mi guion"}
+            pendingLabel="Revisando el guion…"
+            run={async () => {
+              const res = await reviewScriptAction(screenplayId);
+              if (res.ok) maps.ai.set("review", res.review);
               return res;
             }}
           />

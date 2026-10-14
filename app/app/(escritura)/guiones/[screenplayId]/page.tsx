@@ -1,19 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Courier_Prime } from "next/font/google";
+import { courierPrime } from "@/lib/screenplay/font";
 import { prisma } from "@/lib/prisma";
 import { getCurrentProfile } from "@/lib/current-user";
 import { getScreenplay, SCREENPLAY_FORMAT_LABELS } from "@/lib/screenplay-core";
 import { ScreenplayEditorLoader } from "@/components/screenplay/ScreenplayEditorLoader";
 
-// Courier Prime: la Courier de los guiones, pensada para pantalla. Mismo
-// ancho de carácter que la Courier del PDF, así la página se ve igual.
-const courierPrime = Courier_Prime({
-  weight: ["400", "700"],
-  style: ["normal", "italic"],
-  subsets: ["latin"],
-  variable: "--font-courier",
-});
 
 export const metadata: Metadata = { title: "Guion" };
 
