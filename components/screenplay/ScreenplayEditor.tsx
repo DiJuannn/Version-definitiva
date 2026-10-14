@@ -25,9 +25,20 @@ import { layoutScreenplay, pageStarts } from "@/lib/screenplay/layout";
 import {
   PLACEHOLDERS,
   ScreenplayBehaviour,
+  ensureSceneIdsTr,
   screenplayNodes,
   setPageBreaks,
 } from "@/lib/screenplay/editor-extensions";
+import { characterNames, scenesFromBlocks, type Reference } from "@/lib/screenplay/story";
+import { storyMaps } from "@/lib/screenplay/story-doc";
+import { useYMap } from "@/lib/screenplay/use-ymap";
+import { VIEWS, WorkspaceProvider, type View, type Workspace } from "@/components/screenplay/workspace";
+import { ContextPanel } from "@/components/screenplay/ContextPanel";
+import { BoardView } from "@/components/screenplay/BoardView";
+import { TimeView } from "@/components/screenplay/TimeView";
+import { CharactersView } from "@/components/screenplay/CharactersView";
+import { ReferencesView } from "@/components/screenplay/ReferencesView";
+import { StoryView } from "@/components/screenplay/StoryView";
 import {
   REMOTE_ORIGIN,
   SupabaseYjsProvider,
@@ -57,7 +68,9 @@ const isMac = () => typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(n
 function docBlocks(doc: import("@tiptap/pm/model").Node): ScreenplayBlock[] {
   const out: ScreenplayBlock[] = [];
   doc.forEach((node) => {
-    if (isBlockType(node.type.name)) out.push({ type: node.type.name, text: node.textContent });
+    if (!isBlockType(node.type.name)) return;
+    const sid = node.type.name === "sceneHeading" ? (node.attrs.sid as string | null) : null;
+    out.push(sid ? { type: node.type.name, text: node.textContent, id: sid } : { type: node.type.name, text: node.textContent });
   });
   return out;
 }
@@ -237,16 +250,31 @@ export default function ScreenplayEditor({ screenplayId, initialState, userId, u
   const current = useEditorState({
     editor,
     selector: ({ editor: e }) => {
-      if (!e) return null;
-      const name = e.state.selection.$from.parent.type.name;
-      return isBlockType(name) ? name : null;
+      if (!e) return { type: null as BlockType | null, sid: null as string | null };
+      const { $from } = e.state.selection;
+      const name = $from.depth >= 1 ? $from.node(1).type.name : $from.parent.type.name;
+      // Escena actual: el último encabezado antes del cursor.
+      let sid: string | null = null;
+      const top = $from.index(0);
+      for (let i = top; i >= 0; i--) {
+        const n = e.state.doc.child(i);
+        if (n.type.name === "sceneHeading" && n.textContent.trim()) {
+          sid = (n.attrs.sid as string | null) ?? null;
+          break;
+        }
+      }
+      return { type: isBlockType(name) ? name : null, sid };
     },
-  });
+  }) ?? { type: null, sid: null };
 
   const [blocks, setBlocks] = useState<ScreenplayBlock[]>([]);
   const [pageCount, setPageCount] = useState(0);
   useEffect(() => {
     if (!editor) return;
+    // Guiones creados antes de que las escenas tuvieran id.
+    const fix = ensureSceneIdsTr(editor.state);
+    if (fix) editor.view.dispatch(fix.setMeta("addToHistory", false));
+
     let t: ReturnType<typeof setTimeout> | null = null;
     const recompute = () => {
       const list = docBlocks(editor.state.doc);
@@ -267,41 +295,99 @@ export default function ScreenplayEditor({ screenplayId, initialState, userId, u
     };
   }, [editor]);
 
-  const scenes = useMemo(() => {
-    const out: { index: number; number: number; text: string }[] = [];
-    let n = 0;
-    blocks.forEach((b, index) => {
-      if (b.type === "sceneHeading" && b.text.trim()) out.push({ index, number: ++n, text: b.text.trim().toUpperCase() });
-    });
-    return out;
-  }, [blocks]);
+  const scenes = useMemo(() => scenesFromBlocks(blocks), [blocks]);
+  const characters = useMemo(() => characterNames(blocks), [blocks]);
+  const maps = useMemo(() => storyMaps(ydoc), [ydoc]);
+  const refs = useYMap<Reference>(maps.refs);
+  const sceneRefs = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const r of Object.values(refs)) if (r.anchor.type === "scene") m.set(r.anchor.sid, (m.get(r.anchor.sid) ?? 0) + 1);
+    return m;
+  }, [refs]);
 
-  const characters = useMemo(() => {
-    const counts = new Map<string, number>();
-    let speaker: string | null = null;
-    for (const b of blocks) {
-      if (b.type === "character") speaker = b.text.replace(/\(.*?\)/g, "").trim().toUpperCase() || null;
-      else if (b.type === "dialogue" && speaker) counts.set(speaker, (counts.get(speaker) ?? 0) + 1);
-      else if (b.type !== "parenthetical") speaker = null;
-    }
-    return [...counts.entries()].sort((a, b) => b[1] - a[1]);
-  }, [blocks]);
+  const [view, setViewState] = useState<View>("page");
+  const setView = useCallback((v: View) => {
+    setViewState(v);
+    window.scrollTo({ top: 0 });
+  }, []);
 
-  const goToBlock = useCallback(
-    (index: number) => {
-      if (!editor) return;
+  const scenePos = useCallback(
+    (sid: string): number | null => {
+      if (!editor) return null;
       let pos: number | null = null;
-      let i = 0;
-      editor.state.doc.forEach((_n, offset) => {
-        if (i++ === index) pos = offset;
+      editor.state.doc.forEach((n, offset) => {
+        if (pos === null && n.type.name === "sceneHeading" && n.attrs.sid === sid) pos = offset;
       });
-      if (pos === null) return;
-      editor.chain().focus().setTextSelection(pos + 1).run();
-      const dom = editor.view.nodeDOM(pos);
-      if (dom instanceof HTMLElement) dom.scrollIntoView({ block: "center", behavior: "smooth" });
+      return pos;
     },
     [editor],
   );
+
+  const goToScene = useCallback(
+    (sid: string) => {
+      if (!editor) return;
+      // La página tiene que estar visible para poder enfocarla y desplazarse.
+      requestAnimationFrame(() => {
+        const pos = scenePos(sid);
+        if (pos === null) return;
+        editor.chain().focus().setTextSelection(pos + 1).run();
+        const dom = editor.view.nodeDOM(pos);
+        if (dom instanceof HTMLElement) dom.scrollIntoView({ block: "center", behavior: "smooth" });
+      });
+    },
+    [editor, scenePos],
+  );
+
+  // Mueve la escena entera (del encabezado a la siguiente) delante de la
+  // escena que ahora ocupa `toIndex`; más allá del final, al final del guion.
+  const moveScene = useCallback(
+    (sid: string, toIndex: number) => {
+      if (!editor) return;
+      const { doc } = editor.state;
+      const ranges: { sid: string; from: number; to: number }[] = [];
+      doc.forEach((n, offset) => {
+        if (n.type.name === "sceneHeading" && n.attrs.sid) {
+          if (ranges.length) ranges[ranges.length - 1].to = offset;
+          ranges.push({ sid: n.attrs.sid as string, from: offset, to: doc.content.size });
+        }
+      });
+      const from = ranges.findIndex((r) => r.sid === sid);
+      if (from === -1) return;
+      const target = toIndex >= ranges.length ? doc.content.size : ranges[Math.max(0, toIndex)].from;
+      const { from: a, to: b } = ranges[from];
+      if (target >= a && target <= b) return; // ya está ahí
+      const slice = doc.slice(a, b);
+      const tr = editor.state.tr.delete(a, b);
+      tr.insert(tr.mapping.map(target), slice.content);
+      editor.view.dispatch(tr);
+    },
+    [editor],
+  );
+
+  // La IA lee lo guardado: antes de llamarla se guarda lo pendiente.
+  const flushSave = useCallback(async () => {
+    for (let i = 0; i < 6; i++) {
+      if (await saveRef.current()) return true;
+      await new Promise((r) => setTimeout(r, 400));
+    }
+    return false;
+  }, []);
+
+  const workspace: Workspace = {
+    screenplayId,
+    ydoc,
+    maps,
+    editor,
+    blocks,
+    scenes,
+    characters,
+    currentSid: current.sid,
+    userName,
+    goToScene,
+    moveScene,
+    flushSave,
+    setView,
+  };
 
   const setType = useCallback(
     (type: BlockType) => {
@@ -323,142 +409,142 @@ export default function ScreenplayEditor({ screenplayId, initialState, userId, u
             : { label: "Guardado", tone: "text-success" };
 
   return (
-    <div>
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0 flex-1">{header}</div>
-        <div className="flex items-center gap-4 font-mono text-[11px]">
-          <ul className="flex -space-x-2" aria-label="Escribiendo ahora">
-            <li
-              title={`${userName} (tú)`}
-              className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-bg text-[11px] font-bold text-bg"
-              style={{ background: myColor }}
-            >
-              {userName.slice(0, 1).toUpperCase()}
-            </li>
-            {peers.map((p) => (
+    <WorkspaceProvider value={workspace}>
+      <div className="sp-root">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">{header}</div>
+          <div className="flex items-center gap-4 font-mono text-[11px]">
+            <ul className="flex -space-x-2" aria-label="Escribiendo ahora">
               <li
-                key={p.clientId}
-                title={p.name}
+                title={`${userName} (tú)`}
                 className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-bg text-[11px] font-bold text-bg"
-                style={{ background: p.color }}
+                style={{ background: myColor }}
               >
-                {p.name.slice(0, 1).toUpperCase()}
+                {userName.slice(0, 1).toUpperCase()}
               </li>
-            ))}
-          </ul>
-          <span className={`flex items-center gap-1.5 ${status.tone}`} role="status" aria-live="polite">
-            <span className="h-1.5 w-1.5 rounded-full bg-current" />
-            {status.label}
-          </span>
-        </div>
-      </div>
-
-      <div className="mt-6 grid gap-6 xl:grid-cols-[220px_minmax(0,1fr)_220px]">
-        {/* Izquierda: escenas */}
-        <aside className="order-2 xl:order-1">
-          <div className="xl:sticky xl:top-40">
-            <p className="font-mono text-[10px] tracking-widest text-muted uppercase">Escenas</p>
-            {scenes.length === 0 ? (
-              <p className="mt-3 font-sans text-xs text-muted">Escribe un encabezado (INT. / EXT.) para empezar la primera escena.</p>
-            ) : (
-              <ol className="mt-3 max-h-[60vh] space-y-px overflow-y-auto pr-1">
-                {scenes.map((s) => (
-                  <li key={s.index}>
-                    <button
-                      type="button"
-                      onClick={() => goToBlock(s.index)}
-                      className="flex w-full gap-2 border-l-2 border-transparent px-2 py-1.5 text-left font-mono text-[11px] text-muted transition-colors hover:border-accent hover:bg-bg-raised hover:text-fg"
-                    >
-                      <span className="w-5 shrink-0 text-right text-accent">{s.number}</span>
-                      <span className="line-clamp-2">{s.text}</span>
-                    </button>
-                  </li>
-                ))}
-              </ol>
-            )}
-          </div>
-        </aside>
-
-        {/* Centro: la página */}
-        <div className="order-1 min-w-0 xl:order-2">
-          <div className="z-10 mb-4 flex flex-wrap items-center gap-2 border border-line bg-bg/90 p-2 backdrop-blur-md lg:sticky lg:top-24">
-            <label className="sr-only" htmlFor="sp-block-type">
-              Tipo de bloque
-            </label>
-            <select
-              id="sp-block-type"
-              value={current ?? ""}
-              onChange={(e) => isBlockType(e.target.value) && setType(e.target.value)}
-              className="border border-line bg-bg px-2 py-1.5 font-mono text-xs text-fg outline-none focus:border-accent"
-            >
-              {!current && <option value="">—</option>}
-              {BLOCK_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {BLOCK_LABELS[t]} · {mod}+{BLOCK_SHORTCUTS[t]}
-                </option>
+              {peers.map((p) => (
+                <li
+                  key={p.clientId}
+                  title={p.name}
+                  className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-bg text-[11px] font-bold text-bg"
+                  style={{ background: p.color }}
+                >
+                  {p.name.slice(0, 1).toUpperCase()}
+                </li>
               ))}
-            </select>
-            {current && (
-              <span className="font-mono text-[11px] text-muted">
-                <kbd className="sp-kbd">Tab</kbd> {BLOCK_LABELS[TAB_NEXT[current]]}
-                <span className="mx-2 text-line">|</span>
-                <kbd className="sp-kbd">Enter</kbd> {BLOCK_LABELS[ENTER_NEXT[current]]}
-              </span>
-            )}
-            <span className="ml-auto font-mono text-[11px] text-muted">
-              <span className="text-fg">{pageCount}</span> {pageCount === 1 ? "página" : "páginas"} · ≈{pageCount} min
+            </ul>
+            <span className={`flex items-center gap-1.5 ${status.tone}`} role="status" aria-live="polite">
+              <span className="h-1.5 w-1.5 rounded-full bg-current" />
+              {status.label}
             </span>
           </div>
-
-          <div className="sp-desk">
-            <div className="sp-paper">
-              <EditorContent editor={editor} />
-            </div>
-          </div>
         </div>
 
-        {/* Derecha: personajes y ayuda */}
-        <aside className="order-3">
-          <div className="space-y-8 xl:sticky xl:top-40">
-            <div>
-              <p className="font-mono text-[10px] tracking-widest text-muted uppercase">Personajes</p>
-              {characters.length === 0 ? (
-                <p className="mt-3 font-sans text-xs text-muted">Aparecerán aquí al escribir sus diálogos.</p>
-              ) : (
-                <ul className="mt-3 space-y-1.5">
-                  {characters.slice(0, 14).map(([name, lines]) => (
-                    <li key={name} className="flex items-center justify-between gap-2 font-mono text-[11px]">
-                      <span className="truncate">{name}</span>
-                      <span className="text-muted">{lines} {lines === 1 ? "diálogo" : "diálogos"}</span>
-                    </li>
-                  ))}
-                </ul>
+        <nav aria-label="Vistas del guion" className="mt-8 flex gap-6 overflow-x-auto border-b border-line">
+          {VIEWS.map((v) => (
+            <button
+              key={v.id}
+              type="button"
+              onClick={() => setView(v.id)}
+              aria-current={view === v.id ? "page" : undefined}
+              className={`relative shrink-0 pb-3 font-mono text-[11px] tracking-[0.2em] uppercase transition-colors ${
+                view === v.id ? "text-fg" : "text-muted hover:text-fg"
+              }`}
+            >
+              {v.label}
+              {v.id === "references" && Object.keys(refs).length > 0 && (
+                <span className="ml-1.5 text-accent">{Object.keys(refs).length}</span>
               )}
+              {view === v.id && <span className="absolute inset-x-0 -bottom-px h-0.5 bg-accent" />}
+            </button>
+          ))}
+        </nav>
+
+        <div className="mt-8">
+          {view === "board" && <BoardView />}
+          {view === "time" && <TimeView />}
+          {view === "characters" && <CharactersView />}
+          {view === "references" && <ReferencesView />}
+          {view === "story" && <StoryView />}
+
+          {/* La página nunca se desmonta: el editor y su conexión siguen vivos
+              en las otras vistas (el corcho mueve escenas a través de él). */}
+          <div className={view === "page" ? "grid gap-8 xl:grid-cols-[200px_minmax(0,1fr)_280px]" : "hidden"}>
+            <aside className="order-2 xl:order-1">
+              <div className="xl:sticky xl:top-28">
+                <p className="font-mono text-[10px] tracking-[0.2em] text-muted uppercase">Escenas</p>
+                {scenes.length === 0 ? (
+                  <p className="mt-3 font-sans text-xs text-muted">Escribe un encabezado (INT. / EXT.) para empezar la primera escena.</p>
+                ) : (
+                  <ol className="mt-3 max-h-[70vh] space-y-px overflow-y-auto pr-1">
+                    {scenes.map((s) => (
+                      <li key={s.sid}>
+                        <button
+                          type="button"
+                          onClick={() => goToScene(s.sid)}
+                          aria-current={s.sid === current.sid}
+                          className={`flex w-full gap-2 border-l-2 px-2 py-1.5 text-left font-mono text-[11px] transition-colors hover:text-fg ${
+                            s.sid === current.sid ? "border-accent text-fg" : "border-transparent text-muted"
+                          }`}
+                        >
+                          <span className="w-5 shrink-0 text-right text-accent">{s.number}</span>
+                          <span className="line-clamp-2 flex-1">{s.heading}</span>
+                          {sceneRefs.get(s.sid) ? (
+                            <span title={`${sceneRefs.get(s.sid)} referencias`} className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
+                          ) : null}
+                        </button>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </div>
+            </aside>
+
+            <div className="order-1 min-w-0 xl:order-2">
+              <div className="z-10 mb-4 flex flex-wrap items-center gap-3 border-b border-line bg-bg/90 py-2 backdrop-blur-md lg:sticky lg:top-24">
+                <label className="sr-only" htmlFor="sp-block-type">
+                  Tipo de línea
+                </label>
+                <select
+                  id="sp-block-type"
+                  value={current.type ?? ""}
+                  onChange={(e) => isBlockType(e.target.value) && setType(e.target.value)}
+                  className="bg-bg py-1 font-mono text-xs text-fg outline-none"
+                >
+                  {!current.type && <option value="">—</option>}
+                  {BLOCK_TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {BLOCK_LABELS[t]} · {mod}+{BLOCK_SHORTCUTS[t]}
+                    </option>
+                  ))}
+                </select>
+                {current.type && (
+                  <span className="font-mono text-[11px] text-muted">
+                    <kbd className="sp-kbd">Tab</kbd> {BLOCK_LABELS[TAB_NEXT[current.type]]}
+                    <span className="mx-2 text-line">|</span>
+                    <kbd className="sp-kbd">Enter</kbd> {BLOCK_LABELS[ENTER_NEXT[current.type]]}
+                  </span>
+                )}
+                <span className="ml-auto font-mono text-[11px] text-muted">
+                  <span className="text-fg">{pageCount}</span> {pageCount === 1 ? "página" : "páginas"} · ≈{pageCount} min
+                </span>
+              </div>
+
+              <div className="sp-desk">
+                <div className="sp-paper">
+                  <EditorContent editor={editor} />
+                </div>
+              </div>
             </div>
-            <div>
-              <p className="font-mono text-[10px] tracking-widest text-muted uppercase">Atajos</p>
-              <ul className="mt-3 space-y-1.5 font-mono text-[11px] text-muted">
-                <li>
-                  <kbd className="sp-kbd">Tab</kbd> cambia el tipo de línea
-                </li>
-                <li>
-                  <kbd className="sp-kbd">Enter</kbd> línea siguiente lógica
-                </li>
-                <li>
-                  <kbd className="sp-kbd">Tab</kbd>/<kbd className="sp-kbd">→</kbd> acepta la sugerencia gris
-                </li>
-                <li>
-                  «int. » o «ext. » → encabezado
-                </li>
-                <li>«(» en un diálogo → acotación</li>
-                <li>
-                  <kbd className="sp-kbd">{mod}+1…8</kbd> tipo directo
-                </li>
-              </ul>
-            </div>
+
+            <aside className="order-3">
+              <div className="xl:sticky xl:top-28">
+                <ContextPanel />
+              </div>
+            </aside>
           </div>
-        </aside>
+        </div>
       </div>
-    </div>
+    </WorkspaceProvider>
   );
 }

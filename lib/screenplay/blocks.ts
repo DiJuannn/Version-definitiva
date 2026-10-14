@@ -15,7 +15,13 @@ export const BLOCK_TYPES = [
 
 export type BlockType = (typeof BLOCK_TYPES)[number];
 
-export type ScreenplayBlock = { type: BlockType; text: string };
+// `id` solo lo llevan los encabezados: identifica la escena aunque se mueva
+// o se renumere (corcho, referencias, tensión… se guardan con este id).
+export type ScreenplayBlock = { type: BlockType; text: string; id?: string };
+
+export function newSceneId(): string {
+  return `s${Math.random().toString(36).slice(2, 10)}${Date.now().toString(36).slice(-4)}`;
+}
 
 export const BLOCK_LABELS: Record<BlockType, string> = {
   sceneHeading: "Encabezado",

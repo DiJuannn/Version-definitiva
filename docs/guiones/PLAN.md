@@ -154,19 +154,33 @@ desglose".
 - [x] Importar y exportar **Fountain**.
 - [x] Entrada "Guiones" en el menú de Taller.
 
-### Fase 2 — Vistas de la historia
+### Fase 2 — Vistas de la historia ✅ + Referencias e IA ✅
 
-- **Corcho:** tarjetas por escena, agrupadas en actos y secuencias; arrastrar
-  reordena también el guion.
-- **Doble línea temporal:** orden cronológico de la historia vs. orden en
-  pantalla (flashbacks, estructuras no lineales).
-- **Hilos de personaje:** filtrar el guion para ver solo las escenas de un
-  personaje y su arco.
-- **Curva de tensión:** el guionista puntúa cada escena; se dibuja el ritmo de
-  la película completa.
-- **Estructura:** plantillas opcionales de actos (3 actos, 5 actos, viaje del
-  héroe, Save the Cat, estructura libre) que se marcan sobre el corcho, solo
-  como guía visual.
+Todo vive en el mismo documento Yjs que el texto (mapas `scenes`, `acts`,
+`structure`, `characters`, `refs`, `ai`): llega en tiempo real a todo el
+equipo y se guarda con el guion. Cada escena tiene un id propio (`sid` en su
+encabezado) que sobrevive a moverla o renumerarla.
+
+- [x] **Corcho:** una ficha de cartulina por escena, por actos (3, 5 o libre).
+      Sinopsis, tensión, color y referencias en la ficha; arrastrar (o ←/→)
+      mueve la escena en el guion.
+- [x] **Doble línea temporal:** orden en pantalla vs. orden en la historia;
+      las líneas que se cruzan marcan los saltos en el tiempo.
+- [x] **Curva de tensión** por escena, con los actos marcados.
+- [x] **Personajes:** ficha (quiere, necesita, teme, oculta, arco, notas),
+      su hilo escena a escena y sus referencias ("me recuerda a…").
+- [x] **Referencias** a mano o sugeridas por la IA, ancladas a la historia,
+      a una escena o a un personaje: películas, escenas, series, libros, arte,
+      música, escenarios, ideas de montaje, notas de dirección. Mesa con
+      filtros y buscador; marca en las escenas que tienen referencias.
+- [x] **IA que entiende la historia (Mistral)**, sin escribir nunca guion:
+      - *Historia*: lectura de premisa, temas, tono, personajes y estructura,
+        corregible por el equipo (la versión corregida guía las demás ayudas).
+      - *Referencias sugeridas* por escena, personaje o historia, a una
+        bandeja (borde discontinuo) que el equipo guarda o descarta.
+      - *Preguntas para seguir* cuando no sabes cómo continuar.
+      - Límite diario por guion (gratis 3, PRO 40) y el texto se envía a
+        Mistral solo al pulsar una ayuda.
 
 ### Fase 3 — Oficio y desbloqueo
 

@@ -1309,6 +1309,9 @@ model Screenplay {
   pageCount      Int              @default(0)
   sceneCount     Int              @default(0)
   wordCount      Int              @default(0)
+  // Ayudas de IA del día (lectura, referencias, preguntas) para el tope diario.
+  aiDay          String?
+  aiCount        Int              @default(0)
   // Fase 5: proyecto de Taller al que se pasó el guion al bloquearlo.
   projectId      String?
   createdAt      DateTime         @default(now())

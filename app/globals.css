@@ -444,3 +444,88 @@ input[type="radio"] {
   white-space: nowrap;
   user-select: none;
 }
+
+/* Guiones: mesa de trabajo a oscuras. Todo negro; lo único claro es el
+   material del guionista (el folio y las fichas del corcho). Lo que propone
+   la IA lleva borde discontinuo ámbar hasta que alguien lo guarda. */
+body:has(.sp-root) {
+  --bg: #000;
+  --bg-raised: #0a0a0a;
+  --line: #1e1e1e;
+  background: #000;
+}
+.sp-root .sp-desk {
+  padding-top: 8px;
+}
+.sp-card {
+  position: relative;
+  padding: 14px 14px 10px;
+  background: #f6f3ea;
+  color: #1c1b19;
+  /* Ficha de cartulina: la línea roja de arriba, y su color de marca. */
+  background-image: linear-gradient(#e7b3ad, #e7b3ad);
+  background-size: 100% 1px;
+  background-position: 0 36px;
+  background-repeat: no-repeat;
+  box-shadow: inset 4px 0 0 var(--card-tag, transparent);
+  cursor: grab;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+.sp-card:hover {
+  transform: translateY(-2px);
+}
+.sp-card:active {
+  cursor: grabbing;
+}
+.sp-card-drop {
+  box-shadow:
+    inset 4px 0 0 var(--card-tag, transparent),
+    -10px 0 0 -6px var(--accent);
+}
+.sp-card select,
+.sp-card button {
+  cursor: pointer;
+}
+.sp-ref {
+  padding: 14px 0;
+}
+.sp-ref-suggested {
+  margin: 8px 0;
+  padding: 12px 14px;
+  border: 1px dashed rgba(227, 178, 92, 0.55);
+}
+.sp-ai-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px dashed rgba(227, 178, 92, 0.6);
+  color: var(--fg);
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  transition: border-color 150ms ease, background-color 150ms ease;
+}
+.sp-ai-btn:hover:not(:disabled) {
+  border-style: solid;
+  background: rgba(227, 178, 92, 0.08);
+}
+.sp-ai-btn:disabled {
+  color: var(--muted);
+  cursor: progress;
+}
+.sp-ai-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: #e3b25c;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sp-card {
+    transition: none;
+  }
+  .sp-card:hover {
+    transform: none;
+  }
+}

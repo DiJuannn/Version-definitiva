@@ -8,6 +8,7 @@
 import { Extension, Node, mergeAttributes, type Editor } from "@tiptap/core";
 import { Plugin, PluginKey, TextSelection, type EditorState } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
+import { ySyncPluginKey } from "@tiptap/y-tiptap";
 import {
   BLOCK_LABELS,
   BLOCK_SHORTCUTS,
@@ -23,6 +24,7 @@ import {
   TRANSITIONS,
   characterName,
   isBlockType,
+  newSceneId,
   type BlockType,
 } from "@/lib/screenplay/blocks";
 
@@ -50,8 +52,39 @@ export const screenplayNodes = BLOCK_TYPES.map((name) =>
     renderHTML({ HTMLAttributes }) {
       return ["p", mergeAttributes(HTMLAttributes, { "data-sp": name, class: `sp-block sp-${name}` }), 0];
     },
+    // El encabezado lleva el id de su escena (ver lib/screenplay/story.ts).
+    addAttributes() {
+      if (name !== "sceneHeading") return {};
+      return {
+        sid: {
+          default: null,
+          parseHTML: (el: HTMLElement) => el.getAttribute("data-sid"),
+          renderHTML: (attrs: { sid?: string | null }) => (attrs.sid ? { "data-sid": attrs.sid } : {}),
+        },
+      };
+    },
   }),
 );
+
+// Pone id a los encabezados que no lo tienen (nuevos) y lo cambia en los
+// duplicados (partir un encabezado copia sus atributos). Solo con cambios
+// propios: los de otra persona ya traen el id que puso su editor.
+export function ensureSceneIdsTr(state: EditorState) {
+  const seen = new Set<string>();
+  let tr: ReturnType<EditorState["tr"]["setNodeAttribute"]> | null = null;
+  state.doc.forEach((node, offset) => {
+    if (node.type.name !== "sceneHeading") return;
+    const sid = node.attrs.sid as string | null;
+    if (sid && !seen.has(sid)) {
+      seen.add(sid);
+      return;
+    }
+    const id = newSceneId();
+    seen.add(id);
+    tr = (tr ?? state.tr).setNodeAttribute(offset, "sid", id);
+  });
+  return tr as EditorState["tr"] | null;
+}
 
 // ---------------------------------------------------------------- sugerencias
 
@@ -295,6 +328,16 @@ export const ScreenplayBehaviour = Extension.create({
           decorations(state) {
             return pageBreaksKey.getState(state);
           },
+        },
+      }),
+
+      new Plugin({
+        key: new PluginKey("sp-scene-ids"),
+        appendTransaction(transactions, _old, state) {
+          if (!transactions.some((t) => t.docChanged)) return null;
+          if (transactions.some((t) => t.getMeta(ySyncPluginKey)?.isChangeOrigin)) return null;
+          const tr = ensureSceneIdsTr(state);
+          return tr ? tr.setMeta("addToHistory", false) : null;
         },
       }),
 

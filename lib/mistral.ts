@@ -6,7 +6,9 @@ let client: Mistral | null = null;
 
 function getClient() {
   if (!client) {
-    client = new Mistral({ apiKey: process.env.MISTRAL_API_KEY });
+    // MISTRAL_SERVER_URL solo para pruebas locales contra un servidor simulado;
+    // en producción no se define y se usa la API de Mistral.
+    client = new Mistral({ apiKey: process.env.MISTRAL_API_KEY, serverURL: process.env.MISTRAL_SERVER_URL || undefined });
   }
   return client;
 }

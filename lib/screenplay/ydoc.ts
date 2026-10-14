@@ -4,7 +4,7 @@
 // fragmento "default": un Y.XmlElement por bloque, con su texto dentro.
 
 import * as Y from "yjs";
-import { isBlockType, type ScreenplayBlock } from "@/lib/screenplay/blocks";
+import { isBlockType, newSceneId, type ScreenplayBlock } from "@/lib/screenplay/blocks";
 
 export const FRAGMENT = "default";
 
@@ -16,7 +16,8 @@ export function blocksFromYDoc(doc: Y.Doc): ScreenplayBlock[] {
       .toArray()
       .map((child) => (child instanceof Y.XmlText ? child.toString().replace(/<[^>]*>/g, "") : ""))
       .join("");
-    blocks.push({ type: node.nodeName, text });
+    const id = node.nodeName === "sceneHeading" ? node.getAttribute("sid") : undefined;
+    blocks.push(id ? { type: node.nodeName, text, id } : { type: node.nodeName, text });
   }
   return blocks;
 }
@@ -30,6 +31,7 @@ export function fillYDoc(doc: Y.Doc, blocks: ScreenplayBlock[]) {
       fragment.length,
       list.map((b) => {
         const el = new Y.XmlElement(b.type);
+        if (b.type === "sceneHeading") el.setAttribute("sid", b.id ?? newSceneId());
         const text = new Y.XmlText();
         if (b.text) text.insert(0, b.text);
         el.insert(0, [text]);

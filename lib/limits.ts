@@ -71,3 +71,8 @@ export const MAP_MAX_ITEMS = 300;
 // Varias pizarras por proyecto: el plan gratuito tiene una; PRO hasta MAP_MAX_BOARDS.
 export const MAP_FREE_BOARDS = 1;
 export const MAP_MAX_BOARDS = 20;
+
+// Guiones: ayudas de IA (leer la historia, sugerir referencias, preguntas para
+// seguir) por guion y día. La IA nunca escribe el guion: solo lee y propone.
+export const SCREENPLAY_AI_FREE_DAILY_LIMIT = 3;
+export const SCREENPLAY_AI_PRO_DAILY_LIMIT = 40;
