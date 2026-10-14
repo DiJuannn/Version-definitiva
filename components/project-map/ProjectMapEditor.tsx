@@ -1095,7 +1095,7 @@ function MapBoard(props: Props) {
                           onKeyDown={(e) => e.key === "Enter" && void addImageFromUrl(imageUrl.trim())}
                           placeholder="https://…/imagen.jpg"
                           aria-label="Enlace de la imagen"
-                          className="min-w-0 flex-1 border border-line bg-transparent px-2 py-1.5 text-xs outline-none focus:border-accent"
+                          className="field min-w-0 flex-1 px-2 py-1.5 text-xs"
                         />
                         <button type="button" className={btn} onClick={() => void addImageFromUrl(imageUrl.trim())}>
                           Añadir
@@ -1186,7 +1186,7 @@ function MapBoard(props: Props) {
                                 onChange={(e) => setProjectQuery(e.target.value)}
                                 placeholder="Buscar…"
                                 aria-label="Buscar en el proyecto"
-                                className="min-w-0 flex-1 border border-line bg-transparent px-2 py-1 text-xs outline-none focus:border-accent"
+                                className="field min-w-0 flex-1 px-2 py-1 text-xs"
                               />
                               <button
                                 type="button"
@@ -1327,7 +1327,7 @@ function MapBoard(props: Props) {
                     placeholder="Texto de la flecha"
                     maxLength={80}
                     aria-label="Texto de la flecha"
-                    className="w-40 border border-line bg-transparent px-2 py-1 text-xs outline-none focus:border-accent"
+                    className="field w-40 px-2 py-1 text-xs"
                   />
                   <div className="flex gap-1" role="group" aria-label="Color de la flecha">
                     {MAP_COLORS.map((c) => (

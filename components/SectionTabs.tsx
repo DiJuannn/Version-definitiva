@@ -114,7 +114,7 @@ export function SectionTabs({
                   side
                     ? `-mb-px border-b-2 lg:mb-0 lg:justify-between lg:border-b-0 lg:border-l-2 lg:py-2.5 ${
                         isActive
-                          ? "border-accent text-fg lg:bg-bg-raised"
+                          ? "border-accent text-fg lg:bg-accent/[0.06]"
                           : "border-transparent text-muted hover:text-fg"
                       }`
                     : `-mb-px border-b-2 ${
@@ -134,12 +134,12 @@ export function SectionTabs({
                 )}
                 {tab.count !== undefined && (
                   <span
-                    className={`rounded-full border px-1.5 py-px text-[10px] tracking-normal ${
+                    className={`text-[10px] tracking-normal ${
                       isActive
-                        ? "border-accent text-accent"
-                          : tab.count === 0 || tab.count === "0"
-                          ? "border-line text-muted/60"
-                          : "border-line text-muted"
+                        ? "text-accent"
+                        : tab.count === 0 || tab.count === "0"
+                          ? "text-muted/50"
+                          : "text-muted"
                     }`}
                   >
                     {tab.count}

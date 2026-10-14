@@ -11,7 +11,7 @@ import { ListRow } from "@/components/ListRow";
 import { SubmitButton } from "@/components/SubmitButton";
 
 const FIELD =
-  "border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent";
+  "field px-3 py-2 text-sm";
 
 // Biblioteca de localizaciones de la organización (mapa, alta y listado). La
 // usan /app/localizaciones y la pestaña «Toda la biblioteca» de las

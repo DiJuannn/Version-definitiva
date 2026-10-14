@@ -30,7 +30,7 @@ const SHORT_LABELS: Record<BreakdownCategory, string> = {
 };
 
 const inputClass =
-  "border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent";
+  "field px-3 py-2 text-sm";
 
 export default async function DesglosePage({
   params,
@@ -136,8 +136,6 @@ export default async function DesglosePage({
   return (
     <div>
       <PageHeader
-        backHref={`/app/${projectId}`}
-        backLabel={`← ${project.name}`}
         eyebrow="Preproducción"
         title="Desglose"
         description={

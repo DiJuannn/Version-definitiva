@@ -66,16 +66,16 @@ export function ProjectBreadcrumb({
         {open && others.length > 0 && (
           <div
             role="menu"
-            className="absolute left-0 z-30 mt-1 max-h-72 w-64 overflow-y-auto border border-line bg-bg-raised py-1.5 shadow-2xl shadow-black/60"
+            className="menu-panel absolute left-0 z-40 mt-1 max-h-80 w-72 overflow-y-auto"
           >
-            <p className="px-3.5 pb-1.5 text-[10px] text-muted">Cambiar de proyecto</p>
+            <p className="px-3 pt-1.5 pb-2 text-[10px] text-muted/70">Cambiar de proyecto</p>
             {others.map((project) => (
               <Link
                 key={project.id}
                 href={`/app/${project.id}${segment ? `/${segment}` : ""}`}
                 role="menuitem"
                 onClick={close}
-                className="block truncate border-l-2 border-transparent px-3.5 py-2.5 normal-case tracking-normal text-muted transition hover:border-accent/60 hover:text-fg"
+                className="menu-item truncate font-sans text-[14px] normal-case tracking-normal"
               >
                 {project.name}
               </Link>

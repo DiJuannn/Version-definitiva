@@ -55,7 +55,7 @@ export function NewProjectWizard() {
             placeholder="Ej. Noche en el Neón"
             autoFocus
             maxLength={120}
-            className="mt-4 w-full border border-line bg-transparent px-3 py-2.5 text-sm outline-none transition-colors focus:border-accent"
+            className="field mt-4 w-full px-3 py-2.5 text-sm"
           />
           <p className="mt-2 text-center font-sans text-xs text-muted">
             Puedes cambiarlo cuando quieras.

@@ -22,8 +22,6 @@ export default async function ProjectTareasPage({
   return (
     <div>
       <PageHeader
-        backHref={`/app/${projectId}`}
-        backLabel={`← ${project.name}`}
         eyebrow="Gestión"
         title="Tareas"
         description="Los pendientes de este proyecto. Marca una como hecha con la casilla."

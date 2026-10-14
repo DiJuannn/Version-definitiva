@@ -17,8 +17,6 @@ export default async function TareasPage({
   return (
     <div>
       <PageHeader
-        backHref="/app"
-        backLabel="← Inicio"
         eyebrow="Organización"
         title="Tareas"
         description="Pendientes de toda la productora, con o sin proyecto. Marca una como hecha con la casilla."

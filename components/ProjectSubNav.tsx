@@ -70,7 +70,7 @@ export function ProjectSubNav({
     <nav
       ref={navRef}
       aria-label="Herramientas del proyecto"
-      className="flex flex-wrap items-center gap-x-6 border-b border-line print:hidden"
+      className="flex flex-wrap items-center gap-x-6 print:hidden"
     >
       <Link
         href={base}
@@ -109,7 +109,8 @@ export function ProjectSubNav({
                 ▾
               </span>
             </summary>
-            <div className="absolute left-0 z-20 mt-2 w-64 border border-line bg-bg-raised py-1.5 shadow-2xl shadow-black/60">
+            <div className="menu-panel absolute left-0 z-40 mt-2 w-[22rem] max-w-[calc(100vw-2rem)]">
+              <p className="px-3 pt-1.5 pb-2 font-mono text-[10px] tracking-widest text-muted/70 uppercase">{group.label}</p>
               {tools.map((tool) => {
                 const toolActive = isOn(toolHref(tool));
                 return (
@@ -118,19 +119,24 @@ export function ProjectSubNav({
                     href={toolHref(tool)}
                     onClick={closeOnClick}
                     aria-current={toolActive ? "page" : undefined}
-                    className={`flex items-center gap-2.5 border-l-2 px-3.5 py-2.5 font-mono text-xs transition ${
-                      toolActive
-                        ? "border-accent text-accent"
-                        : "border-transparent text-muted hover:border-accent/60 hover:text-fg"
-                    }`}
+                    className="menu-item group/item items-start normal-case tracking-normal"
                   >
-                    <span className="h-4 w-4 shrink-0">{tool.icon}</span>
-                    {tool.label}
-                    {tool.pro && (
-                      <span className="ml-auto rounded-full bg-accent px-1.5 py-px text-[9px] tracking-widest text-bg uppercase">
-                        Pro
+                    <span
+                      className={`mt-0.5 h-4 w-4 shrink-0 ${toolActive ? "text-accent" : "text-muted group-hover/item:text-fg"}`}
+                    >
+                      {tool.icon}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-center gap-2 font-sans text-[14px] font-semibold">
+                        {tool.label}
+                        {tool.pro && (
+                          <span className="rounded-full bg-accent px-1.5 py-px font-mono text-[9px] tracking-widest text-bg uppercase">
+                            Pro
+                          </span>
+                        )}
                       </span>
-                    )}
+                      <span className="mt-0.5 line-clamp-1 block font-sans text-[12px] text-muted">{tool.description}</span>
+                    </span>
                   </Link>
                 );
               })}

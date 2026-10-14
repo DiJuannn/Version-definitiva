@@ -90,8 +90,6 @@ export default async function GuionPage({
   return (
     <div>
       <PageHeader
-        backHref={`/app/${projectId}`}
-        backLabel={`← ${project.name}`}
         eyebrow="Preproducción"
         title="Guion"
       />
@@ -115,7 +113,7 @@ export default async function GuionPage({
                               <FormField label="Número de escena" className="w-full">
                                 <input name="number"
                                 required
-                                className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+                                className="field px-3 py-2 text-sm"
           
                                 placeholder="04" />
                               </FormField>

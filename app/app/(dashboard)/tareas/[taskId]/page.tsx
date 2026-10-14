@@ -93,7 +93,7 @@ export default async function TaskDetailPage({
             name="title"
             defaultValue={task.title}
             required
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="field px-3 py-2 text-sm"
           />
         </label>
         <label className="flex flex-col gap-1 sm:col-span-2">
@@ -104,7 +104,7 @@ export default async function TaskDetailPage({
             name="description"
             defaultValue={task.description ?? ""}
             rows={3}
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="field px-3 py-2 text-sm"
           />
         </label>
         <label className="flex flex-col gap-1">
@@ -114,7 +114,7 @@ export default async function TaskDetailPage({
           <input
             name="assignedTo"
             defaultValue={task.assignedTo ?? ""}
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="field px-3 py-2 text-sm"
           />
         </label>
         <label className="flex flex-col gap-1">
@@ -125,7 +125,7 @@ export default async function TaskDetailPage({
             type="date"
             name="dueDate"
             defaultValue={task.dueDate ? task.dueDate.toISOString().slice(0, 10) : ""}
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="field px-3 py-2 text-sm"
           />
         </label>
         <label className="flex flex-col gap-1">
@@ -135,7 +135,7 @@ export default async function TaskDetailPage({
           <select
             name="priority"
             defaultValue={task.priority}
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="field px-3 py-2 text-sm"
           >
             {Object.values(TaskPriority).map((value) => (
               <option key={value} value={value} className="bg-bg">
@@ -151,7 +151,7 @@ export default async function TaskDetailPage({
           <input
             name="category"
             defaultValue={task.category ?? ""}
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="field px-3 py-2 text-sm"
           />
         </label>
         <div>
@@ -186,7 +186,7 @@ export default async function TaskDetailPage({
             name="body"
             placeholder="Añadir comentario"
             required
-            className="w-full border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="field w-full px-3 py-2 text-sm"
           />
           <SubmitButton
             pendingLabel="Enviando…"

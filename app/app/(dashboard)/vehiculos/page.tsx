@@ -9,8 +9,6 @@ export default async function VehiculosPage() {
   return (
     <div>
       <PageHeader
-        backHref="/app"
-        backLabel="← Inicio"
         eyebrow="Recursos"
         title="Vehículos"
         description="Flota de la organización: se reserva por día de rodaje desde cualquier proyecto, sin recrearla."

@@ -25,7 +25,7 @@ const BUDGET_RANGES = [
 ];
 
 const fieldClass =
-  "border border-line bg-transparent px-3 py-2.5 font-mono text-sm outline-none transition-colors focus:border-accent";
+  "field px-3 py-2.5 font-mono text-sm";
 const optionClass =
   "w-full border border-line px-4 py-3 text-left font-mono text-sm transition-colors hover:border-accent hover:text-accent";
 

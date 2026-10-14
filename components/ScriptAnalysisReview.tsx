@@ -50,9 +50,9 @@ type SceneRow = {
 type State = { characters: Row[]; locations: Row[]; props: Row[]; scenes: SceneRow[] };
 
 const inputClass =
-  "w-full border border-line bg-transparent px-2.5 py-1.5 text-sm outline-none transition-colors focus:border-accent";
+  "field w-full px-2.5 py-1.5 text-sm";
 const smallSelect =
-  "border border-line bg-transparent px-2 py-1.5 font-mono text-[11px] text-fg outline-none transition-colors focus:border-accent";
+  "field px-2 py-1.5 font-mono text-[11px] text-fg";
 const CATEGORY_KEYS = Object.keys(BREAKDOWN_CATEGORY_LABELS);
 
 // Aleatoria (no un contador): las claves se guardan en el borrador y no deben chocar con las nuevas.
@@ -622,7 +622,7 @@ function RowsTab({
             onChange={(e) => setQuery(e.target.value)}
             placeholder={`Buscar ${noun}…`}
             aria-label={`Buscar ${noun}`}
-            className="w-full border border-line bg-transparent px-2.5 py-1.5 text-sm outline-none focus:border-accent sm:w-56"
+            className="field w-full px-2.5 py-1.5 text-sm sm:w-56"
           />
         )}
         <button type="button" onClick={() => onAllOn(true)} className="link-action">

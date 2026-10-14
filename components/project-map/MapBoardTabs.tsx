@@ -133,7 +133,7 @@ export function MapBoardTabs({
             maxLength={60}
             autoFocus
             aria-label="Nombre de la pizarra"
-            className="min-w-0 flex-1 border border-line bg-transparent px-3 py-2 text-sm outline-none focus:border-accent"
+            className="field min-w-0 flex-1 px-3 py-2 text-sm"
           />
           <button type="submit" disabled={pending} className="btn btn-secondary disabled:opacity-60">
             {pending ? "…" : mode === "new" ? "Crear" : "Guardar"}

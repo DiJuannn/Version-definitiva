@@ -22,7 +22,7 @@ const PRIORITY_LABELS: Record<TaskPriority, string> = {
 };
 
 const FIELD =
-  "border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent";
+  "field px-3 py-2 text-sm";
 
 // Lista de tareas compartida por /app/tareas (toda la organización) y
 // /app/[id]/tareas (un proyecto): mismos controles, distinto alcance.
@@ -221,7 +221,7 @@ export async function TasksView({
                         name="label"
                         placeholder="Añadir elemento"
                         required
-                        className="w-full border border-line bg-transparent px-2 py-1.5 text-xs outline-none transition-colors focus:border-accent"
+                        className="field w-full px-2 py-1.5 text-xs"
                       />
                       <SubmitButton pendingLabel="…" className="btn btn-outline btn-sm shrink-0">
                         +
@@ -241,7 +241,7 @@ export async function TasksView({
                           id={`apply-${template.id}`}
                           name="projectId"
                           required
-                          className="border border-line bg-transparent px-2 py-1.5 text-xs outline-none transition-colors focus:border-accent"
+                          className="field px-2 py-1.5 text-xs"
                         >
                           {projects.map((project) => (
                             <option key={project.id} value={project.id} className="bg-bg">

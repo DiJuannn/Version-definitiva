@@ -28,8 +28,6 @@ export default async function CallSheetsPage({
   return (
     <div>
       <PageHeader
-        backHref={`/app/${projectId}`}
-        backLabel={`← ${project.name}`}
         eyebrow="Producción"
         title="Hojas de llamada"
         description={

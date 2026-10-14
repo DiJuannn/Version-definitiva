@@ -55,7 +55,7 @@ export function ProjectPresence({
       : `${others.length} personas más están aquí ahora`;
 
   return (
-    <div className="mb-4 flex items-center gap-2 border border-accent/40 bg-accent/10 px-3 py-2 font-mono text-[11px] text-accent">
+    <div className="flex items-center gap-2 font-mono text-[11px] text-accent">
       <span className="relative flex h-2 w-2">
         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-75" />
         <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />

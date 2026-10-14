@@ -17,7 +17,7 @@ import { ShotListUploadForm } from "@/components/ShotListUploadForm";
 export const maxDuration = 60;
 
 const FIELD =
-  "border border-line bg-transparent px-3 py-1.5 text-xs outline-none transition-colors focus:border-accent";
+  "field px-3 py-1.5 text-xs";
 const ROW =
   "grid grid-cols-[4rem_1fr] items-baseline gap-x-4 gap-y-1 px-5 py-3 sm:grid-cols-[4.5rem_5rem_9rem_9rem_1fr]";
 
@@ -46,8 +46,6 @@ export default async function ShotListPage({
   return (
     <div>
       <PageHeader
-        backHref={`/app/${projectId}`}
-        backLabel={`← ${project.name}`}
         eyebrow="Preproducción"
         title="Lista de planos"
         description={

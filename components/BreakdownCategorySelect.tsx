@@ -26,7 +26,7 @@ export function BreakdownCategorySelect({
           action(formData);
         });
       }}
-      className="border border-line bg-transparent px-1.5 py-1 font-mono text-[10px] tracking-widest text-muted uppercase outline-none transition-colors focus:border-accent disabled:opacity-50"
+      className="field px-1.5 py-1 font-mono text-[10px] tracking-widest text-muted uppercase disabled:opacity-50"
     >
       {Object.entries(BREAKDOWN_CATEGORY_LABELS).map(([value, label]) => (
         <option key={value} value={value} className="bg-bg">

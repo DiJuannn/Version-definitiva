@@ -6,7 +6,7 @@ import { FormField } from "@/components/FormField";
 import type { CreateScreenplayState } from "@/lib/actions/screenplays";
 
 const INPUT =
-  "w-full border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent";
+  "field w-full px-3 py-2 text-sm";
 
 const FORMATS = [
   { value: "SHORT", label: "Cortometraje" },

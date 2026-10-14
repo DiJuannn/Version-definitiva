@@ -8,14 +8,14 @@ export function ScopeToggle({
   items: { label: string; href: string; active: boolean }[];
 }) {
   return (
-    <div role="group" aria-label="Ámbito" className="inline-flex flex-wrap border border-line">
+    <div role="group" aria-label="Ámbito" className="inline-flex flex-wrap rounded-full bg-fg/[0.06] p-1">
       {items.map((item) => (
         <Link
           key={item.label}
           href={item.href}
           aria-current={item.active ? "true" : undefined}
-          className={`px-4 py-2 font-mono text-[11px] tracking-widest uppercase transition-colors ${
-            item.active ? "bg-accent/15 text-accent" : "text-muted hover:text-fg"
+          className={`rounded-full px-4 py-1.5 font-mono text-[11px] tracking-widest uppercase transition-colors ${
+            item.active ? "bg-bg-raised text-fg shadow-sm" : "text-muted hover:text-fg"
           }`}
         >
           {item.label}

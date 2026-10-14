@@ -87,7 +87,7 @@ export default async function SceneDetailPage({
               name="number"
               defaultValue={scene.number}
               required
-              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+              className="field px-3 py-2 text-sm"
             />
           </label>
           <div className="flex flex-col gap-1">
@@ -131,7 +131,7 @@ export default async function SceneDetailPage({
             <select
               name="locationId"
               defaultValue={scene.locationId ?? ""}
-              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+              className="field px-3 py-2 text-sm"
             >
               <option value="" className="bg-bg">
                 Sin localización
@@ -161,7 +161,7 @@ export default async function SceneDetailPage({
               type="number"
               placeholder={String(scene.order)}
               defaultValue={scene.storyOrder ?? ""}
-              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+              className="field px-3 py-2 text-sm"
             />
           </label>
 
@@ -173,7 +173,7 @@ export default async function SceneDetailPage({
               name="description"
               defaultValue={scene.description ?? ""}
               rows={2}
-              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+              className="field px-3 py-2 text-sm"
             />
           </label>
           <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-4">
@@ -184,7 +184,7 @@ export default async function SceneDetailPage({
               name="action"
               defaultValue={scene.action ?? ""}
               rows={2}
-              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+              className="field px-3 py-2 text-sm"
             />
           </label>
           <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-4">
@@ -195,7 +195,7 @@ export default async function SceneDetailPage({
               name="dialogueNotes"
               defaultValue={scene.dialogueNotes ?? ""}
               rows={2}
-              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+              className="field px-3 py-2 text-sm"
             />
           </label>
           <label className="flex flex-col gap-1 sm:col-span-2">
@@ -206,7 +206,7 @@ export default async function SceneDetailPage({
               name="extrasNotes"
               defaultValue={scene.extrasNotes ?? ""}
               rows={2}
-              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+              className="field px-3 py-2 text-sm"
             />
           </label>
           <label className="flex flex-col gap-1 sm:col-span-2">
@@ -217,7 +217,7 @@ export default async function SceneDetailPage({
               name="productionNotes"
               defaultValue={scene.productionNotes ?? ""}
               rows={2}
-              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+              className="field px-3 py-2 text-sm"
             />
           </label>
         </div>
@@ -293,7 +293,7 @@ export default async function SceneDetailPage({
                             name={`condition_${item.id}`}
                             placeholder="Estado (opcional)"
                             defaultValue={conditionByBreakdownId.get(item.id) ?? ""}
-                            className="w-36 border border-line bg-transparent px-2 py-1 text-[11px] outline-none transition-colors focus:border-accent"
+                            className="field w-36 px-2 py-1 text-[11px]"
                           />
                         </div>
                       ))}

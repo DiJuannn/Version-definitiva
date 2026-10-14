@@ -23,8 +23,6 @@ export default async function InventarioPage() {
   return (
     <div>
       <PageHeader
-        backHref="/app"
-        backLabel="← Taller"
         title="Inventario"
       />
       <p className="mt-3 max-w-2xl font-sans text-sm text-muted">
@@ -40,14 +38,14 @@ export default async function InventarioPage() {
           <input
             name="name"
             required
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="field px-3 py-2 text-sm"
           />
         </FormField>
         <FormField label="Categoría">
           <select
             name="category"
             defaultValue="OTHER"
-            className="border border-line bg-transparent px-3 py-2 font-mono text-xs uppercase outline-none focus:border-accent"
+            className="field px-3 py-2 font-mono text-xs uppercase"
           >
             {Object.values(InventoryItemCategory).map((value) => (
               <option key={value} value={value} className="bg-bg">
@@ -62,13 +60,13 @@ export default async function InventarioPage() {
             type="number"
             min={1}
             defaultValue={1}
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="field px-3 py-2 text-sm"
           />
         </FormField>
         <FormField label="Notas">
           <input
             name="notes"
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="field px-3 py-2 text-sm"
           />
         </FormField>
         <div>

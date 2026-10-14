@@ -46,7 +46,7 @@ export function NewProjectPanel({ hasProjects }: { hasProjects: boolean }) {
           <CreateProjectForm
             action={createProject}
             formClassName="flex flex-col gap-3 sm:flex-row sm:items-center"
-            inputClassName="w-full border border-line bg-transparent px-3 py-2.5 text-sm outline-none transition-colors focus:border-accent"
+            inputClassName="field w-full px-3 py-2.5 text-sm"
             buttonClassName="shrink-0 rounded-full bg-accent px-6 py-2.5 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90 disabled:opacity-70"
             autoFocus
           />

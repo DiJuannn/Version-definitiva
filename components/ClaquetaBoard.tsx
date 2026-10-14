@@ -562,7 +562,7 @@ export function ClaquetaBoard({
               <select
                 value={sceneId}
                 onChange={(e) => pickScene(e.target.value)}
-                className="w-full min-w-0 border border-line bg-transparent px-3 py-2.5 text-sm outline-none transition-colors focus:border-accent"
+                className="field w-full min-w-0 px-3 py-2.5 text-sm"
               >
                 {scenes.map((scene) => (
                   <option key={scene.id} value={scene.id} className="bg-bg">
@@ -579,7 +579,7 @@ export function ClaquetaBoard({
                 onChange={(e) => updateManualSceneNumber(e.target.value)}
                 placeholder="Número de escena (ej. 04)"
                 autoFocus={scenes.length > 0}
-                className="w-full min-w-0 border border-line bg-transparent px-3 py-2.5 text-sm outline-none transition-colors focus:border-accent"
+                className="field w-full min-w-0 px-3 py-2.5 text-sm"
               />
             )}
           </label>
@@ -602,7 +602,7 @@ export function ClaquetaBoard({
                 min={1}
                 value={take}
                 onChange={(e) => setTake(Math.max(1, Number(e.target.value) || 1))}
-                className="h-14 w-full border border-line bg-transparent px-3 text-center font-mono text-lg outline-none transition-colors focus:border-accent"
+                className="field h-14 w-full px-3 text-center font-mono text-lg"
               />
               <button
                 type="button"
@@ -623,7 +623,7 @@ export function ClaquetaBoard({
               value={shotNumber}
               onChange={(e) => updateShotNumber(e.target.value)}
               placeholder="Plano (ej. 3A)"
-              className="border border-line bg-transparent px-3 py-2.5 text-sm outline-none transition-colors focus:border-accent"
+              className="field px-3 py-2.5 text-sm"
             />
           </label>
           <label className="flex flex-col gap-1">

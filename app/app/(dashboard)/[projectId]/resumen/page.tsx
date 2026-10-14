@@ -153,8 +153,6 @@ export default async function ProjectSummaryPage({
     return (
       <div>
         <PageHeader
-          backHref={`/app/${projectId}`}
-          backLabel={`← ${access.name}`}
           eyebrow="Proyecto"
           title="Resumen"
           description="La pizarra de tu proyecto: una tarjeta por herramienta con lo importante, y todo lo que quieras añadir (notas, textos, imágenes, formas, secciones y flechas). Las tarjetas se actualizan solas con tus datos."
@@ -237,8 +235,6 @@ export default async function ProjectSummaryPage({
   return (
     <div>
       <PageHeader
-        backHref={`/app/${projectId}`}
-        backLabel={`← ${project.name}`}
         eyebrow="Proyecto"
         title="Resumen"
         description="Todo el proyecto de un vistazo. Pulsa cada apartado para desplegarlo y usa su enlace para ir a la herramienta."

@@ -22,8 +22,6 @@ export default async function EquipoPage() {
   return (
     <div>
       <PageHeader
-        backHref="/app"
-        backLabel="← Taller"
         title="Equipo"
       />
       <p className="mt-3 max-w-2xl font-sans text-sm text-muted">
@@ -38,29 +36,29 @@ export default async function EquipoPage() {
         <FormField label="Nombre">
             <input name="firstName"
           required
-          className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
+          className="field px-3 py-2 text-sm" />
           </FormField>
         <FormField label="Apellidos">
             <input name="lastName"
-          className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
+          className="field px-3 py-2 text-sm" />
           </FormField>
         <FormField label="Rol principal">
             <input name="primaryRole"
-          className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
+          className="field px-3 py-2 text-sm" />
           </FormField>
         <FormField label="Email">
             <input name="email"
-          className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
+          className="field px-3 py-2 text-sm" />
           </FormField>
         <FormField label="Teléfono">
             <input name="phone"
-          className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
+          className="field px-3 py-2 text-sm" />
           </FormField>
         <FormField label="Tarifa">
             <input name="rate"
           type="number"
           step="0.01"
-          className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent" />
+          className="field px-3 py-2 text-sm" />
           </FormField>
         <div>
           <SubmitButton

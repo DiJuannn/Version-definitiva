@@ -78,7 +78,7 @@ export function ActorAssignmentField({
             setConfirming(false);
           }}
           autoFocus
-          className="border border-line bg-transparent px-2 py-1.5 text-xs outline-none transition-colors focus:border-accent"
+          className="field px-2 py-1.5 text-xs"
         >
           <option value="" className="bg-bg">
             Sin actor

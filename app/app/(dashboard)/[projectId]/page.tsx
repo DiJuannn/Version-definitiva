@@ -83,8 +83,6 @@ export default async function ProjectTallerPage({
   return (
     <div>
       <PageHeader
-        backHref="/app/proyectos"
-        backLabel="← Proyectos"
         eyebrow="Proyecto"
         title={project.name}
         description={!isOwnerOrg && ownerLabel ? `Propietario: ${ownerLabel}` : undefined}

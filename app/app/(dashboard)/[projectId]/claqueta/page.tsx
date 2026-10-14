@@ -63,8 +63,6 @@ export default async function ClaquetaPage({
   return (
     <div>
       <PageHeader
-        backHref={`/app/${projectId}`}
-        backLabel={`← ${project.name}`}
         title="Claqueta digital"
       />
       <p className="mt-3 max-w-2xl font-sans text-sm text-muted">

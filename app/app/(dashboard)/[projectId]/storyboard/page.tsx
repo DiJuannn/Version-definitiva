@@ -35,8 +35,6 @@ export default async function StoryboardPage({
   return (
     <div>
       <PageHeader
-        backHref={`/app/${projectId}`}
-        backLabel={`← ${project.name}`}
         eyebrow="Preproducción"
         title="Storyboard"
         description="Viñetas de los planos clave, escena por escena."
@@ -123,7 +121,7 @@ export default async function StoryboardPage({
                           <input
                             name="description"
                             placeholder="Descripción"
-                            className="border border-line bg-transparent px-2 py-1 text-xs outline-none transition-colors focus:border-accent"
+                            className="field px-2 py-1 text-xs"
                           />
                           <SubmitButton
                             pendingLabel="Añadiendo…"

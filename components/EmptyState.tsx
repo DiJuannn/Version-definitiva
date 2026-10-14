@@ -12,15 +12,16 @@ export function EmptyState({
   actionHref?: string;
 }) {
   return (
-    <div className="mt-10 border border-dashed border-line p-8 text-center">
-      <p className="font-display text-sm font-bold">{title}</p>
+    // Sin caja: un vacío es una invitación a empezar, no otro recuadro.
+    <div className="mt-10 py-10 text-center">
+      <p className="font-display text-lg font-bold">{title}</p>
       {description && (
-        <p className="mt-2 font-sans text-sm text-muted">{description}</p>
+        <p className="mx-auto mt-2 max-w-md font-sans text-sm text-muted">{description}</p>
       )}
       {actionLabel && actionHref && (
         <Link
           href={actionHref}
-          className="btn btn-secondary mt-5 inline-block"
+          className="btn btn-primary mt-5"
         >
           {actionLabel}
         </Link>

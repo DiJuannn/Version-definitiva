@@ -45,8 +45,6 @@ export default async function ProjectLocationsPage({
   return (
     <div>
       <PageHeader
-        backHref={`/app/${projectId}`}
-        backLabel={`← ${project.name}`}
         eyebrow="Gestión"
         title="Localizaciones"
       />

@@ -21,8 +21,6 @@ export default async function FestivalesPage({
   return (
     <div>
       <PageHeader
-        backHref={`/app/${projectId}`}
-        backLabel={`← ${project.name}`}
         eyebrow="Entrega"
         title="Festivales"
         description={

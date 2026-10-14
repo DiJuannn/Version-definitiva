@@ -9,8 +9,6 @@ export default async function LocalizacionesPage() {
   return (
     <div>
       <PageHeader
-        backHref="/app"
-        backLabel="← Inicio"
         eyebrow="Recursos"
         title="Localizaciones"
         description="Biblioteca de la organización: se eligen desde el Guion de cualquier proyecto, sin recrearlas."

@@ -111,7 +111,7 @@ export function FestivalGuide({ projectType }: { projectType: string | null }) {
           <select
             value={zone}
             onChange={(e) => chooseZone(e.target.value)}
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="field px-3 py-2 text-sm"
           >
             <option value="" className="bg-bg">
               Elige tu zona

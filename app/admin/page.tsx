@@ -34,9 +34,9 @@ import { HelpTip } from "@/components/HelpTip";
 import { SubmitButton } from "@/components/SubmitButton";
 
 const fieldClass =
-  "border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent";
+  "field px-3 py-2 text-sm";
 const smallFieldClass =
-  "border border-line bg-transparent px-2 py-1.5 text-xs outline-none transition-colors focus:border-accent";
+  "field px-2 py-1.5 text-xs";
 const submitClass =
   "rounded-full bg-fg px-5 py-2 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90";
 

@@ -25,7 +25,7 @@ export type PlannerScene = {
 };
 
 const FIELD =
-  "border border-line bg-transparent px-2 py-1 text-xs outline-none transition-colors focus:border-accent";
+  "field px-2 py-1 text-xs";
 
 // Planificador de un día de rodaje: se planifica por escenas y, dentro de cada
 // escena, por planos (que es como se rueda de verdad: una escena puede tener

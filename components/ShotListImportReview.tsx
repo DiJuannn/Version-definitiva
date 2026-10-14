@@ -23,7 +23,7 @@ type ShotRow = ProposedShot & { key: string; on: boolean };
 type SceneRow = { key: string; number: string; shots: ShotRow[] };
 
 const inputClass =
-  "border border-line bg-transparent px-2.5 py-1.5 text-sm outline-none transition-colors focus:border-accent";
+  "field px-2.5 py-1.5 text-sm";
 const nextKey = () => `r${Math.random().toString(36).slice(2, 10)}`;
 
 function initialState(proposal: Proposal): SceneRow[] {

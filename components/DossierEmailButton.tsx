@@ -31,7 +31,7 @@ export function DossierEmailButton({ projectId }: { projectId: string }) {
           name="email"
           required
           placeholder="email@destino.com"
-          className="w-48 border border-line bg-transparent px-3 py-2 text-xs outline-none focus:border-accent"
+          className="field w-48 px-3 py-2 text-xs"
         />
         <SubmitButton
           pendingLabel="Enviando…"

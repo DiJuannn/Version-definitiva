@@ -46,8 +46,6 @@ export default async function OrganizacionPage({
   return (
     <div>
       <PageHeader
-        backHref="/app"
-        backLabel="← Inicio"
         eyebrow="Organización"
         title="Equipo y accesos"
         description="Tu plan, quién forma parte de la organización y a quién invitar."
@@ -238,7 +236,7 @@ export default async function OrganizacionPage({
                                     name="role"
                                     defaultValue={member.role}
                                     disabled={member.id === profile.id && adminCount === 1}
-                                    className="border border-line bg-transparent px-2 py-1 font-mono text-xs uppercase outline-none focus:border-accent disabled:opacity-40"
+                                    className="field px-2 py-1 font-mono text-xs uppercase disabled:opacity-40"
                                   >
                                     <option value="ADMIN" className="bg-bg">Admin</option>
                                     <option value="MEMBER" className="bg-bg">Miembro</option>

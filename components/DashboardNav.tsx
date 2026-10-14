@@ -133,7 +133,7 @@ function GroupTab({ item, pathname }: { item: NavItem; pathname: string }) {
       {open && (
         <div
           role="menu"
-          className="absolute left-0 z-40 mt-px w-56 border border-line bg-bg-raised py-1.5 shadow-2xl shadow-black/60"
+          className="menu-panel absolute left-0 z-40 mt-1 w-60"
         >
           {item.children?.map((child) => {
             const ChildIcon = ICONS[child.icon];
@@ -143,11 +143,8 @@ function GroupTab({ item, pathname }: { item: NavItem; pathname: string }) {
                 key={child.href}
                 href={child.href}
                 role="menuitem"
-                className={`flex items-center gap-2.5 border-l-2 px-3.5 py-2.5 font-mono text-xs transition ${
-                  childActive
-                    ? "border-accent text-accent"
-                    : "border-transparent text-muted hover:border-accent/60 hover:text-fg"
-                }`}
+                data-active={childActive}
+                className="menu-item font-sans text-[14px]"
               >
                 <ChildIcon className="h-4 w-4 shrink-0" />
                 {child.label}

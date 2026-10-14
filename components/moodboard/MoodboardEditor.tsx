@@ -587,7 +587,7 @@ function Board(props: Props) {
                         onKeyDown={(e) => e.key === "Enter" && void addImageUrl()}
                         placeholder="https://…/imagen.jpg"
                         aria-label="Enlace de la imagen"
-                        className="min-w-0 flex-1 border border-line bg-transparent px-2 py-1.5 text-xs outline-none focus:border-accent"
+                        className="field min-w-0 flex-1 px-2 py-1.5 text-xs"
                       />
                       <button type="button" className={btn} onClick={() => void addImageUrl()}>
                         Añadir

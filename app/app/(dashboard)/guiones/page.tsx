@@ -40,8 +40,6 @@ export default async function GuionesPage() {
   return (
     <div className={courierPrime.variable}>
       <PageHeader
-        backHref="/app"
-        backLabel="← Inicio"
         eyebrow="Escritura"
         title="Guiones"
         description="De la idea al guion terminado, con tu equipo y en tiempo real. Cuando esté listo, vincúlalo a un proyecto y sus personajes y referencias pasan a producción."

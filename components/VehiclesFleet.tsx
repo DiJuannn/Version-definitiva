@@ -7,7 +7,7 @@ import { ListRow } from "@/components/ListRow";
 import { SubmitButton } from "@/components/SubmitButton";
 
 const FIELD =
-  "border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent";
+  "field px-3 py-2 text-sm";
 
 // Flota de la organización (alta, listado y borrado). La usan /app/vehiculos y
 // la pestaña «Toda la flota» de los vehículos de un proyecto.

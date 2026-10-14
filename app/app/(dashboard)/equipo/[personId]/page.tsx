@@ -116,7 +116,7 @@ export default async function PersonDetailPage({
                               name="firstName"
                               defaultValue={person.firstName}
                               required
-                              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+                              className="field px-3 py-2 text-sm"
                             />
                           </label>
                           <label className="flex flex-col gap-1">
@@ -126,7 +126,7 @@ export default async function PersonDetailPage({
                             <input
                               name="lastName"
                               defaultValue={person.lastName ?? ""}
-                              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+                              className="field px-3 py-2 text-sm"
                             />
                           </label>
                           <label className="flex flex-col gap-1">
@@ -136,7 +136,7 @@ export default async function PersonDetailPage({
                             <input
                               name="primaryRole"
                               defaultValue={person.primaryRole ?? ""}
-                              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+                              className="field px-3 py-2 text-sm"
                             />
                           </label>
                           <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-3">
@@ -146,7 +146,7 @@ export default async function PersonDetailPage({
                             <input
                               name="otherRoles"
                               defaultValue={person.otherRoles.join(", ")}
-                              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+                              className="field px-3 py-2 text-sm"
                             />
                           </label>
                           <label className="flex flex-col gap-1">
@@ -156,7 +156,7 @@ export default async function PersonDetailPage({
                             <input
                               name="email"
                               defaultValue={person.email ?? ""}
-                              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+                              className="field px-3 py-2 text-sm"
                             />
                           </label>
                           <label className="flex flex-col gap-1">
@@ -166,7 +166,7 @@ export default async function PersonDetailPage({
                             <input
                               name="phone"
                               defaultValue={person.phone ?? ""}
-                              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+                              className="field px-3 py-2 text-sm"
                             />
                           </label>
                           <label className="flex flex-col gap-1">
@@ -178,7 +178,7 @@ export default async function PersonDetailPage({
                               type="number"
                               step="0.01"
                               defaultValue={person.rate?.toString() ?? ""}
-                              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+                              className="field px-3 py-2 text-sm"
                             />
                           </label>
                           <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-3">
@@ -188,7 +188,7 @@ export default async function PersonDetailPage({
                             <input
                               name="address"
                               defaultValue={person.address ?? ""}
-                              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+                              className="field px-3 py-2 text-sm"
                             />
                           </label>
                           <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-3">
@@ -199,7 +199,7 @@ export default async function PersonDetailPage({
                               name="notes"
                               defaultValue={person.notes ?? ""}
                               rows={2}
-                              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+                              className="field px-3 py-2 text-sm"
                             />
                           </label>
                           <div>
@@ -260,12 +260,12 @@ export default async function PersonDetailPage({
                               type="date"
                               name="date"
                               required
-                              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+                              className="field px-3 py-2 text-sm"
                             />
                             <select
                               name="status"
                               defaultValue="UNAVAILABLE"
-                              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+                              className="field px-3 py-2 text-sm"
                             >
                               {Object.values(PersonAvailabilityStatus).map((value) => (
                                 <option key={value} value={value} className="bg-bg">
@@ -276,7 +276,7 @@ export default async function PersonDetailPage({
                             <input
                               name="note"
                               placeholder="Nota"
-                              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+                              className="field px-3 py-2 text-sm"
                             />
                             <SubmitButton
                               pendingLabel="Guardando…"

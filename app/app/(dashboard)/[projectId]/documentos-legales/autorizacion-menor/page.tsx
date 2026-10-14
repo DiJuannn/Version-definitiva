@@ -4,7 +4,7 @@ import { isProjectOwnerPro } from "@/lib/project-plan";
 import { PageHeader } from "@/components/PageHeader";
 
 const inputClass =
-  "w-full border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent";
+  "field w-full px-3 py-2 text-sm";
 const labelClass = "font-mono text-[10px] tracking-widest text-muted uppercase";
 
 export default async function AutorizacionMenorPage({

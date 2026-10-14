@@ -82,8 +82,6 @@ export default async function PlanDeRodajePage({
   return (
     <div>
       <PageHeader
-        backHref={`/app/${projectId}`}
-        backLabel={`← ${project.name}`}
         eyebrow="Producción"
         title="Plan de rodaje"
         description={
@@ -109,7 +107,7 @@ export default async function PlanDeRodajePage({
             type="date"
             name="date"
             required
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="field px-3 py-2 text-sm"
           />
         </FormField>
         <SubmitButton pendingLabel="Creando…" className="btn btn-primary shrink-0">

@@ -199,7 +199,7 @@ export default async function ShootingDayDetailPage({
             name="date"
             defaultValue={toDateInputValue(summary.shootingDay.date)}
             required
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="field px-3 py-2 text-sm"
           />
         </label>
         <label className="flex flex-col gap-1">
@@ -209,7 +209,7 @@ export default async function ShootingDayDetailPage({
           <input
             name="notes"
             defaultValue={summary.shootingDay.notes ?? ""}
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="field px-3 py-2 text-sm"
           />
         </label>
         <div>
@@ -289,7 +289,7 @@ export default async function ShootingDayDetailPage({
                                         aria-label={`Unidades reservadas de ${item.name}`}
                                         placeholder="Uds."
                                         defaultValue={reservedItemQty.get(item.id) ?? 1}
-                                        className="w-16 border border-line bg-transparent px-2 py-1 text-xs outline-none transition-colors focus:border-accent"
+                                        className="field w-16 px-2 py-1 text-xs"
                                       />
                                     </div>
                                   ))}

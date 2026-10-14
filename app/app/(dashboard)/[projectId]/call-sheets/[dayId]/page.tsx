@@ -86,7 +86,7 @@ export default async function CallSheetDetailPage({
             name="generalCallTime"
             defaultValue={callSheet?.generalCallTime ?? ""}
             placeholder="08:00"
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="field px-3 py-2 text-sm"
           />
         </label>
         <label className="flex flex-col gap-1">
@@ -96,7 +96,7 @@ export default async function CallSheetDetailPage({
           <input
             name="transportNotes"
             defaultValue={callSheet?.transportNotes ?? ""}
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="field px-3 py-2 text-sm"
           />
         </label>
         <label className="flex flex-col gap-1">
@@ -106,7 +106,7 @@ export default async function CallSheetDetailPage({
           <input
             name="cateringNotes"
             defaultValue={callSheet?.cateringNotes ?? ""}
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="field px-3 py-2 text-sm"
           />
         </label>
         <label className="flex flex-col gap-1">
@@ -116,7 +116,7 @@ export default async function CallSheetDetailPage({
           <input
             name="additionalNotes"
             defaultValue={callSheet?.additionalNotes ?? ""}
-            className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            className="field px-3 py-2 text-sm"
           />
         </label>
         <div>

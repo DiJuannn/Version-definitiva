@@ -30,8 +30,6 @@ export default async function MoodboardPage({
   return (
     <div>
       <PageHeader
-        backHref={`/app/${projectId}`}
-        backLabel={`← ${project.name}`}
         eyebrow="Preproducción"
         title="Moodboard"
         description="Un tablero libre para reunir referencias: notas, imágenes, paletas y tarjetas de tu proyecto (escenas, personajes y localizaciones) que se actualizan solas."

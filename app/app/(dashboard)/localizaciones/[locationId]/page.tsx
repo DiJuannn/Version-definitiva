@@ -126,7 +126,7 @@ export default async function LocationDetailPage({
                               name="name"
                               defaultValue={location.name}
                               required
-                              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+                              className="field px-3 py-2 text-sm"
                             />
                           </label>
                           <label className="flex flex-col gap-1">
@@ -136,7 +136,7 @@ export default async function LocationDetailPage({
                             <input
                               name="address"
                               defaultValue={location.address ?? ""}
-                              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+                              className="field px-3 py-2 text-sm"
                             />
                           </label>
                           <label className="flex flex-col gap-1">
@@ -146,7 +146,7 @@ export default async function LocationDetailPage({
                             <input
                               name="contactName"
                               defaultValue={location.contactName ?? ""}
-                              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+                              className="field px-3 py-2 text-sm"
                             />
                           </label>
                           <label className="flex flex-col gap-1">
@@ -156,7 +156,7 @@ export default async function LocationDetailPage({
                             <input
                               name="contactPhone"
                               defaultValue={location.contactPhone ?? ""}
-                              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+                              className="field px-3 py-2 text-sm"
                             />
                           </label>
                           <label className="flex flex-col gap-1">
@@ -166,7 +166,7 @@ export default async function LocationDetailPage({
                             <input
                               name="availability"
                               defaultValue={location.availability ?? ""}
-                              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+                              className="field px-3 py-2 text-sm"
                             />
                           </label>
                           <label className="flex flex-col gap-1">
@@ -178,7 +178,7 @@ export default async function LocationDetailPage({
                               type="number"
                               step="0.01"
                               defaultValue={location.cost?.toString() ?? ""}
-                              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+                              className="field px-3 py-2 text-sm"
                             />
                           </label>
                           <label className="flex flex-col gap-1">
@@ -190,7 +190,7 @@ export default async function LocationDetailPage({
                               type="number"
                               step="any"
                               defaultValue={location.latitude ?? ""}
-                              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+                              className="field px-3 py-2 text-sm"
                             />
                           </label>
                           <label className="flex flex-col gap-1">
@@ -202,7 +202,7 @@ export default async function LocationDetailPage({
                               type="number"
                               step="any"
                               defaultValue={location.longitude ?? ""}
-                              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+                              className="field px-3 py-2 text-sm"
                             />
                           </label>
                           <GeocodeButton />
@@ -233,7 +233,7 @@ export default async function LocationDetailPage({
                               name="permitsNotes"
                               defaultValue={location.permitsNotes ?? ""}
                               rows={2}
-                              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+                              className="field px-3 py-2 text-sm"
                             />
                           </label>
                           <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-3">
@@ -244,7 +244,7 @@ export default async function LocationDetailPage({
                               name="restrictions"
                               defaultValue={location.restrictions ?? ""}
                               rows={2}
-                              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+                              className="field px-3 py-2 text-sm"
                             />
                           </label>
                           <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-3">
@@ -255,7 +255,7 @@ export default async function LocationDetailPage({
                               name="productionNotes"
                               defaultValue={location.productionNotes ?? ""}
                               rows={2}
-                              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+                              className="field px-3 py-2 text-sm"
                             />
                           </label>
                           <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-3">
@@ -266,7 +266,7 @@ export default async function LocationDetailPage({
                               name="notes"
                               defaultValue={location.notes ?? ""}
                               rows={2}
-                              className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+                              className="field px-3 py-2 text-sm"
                             />
                           </label>
                           <div>
@@ -337,7 +337,7 @@ export default async function LocationDetailPage({
                               name="videoUrl"
                               placeholder="URL del vídeo"
                               required
-                              className="w-full border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+                              className="field w-full px-3 py-2 text-sm"
                             />
                             <SubmitButton
                               pendingLabel="Añadiendo…"

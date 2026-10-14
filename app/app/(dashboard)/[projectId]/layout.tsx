@@ -30,26 +30,26 @@ export default async function ProjectLayout({
 
   return (
     <div>
-      {project && (
-        <ProjectBreadcrumb
-          projectId={projectId}
-          projectName={project.name}
-          projects={projects.map((p) => ({ id: p.id, name: p.name }))}
-        />
-      )}
-      <div className="mt-3">
-        <ProjectSubNav projectId={projectId} access={access} mode={mode} />
+      {/* Cabecera del proyecto en negro, a todo el ancho, pegada a la barra
+          de arriba: es parte del marco. Debajo empieza la herramienta. */}
+      <div className="taller-ink -mt-8 mx-[calc(50%-50vw)] bg-bg px-[calc(50vw-50%)] pt-6 text-fg print:hidden sm:-mt-12">
+        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+          {project && (
+            <ProjectBreadcrumb
+              projectId={projectId}
+              projectName={project.name}
+              projects={projects.map((p) => ({ id: p.id, name: p.name }))}
+            />
+          )}
+          {profile && (
+            <ProjectPresence projectId={projectId} userId={profile.id} userLabel={profile.fullName ?? profile.email} />
+          )}
+        </div>
+        <div className="mt-3">
+          <ProjectSubNav projectId={projectId} access={access} mode={mode} />
+        </div>
       </div>
-      <div className="mt-8">
-        {profile && (
-          <ProjectPresence
-            projectId={projectId}
-            userId={profile.id}
-            userLabel={profile.fullName ?? profile.email}
-          />
-        )}
-        {children}
-      </div>
+      <div className="mt-8 sm:mt-10">{children}</div>
       {(mode === "full" || access.claqueta?.unlocked !== false) && <ClaquetaFab projectId={projectId} />}
     </div>
   );

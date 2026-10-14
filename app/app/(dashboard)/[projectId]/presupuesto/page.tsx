@@ -22,7 +22,7 @@ function currency(value: number) {
 }
 
 const FIELD =
-  "border border-line bg-transparent px-2 py-1.5 text-xs outline-none transition-colors focus:border-accent";
+  "field px-2 py-1.5 text-xs";
 
 export default async function PresupuestoPage({
   params,
@@ -116,7 +116,7 @@ export default async function PresupuestoPage({
           name="name"
           placeholder="Ej. Localizaciones"
           required
-          className="border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+          className="field px-3 py-2 text-sm"
         />
       </FormField>
       <SubmitButton pendingLabel="Creando…" savedLabel="✓ Creada" className="btn btn-secondary shrink-0">
@@ -128,8 +128,6 @@ export default async function PresupuestoPage({
   return (
     <div>
       <PageHeader
-        backHref={`/app/${projectId}`}
-        backLabel={`← ${project.name}`}
         eyebrow="Producción"
         title="Presupuesto"
         description="Lo previsto (cantidad × precio + IVA) se calcula solo. Anota el gasto real de cada partida a medida que se paga para ver cómo vas."

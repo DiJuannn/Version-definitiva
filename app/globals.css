@@ -34,6 +34,134 @@
   --line: #2a2536;
 }
 
+/* Taller en dos tintas: el marco (cabecera, menús, cabecera del proyecto) va
+   en negro y el espacio de trabajo en claro, con la misma paleta que la
+   página del guion para que entrar al editor no sea un salto. */
+.taller-ink {
+  --bg: #0a0a0a;
+  --bg-raised: #120e1c;
+  --fg: #f2f0ea;
+  --muted: #8a8a84;
+  --line: #2a2536;
+  --accent: #a08fd0;
+  --success: #6dbf8b;
+  --warn: #e3b25c;
+  --danger: #ef6b62;
+  color-scheme: dark;
+}
+.taller-paper {
+  --bg: #f5f5f3;
+  --bg-raised: #ffffff;
+  --fg: #17171b;
+  --muted: #6c6c72;
+  --line: #e3e3df;
+  --accent: #5a46a8;
+  --success: #2f7d4f;
+  --warn: #a8640a;
+  --danger: #b4372f;
+  color-scheme: light;
+}
+body:has(.taller-paper) {
+  background: #f5f5f3;
+}
+body:has(.taller-paper) > div[aria-hidden].fixed {
+  display: none; /* el grano de película es de la web, no del trabajo */
+}
+.taller-paper ::selection {
+  background: rgba(90, 70, 168, 0.18);
+}
+
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .menu-panel {
+    animation: none;
+  }
+}
+
+/* Piezas del espacio de trabajo. En @layer components para que cualquier
+   utilidad de Tailwind (px-2, w-full…) pueda ajustarlas en el sitio. */
+@layer components {
+  /* Una hoja: la única superficie. Nunca va una hoja dentro de otra; dentro
+     se separa con líneas (divide-y) y espacio, no con más cajas. */
+  .sheet {
+    background: var(--bg-raised);
+    border-radius: 0.75rem;
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--fg) 6%, transparent),
+      0 1px 2px color-mix(in srgb, var(--fg) 5%, transparent);
+  }
+  /* Campo de formulario: blanco, borde fino, foco con anillo de acento. */
+  .field {
+    min-width: 0;
+    border: 1px solid var(--line);
+    border-radius: 0.5rem;
+    background: var(--bg-raised);
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    color: var(--fg);
+    outline: none;
+    transition:
+      border-color 150ms ease,
+      box-shadow 150ms ease;
+  }
+  .field::placeholder {
+    color: color-mix(in srgb, var(--muted) 75%, transparent);
+  }
+  .field:hover {
+    border-color: color-mix(in srgb, var(--fg) 22%, var(--line));
+  }
+  .field:focus,
+  .field:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent);
+  }
+  /* Desplegables del marco (menú principal, herramientas, proyectos). */
+  .menu-panel {
+    border-radius: 0.875rem;
+    background: #16131e;
+    padding: 0.375rem;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.08),
+      0 24px 48px -12px rgba(0, 0, 0, 0.7);
+    animation: menu-in 140ms ease-out;
+  }
+  .menu-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    color: var(--muted);
+    transition:
+      background-color 120ms ease,
+      color 120ms ease;
+  }
+  .menu-item:hover,
+  .menu-item:focus-visible {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--fg);
+  }
+  .menu-item[aria-current="page"],
+  .menu-item[data-active="true"] {
+    background: color-mix(in srgb, var(--accent) 16%, transparent);
+    color: var(--fg);
+  }
+  /* Etiqueta pequeña de sección (PREPRODUCCIÓN, ACTORES…). */
+  .eyebrow {
+    font-family: var(--font-jetbrains-mono), monospace;
+    font-size: 0.6875rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+}
+
 @theme inline {
   --color-bg: var(--bg);
   --color-bg-raised: var(--bg-raised);

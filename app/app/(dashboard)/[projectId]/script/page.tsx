@@ -17,8 +17,6 @@ export default async function ScriptPage({ params }: { params: Promise<{ project
   return (
     <div>
       <PageHeader
-        backHref={`/app/${projectId}`}
-        backLabel={`← ${project.name}`}
         eyebrow="Producción"
         title="Parte de script"
         description="El parte de script: todas las tomas del rodaje, por día, escena y plano. Marca las buenas y anota lo que haga falta. Se rellena solo con la claqueta, o puedes apuntar tomas a mano."

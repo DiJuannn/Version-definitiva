@@ -65,8 +65,6 @@ export default async function DocumentosPage({
   return (
     <div>
       <PageHeader
-        backHref={`/app/${projectId}`}
-        backLabel={`← ${project.name}`}
         eyebrow="Gestión"
         title="Biblioteca de archivos"
         description="Contratos, permisos y archivos del proyecto, junto con lo que generas en otras herramientas."
@@ -96,7 +94,7 @@ export default async function DocumentosPage({
                             <select
                               name="actorId"
                               defaultValue=""
-                              className="border border-line bg-transparent px-2 py-1.5 text-xs outline-none transition-colors focus:border-accent"
+                              className="field px-2 py-1.5 text-xs"
                             >
                               <option value="" className="bg-bg">
                                 Sin actor
@@ -110,7 +108,7 @@ export default async function DocumentosPage({
                             <select
                               name="locationId"
                               defaultValue=""
-                              className="border border-line bg-transparent px-2 py-1.5 text-xs outline-none transition-colors focus:border-accent"
+                              className="field px-2 py-1.5 text-xs"
                             >
                               <option value="" className="bg-bg">
                                 Sin localización

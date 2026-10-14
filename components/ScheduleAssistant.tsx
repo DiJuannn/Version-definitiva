@@ -9,7 +9,7 @@ import {
 } from "@/lib/actions/schedule-assistant";
 
 const INPUT =
-  "border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent";
+  "field px-3 py-2 text-sm";
 
 function formatDay(key: string) {
   const text = new Date(`${key}T00:00:00Z`).toLocaleDateString("es-ES", {

@@ -19,8 +19,6 @@ export default async function ProyectosPage() {
   return (
     <div>
       <PageHeader
-        backHref="/app"
-        backLabel="← Inicio"
         title="Proyectos"
         description="Todos tus proyectos. Entra en uno para ver su hoja de ruta y sus herramientas, o salta directo a una herramienta más abajo."
       />
@@ -39,7 +37,7 @@ export default async function ProyectosPage() {
           <CreateProjectForm
             action={createProject}
             formClassName="flex gap-2"
-            inputClassName="w-full border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent"
+            inputClassName="field w-full px-3 py-2 text-sm"
             buttonClassName="btn btn-primary shrink-0"
             buttonLabel="Nuevo proyecto"
           />

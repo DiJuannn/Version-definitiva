@@ -8,7 +8,7 @@ import { SubmitButton } from "@/components/SubmitButton";
 import { FormField } from "@/components/FormField";
 
 const inputClass =
-  "border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent";
+  "field px-3 py-2 text-sm";
 
 export default async function EquipoPage({
   params,
@@ -45,8 +45,6 @@ export default async function EquipoPage({
   return (
     <div>
       <PageHeader
-        backHref={`/app/${projectId}`}
-        backLabel={`← ${project.name}`}
         eyebrow="Preproducción"
         title="Equipo técnico"
         description="Quién forma el equipo de este proyecto — se asigna a cada escena desde Guion, y aparece en las hojas de llamada de los días en que trabaja."

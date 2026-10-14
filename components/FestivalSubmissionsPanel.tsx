@@ -23,7 +23,7 @@ export type FestivalSubmissionView = {
 };
 
 const INPUT =
-  "w-full border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent";
+  "field w-full px-3 py-2 text-sm";
 
 function currency(value: number) {
   return value.toLocaleString("es-ES", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
@@ -70,7 +70,7 @@ function Row({ projectId, submission }: { projectId: string; submission: Festiva
               name="status"
               defaultValue={submission.status}
               onChange={(e) => e.currentTarget.form?.requestSubmit()}
-              className="border border-line bg-transparent px-2 py-1.5 font-mono text-[11px] uppercase outline-none focus:border-accent"
+              className="field px-2 py-1.5 font-mono text-[11px] uppercase"
             >
               {Object.entries(FESTIVAL_SUBMISSION_STATUS_LABELS).map(([value, label]) => (
                 <option key={value} value={value} className="bg-bg">

@@ -64,7 +64,7 @@ export default async function DashboardLayout({
           toda la organización, no de un proyecto — sin esto quedan fuera de
           la vista en cuanto haces scroll dentro de un proyecto, y el único
           camino de vuelta es recargar o usar "atrás" del navegador. */}
-      <header className="sticky top-0 z-30 border-b border-line bg-bg/85 px-4 pt-4 pb-4 backdrop-blur-md sm:px-6 lg:pb-0">
+      <header className="taller-ink sticky top-0 z-30 border-b border-line bg-bg/95 px-4 pt-4 pb-4 backdrop-blur-md print:hidden sm:px-6 lg:pb-0">
         <MainContainer>
           <div className="flex items-center justify-between gap-3">
             <Link href="/app" className="flex min-w-0 items-center gap-2.5">
@@ -103,7 +103,8 @@ export default async function DashboardLayout({
           <DashboardNav items={nav} />
         </MainContainer>
       </header>
-      <main className="flex-1 px-4 pt-8 pb-28 sm:px-6 sm:pt-12 sm:pb-24">
+      {/* El trabajo va en claro; el negro queda para el marco. */}
+      <main className="taller-paper flex-1 bg-bg px-4 pt-8 pb-28 text-fg sm:px-6 sm:pt-12 sm:pb-24">
         <MainContainer>{children}</MainContainer>
       </main>
     </div>

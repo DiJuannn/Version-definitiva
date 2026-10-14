@@ -157,7 +157,7 @@ function ChunkCard({
                     id={`shot-move-${shot.id}`}
                     value={chunk.columnId}
                     onChange={(e) => onMoveShot(shot.id, e.target.value)}
-                    className="mt-1 w-full border border-line bg-transparent px-1 py-0.5 font-mono text-[10px] text-muted outline-none focus:border-accent"
+                    className="field mt-1 w-full px-1 py-0.5 font-mono text-[10px] text-muted"
                   >
                     {columns.map((column) => (
                       <option key={column.id} value={column.id} className="bg-bg">
@@ -181,7 +181,7 @@ function ChunkCard({
           id={`move-${chunk.key}`}
           value={chunk.columnId}
           onChange={(e) => onMove(e.target.value)}
-          className="min-w-0 flex-1 border border-line bg-transparent px-1.5 py-1 font-mono text-[10px] text-muted outline-none focus:border-accent"
+          className="field min-w-0 flex-1 px-1.5 py-1 font-mono text-[10px] text-muted"
         >
           {columns.map((column) => (
             <option key={column.id} value={column.id} className="bg-bg">

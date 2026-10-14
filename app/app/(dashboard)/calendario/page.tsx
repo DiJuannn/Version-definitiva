@@ -183,8 +183,6 @@ export default async function CalendarioPage({
   return (
     <div>
       <PageHeader
-        backHref="/app"
-        backLabel="← Inicio"
         eyebrow="Organización"
         title={monthStart.toLocaleDateString("es-ES", { month: "long", year: "numeric" })}
         description="Rodajes de todos tus proyectos y los eventos de la productora."
@@ -312,7 +310,7 @@ export default async function CalendarioPage({
             <input
               name="title"
               required
-              className="border border-line bg-transparent px-2 py-1.5 text-sm outline-none transition-colors focus:border-accent"
+              className="field px-2 py-1.5 text-sm"
             />
           </FormField>
           <FormField label="Fecha">
@@ -320,14 +318,14 @@ export default async function CalendarioPage({
               type="date"
               name="date"
               required
-              className="border border-line bg-transparent px-2 py-1.5 text-sm outline-none transition-colors focus:border-accent"
+              className="field px-2 py-1.5 text-sm"
             />
           </FormField>
           <FormField label="Proyecto">
           <select
             name="projectId"
             defaultValue=""
-            className="border border-line bg-transparent px-2 py-1.5 text-sm outline-none transition-colors focus:border-accent"
+            className="field px-2 py-1.5 text-sm"
           >
             <option value="" className="bg-bg">
               Sin proyecto

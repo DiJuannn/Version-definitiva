@@ -43,8 +43,6 @@ export default async function MontajePage({
   return (
     <div>
       <PageHeader
-        backHref={`/app/${projectId}`}
-        backLabel={`← ${project.name}`}
         eyebrow="Entrega"
         title="Montaje"
         description="La selección de tomas para quien monta, el registro de los cortes, la checklist de entrega y los créditos — todo a partir de lo que ya tiene el proyecto."

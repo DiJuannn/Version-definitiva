@@ -18,7 +18,7 @@ export type EditCutView = {
 };
 
 const INPUT =
-  "w-full border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent";
+  "field w-full px-3 py-2 text-sm";
 
 function StatusBadge({ status }: { status: string }) {
   const tone =
@@ -59,7 +59,7 @@ function CutRow({ projectId, cut }: { projectId: string; cut: EditCutView }) {
               defaultValue={cut.status}
               disabled={pending}
               onChange={(e) => e.currentTarget.form?.requestSubmit()}
-              className="border border-line bg-transparent px-2 py-1.5 font-mono text-[11px] uppercase outline-none focus:border-accent disabled:opacity-60"
+              className="field px-2 py-1.5 font-mono text-[11px] uppercase disabled:opacity-60"
             >
               {Object.entries(EDIT_CUT_STATUS_LABELS).map(([value, label]) => (
                 <option key={value} value={value} className="bg-bg">

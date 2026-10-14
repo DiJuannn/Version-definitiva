@@ -7,7 +7,7 @@ import type { ScriptReport as Report, ScriptTake } from "@/lib/script-report";
 import { useToast } from "@/components/Toast";
 
 const FIELD =
-  "border border-line bg-transparent px-3 py-2 text-sm outline-none transition-colors focus:border-accent";
+  "field px-3 py-2 text-sm";
 
 function timeOf(iso: string) {
   return new Date(iso).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Madrid" });

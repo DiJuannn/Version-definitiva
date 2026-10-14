@@ -47,7 +47,7 @@ export function ToolCard({
 
   if (variant === "row") {
     const inner = (
-      <div className="flex h-full items-start gap-3.5 border border-line bg-bg-raised/40 p-4 transition duration-300 group-hover:border-accent/60 group-hover:bg-accent/5 group-active:scale-[0.99] max-sm:p-3">
+      <div className="sheet flex h-full items-start gap-3.5 p-4 transition duration-300 group-hover:-translate-y-0.5 group-hover:shadow-[0_0_0_1px_var(--accent),0_8px_24px_-12px_rgba(0,0,0,0.18)] group-active:scale-[0.99] max-sm:p-3">
         <div className="h-7 w-7 shrink-0 text-muted transition duration-300 group-hover:-translate-y-0.5 group-hover:text-accent">
           {icon}
         </div>
@@ -94,7 +94,7 @@ export function ToolCard({
   );
 
   const inner = (
-    <div className="relative flex aspect-square flex-col items-center justify-center gap-2.5 overflow-hidden border border-line p-4 text-center transition duration-300 group-hover:border-accent group-hover:text-accent group-focus-visible:border-accent group-active:scale-[0.97]">
+    <div className="sheet relative flex aspect-square flex-col items-center justify-center gap-2.5 overflow-hidden p-4 text-center transition duration-300 group-hover:-translate-y-0.5 group-hover:text-accent group-hover:shadow-[0_0_0_1px_var(--accent),0_8px_24px_-12px_rgba(0,0,0,0.18)] group-focus-visible:text-accent group-active:scale-[0.97]">
       {badge && <span className="absolute top-2 right-2">{badgePill}</span>}
       {iconBlock}
       <span className="flex items-center font-display text-sm font-bold">
@@ -108,7 +108,7 @@ export function ToolCard({
             {description}
           </p>
           {/* Ratón o teclado: capa que aparece al pasar por encima o al enfocar. */}
-          <div className="absolute inset-0 hidden items-center justify-center bg-bg/95 p-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100 [@media(hover:hover)]:flex">
+          <div className="absolute inset-0 hidden items-center justify-center bg-bg-raised/95 p-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100 [@media(hover:hover)]:flex">
             <p className="font-mono text-[11px] leading-relaxed text-muted">
               {description}
             </p>
