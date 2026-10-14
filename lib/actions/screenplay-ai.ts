@@ -9,6 +9,7 @@ import { MistralBusyError, withMistralSlot } from "@/lib/mistral-concurrency";
 import { SCREENPLAY_AI_FREE_DAILY_LIMIT, SCREENPLAY_AI_PRO_DAILY_LIMIT } from "@/lib/limits";
 import { SCREENPLAY_FORMAT_LABELS } from "@/lib/screenplay-core";
 import {
+  aiConfigured,
   askQuestions,
   hasEnoughText,
   readStory,
@@ -58,11 +59,11 @@ async function refund(id: string) {
 async function run<T>(id: string, fn: (loaded: Exclude<Awaited<ReturnType<typeof load>>, { error: string }>) => Promise<T>): Promise<
   { ok: true; value: T } | Fail
 > {
-  if (!process.env.MISTRAL_API_KEY) return { ok: false, error: "La IA no está configurada en este servidor." };
+  if (!aiConfigured()) return { ok: false, error: "La IA no está configurada en este servidor." };
   const loaded = await load(id);
   if ("error" in loaded) return { ok: false, error: loaded.error ?? "Error" };
   if (!hasEnoughText(loaded.doc)) {
-    return { ok: false, error: "Todavía hay muy poco escrito. Escribe al menos una escena y vuelve a probar." };
+    return { ok: false, error: "Todavía hay muy poco escrito. Escribe la idea o una escena y vuelve a probar." };
   }
   if (!(await claim(id, loaded.pro))) {
     return loaded.pro

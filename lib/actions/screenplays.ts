@@ -5,9 +5,10 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getCurrentProfile } from "@/lib/current-user";
 import { optionalString } from "@/lib/form-utils";
+import { uploadProjectFile } from "@/lib/storage";
+import { syncScreenplayToProjectCore, type SyncResult } from "@/lib/screenplay-taller";
 import {
   FOUNTAIN_MAX_BYTES,
-  SCREENPLAY_LOGLINE_MAX,
   SCREENPLAY_TITLE_MAX,
   applyScreenplayUpdateCore,
   createScreenplayCore,
@@ -45,7 +46,10 @@ export async function createScreenplay(
   if ("error" in result) return result;
 
   revalidatePath("/app/guiones");
-  redirect(`/app/guiones/${result.id}`);
+  // Por dónde empieza: la idea, la escaleta o directamente el guion.
+  const start = String(formData.get("start") ?? "");
+  const step = fountain ? "guion" : start === "idea" || start === "escaleta" ? start : "guion";
+  redirect(`/app/guiones/${result.id}?paso=${step}`);
 }
 
 // Guardado automático del editor: llega solo lo nuevo desde el último
@@ -74,7 +78,6 @@ export async function updateScreenplayDetails(
     data: {
       title,
       format: parseFormat(formData.get("format")),
-      logline: optionalString(formData.get("logline"))?.slice(0, SCREENPLAY_LOGLINE_MAX) ?? null,
       author: optionalString(formData.get("author")),
     },
   });
@@ -91,4 +94,59 @@ export async function deleteScreenplay(id: string): Promise<void> {
   await prisma.screenplay.deleteMany({ where: { id, organizationId: profile.organizationId } });
   revalidatePath("/app/guiones");
   redirect("/app/guiones");
+}
+
+// ---------------------------------------------------------------- Taller
+
+// Vincula (o desvincula, con null) el guion a un proyecto de la organización y
+// sincroniza personajes y Moodboard en el momento.
+export async function linkScreenplayProject(id: string, projectId: string | null): Promise<SyncResult> {
+  const profile = await getCurrentProfile();
+  if (!profile) return { ok: false, error: "Tu sesión ha caducado." };
+  if (projectId) {
+    const project = await prisma.project.findFirst({
+      where: { id: projectId, organizationId: profile.organizationId },
+      select: { id: true },
+    });
+    if (!project) return { ok: false, error: "Ese proyecto no existe." };
+  }
+  const { count } = await prisma.screenplay.updateMany({
+    where: { id, organizationId: profile.organizationId },
+    data: { projectId },
+  });
+  if (!count) return { ok: false, error: "Este guion ya no existe." };
+  revalidatePath(`/app/guiones/${id}`);
+  if (!projectId) return { ok: true, characters: 0, cards: 0 };
+  const res = await syncScreenplayToProjectCore(id, profile.organizationId);
+  revalidatePath(`/app/${projectId}/personajes`);
+  revalidatePath(`/app/${projectId}/moodboard`);
+  return res;
+}
+
+// La llama el editor (con calma, unos segundos después de cambiar fichas o
+// referencias) cuando el guion está vinculado.
+export async function syncScreenplayToProject(id: string): Promise<SyncResult> {
+  const profile = await getCurrentProfile();
+  if (!profile) return { ok: false, error: "Tu sesión ha caducado." };
+  return syncScreenplayToProjectCore(id, profile.organizationId);
+}
+
+const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
+
+// Imagen para una ficha de personaje o una referencia.
+export async function uploadScreenplayImage(id: string, formData: FormData): Promise<{ url: string } | { error: string }> {
+  const profile = await getCurrentProfile();
+  if (!profile) return { error: "Tu sesión ha caducado." };
+  const screenplay = await prisma.screenplay.findFirst({
+    where: { id, organizationId: profile.organizationId },
+    select: { id: true },
+  });
+  if (!screenplay) return { error: "Este guion ya no existe." };
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) return { error: "No se recibió ninguna imagen." };
+  if (!file.type.startsWith("image/")) return { error: "Solo se pueden subir imágenes." };
+  if (file.size > MAX_IMAGE_BYTES) return { error: "La imagen pesa más de 8 MB." };
+  const uploaded = await uploadProjectFile(`guiones/${id}`, file);
+  if (!uploaded) return { error: "No se pudo subir la imagen. Inténtalo de nuevo." };
+  return { url: uploaded.url };
 }

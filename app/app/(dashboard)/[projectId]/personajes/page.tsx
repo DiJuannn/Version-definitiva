@@ -1,3 +1,4 @@
+import { ScreenplayProfile } from "@/components/screenplay/ScreenplayProfile";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
@@ -146,6 +147,7 @@ export default async function PersonajesPage({
                                         {character.notes}
                                       </p>
                                     )}
+                                    <ScreenplayProfile profile={character.profile} screenplayId={character.screenplayId} />
                                     <details className="mt-2">
                                       <summary className="link-action inline-block cursor-pointer list-none">
                                         Editar nombre y notas

@@ -182,6 +182,31 @@ encabezado) que sobrevive a moverla o renumerarla.
       - Límite diario por guion (gratis 3, PRO 40) y el texto se envía a
         Mistral solo al pulsar una ayuda.
 
+### Rediseño ✅ — un camino en 3 pasos
+
+Tras probar las pestañas (Página, Corcho, Tiempo, Personajes, Referencias,
+Historia) quedó claro que había demasiadas tarjetas y demasiado que explorar.
+Ahora el guion se trabaja en **modo foco** (sin el menú de Taller), en claro
+como el papel, y en tres pasos que no son obligatorios:
+
+1. **Idea:** idea, tesis, logline, sinopsis, tono y mundo, personajes (con
+   ficha e imágenes) y referencias. Todo opcional.
+2. **Escaleta:** la historia escena a escena en una lista por actos, con la
+   curva de tensión y el orden "como se ve" / "como pasa". Añadir aquí una
+   escena crea su encabezado en el guion.
+3. **Guion:** el folio, con un panel lateral de la escena (de qué va, quién
+   sale, referencias, «¿atascada?»).
+
+- Al crear un guion se elige por dónde empezar; se puede saltar de paso
+  cuando se quiera, y lo que se escribe en el guion rellena solo la escaleta
+  y los personajes.
+- La IA vive en un único botón (**Asistente IA**) y en el panel de la escena.
+  Opción de **proponer referencias solas al terminar cada escena**.
+- **Vínculo con Taller** (Ajustes → Proyecto): las fichas aparecen en
+  Personajes y las referencias e imágenes en el Moodboard, al día solos.
+- **Proveedor de IA intercambiable:** Mistral (por defecto), Gemini o Groq
+  con `SCREENPLAY_AI_PROVIDER`.
+
 ### Fase 3 — Oficio y desbloqueo
 
 - **Siembra y recogida:** marcar un detalle como siembra y enlazar su pago;

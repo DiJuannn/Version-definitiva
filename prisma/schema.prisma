@@ -506,11 +506,16 @@ model Character {
   actorId   String?
   name      String
   notes     String?
+  // Ficha que viene de un guion vinculado (quiere, teme, arco, imágenes…):
+  // se escribe en Guiones y aquí se ve. `notes` sigue siendo de Taller.
+  screenplayId String?
+  profile      Json?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   project          Project                     @relation(fields: [projectId], references: [id])
   actor            Actor?                      @relation(fields: [actorId], references: [id])
+  screenplay       Screenplay?                 @relation(fields: [screenplayId], references: [id], onDelete: SetNull)
   scenes           SceneCharacter[]
   shots            ShotCharacter[]
   dayCastOverrides ShootingDaySceneCharacter[]
@@ -1320,6 +1325,7 @@ model Screenplay {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   createdBy    User?        @relation(fields: [createdById], references: [id], onDelete: SetNull)
   project      Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  characters   Character[]
 
   @@index([organizationId, updatedAt])
   @@index([projectId])

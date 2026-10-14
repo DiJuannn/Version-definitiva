@@ -445,87 +445,139 @@ input[type="radio"] {
   user-select: none;
 }
 
-/* Guiones: mesa de trabajo a oscuras. Todo negro; lo único claro es el
-   material del guionista (el folio y las fichas del corcho). Lo que propone
-   la IA lleva borde discontinuo ámbar hasta que alguien lo guarda. */
-body:has(.sp-root) {
-  --bg: #000;
-  --bg-raised: #0a0a0a;
-  --line: #1e1e1e;
-  background: #000;
+/* Guiones (escritura): pantalla clara como el papel, sin el menú de Taller.
+   Mismos nombres de variables que el resto, así botones, modales y
+   formularios compartidos se ven bien también aquí. */
+.sp-light {
+  --bg: #f5f5f3;
+  --bg-raised: #ffffff;
+  --fg: #17171b;
+  --muted: #6c6c72;
+  --line: #e3e3df;
+  --accent: #5a46a8;
+  --success: #2f7d4f;
+  --warn: #a8640a;
+  --danger: #b4372f;
+  --ai: #b26b00;
+  color-scheme: light;
 }
-.sp-root .sp-desk {
-  padding-top: 8px;
+body:has(.sp-light) {
+  background: #f5f5f3;
 }
-.sp-card {
-  position: relative;
-  padding: 14px 14px 10px;
-  background: #f6f3ea;
-  color: #1c1b19;
-  /* Ficha de cartulina: la línea roja de arriba, y su color de marca. */
-  background-image: linear-gradient(#e7b3ad, #e7b3ad);
-  background-size: 100% 1px;
-  background-position: 0 36px;
-  background-repeat: no-repeat;
-  box-shadow: inset 4px 0 0 var(--card-tag, transparent);
-  cursor: grab;
-  transition: transform 120ms ease, box-shadow 120ms ease;
+body:has(.sp-light) > div[aria-hidden].fixed {
+  display: none; /* el grano de película de la web, aquí no */
 }
-.sp-card:hover {
-  transform: translateY(-2px);
+.sp-light ::selection {
+  background: rgba(90, 70, 168, 0.18);
 }
-.sp-card:active {
-  cursor: grabbing;
-}
-.sp-card-drop {
+.sp-light .sp-paper {
+  background: #fff;
   box-shadow:
-    inset 4px 0 0 var(--card-tag, transparent),
-    -10px 0 0 -6px var(--accent);
+    0 1px 3px rgba(0, 0, 0, 0.06),
+    0 24px 48px -28px rgba(0, 0, 0, 0.22);
 }
-.sp-card select,
-.sp-card button {
-  cursor: pointer;
+.sp-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 15px 7px 9px;
+  border-radius: 9999px;
+  font-size: 14px;
+  color: var(--muted);
+  transition: background-color 150ms ease, color 150ms ease;
 }
-.sp-ref {
-  padding: 14px 0;
+.sp-step:hover {
+  color: var(--fg);
 }
-.sp-ref-suggested {
-  margin: 8px 0;
-  padding: 12px 14px;
-  border: 1px dashed rgba(227, 178, 92, 0.55);
+.sp-step-num {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  border: 1.5px solid #b9b9bd;
+  font-size: 11px;
+  font-weight: 700;
+}
+.sp-step[aria-current="step"] {
+  background: var(--fg);
+  color: #fff;
+}
+.sp-step[aria-current="step"] .sp-step-num {
+  border-color: #fff;
+}
+.sp-step-done .sp-step-num {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.sp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 13px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  font-size: 13px;
+  color: var(--fg);
+  transition: border-color 150ms ease;
+}
+.sp-btn:hover {
+  border-color: #b9b9bd;
 }
 .sp-ai-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 14px;
-  border: 1px dashed rgba(227, 178, 92, 0.6);
-  color: var(--fg);
-  font-family: var(--font-jetbrains-mono), monospace;
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  transition: border-color 150ms ease, background-color 150ms ease;
+  padding: 7px 13px;
+  border: 1px dashed var(--ai);
+  border-radius: 8px;
+  color: var(--ai);
+  font-size: 13px;
+  transition: background-color 150ms ease;
 }
 .sp-ai-btn:hover:not(:disabled) {
-  border-style: solid;
-  background: rgba(227, 178, 92, 0.08);
+  background: rgba(178, 107, 0, 0.06);
 }
 .sp-ai-btn:disabled {
-  color: var(--muted);
+  opacity: 0.7;
   cursor: progress;
 }
 .sp-ai-dot {
   width: 6px;
   height: 6px;
   border-radius: 9999px;
-  background: #e3b25c;
+  background: var(--ai);
+}
+.sp-suggested {
+  border: 1px dashed rgba(178, 107, 0, 0.55);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+.sp-label {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.sp-drawer {
+  position: fixed;
+  top: 64px;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  width: min(520px, 100vw);
+  overflow-y: auto;
+  background: #fff;
+  border-left: 1px solid var(--line);
+  box-shadow: -30px 0 60px -30px rgba(0, 0, 0, 0.25);
 }
 @media (prefers-reduced-motion: reduce) {
-  .sp-card {
+  .sp-step,
+  .sp-btn,
+  .sp-ai-btn {
     transition: none;
-  }
-  .sp-card:hover {
-    transform: none;
   }
 }

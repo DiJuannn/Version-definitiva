@@ -17,7 +17,23 @@ export type SceneMeta = {
   color?: string; // clave de SCENE_COLORS
 };
 
+export type StoryImage = { id: string; url: string; caption?: string };
+
+// Lo que hay antes del guion (paso "Idea"). Todo opcional: se puede ir
+// directo a escribir y volver aquí cuando se quiera.
+export const DEV_FIELDS = [
+  { key: "idea", label: "La idea", hint: "En una frase, como se la contarías a alguien.", rows: 2 },
+  { key: "thesis", label: "Qué quieres contar", hint: "Tu tesis: lo que la historia dice sin decirlo.", rows: 2 },
+  { key: "logline", label: "Logline", hint: "Protagonista, lo que quiere y lo que se lo impide.", rows: 2 },
+  { key: "synopsis", label: "Sinopsis", hint: "La historia de principio a fin, en un párrafo o dos.", rows: 3 },
+  { key: "tone", label: "Tono y mundo", hint: "Cómo se ve, cómo suena, qué se siente.", rows: 2 },
+] as const;
+
+export type DevKey = (typeof DEV_FIELDS)[number]["key"];
+
 export type CharacterMeta = {
+  images?: StoryImage[];
+  added?: boolean; // creado a mano en la Idea, antes de tener diálogos
   want?: string; // qué quiere
   need?: string; // qué necesita de verdad
   fear?: string;
@@ -55,6 +71,7 @@ export type Reference = {
   year?: string;
   author?: string; // director/a, autor/a, artista
   url?: string;
+  image?: string; // imagen subida (se ve en la ficha y va al Moodboard)
   anchor: ReferenceAnchor;
   source: "manual" | "ai";
   by?: string; // nombre de quien la añadió

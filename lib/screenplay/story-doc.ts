@@ -13,6 +13,7 @@ import type {
 } from "@/lib/screenplay/story";
 
 export type StoryMaps = {
+  dev: Y.Map<string>; // paso "Idea": idea, thesis, logline, synopsis, tone
   scenes: Y.Map<SceneMeta>; // sid → meta
   acts: Y.Map<string>; // sid de la escena que abre el acto → nombre del acto
   structure: Y.Map<unknown>; // "template", "storyOrder"
@@ -23,6 +24,7 @@ export type StoryMaps = {
 
 export function storyMaps(doc: Y.Doc): StoryMaps {
   return {
+    dev: doc.getMap<string>("dev"),
     scenes: doc.getMap<SceneMeta>("scenes"),
     acts: doc.getMap<string>("acts"),
     structure: doc.getMap<unknown>("structure"),

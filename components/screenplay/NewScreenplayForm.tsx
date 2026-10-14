@@ -70,6 +70,28 @@ export function NewScreenplayForm({
         <textarea name="logline" rows={2} maxLength={400} className={`${INPUT} resize-none`} />
       </FormField>
 
+      {mode === "blank" && (
+        <fieldset className="flex flex-col gap-2">
+          <legend className="mb-1 font-mono text-[10px] tracking-widest text-muted uppercase">¿Por dónde empiezas?</legend>
+          {(
+            [
+              ["guion", "Directo al guion", "Ya tengo la historia en la cabeza."],
+              ["idea", "Por la idea", "Idea, tesis, logline, personajes…"],
+              ["escaleta", "Por la escaleta", "Ordenar la historia escena a escena."],
+            ] as const
+          ).map(([value, label, hint], i) => (
+            <label key={value} className="flex cursor-pointer items-start gap-3 border border-line px-3 py-2.5 has-[:checked]:border-accent">
+              <input type="radio" name="start" value={value} defaultChecked={i === 0} className="mt-1 accent-[var(--accent)]" />
+              <span className="text-sm">
+                {label}
+                <span className="block text-xs text-muted">{hint}</span>
+              </span>
+            </label>
+          ))}
+          <span className="font-mono text-[10px] text-muted">Puedes cambiar de paso cuando quieras.</span>
+        </fieldset>
+      )}
+
       {mode === "import" && (
         <FormField label="Archivo Fountain" hint="De Highland, WriterSolo, Beat, Fade In… Si no pones título, se usa el del archivo.">
           <input

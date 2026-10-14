@@ -4,7 +4,7 @@ import { Prisma, type ScreenplayFormat } from "@/lib/generated/prisma";
 import type { ScreenplayBlock } from "@/lib/screenplay/blocks";
 import { parseFountain } from "@/lib/screenplay/fountain";
 import { screenplayStats } from "@/lib/screenplay/layout";
-import { blocksFromYDoc, fromBase64, toBase64, ydocFromBlocks } from "@/lib/screenplay/ydoc";
+import { blocksFromYDoc, fillYDoc, fromBase64, toBase64 } from "@/lib/screenplay/ydoc";
 
 export const SCREENPLAY_FORMAT_LABELS: Record<ScreenplayFormat, string> = {
   SHORT: "Cortometraje",
@@ -79,15 +79,19 @@ export async function createScreenplayCore(
   if (!blocks.length) blocks = [{ type: "sceneHeading", text: "" }];
 
   const stats = screenplayStats(blocks);
+  const logline = input.logline?.trim().slice(0, SCREENPLAY_LOGLINE_MAX) || null;
+  const doc = new Y.Doc();
+  fillYDoc(doc, blocks);
+  if (logline) doc.getMap<string>("dev").set("logline", logline);
   const screenplay = await prisma.screenplay.create({
     data: {
       organizationId,
       createdById: userId,
       title,
       format: input.format,
-      logline: input.logline?.trim().slice(0, SCREENPLAY_LOGLINE_MAX) || null,
+      logline,
       author,
-      ydoc: Buffer.from(ydocFromBlocks(blocks)),
+      ydoc: Buffer.from(Y.encodeStateAsUpdate(doc)),
       content: blocks as unknown as Prisma.InputJsonValue,
       pageCount: stats.pages,
       sceneCount: stats.scenes,
@@ -130,9 +134,12 @@ export async function applyScreenplayUpdateCore(
 
         const blocks = blocksFromYDoc(doc);
         const stats = screenplayStats(blocks);
+        // La logline se escribe en el paso "Idea"; la lista de guiones la enseña.
+        const logline = doc.getMap<string>("dev").get("logline");
         const saved = await tx.screenplay.update({
           where: { id },
           data: {
+            ...(typeof logline === "string" ? { logline: logline.trim().slice(0, SCREENPLAY_LOGLINE_MAX) || null } : {}),
             ydoc: Buffer.from(Y.encodeStateAsUpdate(doc)),
             content: blocks as unknown as Prisma.InputJsonValue,
             pageCount: stats.pages,

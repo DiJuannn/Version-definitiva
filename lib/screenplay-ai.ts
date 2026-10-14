@@ -91,6 +91,19 @@ function charactersText(doc: Y.Doc): string {
   ].join("\n");
 }
 
+// Lo escrito en el paso "Idea": idea, tesis, logline, sinopsis, tono.
+function devText(doc: Y.Doc): string {
+  const dev = storyMaps(doc).dev;
+  const labels: Record<string, string> = { idea: "Idea", thesis: "Lo que quiere contar (tesis)", logline: "Logline", synopsis: "Sinopsis", tone: "Tono y mundo" };
+  const lines = Object.entries(labels)
+    .map(([k, label]) => {
+      const v = dev.get(k);
+      return typeof v === "string" && v.trim() ? `${label}: ${v.trim().slice(0, 2500)}` : "";
+    })
+    .filter(Boolean);
+  return lines.length ? ["DESARROLLO (escrito por el equipo):", ...lines].join("\n") : "";
+}
+
 function header(ctx: Context): string {
   return [`Título: ${ctx.title}`, `Formato: ${ctx.format}`, ctx.logline ? `Logline: ${ctx.logline}` : ""]
     .filter(Boolean)
@@ -99,24 +112,73 @@ function header(ctx: Context): string {
 
 // ------------------------------------------------------------------ llamada
 
+// Proveedor de IA: Mistral (por defecto), Gemini o Groq, con
+// SCREENPLAY_AI_PROVIDER. Todos devuelven JSON con la misma forma.
+export type AiProvider = "mistral" | "gemini" | "groq";
+
+export function aiProvider(): AiProvider {
+  const p = process.env.SCREENPLAY_AI_PROVIDER;
+  return p === "gemini" || p === "groq" ? p : "mistral";
+}
+
+export function aiConfigured(): boolean {
+  const p = aiProvider();
+  return Boolean(p === "gemini" ? process.env.GEMINI_API_KEY : p === "groq" ? process.env.GROQ_API_KEY : process.env.MISTRAL_API_KEY);
+}
+
 async function callJson(name: string, system: string, user: string, schema: object, temperature: number) {
-  const response = await getMistralClient().chat.complete({
-    model: SCREENPLAY_AI_MODEL,
-    temperature,
-    messages: [
-      { role: "system", content: system },
-      { role: "user", content: user },
-    ],
-    responseFormat: { type: "json_schema", jsonSchema: { name, schemaDefinition: schema, strict: true } },
-  });
-  const content = response.choices?.[0]?.message?.content;
-  const text =
-    typeof content === "string"
-      ? content
-      : Array.isArray(content)
-        ? content.map((chunk) => ("text" in chunk ? chunk.text : "")).join("")
-        : "";
-  if (!text) throw new Error("Mistral no devolvió contenido");
+  const provider = aiProvider();
+  let text = "";
+  if (provider === "gemini") {
+    const model = process.env.GEMINI_MODEL || "gemini-flash-latest";
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-goog-api-key": process.env.GEMINI_API_KEY ?? "" },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: system }] },
+        contents: [{ role: "user", parts: [{ text: user }] }],
+        generationConfig: { temperature, responseMimeType: "application/json", responseJsonSchema: schema },
+      }),
+    });
+    if (!res.ok) throw new Error(`Gemini ${res.status}`);
+    const data = (await res.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
+    text = data.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";
+  } else if (provider === "groq") {
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: `Bearer ${process.env.GROQ_API_KEY ?? ""}` },
+      body: JSON.stringify({
+        model: process.env.GROQ_MODEL || "openai/gpt-oss-120b",
+        temperature,
+        response_format: { type: "json_object" },
+        messages: [
+          { role: "system", content: `${system}\n\nResponde con un objeto JSON que cumpla este esquema:\n${JSON.stringify(schema)}` },
+          { role: "user", content: user },
+        ],
+      }),
+    });
+    if (!res.ok) throw new Error(`Groq ${res.status}`);
+    const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
+    text = data.choices?.[0]?.message?.content ?? "";
+  } else {
+    const response = await getMistralClient().chat.complete({
+      model: SCREENPLAY_AI_MODEL,
+      temperature,
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: user },
+      ],
+      responseFormat: { type: "json_schema", jsonSchema: { name, schemaDefinition: schema, strict: true } },
+    });
+    const content = response.choices?.[0]?.message?.content;
+    text =
+      typeof content === "string"
+        ? content
+        : Array.isArray(content)
+          ? content.map((chunk) => ("text" in chunk ? chunk.text : "")).join("")
+          : "";
+  }
+  if (!text) throw new Error(`${provider}: respuesta vacía`);
   return JSON.parse(text) as Record<string, unknown>;
 }
 
@@ -168,7 +230,7 @@ Instrucciones:
 
 export async function readStory(doc: Y.Doc, ctx: Context): Promise<Omit<StoryReading, "at">> {
   const blocks = blocksFromYDoc(doc);
-  const user = [header(ctx), readingText(readReading(doc)), charactersText(doc), "GUION:", scriptText(blocks)]
+  const user = [header(ctx), devText(doc), readingText(readReading(doc)), charactersText(doc), "GUION:", scriptText(blocks)]
     .filter(Boolean)
     .join("\n\n");
   const raw = await callJson("lectura_historia", READING_SYSTEM, user, READING_SCHEMA, 0.3);
@@ -195,11 +257,14 @@ export async function readStory(doc: Y.Doc, ctx: Context): Promise<Omit<StoryRea
   };
 }
 
+// Hace falta algo de lo que tirar: guion o lo escrito en la Idea.
 export function hasEnoughText(doc: Y.Doc): boolean {
-  const words = blocksFromYDoc(doc)
+  const count = (t: string) => (t.trim() ? t.trim().split(/\s+/).length : 0);
+  const script = blocksFromYDoc(doc)
     .filter((b) => b.type !== "note")
-    .reduce((n, b) => n + (b.text.trim() ? b.text.trim().split(/\s+/).length : 0), 0);
-  return words >= 40;
+    .reduce((n, b) => n + count(b.text), 0);
+  const dev = [...storyMaps(doc).dev.values()].reduce((n, v) => n + (typeof v === "string" ? count(v) : 0), 0);
+  return script + dev >= 30;
 }
 
 // ------------------------------------------------------------------ 2. referencias
@@ -270,6 +335,7 @@ export async function suggestReferences(doc: Y.Doc, ctx: Context, scope: Suggest
 
   const user = [
     header(ctx),
+    devText(doc),
     readingText(readReading(doc)),
     charactersText(doc),
     existing.length ? `REFERENCIAS YA PUESTAS:\n${existing.join("\n")}` : "",
@@ -327,7 +393,7 @@ export async function askQuestions(doc: Y.Doc, ctx: Context, sid: string | null)
   const focus = scene
     ? `FOCO: quien escribe está atascado en la escena ${scene.number}:\n${toFountain(blocks.slice(scene.start, scene.end))}`
     : "FOCO: quien escribe no sabe cómo seguir la historia a partir de donde está ahora (el final del texto).";
-  const user = [header(ctx), readingText(readReading(doc)), charactersText(doc), focus, `GUION:\n${scriptText(blocks)}`]
+  const user = [header(ctx), devText(doc), readingText(readReading(doc)), charactersText(doc), focus, `GUION:\n${scriptText(blocks)}`]
     .filter(Boolean)
     .join("\n\n");
   const raw = await callJson("preguntas_guion", QUESTIONS_SYSTEM, user, QUESTIONS_SCHEMA, 0.7);
