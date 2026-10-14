@@ -17,7 +17,7 @@ import { getCurrentProfile } from "@/lib/current-user";
 import { getProjectForCurrentUser, getProjectOwnerLabel } from "@/lib/project-access";
 import { setProjectStatus, updateProjectDetails } from "@/lib/actions/project-details";
 import { getProjectFacts, getToolMode, hasSeenWelcome } from "@/lib/tool-access";
-import { computeAccess, computeStage } from "@/lib/tool-rules";
+import { STAGES, computeAccess, computeStage } from "@/lib/tool-rules";
 
 export default async function ProjectTallerPage({
   params,
@@ -80,15 +80,27 @@ export default async function ProjectTallerPage({
   // Bienvenida: la primera vez en un proyecto vacío (modo simple), o cuando se pide con «¿Cómo funciona?».
   const showWelcome = ayuda === "1" || (mode === "simple" && stage === 1 && facts.scenes === 0 && !(await hasSeenWelcome()));
 
+  const stageInfo = STAGES[stage - 1];
+  const hasActivity = activityLogs.length > 0;
+
+  // Jerarquía de arriba abajo: quién es el proyecto → dónde está (cifras y etapas) → qué toca ahora
+  // (una sola hoja) → con qué herramientas → la ficha y lo último que ha pasado. Una sola capa de
+  // superficie: la hoja del «siguiente paso»; el resto va sobre el papel, separado por espacio y rayas.
   return (
-    <div>
+    <div className="pb-16">
       <PageHeader
-        eyebrow="Proyecto"
+        eyebrow={project.type ? `Proyecto · ${project.type}` : "Proyecto"}
         title={project.name}
-        description={!isOwnerOrg && ownerLabel ? `Propietario: ${ownerLabel}` : undefined}
+        description={
+          <>
+            Etapa {stage} de 4: <span className="text-fg">{stageInfo.label}</span>, {stageInfo.hint.toLowerCase()}.
+            {!isOwnerOrg && ownerLabel ? ` Propietario: ${ownerLabel}.` : ""}
+          </>
+        }
         actions={
           isOwnerOrg ? (
             <ProjectShareButton
+              variant="button"
               projectId={project.id}
               origin={origin}
               shares={shares.map((s) => ({
@@ -113,15 +125,22 @@ export default async function ProjectTallerPage({
         />
       )}
 
-      {showWelcome && <ProjectWelcome projectId={project.id} />}
-      <StageStepper stage={stage} />
-      {!showWelcome && stage === 1 && facts.scenes === 0 && (
-        <p className="mt-3 font-mono text-[11px] tracking-widest uppercase">
-          <Link href={`/app/${project.id}?ayuda=1`} className="text-muted hover:text-accent">
-            ¿Cómo funciona?
-          </Link>
-        </p>
+      {/* La bienvenida ya explica las cuatro etapas; con ella delante, el recorrido sobraría. */}
+      {showWelcome ? (
+        <ProjectWelcome projectId={project.id} />
+      ) : (
+        <div className="mt-10">
+          <StageStepper stage={stage} className="" />
+          {stage === 1 && facts.scenes === 0 && (
+            <p className="mt-4">
+              <Link href={`/app/${project.id}?ayuda=1`} className="link-action !px-0 hover:!text-accent">
+                ¿Cómo funciona? →
+              </Link>
+            </p>
+          )}
+        </div>
       )}
+
       {stage >= 3 ? (
         <StageFocus
           projectId={project.id}
@@ -141,21 +160,25 @@ export default async function ProjectTallerPage({
 
       <ProjectTools projectId={project.id} mode={mode} access={access} toolStats={toolStats} />
 
-      <div className="mt-10">
-        <ProjectSummaryCard
-          project={{ ...project, budgetTarget }}
-          updateAction={updateAction}
-        />
+      <div
+        className={`mt-16 grid gap-x-16 gap-y-12 border-t border-line pt-10 ${
+          hasActivity ? "lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]" : ""
+        }`}
+      >
+        <div className={hasActivity ? "" : "max-w-3xl"}>
+          <ProjectSummaryCard project={{ ...project, budgetTarget }} updateAction={updateAction} />
+        </div>
+        {hasActivity && (
+          <ActivityFeed
+            entries={activityLogs.map((log) => ({
+              id: log.id,
+              summary: log.summary,
+              createdAt: log.createdAt,
+              userName: log.user?.fullName ?? log.user?.email ?? null,
+            }))}
+          />
+        )}
       </div>
-
-      <ActivityFeed
-        entries={activityLogs.map((log) => ({
-          id: log.id,
-          summary: log.summary,
-          createdAt: log.createdAt,
-          userName: log.user?.fullName ?? log.user?.email ?? null,
-        }))}
-      />
     </div>
   );
 }

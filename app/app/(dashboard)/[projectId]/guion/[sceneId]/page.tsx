@@ -9,11 +9,36 @@ import {
   INT_EXT_LABELS,
 } from "@/lib/labels";
 import { BreakdownCategory, DayPart, IntExt } from "@/lib/generated/prisma";
-import { HelpTip } from "@/components/HelpTip";
 import { DeleteButton } from "@/components/DeleteButton";
 import { ChipOption } from "@/components/ChipOption";
 import { PageHeader } from "@/components/PageHeader";
 import { SubmitButton } from "@/components/SubmitButton";
+
+// Ficha de una escena: una sola hoja con sus apartados en filas (etiqueta y
+// explicación a la izquierda, campos a la derecha), sin recuadros dentro de
+// recuadros. El botón de guardar se queda pegado abajo mientras se edita.
+
+const LABEL = "eyebrow text-muted";
+
+function Section({
+  title,
+  hint,
+  children,
+}: {
+  title: string;
+  hint?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="grid gap-x-10 gap-y-4 border-t border-line px-5 py-7 first:border-t-0 sm:px-8 lg:grid-cols-[13rem_minmax(0,1fr)]">
+      <div>
+        <h2 className="font-display text-base font-bold">{title}</h2>
+        {hint && <p className="mt-1 font-sans text-[13px] leading-relaxed text-muted">{hint}</p>}
+      </div>
+      <div className="min-w-0">{children}</div>
+    </section>
+  );
+}
 
 export default async function SceneDetailPage({
   params,
@@ -68,291 +93,220 @@ export default async function SceneDetailPage({
   );
 
   const updateAction = updateScene.bind(null, projectId, sceneId);
+  const location = locations.find((l) => l.id === scene.locationId);
 
   return (
-    <div>
+    <div className="pb-16">
       <PageHeader
         backHref={`/app/${projectId}/guion`}
-        backLabel="← Guion"
+        backLabel="← Escenas"
+        eyebrow="Guion"
         title={`Escena ${scene.number}`}
+        description={
+          <span className="font-mono text-[13px] tracking-wide uppercase">
+            {INT_EXT_LABELS[scene.intExt]}. {location?.name ?? "Sin localización"} — {DAY_PART_LABELS[scene.dayPart]}
+          </span>
+        }
       />
 
-      <form action={updateAction} className="mt-8 space-y-8">
-        <div className="grid gap-4 border border-line p-5 sm:grid-cols-2 lg:grid-cols-4">
-          <label className="flex flex-col gap-1">
-            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-              Número
-            </span>
-            <input
-              name="number"
-              defaultValue={scene.number}
-              required
-              className="field px-3 py-2 text-sm"
-            />
-          </label>
-          <div className="flex flex-col gap-1">
-            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-              INT/EXT
-            </span>
-            <div className="flex flex-wrap gap-2">
-              {Object.values(IntExt).map((value) => (
-                <ChipOption
-                  key={value}
-                  type="radio"
-                  name="intExt"
-                  value={value}
-                  label={INT_EXT_LABELS[value]}
-                  defaultChecked={scene.intExt === value}
-                />
-              ))}
-            </div>
-          </div>
-          <div className="flex flex-col gap-1">
-            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-              Día/Noche
-            </span>
-            <div className="flex flex-wrap gap-2">
-              {Object.values(DayPart).map((value) => (
-                <ChipOption
-                  key={value}
-                  type="radio"
-                  name="dayPart"
-                  value={value}
-                  label={DAY_PART_LABELS[value]}
-                  defaultChecked={scene.dayPart === value}
-                />
-              ))}
-            </div>
-          </div>
-          <label className="flex flex-col gap-1">
-            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-              Localización
-            </span>
-            <select
-              name="locationId"
-              defaultValue={scene.locationId ?? ""}
-              className="field px-3 py-2 text-sm"
-            >
-              <option value="" className="bg-bg">
-                Sin localización
-              </option>
-              {locations.map((location) => (
-                <option key={location.id} value={location.id} className="bg-bg">
-                  {location.name}
+      <form action={updateAction} className="sheet mt-8">
+        <Section title="Encabezado" hint="Lo que dice la línea de escena del guion.">
+          <div className="grid gap-x-6 gap-y-5 sm:grid-cols-[8rem_minmax(0,1fr)]">
+            <label className="flex flex-col gap-1.5">
+              <span className={LABEL}>Número</span>
+              <input name="number" defaultValue={scene.number} required className="field" />
+            </label>
+            <label className="flex flex-col gap-1.5">
+              <span className={LABEL}>Localización</span>
+              <select name="locationId" defaultValue={scene.locationId ?? ""} className="field">
+                <option value="" className="bg-bg">
+                  Sin localización
                 </option>
-              ))}
-            </select>
-            {locations.length === 0 && (
-              <span className="font-mono text-[10px] text-muted">
-                <Link href="/app/localizaciones" className="text-fg hover:text-accent">
-                  Añadir en Localizaciones →
+                {locations.map((loc) => (
+                  <option key={loc.id} value={loc.id} className="bg-bg">
+                    {loc.name}
+                  </option>
+                ))}
+              </select>
+              {locations.length === 0 && (
+                <Link href="/app/localizaciones" className="font-sans text-xs text-accent hover:underline">
+                  Aún no hay localizaciones · Añadir en Localizaciones →
                 </Link>
+              )}
+            </label>
+            <fieldset className="flex flex-col gap-2 sm:col-span-2">
+              <legend className={`${LABEL} mb-2`}>Interior / exterior</legend>
+              <div className="flex flex-wrap gap-2">
+                {Object.values(IntExt).map((value) => (
+                  <ChipOption
+                    key={value}
+                    type="radio"
+                    name="intExt"
+                    value={value}
+                    label={INT_EXT_LABELS[value]}
+                    defaultChecked={scene.intExt === value}
+                  />
+                ))}
+              </div>
+            </fieldset>
+            <fieldset className="flex flex-col gap-2 sm:col-span-2">
+              <legend className={`${LABEL} mb-2`}>Momento del día</legend>
+              <div className="flex flex-wrap gap-2">
+                {Object.values(DayPart).map((value) => (
+                  <ChipOption
+                    key={value}
+                    type="radio"
+                    name="dayPart"
+                    value={value}
+                    label={DAY_PART_LABELS[value]}
+                    defaultChecked={scene.dayPart === value}
+                  />
+                ))}
+              </div>
+            </fieldset>
+            <label className="flex flex-col gap-1.5 sm:col-span-2">
+              <span className={LABEL}>Orden en la historia (opcional)</span>
+              <input
+                name="storyOrder"
+                type="number"
+                placeholder={String(scene.order)}
+                defaultValue={scene.storyOrder ?? ""}
+                className="field max-w-[8rem]"
+              />
+              <span className="font-sans text-xs text-muted">
+                Solo si no ocurre en el orden en que aparece en el guion (un flashback, por ejemplo). Vacío = orden
+                del guion.
               </span>
-            )}
-          </label>
+            </label>
+          </div>
+        </Section>
 
-          <label className="flex flex-col gap-1">
-            <span className="flex items-center gap-1 font-mono text-[10px] tracking-widest text-muted uppercase">
-              Orden en la historia
-              <HelpTip text="Solo hace falta rellenarlo si esta escena no ocurre en el mismo orden en que aparece en el guion (por ejemplo, un flashback). Si se deja vacío, se usa el orden del guion tal cual." />
-            </span>
-            <input
-              name="storyOrder"
-              type="number"
-              placeholder={String(scene.order)}
-              defaultValue={scene.storyOrder ?? ""}
-              className="field px-3 py-2 text-sm"
-            />
-          </label>
+        <Section title="Qué pasa" hint="Un resumen para el equipo; el texto completo sigue en el guion.">
+          <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
+            {(
+              [
+                ["description", "Descripción", scene.description, true],
+                ["action", "Acción", scene.action, true],
+                ["dialogueNotes", "Diálogos / notas", scene.dialogueNotes, true],
+                ["extrasNotes", "Extras", scene.extrasNotes, false],
+                ["productionNotes", "Notas de producción", scene.productionNotes, false],
+              ] as const
+            ).map(([name, label, value, wide]) => (
+              <label key={name} className={`flex flex-col gap-1.5 ${wide ? "sm:col-span-2" : ""}`}>
+                <span className={LABEL}>{label}</span>
+                <textarea name={name} defaultValue={value ?? ""} rows={2} className="field leading-relaxed" />
+              </label>
+            ))}
+          </div>
+        </Section>
 
-          <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-4">
-            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-              Descripción
-            </span>
-            <textarea
-              name="description"
-              defaultValue={scene.description ?? ""}
-              rows={2}
-              className="field px-3 py-2 text-sm"
-            />
-          </label>
-          <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-4">
-            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-              Acción
-            </span>
-            <textarea
-              name="action"
-              defaultValue={scene.action ?? ""}
-              rows={2}
-              className="field px-3 py-2 text-sm"
-            />
-          </label>
-          <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-4">
-            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-              Diálogos / notas
-            </span>
-            <textarea
-              name="dialogueNotes"
-              defaultValue={scene.dialogueNotes ?? ""}
-              rows={2}
-              className="field px-3 py-2 text-sm"
-            />
-          </label>
-          <label className="flex flex-col gap-1 sm:col-span-2">
-            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-              Extras
-            </span>
-            <textarea
-              name="extrasNotes"
-              defaultValue={scene.extrasNotes ?? ""}
-              rows={2}
-              className="field px-3 py-2 text-sm"
-            />
-          </label>
-          <label className="flex flex-col gap-1 sm:col-span-2">
-            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-              Notas de producción
-            </span>
-            <textarea
-              name="productionNotes"
-              defaultValue={scene.productionNotes ?? ""}
-              rows={2}
-              className="field px-3 py-2 text-sm"
-            />
-          </label>
-        </div>
-
-        <div className="border border-line p-5">
-          <span className="font-mono text-[10px] tracking-widest text-accent uppercase">
-            Personajes
-          </span>
+        <Section title="Quién sale" hint="Los personajes que aparecen en esta escena.">
           {characters.length === 0 ? (
-            <p className="mt-3 font-mono text-xs text-muted">
-              No hay personajes en el proyecto todavía.
+            <p className="font-sans text-sm text-muted">
+              Aún no hay personajes en el proyecto.{" "}
+              <Link href={`/app/${projectId}/personajes`} className="text-accent hover:underline">
+                Añadir en Reparto →
+              </Link>
             </p>
           ) : (
-            <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2">
+            <div className="flex flex-wrap gap-2">
               {characters.map((character) => (
-                <label
+                <ChipOption
                   key={character.id}
-                  className="flex items-center gap-2 font-mono text-xs"
-                >
-                  <input
-                    type="checkbox"
-                    name="characterIds"
-                    value={character.id}
-                    defaultChecked={selectedCharacterIds.has(character.id)}
-                  />
-                  {character.name}
-                </label>
+                  type="checkbox"
+                  name="characterIds"
+                  value={character.id}
+                  label={character.name}
+                  defaultChecked={selectedCharacterIds.has(character.id)}
+                />
               ))}
             </div>
           )}
-        </div>
+        </Section>
 
-        <div className="border border-line p-5">
-          <span className="flex items-center gap-1.5 font-mono text-[10px] tracking-widest text-accent uppercase">
-            Desglose
-            <HelpTip text="El campo 'Estado' es opcional — solo rellénalo si en esta escena concreta el objeto está roto, perdido, manchado, etc. Ayuda al detector de continuidad a avisar si luego aparece intacto sin explicación." />
-          </span>
+        <Section
+          title="Qué se necesita"
+          hint="Marca lo que sale en la escena. El estado es opcional: escríbelo solo si aquí está roto, manchado, perdido… y la revisión de continuidad lo tendrá en cuenta."
+        >
           {breakdownElements.length === 0 ? (
-            <p className="mt-3 font-mono text-xs text-muted">
-              Todavía no hay elementos de desglose en el proyecto.{" "}
-              <Link
-                href={`/app/${projectId}/desglose`}
-                className="text-fg hover:text-accent"
-              >
+            <p className="font-sans text-sm text-muted">
+              Aún no hay elementos de desglose en el proyecto.{" "}
+              <Link href={`/app/${projectId}/desglose`} className="text-accent hover:underline">
                 Añadir en Desglose →
               </Link>
             </p>
           ) : (
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-x-10 gap-y-6 xl:grid-cols-2">
               {breakdownByCategory
                 .filter((group) => group.items.length > 0)
                 .map((group) => (
                   <div key={group.category}>
-                    <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
-                      {BREAKDOWN_CATEGORY_LABELS[group.category]}
-                    </p>
-                    <div className="mt-2 flex flex-col gap-1.5">
+                    <p className={LABEL}>{BREAKDOWN_CATEGORY_LABELS[group.category]}</p>
+                    <ul className="mt-1 divide-y divide-line">
                       {group.items.map((item) => (
-                        <div
-                          key={item.id}
-                          className="flex items-center gap-2 font-mono text-xs"
-                        >
-                          <label className="flex items-center gap-2">
+                        <li key={item.id} className="grid grid-cols-[minmax(0,1fr)_7.5rem] items-center gap-4 py-1.5">
+                          <label className="flex min-w-0 cursor-pointer items-start gap-2.5 font-sans text-sm [&>input]:mt-0.5">
                             <input
                               type="checkbox"
                               name="breakdownElementIds"
                               value={item.id}
                               defaultChecked={selectedBreakdownIds.has(item.id)}
+                              className="h-4 w-4 shrink-0"
                             />
-                            {item.name}
+                            <span className="leading-snug">{item.name}</span>
                           </label>
-                          <input
-                            name={`condition_${item.id}`}
-                            placeholder="Estado (opcional)"
-                            defaultValue={conditionByBreakdownId.get(item.id) ?? ""}
-                            className="field w-36 px-2 py-1 text-[11px]"
-                          />
-                        </div>
+                          <label>
+                            <span className="sr-only">Estado de {item.name} en esta escena</span>
+                            <input
+                              name={`condition_${item.id}`}
+                              placeholder="Estado"
+                              defaultValue={conditionByBreakdownId.get(item.id) ?? ""}
+                              className="field-line mt-0 py-1 text-[13px]"
+                            />
+                          </label>
+                        </li>
                       ))}
-                    </div>
+                    </ul>
                   </div>
                 ))}
             </div>
           )}
-        </div>
+        </Section>
 
-        <div className="border border-line p-5">
-          <span className="font-mono text-[10px] tracking-widest text-accent uppercase">
-            Equipo técnico
-          </span>
+        <Section title="Equipo técnico" hint="Quién del equipo tiene que estar en esta escena.">
           {crewMembers.length === 0 ? (
-            <p className="mt-3 font-mono text-xs text-muted">
-              Todavía no hay equipo técnico en el proyecto.{" "}
-              <Link
-                href={`/app/${projectId}/desglose`}
-                className="text-fg hover:text-accent"
-              >
-                Añadir en Desglose →
+            <p className="font-sans text-sm text-muted">
+              Aún no hay equipo técnico en el proyecto.{" "}
+              <Link href={`/app/${projectId}/equipo`} className="text-accent hover:underline">
+                Añadir en Equipo técnico →
               </Link>
             </p>
           ) : (
-            <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2">
+            <div className="flex flex-wrap gap-2">
               {crewMembers.map((member) => (
-                <label
+                <ChipOption
                   key={member.id}
-                  className="flex items-center gap-2 font-mono text-xs"
-                >
-                  <input
-                    type="checkbox"
-                    name="crewMemberIds"
-                    value={member.id}
-                    defaultChecked={selectedCrewIds.has(member.id)}
-                  />
-                  {member.name}
-                  {member.role ? ` (${member.role})` : ""}
-                </label>
+                  type="checkbox"
+                  name="crewMemberIds"
+                  value={member.id}
+                  label={member.role ? `${member.name} · ${member.role}` : member.name}
+                  defaultChecked={selectedCrewIds.has(member.id)}
+                />
               ))}
             </div>
           )}
-        </div>
+        </Section>
 
-        <SubmitButton
-          pendingLabel="Guardando…"
-          savedLabel="✓ Guardado"
-          className="btn btn-secondary"
-        >
-          Guardar
-        </SubmitButton>
+        <div className="sticky bottom-0 flex items-center justify-between gap-4 rounded-b-xl border-t border-line bg-bg-raised/95 px-5 py-4 backdrop-blur sm:px-8">
+          <p className="hidden font-sans text-xs text-muted sm:block">Los cambios se guardan al pulsar Guardar.</p>
+          <SubmitButton pendingLabel="Guardando…" savedLabel="✓ Guardado" className="btn btn-primary">
+            Guardar escena
+          </SubmitButton>
+        </div>
       </form>
 
-      <form action={deleteScene.bind(null, projectId, sceneId)} className="mt-6">
-        <DeleteButton
-          confirmMessage="¿Eliminar esta escena? No se puede deshacer."
-          className="link-action"
-        >
+      <form action={deleteScene.bind(null, projectId, sceneId)} className="mt-6 flex justify-end">
+        <DeleteButton confirmMessage="¿Eliminar esta escena? No se puede deshacer." className="link-action hover:text-danger">
           Eliminar escena
         </DeleteButton>
       </form>

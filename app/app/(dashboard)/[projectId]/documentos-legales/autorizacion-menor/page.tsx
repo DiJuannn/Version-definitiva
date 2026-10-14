@@ -2,10 +2,8 @@ import { notFound } from "next/navigation";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { isProjectOwnerPro } from "@/lib/project-plan";
 import { PageHeader } from "@/components/PageHeader";
+import { LEGAL_INPUT, LegalField, LegalTemplateForm } from "@/components/gestion/LegalTemplateForm";
 
-const inputClass =
-  "field w-full px-3 py-2 text-sm";
-const labelClass = "font-mono text-[10px] tracking-widest text-muted uppercase";
 
 export default async function AutorizacionMenorPage({
   params,
@@ -19,58 +17,41 @@ export default async function AutorizacionMenorPage({
   if (!(await isProjectOwnerPro(project.organizationId))) notFound();
 
   return (
-    <div>
+    <div className="pb-16">
       <PageHeader
         backHref={`/app/${projectId}/documentos-legales`}
-        backLabel="← Plantilla de documentos"
+        backLabel="← Plantillas de documentos"
+        eyebrow="Plantilla legal"
         title="Autorización de menor en pantalla"
+        description="Consentimiento del padre, madre o tutor legal para que un menor aparezca en el material."
       />
-      <p className="mt-3 max-w-2xl font-sans text-sm text-muted">
-        El nombre del proyecto y la productora se rellenan solos. Completa lo
-        demás — al generar el PDF se abre listo para imprimir y firmar. Revisa
-        siempre este documento con asesoría legal antes de usarlo.
-      </p>
 
-      <form
+      <LegalTemplateForm
         action={`/api/pdf/legal/${projectId}/autorizacion-menor`}
-        method="POST"
-        target="_blank"
-        className="mt-6 grid gap-4 border border-line p-5 sm:grid-cols-2"
+        projectName={project.name}
+        warning="Revisa siempre este documento con asesoría legal antes de usarlo: con menores, las normas cambian mucho según el país y la comunidad."
       >
-        <label className="flex flex-col gap-1 sm:col-span-2">
-          <span className={labelClass}>Nombre completo del menor</span>
-          <input name="nombreMenor" required className={inputClass} />
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className={labelClass}>Nombre del tutor o tutora legal</span>
-          <input name="nombreTutor" required className={inputClass} />
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className={labelClass}>DNI del tutor o tutora</span>
-          <input name="dniTutor" className={inputClass} />
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className={labelClass}>Relación con el menor</span>
-          <input name="relacion" placeholder="Ej. madre, padre, tutor legal" className={inputClass} />
-        </label>
-        <label className="flex flex-col gap-1 sm:col-span-2">
-          <span className={labelClass}>Condiciones específicas</span>
+        <LegalField label="Nombre completo del menor" wide>
+          <input name="nombreMenor" required className={LEGAL_INPUT} />
+        </LegalField>
+        <LegalField label="Nombre del tutor o tutora legal">
+          <input name="nombreTutor" required className={LEGAL_INPUT} />
+        </LegalField>
+        <LegalField label="DNI del tutor o tutora">
+          <input name="dniTutor" className={LEGAL_INPUT} />
+        </LegalField>
+        <LegalField label="Relación con el menor">
+          <input name="relacion" placeholder="Ej. madre, padre, tutor legal" className={LEGAL_INPUT} />
+        </LegalField>
+        <LegalField label="Condiciones específicas" wide>
           <textarea
             name="condiciones"
             rows={3}
             placeholder="Ej. horario limitado, presencia del tutor en el set..."
-            className={inputClass}
+            className={`${LEGAL_INPUT} resize-y`}
           />
-        </label>
-        <div>
-          <button
-            type="submit"
-            className="btn btn-secondary"
-          >
-            Generar PDF
-          </button>
-        </div>
-      </form>
+        </LegalField>
+      </LegalTemplateForm>
     </div>
   );
 }

@@ -25,21 +25,21 @@ export function NewProjectWizard() {
       <input type="hidden" name="type" value={type} />
       <input type="hidden" name="stage" value={stage} />
 
-      <p className="text-center font-mono text-[10px] tracking-widest text-muted uppercase">
-        Paso {step} de {STEPS}
-      </p>
-      <div className="mx-auto mt-2 flex max-w-[8rem] gap-1.5" aria-hidden>
+      <div className="mx-auto flex max-w-[9rem] gap-1.5" aria-hidden>
         {Array.from({ length: STEPS }, (_, i) => (
           <span
             key={i}
-            className={`h-0.5 flex-1 transition-colors ${i < step ? "bg-accent" : "bg-line"}`}
+            className={`h-1 flex-1 rounded-full transition-colors ${i < step ? "bg-accent" : "bg-line"}`}
           />
         ))}
       </div>
+      <p className="mt-2 text-center font-mono text-[10px] tracking-widest text-muted uppercase">
+        Paso {step} de {STEPS}
+      </p>
 
       {step === 1 && (
         <div className="mt-6">
-          <label htmlFor="wizard-name" className="block text-center font-display text-lg font-bold">
+          <label htmlFor="wizard-name" className="block text-center font-display text-xl font-black tracking-tight">
             ¿Cómo se llama tu proyecto?
           </label>
           <input
@@ -65,7 +65,7 @@ export function NewProjectWizard() {
 
       {step === 2 && (
         <div className="mt-6">
-          <p className="text-center font-display text-lg font-bold">¿Qué tipo de proyecto es?</p>
+          <p className="text-center font-display text-xl font-black tracking-tight">¿Qué tipo de proyecto es?</p>
           <div className="mt-4 flex flex-wrap justify-center gap-2">
             {PROJECT_TYPES.map((option) => (
               <button
@@ -73,10 +73,10 @@ export function NewProjectWizard() {
                 type="button"
                 aria-pressed={type === option}
                 onClick={() => setType(type === option ? "" : option)}
-                className={`border px-3 py-2 font-mono text-xs tracking-wider uppercase transition-colors ${
+                className={`rounded-full border px-4 py-2 font-sans text-sm transition-colors ${
                   type === option
-                    ? "border-accent bg-accent/10 text-accent"
-                    : "border-line text-muted hover:border-accent hover:text-fg"
+                    ? "border-accent bg-accent text-bg"
+                    : "border-line text-fg hover:border-accent hover:text-accent"
                 }`}
               >
                 {option}
@@ -88,22 +88,31 @@ export function NewProjectWizard() {
 
       {step === 3 && (
         <div className="mt-6">
-          <p className="text-center font-display text-lg font-bold">¿En qué punto estás?</p>
-          <div className="mt-4 grid gap-2">
+          <p className="text-center font-display text-xl font-black tracking-tight">¿En qué punto estás?</p>
+          <div className="mt-5 divide-y divide-line border-y border-line">
             {PROJECT_STAGES.map((option) => (
               <button
                 key={option.id}
                 type="button"
                 aria-pressed={stage === option.id}
                 onClick={() => setStage(stage === option.id ? "" : option.id)}
-                className={`border px-4 py-3 text-left transition-colors ${
-                  stage === option.id
-                    ? "border-accent bg-accent/10"
-                    : "border-line hover:border-accent"
+                className={`flex w-full items-start gap-3 px-2 py-3 text-left transition-colors ${
+                  stage === option.id ? "bg-accent/10" : "hover:bg-fg/5"
                 }`}
               >
-                <span className="block font-display text-sm font-bold">{option.label}</span>
-                <span className="mt-0.5 block font-sans text-xs text-muted">{option.hint}</span>
+                {/* Opción como fila con su punto de radio, no como cajita con borde. */}
+                <span
+                  aria-hidden
+                  className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${
+                    stage === option.id ? "ring-2 ring-accent" : "ring-1 ring-muted/60"
+                  }`}
+                >
+                  {stage === option.id && <span className="h-2 w-2 rounded-full bg-accent" />}
+                </span>
+                <span className="min-w-0">
+                  <span className="block font-display text-[15px] font-bold">{option.label}</span>
+                  <span className="mt-0.5 block font-sans text-[13px] text-muted">{option.hint}</span>
+                </span>
               </button>
             ))}
           </div>
@@ -115,7 +124,7 @@ export function NewProjectWizard() {
           <button
             type="button"
             onClick={() => setStep(step - 1)}
-            className="font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent"
+            className="link-action"
           >
             ← Atrás
           </button>
@@ -128,7 +137,7 @@ export function NewProjectWizard() {
             <button
               type="button"
               onClick={() => setStep(step + 1)}
-              className="font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent"
+              className="link-action"
             >
               Saltar
             </button>
@@ -151,7 +160,7 @@ export function NewProjectWizard() {
       </div>
 
       {state?.error && (
-        <p className="mt-3 text-center font-mono text-xs text-danger" role="alert">
+        <p className="mt-4 border-l-2 border-danger pl-3 font-sans text-sm text-danger" role="alert">
           {state.error}
           {state.upgrade && (
             <>

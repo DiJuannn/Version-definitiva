@@ -13,35 +13,31 @@ export function InviteForm() {
   const [state, formAction] = useActionState(createInvite, undefined);
 
   return (
-    <form action={formAction} className="mt-4 flex flex-wrap gap-3">
-      <input
-        name="email"
-        type="email"
-        placeholder="email@ejemplo.com"
-        required
-        className="field min-w-[220px] flex-1 px-3 py-2 text-sm"
-      />
-      <select
-        name="role"
-        defaultValue="MEMBER"
-        className="field px-3 py-2 font-mono text-xs uppercase"
-      >
-        <option value="MEMBER" className="bg-bg">
-          Miembro
-        </option>
-        <option value="ADMIN" className="bg-bg">
-          Admin
-        </option>
-      </select>
-      <SubmitButton
-        pendingLabel="Invitando…"
-        savedLabel={state && "success" in state ? "✓ Invitación creada" : undefined}
-        className="btn btn-secondary"
-      >
-        Invitar
-      </SubmitButton>
+    <form action={formAction} className="mt-5 grid gap-x-4 gap-y-3 sm:grid-cols-[minmax(0,1fr)_8rem]">
+      <label className="block">
+        <span className="font-mono text-[10px] tracking-[0.18em] text-muted uppercase">Email</span>
+        <input name="email" type="email" placeholder="nombre@ejemplo.com" required className="field-line" />
+      </label>
+      <label className="block">
+        <span className="font-mono text-[10px] tracking-[0.18em] text-muted uppercase">Entra como</span>
+        <select name="role" defaultValue="MEMBER" className="field-line">
+          <option value="MEMBER">Miembro</option>
+          <option value="ADMIN">Admin</option>
+        </select>
+      </label>
+      <div className="mt-2 sm:col-span-2">
+        <SubmitButton
+          pendingLabel="Creando enlace…"
+          savedLabel={state && "success" in state ? "✓ Enlace creado" : undefined}
+          className="btn btn-primary"
+        >
+          Crear invitación
+        </SubmitButton>
+      </div>
       {state && "error" in state && (
-        <p className="w-full font-mono text-xs text-danger">{state.error}</p>
+        <p role="alert" className="border-l-2 border-danger pl-3 font-sans text-sm text-danger sm:col-span-2">
+          {state.error}
+        </p>
       )}
     </form>
   );

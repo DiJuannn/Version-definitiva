@@ -3,10 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { isProjectOwnerPro } from "@/lib/project-plan";
 import { PageHeader } from "@/components/PageHeader";
+import { LEGAL_INPUT, LegalField, LegalTemplateForm } from "@/components/gestion/LegalTemplateForm";
 
-const inputClass =
-  "field w-full px-3 py-2 text-sm";
-const labelClass = "font-mono text-[10px] tracking-widest text-muted uppercase";
 
 export default async function CesionImagenPage({
   params,
@@ -26,57 +24,42 @@ export default async function CesionImagenPage({
   });
 
   return (
-    <div>
+    <div className="pb-16">
       <PageHeader
         backHref={`/app/${projectId}/documentos-legales`}
-        backLabel="← Plantilla de documentos"
+        backLabel="← Plantillas de documentos"
+        eyebrow="Plantilla legal"
         title="Cesión de derechos de imagen"
+        description="Para que una persona autorice usar su imagen y su voz en el proyecto y en su promoción."
       />
-      <p className="mt-3 max-w-2xl font-sans text-sm text-muted">
-        El nombre del proyecto y la productora se rellenan solos. Completa lo
-        demás — al generar el PDF se abre listo para imprimir y firmar.
-      </p>
 
-      <form
+      <LegalTemplateForm
         action={`/api/pdf/legal/${projectId}/cesion-imagen`}
-        method="POST"
-        target="_blank"
-        className="mt-6 grid gap-4 border border-line p-5 sm:grid-cols-2"
+        projectName={project.name}
+        tip="«Nombre completo» te sugiere a los actores del proyecto mientras escribes."
       >
-        <label className="flex flex-col gap-1">
-          <span className={labelClass}>Nombre completo</span>
-          <input name="nombre" list="actors-list" required className={inputClass} />
+        <LegalField label="Nombre completo">
+          <input name="nombre" list="actors-list" required className={LEGAL_INPUT} />
           <datalist id="actors-list">
             {actors.map((a) => (
               <option key={a.name} value={a.name} />
             ))}
           </datalist>
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className={labelClass}>DNI / identificación</span>
-          <input name="dni" className={inputClass} />
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className={labelClass}>Uso autorizado</span>
+        </LegalField>
+        <LegalField label="DNI / identificación">
+          <input name="dni" className={LEGAL_INPUT} />
+        </LegalField>
+        <LegalField label="Uso autorizado">
           <input
             name="alcance"
             placeholder="Ej. promoción del proyecto en redes y festivales"
-            className={inputClass}
+            className={LEGAL_INPUT}
           />
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className={labelClass}>Duración</span>
-          <input name="duracion" placeholder="Ej. indefinida, o 5 años" className={inputClass} />
-        </label>
-        <div>
-          <button
-            type="submit"
-            className="btn btn-secondary"
-          >
-            Generar PDF
-          </button>
-        </div>
-      </form>
+        </LegalField>
+        <LegalField label="Duración">
+          <input name="duracion" placeholder="Ej. indefinida, o 5 años" className={LEGAL_INPUT} />
+        </LegalField>
+      </LegalTemplateForm>
     </div>
   );
 }

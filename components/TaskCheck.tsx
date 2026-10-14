@@ -11,13 +11,13 @@ function CheckButton({ done, title }: { done: boolean; title: string }) {
       type="submit"
       disabled={pending}
       aria-label={done ? `Marcar «${title}» como pendiente` : `Completar «${title}»`}
-      className={`flex h-6 w-6 shrink-0 items-center justify-center border transition-colors ${
+      className={`flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full border-[1.5px] transition-colors ${
         done
-          ? "border-success/60 bg-success/15 text-success"
-          : "border-muted/60 text-transparent hover:border-accent hover:text-accent"
+          ? "border-success bg-success text-bg"
+          : "border-muted/70 text-transparent hover:border-accent hover:bg-accent/10 hover:text-accent"
       } ${pending ? "animate-pulse" : ""}`}
     >
-      <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2">
+      <svg viewBox="0 0 16 16" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth="2.4">
         <path d="m3.5 8.5 3 3 6-7" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     </button>

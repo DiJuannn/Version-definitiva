@@ -3,12 +3,7 @@
 import { createContext, useContext } from "react";
 import Link from "next/link";
 import { NodeResizer, type Node, type NodeProps } from "@xyflow/react";
-import {
-  NOTE_COLORS,
-  REFERENCE_KINDS,
-  type MoodboardCard,
-  type MoodboardLookup,
-} from "@/lib/moodboard-types";
+import { NOTE_COLORS, REFERENCE_KINDS, type MoodboardCard, type MoodboardLookup } from "@/lib/moodboard-types";
 
 // Una sola clase de nodo ("card") que pinta un tipo u otro según card.type.
 export type CardNode = Node<{ card: MoodboardCard }, "card">;
@@ -29,9 +24,16 @@ function useBoard(): BoardContext {
   return ctx;
 }
 
+// Campos que se escriben directamente sobre la tarjeta: sin caja; al
+// enfocarlos, un leve fondo para saber dónde estás escribiendo.
 const FIELD =
-  "nodrag nowheel w-full bg-transparent outline-none placeholder:opacity-50 focus:bg-white/5";
+  "nodrag nowheel w-full rounded-sm bg-transparent outline-none placeholder:text-current placeholder:opacity-40 focus:bg-fg/[0.04]";
 const LABEL = "font-mono text-[9px] tracking-widest uppercase";
+
+// Las tarjetas son papeles sobre la mesa: sin borde, con una sombra corta
+// y suave (calculada desde el color del texto, así sirve en claro).
+const CARD_SHADOW =
+  "0 1px 2px color-mix(in srgb, var(--fg) 10%, transparent), 0 12px 28px -16px color-mix(in srgb, var(--fg) 45%, transparent)";
 
 function Frame({
   id,
@@ -57,18 +59,22 @@ function Frame({
         minWidth={minW}
         minHeight={minH}
         isVisible={selected}
-        lineClassName="border-accent!"
-        handleClassName="h-2.5! w-2.5! rounded-none! border-accent! bg-bg!"
+        lineClassName="border-accent/70!"
+        handleClassName="h-2.5! w-2.5! rounded-full! border-accent! bg-bg-raised!"
       />
       <button
         type="button"
         onClick={() => remove(id)}
         aria-label="Quitar tarjeta"
-        className="nodrag absolute top-1 right-1 z-10 hidden h-5 w-5 items-center justify-center rounded-full bg-black/60 text-xs leading-none text-white hover:bg-danger group-hover:flex focus-visible:flex"
+        title="Quitar del tablero"
+        className="nodrag absolute -top-2.5 -right-2.5 z-10 hidden h-6 w-6 items-center justify-center rounded-full bg-fg text-sm leading-none text-bg-raised shadow-md transition-colors hover:bg-danger group-hover:flex focus-visible:flex"
       >
         ×
       </button>
-      <div className={`h-full w-full overflow-hidden ${className}`} style={style}>
+      <div
+        className={`h-full w-full overflow-hidden rounded-md transition-shadow ${selected ? "ring-2 ring-accent ring-offset-2 ring-offset-transparent" : ""} ${className}`}
+        style={{ boxShadow: CARD_SHADOW, ...style }}
+      >
         {children}
       </div>
     </div>
@@ -78,15 +84,20 @@ function Frame({
 function NoteCard({ id, card, selected }: { id: string; card: MoodboardCard; selected: boolean }) {
   const { update } = useBoard();
   return (
-    <Frame id={id} selected={selected} className="shadow-lg" style={{ background: card.color ?? NOTE_COLORS[0], color: "#1a1a1a" }}>
-      <div className="flex h-full flex-col p-3">
+    <Frame
+      id={id}
+      selected={selected}
+      className="rounded-sm"
+      style={{ background: card.color ?? NOTE_COLORS[0], color: "#26241f" }}
+    >
+      <div className="flex h-full flex-col p-3.5">
         <textarea
           value={card.text ?? ""}
           onChange={(e) => update(id, { text: e.target.value })}
           placeholder="Escribe una nota…"
           maxLength={2000}
           aria-label="Texto de la nota"
-          className={`${FIELD} min-h-0 flex-1 resize-none font-sans text-sm leading-snug`}
+          className={`${FIELD} min-h-0 flex-1 resize-none font-sans text-[13.5px] leading-snug focus:bg-black/[0.03]`}
         />
         {selected && (
           <div className="nodrag mt-2 flex gap-1.5" role="group" aria-label="Color de la nota">
@@ -97,7 +108,7 @@ function NoteCard({ id, card, selected }: { id: string; card: MoodboardCard; sel
                 aria-label={`Color ${c}`}
                 aria-pressed={card.color === c}
                 onClick={() => update(id, { color: c })}
-                className={`h-4 w-4 rounded-full border ${card.color === c ? "border-black" : "border-black/20"}`}
+                className={`h-4 w-4 rounded-full ring-1 transition-shadow ${card.color === c ? "ring-2 ring-[#26241f]" : "ring-black/20 hover:ring-black/40"}`}
                 style={{ background: c }}
               />
             ))}
@@ -111,8 +122,9 @@ function NoteCard({ id, card, selected }: { id: string; card: MoodboardCard; sel
 function ImageCard({ id, card, selected }: { id: string; card: MoodboardCard; selected: boolean }) {
   const { update } = useBoard();
   return (
-    <Frame id={id} selected={selected} minW={100} minH={80} className="border border-line bg-bg-raised">
-      <div className="flex h-full flex-col">
+    <Frame id={id} selected={selected} minW={100} minH={80} className="bg-bg-raised">
+      {/* Como una copia en papel: la foto con margen y el pie escrito debajo. */}
+      <div className="flex h-full flex-col p-1.5 pb-0">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={card.url}
@@ -120,7 +132,7 @@ function ImageCard({ id, card, selected }: { id: string; card: MoodboardCard; se
           loading="lazy"
           decoding="async"
           draggable={false}
-          className="min-h-0 w-full flex-1 object-cover"
+          className="min-h-0 w-full flex-1 rounded-[3px] bg-fg/5 object-cover"
         />
         <input
           value={card.caption ?? ""}
@@ -128,7 +140,7 @@ function ImageCard({ id, card, selected }: { id: string; card: MoodboardCard; se
           placeholder="Pie de foto"
           maxLength={200}
           aria-label="Pie de foto"
-          className={`${FIELD} shrink-0 px-2 py-1.5 font-sans text-xs text-fg`}
+          className={`${FIELD} shrink-0 px-1 py-1.5 font-sans text-xs text-fg`}
         />
       </div>
     </Frame>
@@ -138,24 +150,27 @@ function ImageCard({ id, card, selected }: { id: string; card: MoodboardCard; se
 function PaletteCard({ id, card, selected }: { id: string; card: MoodboardCard; selected: boolean }) {
   const { update } = useBoard();
   const colors = card.colors ?? [];
-  const setColor = (i: number, value: string) =>
-    update(id, { colors: colors.map((c, j) => (j === i ? value : c)) });
+  const setColor = (i: number, value: string) => update(id, { colors: colors.map((c, j) => (j === i ? value : c)) });
 
   return (
-    <Frame id={id} selected={selected} minW={160} minH={100} className="border border-line bg-bg-raised">
-      <div className="flex h-full flex-col p-2.5">
+    <Frame id={id} selected={selected} minW={160} minH={100} className="bg-bg-raised">
+      <div className="flex h-full flex-col p-3">
         <input
           value={card.title ?? ""}
           onChange={(e) => update(id, { title: e.target.value })}
           placeholder="Paleta"
           maxLength={120}
           aria-label="Nombre de la paleta"
-          className={`${FIELD} mb-2 font-mono text-[11px] tracking-widest text-fg uppercase`}
+          className={`${FIELD} mb-2.5 font-mono text-[10px] tracking-widest text-muted uppercase focus:text-fg`}
         />
-        <div className="flex min-h-0 flex-1 gap-1">
+        <div className="flex min-h-0 flex-1 gap-1.5">
           {colors.map((color, i) => (
             <div key={i} className="group/sw relative flex min-w-0 flex-1 flex-col">
-              <label className="nodrag relative block min-h-0 flex-1 cursor-pointer" style={{ background: color }}>
+              <label
+                className="nodrag relative block min-h-0 flex-1 cursor-pointer rounded-[3px] shadow-[inset_0_0_0_1px_rgb(0_0_0/0.06)]"
+                style={{ background: color }}
+                title="Cambiar color"
+              >
                 <input
                   type="color"
                   value={color}
@@ -164,13 +179,13 @@ function PaletteCard({ id, card, selected }: { id: string; card: MoodboardCard; 
                   className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
                 />
               </label>
-              <span className={`${LABEL} mt-1 truncate text-center text-muted`}>{color}</span>
+              <span className={`${LABEL} mt-1.5 truncate text-center text-muted`}>{color.replace("#", "")}</span>
               {colors.length > 1 && (
                 <button
                   type="button"
                   aria-label={`Quitar color ${i + 1}`}
                   onClick={() => update(id, { colors: colors.filter((_, j) => j !== i) })}
-                  className="nodrag absolute top-0.5 right-0.5 hidden h-4 w-4 items-center justify-center rounded-full bg-black/60 text-[10px] leading-none text-white group-hover/sw:flex"
+                  className="nodrag absolute top-1 right-1 hidden h-4 w-4 items-center justify-center rounded-full bg-fg/70 text-[10px] leading-none text-bg-raised group-hover/sw:flex focus-visible:flex"
                 >
                   ×
                 </button>
@@ -181,8 +196,9 @@ function PaletteCard({ id, card, selected }: { id: string; card: MoodboardCard; 
             <button
               type="button"
               aria-label="Añadir color"
+              title="Añadir color"
               onClick={() => update(id, { colors: [...colors, "#888888"] })}
-              className="nodrag w-6 shrink-0 self-stretch border border-dashed border-line text-muted hover:border-accent hover:text-accent"
+              className="nodrag mb-5 w-6 shrink-0 self-stretch rounded-[3px] text-muted transition-colors hover:bg-accent/10 hover:text-accent"
             >
               +
             </button>
@@ -195,16 +211,18 @@ function PaletteCard({ id, card, selected }: { id: string; card: MoodboardCard; 
 
 function ReferenceCard({ id, card, selected }: { id: string; card: MoodboardCard; selected: boolean }) {
   const { update } = useBoard();
-  const query = encodeURIComponent(`${card.title ?? ""} ${card.year ?? ""} ${card.kind === "Fotografía" ? "fotografía" : ""}`.trim());
+  const query = encodeURIComponent(
+    `${card.title ?? ""} ${card.year ?? ""} ${card.kind === "Fotografía" ? "fotografía" : ""}`.trim(),
+  );
   return (
-    <Frame id={id} selected={selected} minW={180} minH={110} className="border border-line bg-bg-raised">
-      <div className="flex h-full flex-col gap-1.5 p-3">
+    <Frame id={id} selected={selected} minW={180} minH={110} className="bg-bg-raised">
+      <div className="flex h-full flex-col gap-1 p-3.5">
         <div className="flex items-center gap-2">
           <select
             value={card.kind ?? "Otro"}
             onChange={(e) => update(id, { kind: e.target.value })}
             aria-label="Tipo de referencia"
-            className={`nodrag ${LABEL} shrink-0 border border-line bg-bg px-1 py-0.5 text-accent`}
+            className={`nodrag ${LABEL} shrink-0 cursor-pointer [field-sizing:content] rounded-sm bg-transparent py-0.5 pr-1 text-accent outline-none hover:bg-accent/10 focus-visible:ring-2 focus-visible:ring-accent/40`}
           >
             {REFERENCE_KINDS.map((k) => (
               <option key={k} value={k}>
@@ -218,7 +236,7 @@ function ReferenceCard({ id, card, selected }: { id: string; card: MoodboardCard
             placeholder="Año"
             maxLength={12}
             aria-label="Año"
-            className={`${FIELD} w-14 shrink-0 font-mono text-[11px] text-muted`}
+            className={`${FIELD} w-14 shrink-0 font-mono text-[10px] tracking-wider text-muted`}
           />
         </div>
         <input
@@ -227,7 +245,7 @@ function ReferenceCard({ id, card, selected }: { id: string; card: MoodboardCard
           placeholder="Título"
           maxLength={160}
           aria-label="Título de la referencia"
-          className={`${FIELD} font-display text-base leading-tight font-bold text-fg`}
+          className={`${FIELD} font-display text-[15px] leading-tight font-bold text-fg`}
         />
         <textarea
           value={card.why ?? ""}
@@ -235,7 +253,7 @@ function ReferenceCard({ id, card, selected }: { id: string; card: MoodboardCard
           placeholder="¿Qué te sirve de esta referencia?"
           maxLength={700}
           aria-label="Por qué sirve"
-          className={`${FIELD} min-h-0 flex-1 resize-none font-sans text-xs leading-snug text-muted`}
+          className={`${FIELD} mt-0.5 min-h-0 flex-1 resize-none font-sans text-xs leading-snug text-muted`}
         />
         {card.title && (
           <a
@@ -243,6 +261,7 @@ function ReferenceCard({ id, card, selected }: { id: string; card: MoodboardCard
             target="_blank"
             rel="noopener noreferrer"
             className={`nodrag ${LABEL} self-start text-accent hover:underline`}
+            title="Buscar esta referencia en Google"
           >
             Buscar ↗
           </a>
@@ -264,7 +283,8 @@ function LiveCard({ id, card, selected }: { id: string; card: MoodboardCard; sel
   let found = false;
 
   if (card.type === "scene") {
-    const scene = lookup.scenes.find((s) => s.id === card.refId) ?? lookup.scenes.find((s) => s.number.toLowerCase() === label);
+    const scene =
+      lookup.scenes.find((s) => s.id === card.refId) ?? lookup.scenes.find((s) => s.number.toLowerCase() === label);
     heading = "Escena";
     if (scene) {
       found = true;
@@ -274,7 +294,9 @@ function LiveCard({ id, card, selected }: { id: string; card: MoodboardCard; sel
       href = `/app/${projectId}/guion/${scene.id}`;
     }
   } else if (card.type === "character") {
-    const c = lookup.characters.find((x) => x.id === card.refId) ?? lookup.characters.find((x) => x.name.toLowerCase() === label);
+    const c =
+      lookup.characters.find((x) => x.id === card.refId) ??
+      lookup.characters.find((x) => x.name.toLowerCase() === label);
     heading = "Personaje";
     if (c) {
       found = true;
@@ -283,7 +305,8 @@ function LiveCard({ id, card, selected }: { id: string; card: MoodboardCard; sel
       href = `/app/${projectId}/personajes`;
     }
   } else {
-    const l = lookup.locations.find((x) => x.id === card.refId) ?? lookup.locations.find((x) => x.name.toLowerCase() === label);
+    const l =
+      lookup.locations.find((x) => x.id === card.refId) ?? lookup.locations.find((x) => x.name.toLowerCase() === label);
     heading = "Localización";
     if (l) {
       found = true;
@@ -294,20 +317,37 @@ function LiveCard({ id, card, selected }: { id: string; card: MoodboardCard; sel
   }
 
   return (
-    <Frame id={id} selected={selected} minW={160} minH={90} className="border border-accent/50 bg-bg-raised">
-      <div className="flex h-full flex-col gap-1 p-3">
-        <p className={`${LABEL} text-accent`}>{heading} · del proyecto</p>
+    <Frame
+      id={id}
+      selected={selected}
+      minW={160}
+      minH={90}
+      className={`border-l-[3px] bg-bg-raised ${found ? "border-accent" : "border-warn"}`}
+    >
+      {/* Tarjeta viva: la raya morada dice que viene del proyecto y se actualiza sola. */}
+      <div className="flex h-full flex-col gap-1 p-3.5 pl-3">
+        <p
+          className={`${LABEL} flex items-center gap-1.5 text-accent`}
+          title="Se actualiza sola con los datos del proyecto"
+        >
+          {heading}
+          <span className="text-muted">· del proyecto</span>
+        </p>
         {found ? (
           <>
-            <p className="font-display text-base leading-tight font-bold text-fg">{title}</p>
+            <p className="font-display text-[15px] leading-tight font-bold text-fg">{title}</p>
             {detail && <p className="font-mono text-[11px] text-muted">{detail}</p>}
-            {extra && <p className="line-clamp-4 min-h-0 flex-1 overflow-hidden font-sans text-xs leading-snug text-muted">{extra}</p>}
+            {extra && (
+              <p className="line-clamp-4 min-h-0 flex-1 overflow-hidden font-sans text-xs leading-snug text-muted">
+                {extra}
+              </p>
+            )}
             <Link href={href} className={`nodrag ${LABEL} mt-auto self-start text-accent hover:underline`}>
               Abrir →
             </Link>
           </>
         ) : (
-          <p className="font-sans text-xs text-muted">
+          <p className="font-sans text-xs leading-snug text-muted">
             «{card.label ?? "?"}» ya no existe en el proyecto. Puedes quitar la tarjeta.
           </p>
         )}

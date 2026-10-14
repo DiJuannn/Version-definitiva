@@ -9,7 +9,7 @@ export function GeocodeButton() {
   const [candidates, setCandidates] = useState<GeocodeCandidate[]>([]);
 
   return (
-    <div className="flex flex-col items-start gap-2 sm:col-span-2 lg:col-span-3">
+    <div className="col-span-full flex flex-col items-start gap-2">
       <button
         type="button"
         disabled={pending}
@@ -36,17 +36,25 @@ export function GeocodeButton() {
             setCandidates(results);
           });
         }}
-        className="border border-line px-3 py-2 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent disabled:opacity-50"
+        className="btn btn-outline btn-sm"
       >
-        {pending ? "Buscando…" : "Buscar coordenadas por dirección"}
+        <svg aria-hidden viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Z" strokeLinejoin="round" />
+          <circle cx="12" cy="10" r="2.3" />
+        </svg>
+        {pending ? "Buscando…" : "Buscar en el mapa"}
       </button>
 
-      {message && <p className="max-w-md font-mono text-[11px] text-muted">{message}</p>}
+      {message && (
+        <p role="status" className="max-w-md border-l-2 border-line pl-3 font-sans text-[13px] text-muted">
+          {message}
+        </p>
+      )}
 
       {candidates.length > 0 && (
-        <div className="w-full max-w-md border border-line">
-          <p className="border-b border-line p-2 font-mono text-[10px] tracking-widest text-muted uppercase">
-            Elige el resultado correcto
+        <div className="w-full max-w-md">
+          <p className="pb-1 font-mono text-[10px] tracking-widest text-muted uppercase">
+            ¿Cuál es? Elige el resultado correcto
           </p>
           {candidates.map((candidate, i) => (
             <button
@@ -66,7 +74,7 @@ export function GeocodeButton() {
                 setCandidates([]);
                 setMessage(`Coordenadas asignadas: ${candidate.label}`);
               }}
-              className="block w-full border-b border-line p-2 text-left font-mono text-[11px] text-muted last:border-b-0 hover:border-accent hover:text-accent"
+              className="block w-full border-t border-line py-2 text-left font-sans text-[13px] text-fg transition-colors hover:text-accent"
             >
               {candidate.label}
             </button>

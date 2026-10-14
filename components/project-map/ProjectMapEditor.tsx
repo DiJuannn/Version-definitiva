@@ -771,7 +771,7 @@ function MapBoard(props: Props) {
 
         const { toPng } = await import("html-to-image");
         const dataUrl = await toPng(el, {
-          backgroundColor: "#0a0a0a",
+          backgroundColor: "#eceae5", // el papel de la pizarra (.sheet)
           width,
           height,
           pixelRatio: 1.5,
@@ -796,7 +796,7 @@ function MapBoard(props: Props) {
         g.drawImage(img, 0, 0);
         if (!isPro) {
           g.font = `${Math.round(canvas.width / 90) + 10}px monospace`;
-          g.fillStyle = "rgba(255,255,255,0.45)";
+          g.fillStyle = "rgba(23,23,27,0.4)";
           g.textAlign = "right";
           g.fillText("Hecho con Taller · Versión definitiva", canvas.width - 24, canvas.height - 20);
         }
@@ -1020,17 +1020,17 @@ function MapBoard(props: Props) {
           : { text: "✓ Guardado", tone: "text-success" };
 
   const btn =
-    "border border-line bg-bg-raised px-2.5 py-1.5 font-mono text-[11px] tracking-wider uppercase transition-colors hover:border-accent hover:text-accent disabled:opacity-40";
+    "rounded-lg border border-line bg-bg-raised px-2.5 py-1.5 font-mono text-[11px] tracking-wider uppercase shadow-[0_1px_2px_color-mix(in_srgb,var(--fg)_6%,transparent)] transition-colors hover:border-accent hover:text-accent disabled:opacity-40";
   const chip = (on: boolean) =>
-    `border px-2 py-1 font-mono text-[11px] uppercase ${on ? "border-accent text-accent" : "border-line text-muted hover:text-fg"}`;
-  const popover = "absolute top-full left-0 z-20 mt-1 border border-line bg-bg-raised shadow-xl";
+    `rounded-md border px-2 py-1 font-mono text-[11px] uppercase ${on ? "border-accent text-accent" : "border-line text-muted hover:text-fg"}`;
+  const popover = "absolute top-full left-0 z-20 mt-1.5 overflow-hidden rounded-xl bg-bg-raised shadow-[0_0_0_1px_color-mix(in_srgb,var(--fg)_8%,transparent),0_16px_40px_-12px_color-mix(in_srgb,var(--fg)_30%,transparent)]";
 
   return (
     <MapProvider value={mapCtx}>
       <ItemProvider value={itemCtx}>
         <div
           ref={wrapperRef}
-          className="relative h-[calc(100dvh-16rem)] min-h-[560px] border border-line"
+          className="sheet relative h-[calc(100dvh-16rem)] min-h-[560px] overflow-hidden"
           onPointerMove={onPointerMove}
           onPointerLeave={onPointerLeave}
           onDragOver={(e) => {
@@ -1050,8 +1050,9 @@ function MapBoard(props: Props) {
             onNodeDragStop={onNodeDragStop}
             onBeforeDelete={async ({ nodes: ns, edges: es }) => ({ nodes: ns.filter((n) => n.type !== "tool"), edges: es })}
             connectionMode={ConnectionMode.Loose}
-            connectionLineStyle={{ stroke: "#a08fd0", strokeWidth: 2 }}
-            colorMode="dark"
+            connectionLineStyle={{ stroke: "var(--accent)", strokeWidth: 2 }}
+            colorMode="light"
+            style={{ ["--xy-background-color" as string]: "transparent", ["--xy-controls-button-background-color" as string]: "var(--bg-raised)" }}
             minZoom={0.1}
             maxZoom={2}
             fitView
@@ -1060,10 +1061,10 @@ function MapBoard(props: Props) {
             zoomOnDoubleClick={false}
             proOptions={{ hideAttribution: false }}
           >
-            <Background gap={24} size={1} />
+            <Background gap={24} size={1.2} color="color-mix(in srgb, var(--fg) 18%, transparent)" />
             <RemoteCursors cursors={cursors} />
             <Controls showInteractive={false} />
-            <MiniMap pannable zoomable className="hidden! sm:block!" maskColor="rgba(0,0,0,0.6)" />
+            <MiniMap pannable zoomable className="hidden! sm:block!" maskColor="rgba(23,23,27,0.06)" bgColor="var(--bg-raised)" nodeColor="color-mix(in srgb, var(--fg) 14%, transparent)" />
 
             <Panel position="top-left" className="m-2! max-w-[calc(100%-1rem)]">
               <div className="flex flex-wrap items-center gap-1.5">
@@ -1082,7 +1083,7 @@ function MapBoard(props: Props) {
                     <div className={`${popover} w-80 p-3`}>
                       <button
                         type="button"
-                        className="w-full border border-line px-3 py-2 font-mono text-[11px] tracking-wider uppercase hover:border-accent hover:text-accent"
+                        className="w-full rounded-lg border border-line px-3 py-2 font-mono text-[11px] tracking-wider uppercase hover:border-accent hover:text-accent"
                         onClick={() => fileRef.current?.click()}
                       >
                         Subir desde el dispositivo
@@ -1112,7 +1113,7 @@ function MapBoard(props: Props) {
                                 title={im.label}
                                 aria-label={`Añadir ${im.label}`}
                                 onClick={() => void addImageFromUrl(im.url)}
-                                className="aspect-square overflow-hidden border border-line hover:border-accent"
+                                className="aspect-square overflow-hidden rounded-md border border-line hover:border-accent"
                               >
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img src={im.url} alt="" loading="lazy" className="h-full w-full object-cover" />
@@ -1203,7 +1204,7 @@ function MapBoard(props: Props) {
                                 <p className="p-3 font-sans text-xs text-muted">Todavía no hay nada de esto en el proyecto.</p>
                               ) : (
                                 filtered.slice(0, 60).map((e) => (
-                                  <button key={e.id} type="button" onClick={() => addEntity(projectTab, e)} className="block w-full border-b border-line px-3 py-2 text-left hover:bg-white/5">
+                                  <button key={e.id} type="button" onClick={() => addEntity(projectTab, e)} className="block w-full border-b border-line px-3 py-2 text-left hover:bg-bg">
                                     <span className="block font-display text-sm font-bold">{e.title}</span>
                                     {e.sub && <span className="block truncate font-mono text-[11px] text-muted">{e.sub}</span>}
                                   </button>
@@ -1229,13 +1230,13 @@ function MapBoard(props: Props) {
                   </button>
                   {menu === "more" && (
                     <div className={`${popover} w-64`}>
-                      <button type="button" onClick={refresh} disabled={busy} className="block w-full border-b border-line px-3 py-2 text-left font-mono text-[11px] tracking-wider uppercase hover:bg-white/5">
+                      <button type="button" onClick={refresh} disabled={busy} className="block w-full border-b border-line px-3 py-2 text-left font-mono text-[11px] tracking-wider uppercase hover:bg-bg">
                         {busy ? "Actualizando…" : "↻ Actualizar tarjetas"}
                       </button>
-                      <button type="button" onClick={() => void exportBoard("png")} disabled={exporting} className="block w-full border-b border-line px-3 py-2 text-left font-mono text-[11px] tracking-wider uppercase hover:bg-white/5">
+                      <button type="button" onClick={() => void exportBoard("png")} disabled={exporting} className="block w-full border-b border-line px-3 py-2 text-left font-mono text-[11px] tracking-wider uppercase hover:bg-bg">
                         {exporting ? "Exportando…" : "Descargar imagen (PNG)"}
                       </button>
-                      <button type="button" onClick={() => void exportBoard("pdf")} disabled={exporting} className="block w-full border-b border-line px-3 py-2 text-left font-mono text-[11px] tracking-wider uppercase hover:bg-white/5">
+                      <button type="button" onClick={() => void exportBoard("pdf")} disabled={exporting} className="block w-full border-b border-line px-3 py-2 text-left font-mono text-[11px] tracking-wider uppercase hover:bg-bg">
                         Descargar PDF
                       </button>
                       {confirmReset ? (
@@ -1249,7 +1250,7 @@ function MapBoard(props: Props) {
                           </button>
                         </div>
                       ) : (
-                        <button type="button" onClick={() => setConfirmReset(true)} className="block w-full border-b border-line px-3 py-2 text-left font-mono text-[11px] tracking-wider uppercase hover:bg-white/5">
+                        <button type="button" onClick={() => setConfirmReset(true)} className="block w-full border-b border-line px-3 py-2 text-left font-mono text-[11px] tracking-wider uppercase hover:bg-bg">
                           Reordenar tarjetas
                         </button>
                       )}
@@ -1258,7 +1259,7 @@ function MapBoard(props: Props) {
                         <p className="px-3 pt-1 pb-3 font-sans text-xs text-muted">Ninguna.</p>
                       ) : (
                         hidden.map((k) => (
-                          <button key={k} type="button" onClick={() => show(k)} className="flex w-full items-center justify-between border-t border-line px-3 py-2 text-left hover:bg-white/5">
+                          <button key={k} type="button" onClick={() => show(k)} className="flex w-full items-center justify-between border-t border-line px-3 py-2 text-left hover:bg-bg">
                             <span className="font-display text-sm font-bold">{toolsByKey[k]?.title ?? k}</span>
                             <span className="font-mono text-[10px] tracking-wider text-accent uppercase">Mostrar</span>
                           </button>
@@ -1286,14 +1287,14 @@ function MapBoard(props: Props) {
             </Panel>
 
             <Panel position="top-right" className="m-2!">
-              <div className="flex items-center gap-3 border border-line bg-bg-raised px-3 py-1.5 font-mono text-[11px]">
+              <div className="flex items-center gap-3 rounded-lg border border-line bg-bg-raised px-3 py-1.5 font-mono text-[11px]">
                 {uniquePeers(peers).length > 0 && (
                   <span className="flex items-center gap-1" aria-label={`${uniquePeers(peers).length} personas más en la pizarra`}>
                     {uniquePeers(peers).slice(0, 5).map((p) => (
                       <span
                         key={p.userId}
                         title={`${p.name} está en esta pizarra`}
-                        className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-black"
+                        className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-[#17171b]"
                         style={{ background: p.color }}
                       >
                         {p.name.slice(0, 1).toUpperCase()}
@@ -1320,7 +1321,7 @@ function MapBoard(props: Props) {
 
             <Panel position="bottom-center" className="mb-3!">
               {selEdge ? (
-                <div className="flex flex-wrap items-center gap-2 border border-line bg-bg-raised p-2" role="toolbar" aria-label="Flecha seleccionada">
+                <div className="flex flex-wrap items-center gap-2 rounded-xl bg-bg-raised p-2 shadow-[0_0_0_1px_color-mix(in_srgb,var(--fg)_8%,transparent),0_8px_24px_-12px_color-mix(in_srgb,var(--fg)_30%,transparent)]" role="toolbar" aria-label="Flecha seleccionada">
                   <input
                     value={selEdge.label ?? ""}
                     onChange={(e) => updateEdge(selEdge.id, { label: e.target.value || undefined })}
@@ -1337,7 +1338,7 @@ function MapBoard(props: Props) {
                         aria-label={`Color ${c}`}
                         aria-pressed={selEdge.color === c}
                         onClick={() => updateEdge(selEdge.id, { color: c })}
-                        className={`h-5 w-5 rounded-full border-2 ${selEdge.color === c ? "border-white" : "border-transparent"}`}
+                        className={`h-5 w-5 rounded-full border-2 ring-1 ring-line ${selEdge.color === c ? "border-fg" : "border-transparent"}`}
                         style={{ background: c }}
                       />
                     ))}
@@ -1353,7 +1354,7 @@ function MapBoard(props: Props) {
                   </button>
                 </div>
               ) : selItems.length > 0 ? (
-                <div className="flex flex-wrap items-center gap-2 border border-line bg-bg-raised p-2" role="toolbar" aria-label="Elementos seleccionados">
+                <div className="flex flex-wrap items-center gap-2 rounded-xl bg-bg-raised p-2 shadow-[0_0_0_1px_color-mix(in_srgb,var(--fg)_8%,transparent),0_8px_24px_-12px_color-mix(in_srgb,var(--fg)_30%,transparent)]" role="toolbar" aria-label="Elementos seleccionados">
                   {selTypes.has("text") && (
                     <div className="flex gap-1" role="group" aria-label="Tamaño del texto">
                       {(["s", "m", "l"] as MapTextSize[]).map((s) => (
@@ -1381,7 +1382,7 @@ function MapBoard(props: Props) {
                   {colorable.length > 0 && (
                     <div className="flex gap-1" role="group" aria-label="Color">
                       {MAP_COLORS.map((c) => (
-                        <button key={c} type="button" aria-label={`Color ${c}`} onClick={() => patchSelected(colorable, { color: c })} className="h-5 w-5 rounded-full border-2 border-transparent hover:border-white" style={{ background: c }} />
+                        <button key={c} type="button" aria-label={`Color ${c}`} onClick={() => patchSelected(colorable, { color: c })} className="h-5 w-5 rounded-full border-2 border-transparent ring-1 ring-line hover:border-fg" style={{ background: c }} />
                       ))}
                     </div>
                   )}
@@ -1393,7 +1394,7 @@ function MapBoard(props: Props) {
                   </button>
                 </div>
               ) : (
-                <p className="hidden max-w-xl border border-line bg-bg-raised/90 px-3 py-1.5 text-center font-sans text-[11px] text-muted sm:block">
+                <p className="hidden max-w-xl rounded-full bg-bg-raised/90 px-4 py-1.5 text-center font-sans text-[11px] text-muted sm:block">
                   Arrastra desde los puntos de una tarjeta para unirla con una flecha · Mayús + arrastrar selecciona varias · Ctrl+Z deshace · Ctrl+D duplica
                 </p>
               )}
@@ -1401,7 +1402,7 @@ function MapBoard(props: Props) {
           </ReactFlow>
 
           {(notice || saveError) && (
-            <div className="absolute bottom-16 left-1/2 z-20 flex max-w-[92%] -translate-x-1/2 items-center gap-3 border border-warn/60 bg-bg-raised px-4 py-2 font-sans text-xs shadow-xl" role="alert">
+            <div className="absolute bottom-16 left-1/2 z-20 flex max-w-[92%] -translate-x-1/2 items-center gap-3 rounded-lg border-l-2 border-warn bg-bg-raised px-4 py-2 font-sans text-xs shadow-[0_8px_24px_-12px_color-mix(in_srgb,var(--fg)_35%,transparent)]" role="alert">
               <span>{notice ?? saveError}</span>
               <button type="button" aria-label="Cerrar aviso" onClick={() => { setNotice(null); setSaveError(null); }} className="text-muted hover:text-fg">
                 ×

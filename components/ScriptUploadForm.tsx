@@ -3,11 +3,15 @@
 import { useActionState, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import type { UploadScriptState } from "@/lib/actions/script";
+import { Modal } from "@/components/Modal";
 
 function UploadStatus() {
   const { pending } = useFormStatus();
   return pending ? (
-    <span className="font-mono text-xs text-muted">Subiendo…</span>
+    <span className="inline-flex items-center gap-2 font-mono text-xs text-muted" role="status">
+      <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
+      Subiendo…
+    </span>
   ) : null;
 }
 
@@ -40,7 +44,7 @@ export function ScriptUploadForm({
         action={formAction}
         className="flex flex-wrap items-center gap-3"
       >
-        <label className={`btn cursor-pointer ${prominent ? "btn-primary" : "btn-secondary btn-sm"}`}>
+        <label className={`btn cursor-pointer has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent ${prominent ? "btn-primary" : "btn-outline btn-sm"}`}>
           {existingFileName ? "Reemplazar guion" : prominent ? "Elegir mi guion (PDF o Word)" : "Subir guion"}
           <input
             type="file"
@@ -65,49 +69,33 @@ export function ScriptUploadForm({
         )}
       </form>
 
-      {pendingFileName && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-          onClick={() => setPendingFileName(null)}
-        >
-          <div
-            className="w-full max-w-sm border border-accent bg-bg p-6"
-            onClick={(e) => e.stopPropagation()}
+      <Modal
+        open={pendingFileName !== null}
+        onClose={() => setPendingFileName(null)}
+        title="¿Reemplazar el guion?"
+        description={`Ya hay un guion subido (${existingFileName}). Si subes «${pendingFileName}», lo sustituirá.`}
+      >
+        <p className="mt-4 border-l-2 border-warn pl-3 font-sans text-sm leading-relaxed text-fg">
+          Al analizarlo podrás reemplazar todo lo del guion anterior (escenas, planos, personajes y desglose).
+          Actores, equipo, presupuesto, días de rodaje, tareas y documentos no se tocan, y antes de borrar nada te
+          pediremos confirmación.
+        </p>
+        <div className="mt-6 flex justify-end gap-4">
+          <button type="button" onClick={() => setPendingFileName(null)} className="link-action">
+            Cancelar
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setPendingFileName(null);
+              formRef.current?.requestSubmit();
+            }}
+            className="btn btn-primary"
           >
-            <p className="font-display text-lg font-bold">
-              ¿Reemplazar el guion?
-            </p>
-            <p className="mt-2 font-sans text-sm text-muted">
-              Ya hay un guion subido ({existingFileName}). Si subes «
-              {pendingFileName}», lo sustituirá.
-            </p>
-            <p className="mt-3 border border-warn/60 p-3 font-sans text-sm text-warn">
-              ⚠ Al analizarlo, podrás reemplazar todo lo del guion anterior (escenas, planos, personajes y desglose):
-              se borrará y se sustituirá con el nuevo. Actores, equipo, presupuesto, días de rodaje, tareas y
-              documentos no se tocan. Antes de borrar nada te pediremos confirmación.
-            </p>
-            <div className="mt-6 flex justify-end gap-4">
-              <button
-                type="button"
-                onClick={() => setPendingFileName(null)}
-                className="link-action"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setPendingFileName(null);
-                  formRef.current?.requestSubmit();
-                }}
-                className="btn btn-primary"
-              >
-                Sí, reemplazar
-              </button>
-            </div>
-          </div>
+            Sí, reemplazar
+          </button>
         </div>
-      )}
+      </Modal>
     </>
   );
 }

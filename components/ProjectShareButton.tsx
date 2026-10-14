@@ -22,10 +22,13 @@ export function ProjectShareButton({
   projectId,
   origin,
   shares,
+  variant = "icon",
 }: {
   projectId: string;
   origin: string;
   shares: ShareEntry[];
+  // "icon": botón redondo discreto (filas de proyectos); "button": botón con texto (cabecera).
+  variant?: "icon" | "button";
 }) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -37,39 +40,49 @@ export function ProjectShareButton({
 
   return (
     <div ref={containerRef} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-label="Compartir proyecto"
-        aria-expanded={open}
-        className={`flex h-8 w-8 items-center justify-center border transition-colors ${
-          open ? "border-accent text-accent" : "border-line text-muted hover:border-accent hover:text-accent"
-        }`}
-      >
-        <ShareIcon className="h-4 w-4" />
-      </button>
+      {variant === "button" ? (
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          aria-haspopup="dialog"
+          className={`btn btn-outline ${open ? "border-accent text-accent" : ""}`}
+        >
+          <ShareIcon className="h-3.5 w-3.5" />
+          Compartir
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-label="Compartir proyecto"
+          aria-expanded={open}
+          aria-haspopup="dialog"
+          className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
+            open ? "bg-accent/10 text-accent" : "text-muted hover:bg-fg/5 hover:text-accent"
+          }`}
+        >
+          <ShareIcon className="h-4 w-4" />
+        </button>
+      )}
 
       {open && (
-        <div className="absolute right-0 z-20 mt-2 w-80 border border-line bg-bg p-4 shadow-lg">
-          <div className="flex items-center justify-between gap-3">
-            <p className="font-mono text-[10px] tracking-widest text-accent uppercase">
-              Compartir proyecto
-            </p>
-            <form action={createShareAction}>
-              <SubmitButton
-                pendingLabel="Generando…"
-                className="font-mono text-[10px] tracking-widest text-muted uppercase hover:text-accent"
-              >
-                + Generar enlace
-              </SubmitButton>
-            </form>
-          </div>
-          <p className="mt-2 font-mono text-[11px] leading-relaxed text-muted">
-            Quien entre con este enlace verá y podrá editar solo este
-            proyecto — no el resto de tu organización.
+        <div
+          role="dialog"
+          aria-label="Compartir proyecto"
+          className="sheet absolute right-0 z-30 mt-2 w-[min(20rem,calc(100vw-2rem))] p-5 text-left"
+        >
+          <p className="font-display text-base font-bold">Compartir este proyecto</p>
+          <p className="mt-1.5 font-sans text-[13px] leading-relaxed text-muted">
+            Quien entre con el enlace podrá ver y editar solo este proyecto, no el resto de tu organización.
           </p>
+          <form action={createShareAction} className="mt-4">
+            <SubmitButton pendingLabel="Generando…" className="btn btn-secondary btn-sm w-full">
+              Generar enlace de invitación
+            </SubmitButton>
+          </form>
           {shareState?.error && (
-            <p className="mt-2 font-mono text-[11px] text-danger">{shareState.error}</p>
+            <p className="mt-2 font-sans text-xs text-danger" role="alert">{shareState.error}</p>
           )}
 
           {shares.length > 0 && (
@@ -80,7 +93,7 @@ export function ProjectShareButton({
                   className="flex items-center justify-between gap-3 py-2.5"
                 >
                   <div className="min-w-0">
-                    <p className="truncate font-mono text-xs">
+                    <p className={`truncate font-sans text-[13px] ${share.userEmail ? "" : "text-muted"}`}>
                       {share.userEmail ?? "Pendiente de aceptar"}
                     </p>
                   </div>
@@ -93,7 +106,7 @@ export function ProjectShareButton({
                     <form action={revokeProjectShare.bind(null, projectId, share.id)}>
                       <DeleteButton
                         confirmMessage="¿Revocar el acceso a este proyecto?"
-                        className="font-mono text-[10px] tracking-widest text-muted uppercase hover:text-accent"
+                        className="link-action hover:!text-danger"
                       >
                         Revocar
                       </DeleteButton>

@@ -263,258 +263,246 @@ export default async function DashboardPage() {
   const heroPct =
     heroRequired.length > 0 ? Math.round((heroDone / heroRequired.length) * 100) : 0;
 
+  const claquetaHref = heroProject ? `/app/${heroProject.id}/claqueta` : "/app/claqueta";
+  const H2 = "font-display text-xl font-black tracking-tight";
+
+  // De arriba abajo: saludo y cifras → lo que estabas haciendo (una losa grande con el próximo
+  // rodaje al lado) → avisos → tus proyectos (losas) → la semana (tareas, fechas y actividad).
+  // Todo sobre la mesa; el papel solo aparece cuando hay un formulario (el primer proyecto).
   return (
-    <div>
-      <div className="flex items-center gap-4">
-        <AjoloteLogo className="h-12 w-auto shrink-0 sm:h-14" priority />
-        <div>
-          <p className="font-mono text-xs tracking-widest text-accent uppercase">
-            {greeting(now.getHours())}
-          </p>
-          <h1 className="mt-0.5 font-display text-2xl font-bold sm:text-3xl">
-            {profile.organization.name}
-          </h1>
+    <div className="pb-8">
+      <header className="flex flex-wrap items-end justify-between gap-x-10 gap-y-6">
+        <div className="flex items-center gap-4">
+          <AjoloteLogo className="h-12 w-auto shrink-0 sm:h-14" priority />
+          <div>
+            <p className="eyebrow text-accent">{greeting(now.getHours())}</p>
+            <h1 className="mt-1 font-display text-2xl font-black tracking-tight sm:text-3xl">
+              {profile.organization.name}
+            </h1>
+          </div>
         </div>
-      </div>
+        {heroProject && (
+          <dl className="flex flex-wrap items-end gap-x-8 gap-y-3">
+            <div>
+              <dt className="eyebrow">Proyectos activos</dt>
+              <dd className="mt-1 font-display text-2xl font-black tabular-nums">{activeProjectsCount}</dd>
+            </div>
+            <div className="border-l border-line pl-8">
+              <dt className="eyebrow">Gastado</dt>
+              <dd className="mt-1 font-display text-2xl font-black tabular-nums">
+                {currency(budgetActual)}
+                <span className="ml-1.5 font-sans text-xs font-normal text-muted">de {currency(budgetPlanned)}</span>
+              </dd>
+            </div>
+            {!isPro(profile.organization.plan) && (
+              <div className="border-l border-line pl-8">
+                <dt className="eyebrow">Plan gratuito</dt>
+                <dd className="mt-1 font-sans text-sm">
+                  {activeProjectsCount} de {FREE_ACTIVE_PROJECTS_LIMIT} proyectos ·{" "}
+                  <Link href="/app/organizacion" className="text-accent hover:underline">
+                    Ver PRO
+                  </Link>
+                </dd>
+              </div>
+            )}
+          </dl>
+        )}
+      </header>
 
       {!heroProject ? (
-        <DashboardReveal className="mt-8 border border-accent/50 bg-gradient-to-br from-accent-purple/30 via-bg-raised to-bg p-8 text-center sm:p-12">
-          <p className="font-mono text-xs tracking-widest text-accent uppercase">Empieza aquí</p>
-          <h2 className="mt-2 font-display text-2xl font-bold sm:text-3xl">
+        <DashboardReveal className="sheet mx-auto mt-12 max-w-xl p-8 sm:p-10">
+          <p className="eyebrow text-center text-accent">Empieza aquí</p>
+          <h2 className="mt-2 text-center font-display text-2xl font-black tracking-tight sm:text-3xl">
             Crea tu primer proyecto
           </h2>
-          <p className="mx-auto mt-3 max-w-sm font-sans text-sm text-muted">
+          <p className="mx-auto mt-3 max-w-sm text-center font-sans text-sm leading-relaxed text-muted">
             Todo en Taller —guion, presupuesto, plan de rodaje— cuelga de un proyecto. Te hacemos tres
             preguntas rápidas y entras: te guiaremos paso a paso.
           </p>
-          <div className="mx-auto mt-6 max-w-md">
+          <div className="mt-8 border-t border-line pt-8">
             <NewProjectWizard />
           </div>
         </DashboardReveal>
       ) : (
         <>
-          <div className="mt-8 grid gap-4 lg:grid-cols-[1.3fr_1fr]">
-            <DashboardReveal className="border border-line bg-bg-raised/40 p-6">
-              <p className="font-mono text-[11px] tracking-widest text-muted uppercase">
-                Próximo rodaje
-              </p>
-              {nextShoot ? (
-                <>
-                  <p className="mt-3 font-display text-4xl font-black">
-                    {relativeDay(nextShoot.date, now)}
-                  </p>
-                  <p className="mt-1 font-mono text-xs text-muted">
-                    {nextShoot.date.toLocaleDateString("es-ES", {
-                      weekday: "long",
-                      day: "numeric",
-                      month: "long",
-                    })}{" "}
-                    ·{" "}
-                    <Link
-                      href={`/app/${nextShoot.projectId}`}
-                      className="text-fg underline decoration-line underline-offset-4 hover:decoration-accent"
-                    >
-                      {nextShoot.project.name}
-                    </Link>
-                  </p>
-                  <p className="mt-2 font-mono text-xs">
-                    {nextShoot._count.scenes} escena{nextShoot._count.scenes === 1 ? "" : "s"} ·{" "}
-                    <span className={nextShoot.callSheet ? "text-success" : "text-warn"}>
-                      {nextShoot.callSheet ? "call sheet creado" : "call sheet sin crear"}
-                    </span>
-                  </p>
-                  <div className="mt-5 flex flex-wrap gap-2">
-                    <Link
-                      href={`/app/${nextShoot.projectId}/call-sheets/${nextShoot.id}`}
-                      className="btn btn-primary btn-sm"
-                    >
-                      {nextShoot.callSheet ? "Ver call sheet" : "Crear call sheet"}
-                      <LinkPendingHint />
-                    </Link>
-                    <Link
-                      href={`/app/${nextShoot.projectId}/plan-de-rodaje/${nextShoot.id}`}
-                      className="btn btn-outline btn-sm"
-                    >
-                      Ver el día
-                    </Link>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <p className="mt-3 font-display text-2xl font-bold text-muted">
-                    Sin rodajes planificados
-                  </p>
-                  <p className="mt-2 font-sans text-sm text-muted">
-                    Cuando repartas las escenas en días de rodaje, aquí verás cuándo es el
-                    próximo y si su call sheet está listo.
-                  </p>
-                  <Link
-                    href={`/app/${heroProject.id}/plan-de-rodaje`}
-                    className="btn btn-outline btn-sm mt-4"
-                  >
-                    Planificar un rodaje
-                  </Link>
-                </>
-              )}
-            </DashboardReveal>
-
-            <DashboardReveal
-              className="border border-line bg-bg-raised/40 p-6"
-              delay={0.05}
-            >
-              <p className="font-mono text-[11px] tracking-widest text-muted uppercase">
-                Requiere atención
-              </p>
-              {attention.length === 0 ? (
-                <p className="mt-3 flex items-start gap-2 font-sans text-sm text-muted">
-                  <span aria-hidden className="mt-0.5 text-success">
-                    ✓
-                  </span>
-                  Todo en orden: sin tareas vencidas ni rodajes próximos sin call sheet.
-                </p>
-              ) : (
-                <ul className="mt-3 space-y-2">
-                  {attention.map((item) => (
-                    <li key={item.id}>
-                      <Link
-                        href={item.href}
-                        className="group flex items-start gap-2.5 py-1 font-mono text-xs"
-                      >
-                        <span
-                          aria-hidden
-                          className={`mt-1 h-2 w-2 shrink-0 rounded-full ${
-                            item.tone === "danger" ? "bg-danger" : "bg-warn"
-                          }`}
-                        />
-                        <span className="transition-colors group-hover:text-accent">
-                          {item.text}
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </DashboardReveal>
-          </div>
-
-          <DashboardReveal
-            className="mt-4 border border-accent/40 bg-gradient-to-br from-accent-purple/40 via-bg-raised to-bg p-6 sm:p-8"
-            delay={0.1}
-          >
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="min-w-0">
-                <p className="font-mono text-[11px] tracking-widest text-accent uppercase">
-                  Continuar
-                </p>
-                <h2 className="mt-1 truncate font-display text-2xl font-bold sm:text-3xl">
+          <DashboardReveal className="tile mt-10 overflow-hidden">
+            <div className="grid lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+              {/* Continuar: lo más importante de la pantalla. */}
+              <div className="p-6 sm:p-8">
+                <p className="eyebrow text-accent">Continuar donde lo dejaste</p>
+                <h2 className="mt-2 truncate font-display text-3xl font-black tracking-tight sm:text-4xl">
                   {heroProject.name}
                 </h2>
-                <p className="mt-1 font-mono text-xs text-muted">
-                  {heroCurrent
-                    ? `Siguiente: ${heroCurrent.title}`
-                    : "Listo para rodar: pasos requeridos completados"}
-                  {" · "}
-                  {heroDone}/{heroRequired.length} requeridos
+                <p className="mt-3 font-sans text-[15px] text-muted">
+                  {heroCurrent ? (
+                    <>
+                      Siguiente paso: <span className="text-fg">{heroCurrent.title}</span>
+                    </>
+                  ) : (
+                    "Listo para rodar: lo esencial está hecho."
+                  )}
                 </p>
+                <div className="mt-5 flex max-w-md items-center gap-3">
+                  <div className="h-1 flex-1 overflow-hidden rounded-full bg-line" aria-hidden>
+                    <div
+                      className="h-full rounded-full bg-accent transition-[width] duration-700"
+                      style={{ width: `${heroPct}%` }}
+                    />
+                  </div>
+                  <span className="shrink-0 font-mono text-[11px] text-muted">
+                    {heroDone}/{heroRequired.length} esenciales
+                  </span>
+                </div>
+                <Link href={`/app/${heroProject.id}`} className="btn btn-primary mt-6">
+                  Continuar →
+                  <LinkPendingHint />
+                </Link>
               </div>
-              <Link href={`/app/${heroProject.id}`} className="btn btn-primary shrink-0">
-                Continuar →
-                <LinkPendingHint />
-              </Link>
-            </div>
-            <div className="mt-5 h-1.5 w-full overflow-hidden rounded-full bg-line">
-              <div
-                className="h-full rounded-full bg-accent transition-[width] duration-700"
-                style={{ width: `${heroPct}%` }}
-              />
+
+              {/* Próximo rodaje, al lado: la otra cosa que hay que saber al entrar. */}
+              <div className="border-t border-line p-6 sm:p-8 lg:border-t-0 lg:border-l">
+                <p className="eyebrow">Próximo rodaje</p>
+                {nextShoot ? (
+                  <>
+                    <p className="mt-2 font-display text-3xl font-black tracking-tight">
+                      {relativeDay(nextShoot.date, now)}
+                    </p>
+                    <p className="mt-1 font-sans text-sm text-muted first-letter:uppercase">
+                      {nextShoot.date.toLocaleDateString("es-ES", {
+                        weekday: "long",
+                        day: "numeric",
+                        month: "long",
+                      })}{" "}
+                      ·{" "}
+                      <Link
+                        href={`/app/${nextShoot.projectId}`}
+                        className="text-fg underline decoration-line underline-offset-4 hover:decoration-accent"
+                      >
+                        {nextShoot.project.name}
+                      </Link>
+                    </p>
+                    <p className="mt-1 font-sans text-sm">
+                      {nextShoot._count.scenes} escena{nextShoot._count.scenes === 1 ? "" : "s"} ·{" "}
+                      <span className={nextShoot.callSheet ? "text-success" : "text-warn"}>
+                        {nextShoot.callSheet ? "hoja de llamada lista" : "sin hoja de llamada"}
+                      </span>
+                    </p>
+                    <div className="mt-5 flex flex-wrap items-center gap-3">
+                      <Link
+                        href={`/app/${nextShoot.projectId}/call-sheets/${nextShoot.id}`}
+                        className="btn btn-outline btn-sm"
+                      >
+                        {nextShoot.callSheet ? "Ver la hoja de llamada" : "Crear la hoja de llamada"}
+                        <LinkPendingHint />
+                      </Link>
+                      <Link
+                        href={`/app/${nextShoot.projectId}/plan-de-rodaje/${nextShoot.id}`}
+                        className="link-action"
+                      >
+                        Ver el día
+                      </Link>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="mt-2 font-display text-2xl font-black tracking-tight text-muted">Sin fecha</p>
+                    <p className="mt-2 max-w-xs font-sans text-sm leading-relaxed text-muted">
+                      Cuando repartas las escenas en días de rodaje, aquí verás cuándo es el próximo y si su
+                      hoja de llamada está lista.
+                    </p>
+                    <Link href={`/app/${heroProject.id}/plan-de-rodaje`} className="link-action mt-3 !px-0 !text-accent">
+                      Planificar un rodaje →
+                    </Link>
+                  </>
+                )}
+              </div>
             </div>
           </DashboardReveal>
+
+          {/* Avisos: una línea con barra de color por cada cosa; si no hay, una sola línea tranquila. */}
+          {attention.length === 0 ? (
+            <p className="mt-5 flex items-center gap-2 font-sans text-sm text-muted">
+              <span aria-hidden className="text-success">
+                ✓
+              </span>
+              Todo en orden: sin tareas vencidas ni rodajes próximos sin hoja de llamada.
+            </p>
+          ) : (
+            <section aria-label="Requiere atención" className="mt-6">
+              <p className="eyebrow">Requiere atención</p>
+              <ul className="mt-3 space-y-2">
+                {attention.map((item) => (
+                  <li key={item.id}>
+                    <Link
+                      href={item.href}
+                      className={`group flex items-center justify-between gap-3 border-l-2 py-1.5 pl-3 font-sans text-sm ${
+                        item.tone === "danger" ? "border-danger" : "border-warn"
+                      }`}
+                    >
+                      <span className="transition-colors group-hover:text-accent">{item.text}</span>
+                      <span aria-hidden className="text-muted group-hover:text-accent">
+                        →
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
         </>
       )}
 
       {/* Siempre visible, incluso sin proyectos todavía — quien es nuevo
           también tiene que poder entrar a la Claqueta, y de ahí se le
           ofrece crear su primer proyecto (ver /app/claqueta). */}
-      <DashboardReveal delay={0.12}>
-        <div className="group relative mt-3 flex items-center gap-3 border border-line bg-bg-raised/40 px-5 py-3.5 transition-colors hover:border-accent/60">
-          <Link
-            href={heroProject ? `/app/${heroProject.id}/claqueta` : "/app/claqueta"}
-            className="flex min-w-0 flex-1 items-center gap-3"
-          >
-            <ClaquetaIcon className="h-5 w-5 shrink-0 text-accent" />
-            <span className="min-w-0">
-              <span className="block font-mono text-xs tracking-widest uppercase transition-colors group-hover:text-accent">
-                Claqueta digital
-              </span>
-              <span className="block truncate font-mono text-[10px] text-muted">
-                {heroProject ? heroProject.name : "Elige o crea un proyecto"}
-              </span>
-            </span>
-          </Link>
-          <Link
-            href={heroProject ? `/app/${heroProject.id}/claqueta` : "/app/claqueta"}
-            className="link-action shrink-0"
-          >
-            Abrir →
-            <LinkPendingHint />
-          </Link>
-          {recentProjects.length > 1 && (
-            <details className="shrink-0">
-              <summary
-                aria-label="Abrir la claqueta de otro proyecto"
-                className="flex min-h-9 min-w-9 cursor-pointer list-none items-center justify-center text-muted hover:text-accent [&::-webkit-details-marker]:hidden"
-              >
-                ▾
-              </summary>
-              <div className="absolute right-0 top-full z-20 mt-1 w-56 border border-line bg-bg-raised py-1 shadow-lg">
-                <p className="px-3 py-1.5 font-mono text-[9px] tracking-widest text-muted uppercase">
-                  Abrir la claqueta de otro proyecto
-                </p>
-                {recentProjects.map((project) => (
-                  <Link
-                    key={project.id}
-                    href={`/app/${project.id}/claqueta`}
-                    className="block px-3 py-2.5 font-mono text-xs text-muted hover:bg-bg hover:text-accent"
-                  >
-                    {project.name}
-                  </Link>
-                ))}
-              </div>
-            </details>
-          )}
-        </div>
-      </DashboardReveal>
-
-      <div className="mt-6 flex flex-wrap items-center gap-x-8 gap-y-3 border-y border-line py-3 sm:mt-8">
-        <div className="flex items-baseline gap-2">
-          <span className="font-display text-xl font-bold">{activeProjectsCount}</span>
-          <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-            Proyectos activos
+      <div className="relative mt-6 flex items-center gap-3 border-y border-line py-3">
+        <Link href={claquetaHref} className="group flex min-w-0 flex-1 items-center gap-3">
+          <ClaquetaIcon className="h-5 w-5 shrink-0 text-accent" />
+          <span className="min-w-0 font-sans text-sm">
+            <span className="font-semibold transition-colors group-hover:text-accent">Claqueta digital</span>
+            <span className="text-muted"> · {heroProject ? heroProject.name : "elige o crea un proyecto"}</span>
           </span>
-        </div>
-        <div className="flex items-baseline gap-2">
-          <span className="font-display text-xl font-bold">{currency(budgetActual)}</span>
-          <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-            Gastado de {currency(budgetPlanned)} previstos
-          </span>
-        </div>
-        {!isPro(profile.organization.plan) && (
-          <Link
-            href="/app/organizacion"
-            className="ml-auto flex items-baseline gap-2 transition-colors hover:text-accent"
-          >
-            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-              Plan gratuito: {activeProjectsCount} de {FREE_ACTIVE_PROJECTS_LIMIT} proyectos ·
-              Ver PRO
-            </span>
-          </Link>
+        </Link>
+        <Link href={claquetaHref} className="link-action shrink-0">
+          Abrir →
+          <LinkPendingHint />
+        </Link>
+        {recentProjects.length > 1 && (
+          <details className="group/menu shrink-0">
+            <summary
+              aria-label="Abrir la claqueta de otro proyecto"
+              className="flex min-h-9 min-w-9 cursor-pointer list-none items-center justify-center rounded-full text-muted hover:bg-fg/5 hover:text-accent [&::-webkit-details-marker]:hidden"
+            >
+              ▾
+            </summary>
+            <div className="sheet absolute top-full right-0 z-20 mt-1 w-64 py-1.5">
+              <p className="px-4 py-1.5 font-sans text-xs text-muted">Abrir la claqueta de otro proyecto</p>
+              {recentProjects.map((project) => (
+                <Link
+                  key={project.id}
+                  href={`/app/${project.id}/claqueta`}
+                  className="block px-4 py-2 font-sans text-sm transition-colors hover:bg-bg hover:text-accent"
+                >
+                  {project.name}
+                </Link>
+              ))}
+            </div>
+          </details>
         )}
       </div>
 
-      <DashboardReveal className="mt-8" delay={0.15}>
-        <NewProjectPanel hasProjects={recentProjects.length > 0} />
-        {recentProjects.length > 0 && (
-          <DashboardStagger className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {recentProjects.length > 0 && (
+        <DashboardReveal className="mt-14" delay={0.1}>
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <h2 className={H2}>Tus proyectos</h2>
+            <div className="flex items-center gap-4">
+              <Link href="/app/proyectos" className="link-action">
+                Ver todos →
+              </Link>
+              <NewProjectPanel className="btn btn-outline btn-sm" />
+            </div>
+          </div>
+          <DashboardStagger className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {recentProjects.map((project) => {
               const isOwnProject = project.organizationId === organizationId;
               const ownerLabel =
@@ -524,33 +512,31 @@ export default async function DashboardPage() {
               return (
                 <div
                   key={project.id}
-                  className="group relative border border-line bg-bg-raised/40 p-4 transition-colors hover:border-accent/60"
+                  className="tile group relative transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_0_0_1px_var(--accent)]"
                 >
-                  <Link href={`/app/${project.id}`} className="block pr-14">
-                    <p className="font-display text-base font-bold transition-colors group-hover:text-accent">
+                  <Link href={`/app/${project.id}`} className="block p-5 pr-20">
+                    <p className="truncate font-display text-lg font-black tracking-tight transition-colors group-hover:text-accent">
                       {project.name}
                     </p>
                     <div className="mt-2 flex flex-wrap items-center gap-2">
                       <StatusPill status={project.status} />
                       {!isOwnProject && (
-                        <span className="font-mono text-[10px] text-muted">
-                          Propietario: {ownerLabel}
-                        </span>
+                        <span className="font-sans text-xs text-muted">· de {ownerLabel}</span>
                       )}
                     </div>
                     {p && (
-                      <div className="mt-3">
-                        <div className="h-1 w-full bg-line">
-                          <div className="h-full bg-accent" style={{ width: `${pct}%` }} />
+                      <div className="mt-5 flex items-center gap-3">
+                        <div className="h-1 flex-1 overflow-hidden rounded-full bg-line" aria-hidden>
+                          <div className="h-full rounded-full bg-accent" style={{ width: `${pct}%` }} />
                         </div>
-                        <p className="mt-1 font-mono text-[10px] text-muted">
-                          {p.done}/{p.total} pasos requeridos
-                        </p>
+                        <span className="shrink-0 font-mono text-[10px] text-muted">
+                          {p.done}/{p.total}
+                        </span>
                       </div>
                     )}
                   </Link>
                   {isOwnProject && (
-                    <div className="absolute right-1 top-1 flex items-center">
+                    <div className="absolute top-3 right-3 flex items-center">
                       <ProjectShareButton
                         projectId={project.id}
                         origin={origin}
@@ -571,99 +557,107 @@ export default async function DashboardPage() {
               );
             })}
           </DashboardStagger>
-        )}
-      </DashboardReveal>
-
-      <div className="mt-8 grid gap-4 sm:mt-10 lg:grid-cols-2">
-        <DashboardReveal className="border border-line bg-bg-raised/40 p-5" delay={0.18}>
-          <p className="font-mono text-[11px] tracking-widest text-accent uppercase">Agenda</p>
-          <div className="mt-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-            <div>
-              <div className="flex items-center justify-between">
-                <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
-                  Tareas pendientes
-                </p>
-                <Link href="/app/tareas" className="link-action">
-                  Ver todas →
-                </Link>
-              </div>
-              {pendingTasks.length === 0 ? (
-                <p className="mt-3 font-sans text-sm text-muted">Sin tareas pendientes.</p>
-              ) : (
-                <ul className="mt-2 space-y-1">
-                  {pendingTasks.map((task) => (
-                    <li key={task.id} className="flex items-center gap-2.5">
-                      <TaskCheck taskId={task.id} done={false} title={task.title} />
-                      <Link
-                        href={`/app/tareas/${task.id}`}
-                        className="min-w-0 flex-1 truncate py-1.5 font-mono text-xs hover:text-accent"
-                      >
-                        {task.title}
-                        {task.project && (
-                          <span className="text-muted"> — {task.project.name}</span>
-                        )}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between">
-                <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
-                  Próximos 14 días
-                </p>
-                <Link href="/app/calendario" className="link-action">
-                  Calendario →
-                </Link>
-              </div>
-              {upcomingEvents.length === 0 ? (
-                <p className="mt-3 font-sans text-sm text-muted">
-                  Sin eventos ni rodajes en los próximos 14 días.
-                </p>
-              ) : (
-                <ul className="mt-2 space-y-1">
-                  {upcomingEvents.map((event) => (
-                    <li key={event.id}>
-                      <Link
-                        href={event.href}
-                        className="group flex items-start gap-2 py-1.5 font-mono text-xs"
-                      >
-                        <span className="w-12 shrink-0 text-muted">
-                          {event.date
-                            .toLocaleDateString("es-ES", { day: "2-digit", month: "short" })
-                            .toUpperCase()}
-                        </span>
-                        <span className="group-hover:text-accent">
-                          <span className="text-muted">{event.typeLabel} · </span>
-                          {event.title}
-                          {event.projectName && (
-                            <span className="text-muted"> ({event.projectName})</span>
-                          )}
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
         </DashboardReveal>
+      )}
 
-        <DashboardReveal className="border border-line bg-bg-raised/40 p-5" delay={0.2}>
-          <p className="font-mono text-[11px] tracking-widest text-accent uppercase">
+      {/* La semana: tres columnas de filas sobre la mesa. */}
+      <DashboardReveal
+        className="mt-14 grid gap-x-12 gap-y-12 border-t border-line pt-10 md:grid-cols-2 xl:grid-cols-3"
+        delay={0.15}
+      >
+        <section aria-labelledby="home-tasks">
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 id="home-tasks" className={H2}>
+              Tareas pendientes
+            </h2>
+            <Link href="/app/tareas" className="link-action">
+              Ver todas →
+            </Link>
+          </div>
+          {pendingTasks.length === 0 ? (
+            <p className="mt-4 border-t border-line pt-4 font-sans text-sm text-muted">
+              Nada pendiente. Las tareas de todos tus proyectos aparecerán aquí.
+            </p>
+          ) : (
+            <ul className="mt-4 divide-y divide-line border-t border-line">
+              {pendingTasks.map((task) => (
+                <li key={task.id} className="flex items-center gap-3 py-2">
+                  <TaskCheck taskId={task.id} done={false} title={task.title} />
+                  <Link
+                    href={`/app/tareas/${task.id}`}
+                    className="min-w-0 flex-1 py-1 font-sans text-sm transition-colors hover:text-accent"
+                  >
+                    <span className="block truncate">{task.title}</span>
+                    {(task.project || task.dueDate) && (
+                      <span className="block truncate text-xs text-muted">
+                        {[
+                          task.project?.name,
+                          task.dueDate?.toLocaleDateString("es-ES", { day: "numeric", month: "short" }),
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </span>
+                    )}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section aria-labelledby="home-agenda">
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 id="home-agenda" className={H2}>
+              Próximos 14 días
+            </h2>
+            <Link href="/app/calendario" className="link-action">
+              Calendario →
+            </Link>
+          </div>
+          {upcomingEvents.length === 0 ? (
+            <p className="mt-4 border-t border-line pt-4 font-sans text-sm text-muted">
+              Sin rodajes, ensayos ni entregas en las próximas dos semanas.
+            </p>
+          ) : (
+            <ul className="mt-4 divide-y divide-line border-t border-line">
+              {upcomingEvents.map((event) => (
+                <li key={event.id}>
+                  <Link href={event.href} className="group flex items-start gap-4 py-3">
+                    <span className="w-10 shrink-0 text-center">
+                      <span className="block font-display text-lg leading-none font-black">
+                        {event.date.getDate()}
+                      </span>
+                      <span className="mt-0.5 block font-mono text-[10px] tracking-widest text-muted uppercase">
+                        {event.date.toLocaleDateString("es-ES", { month: "short" }).replace(".", "")}
+                      </span>
+                    </span>
+                    <span className="min-w-0 font-sans text-sm">
+                      <span className="block truncate transition-colors group-hover:text-accent">{event.title}</span>
+                      <span className="block truncate text-xs text-muted">
+                        {event.typeLabel}
+                        {event.projectName ? ` · ${event.projectName}` : ""}
+                      </span>
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section aria-labelledby="home-activity">
+          <h2 id="home-activity" className={H2}>
             Actividad reciente
-          </p>
+          </h2>
           {activity.length === 0 ? (
-            <p className="mt-4 font-sans text-sm text-muted">
+            <p className="mt-4 border-t border-line pt-4 font-sans text-sm text-muted">
               Aquí verás los cambios de tu equipo en cualquier proyecto.
             </p>
           ) : (
-            <ul className="mt-4 space-y-2.5">
+            <ul className="mt-4 divide-y divide-line border-t border-line">
               {activity.map((entry) => (
-                <li key={entry.id} className="font-mono text-xs text-muted">
-                  <span className="text-fg">
+                <li key={entry.id} className="py-3 font-sans text-sm leading-snug text-muted">
+                  <span className="font-semibold text-fg">
                     {entry.user?.fullName ?? entry.user?.email ?? "Alguien"}
                   </span>{" "}
                   {entry.summary} en{" "}
@@ -672,14 +666,14 @@ export default async function DashboardPage() {
                     className="text-fg underline decoration-line underline-offset-4 hover:decoration-accent"
                   >
                     {entry.project.name}
-                  </Link>{" "}
-                  · {relativeTime(entry.createdAt)}
+                  </Link>
+                  <span className="mt-0.5 block font-mono text-[11px]">{relativeTime(entry.createdAt)}</span>
                 </li>
               ))}
             </ul>
           )}
-        </DashboardReveal>
-      </div>
+        </section>
+      </DashboardReveal>
     </div>
   );
 }

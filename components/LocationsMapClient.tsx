@@ -8,13 +8,20 @@ const LocationsMap = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex h-[420px] w-full items-center justify-center border border-line">
-        <p className="font-mono text-xs text-muted">Cargando mapa…</p>
+      <div className="flex h-[360px] w-full items-center justify-center bg-fg/[0.04]">
+        <p className="font-mono text-[11px] tracking-widest text-muted uppercase">Cargando mapa…</p>
       </div>
     ),
   },
 );
 
-export function LocationsMapClient({ locations }: { locations: MapLocation[] }) {
-  return <LocationsMap locations={locations} />;
+export function LocationsMapClient({
+  locations,
+  className,
+}: {
+  locations: MapLocation[];
+  // Alto del mapa (por defecto 360px).
+  className?: string;
+}) {
+  return <LocationsMap locations={locations} className={className} />;
 }

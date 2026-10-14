@@ -15,7 +15,7 @@ function Item({ task }: { task: DeliveryTaskView }) {
   const done = task.status === "DONE";
 
   return (
-    <li className="flex items-center justify-between gap-3 border-b border-line py-3 last:border-b-0">
+    <li className="flex items-center justify-between gap-3 py-3.5">
       <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-3">
         <input
           type="checkbox"
@@ -28,10 +28,20 @@ function Item({ task }: { task: DeliveryTaskView }) {
           }}
           className="h-4 w-4 shrink-0 accent-[var(--color-accent)]"
         />
-        <span className={`truncate font-sans text-sm ${done ? "text-muted line-through" : "text-fg"}`}>{task.title}</span>
+        <span
+          className={`truncate font-sans text-[15px] ${done ? "text-muted line-through" : "text-fg"}`}
+        >
+          {task.title}
+        </span>
       </label>
       <form action={deleteTask.bind(null, task.id)}>
-        <DeleteButton confirmMessage="¿Quitar esto de la checklist?" className="link-action shrink-0" />
+        <DeleteButton
+          confirmMessage="¿Quitar esto de la checklist?"
+          aria-label={`Quitar «${task.title}» de la checklist`}
+          className="link-action shrink-0 px-1.5 hover:!text-danger"
+        >
+          ✕
+        </DeleteButton>
       </form>
     </li>
   );
@@ -40,16 +50,24 @@ function Item({ task }: { task: DeliveryTaskView }) {
 // Montaje → Entrega: lo típico que hace falta para entregar el proyecto (máster, subtítulos,
 // cartel…), como Tareas normales con category "Entrega" — se ven también en Tareas, sin duplicar
 // el sistema de pendientes.
-export function DeliveryChecklistPanel({ projectId, tasks }: { projectId: string; tasks: DeliveryTaskView[] }) {
+export function DeliveryChecklistPanel({
+  projectId,
+  tasks,
+}: {
+  projectId: string;
+  tasks: DeliveryTaskView[];
+}) {
   const [adding, setAdding] = useState(false);
   const done = tasks.filter((t) => t.status === "DONE").length;
 
   if (tasks.length === 0) {
     return (
       <div>
-        <p className="max-w-2xl font-sans text-sm text-muted">
-          Lo típico que hace falta para entregar el proyecto: el máster, la copia sin títulos, subtítulos, cartel y
-          demás. Te dejo preparada la lista de siempre; márcalos según los vayas teniendo, o añade los tuyos.
+        <p className="max-w-2xl font-sans text-[15px] leading-relaxed text-muted">
+          Lo típico que hace falta para entregar el proyecto: el máster, la
+          copia sin títulos, subtítulos, cartel y demás. Te dejo preparada la
+          lista de siempre; márcalos según los vayas teniendo, o añade los
+          tuyos.
         </p>
         <div className="mt-5">
           <ActionButtonForm
@@ -65,40 +83,80 @@ export function DeliveryChecklistPanel({ projectId, tasks }: { projectId: string
   }
 
   return (
-    <div>
-      <p className="font-mono text-[11px] tracking-widest text-accent uppercase">
-        {done}/{tasks.length} listos
-      </p>
-      <ul className="mt-3 border-t border-line">
-        {tasks.map((task) => (
-          <Item key={task.id} task={task} />
-        ))}
-      </ul>
+    <div className="max-w-3xl">
+      {/* Progreso como cifra y barra, sin caja. */}
+      <div className="flex items-end gap-6">
+        <p className="font-display text-3xl leading-none font-black tabular-nums">
+          {done}
+          <span className="text-muted">/{tasks.length}</span>
+        </p>
+        <div className="flex-1 pb-1">
+          <p className="eyebrow">
+            {done === tasks.length
+              ? "Todo listo para entregar"
+              : "Listos para entregar"}
+          </p>
+          <div className="mt-2 h-1 overflow-hidden rounded-full bg-line">
+            <div
+              className="h-full bg-success"
+              style={{ width: `${Math.round((done / tasks.length) * 100)}%` }}
+            />
+          </div>
+        </div>
+      </div>
 
-      <button type="button" onClick={() => setAdding((v) => !v)} className="link-action mt-4">
-        {adding ? "− Cancelar" : "+ Añadir algo más"}
-      </button>
-      {adding && (
-        <form
-          action={(fd) => {
-            createTask(fd);
-            setAdding(false);
-          }}
-          className="mt-3 flex max-w-md items-end gap-2"
-        >
-          <input type="hidden" name="projectId" value={projectId} />
-          <input type="hidden" name="category" value={DELIVERY_CATEGORY} />
-          <input
-            name="title"
-            required
-            placeholder="Ej. Versión para redes sociales"
-            className="field w-full px-3 py-2 text-sm"
-          />
-          <SubmitButton pendingLabel="Añadiendo…" className="btn btn-secondary shrink-0">
-            Añadir
-          </SubmitButton>
-        </form>
-      )}
+      <div className="sheet mt-6 px-5 sm:px-8">
+        <ul className="divide-y divide-line">
+          {tasks.map((task) => (
+            <Item key={task.id} task={task} />
+          ))}
+        </ul>
+        <div className="border-t border-line py-3">
+          {adding ? (
+            <form
+              action={(fd) => {
+                createTask(fd);
+                setAdding(false);
+              }}
+              className="flex items-end gap-3"
+            >
+              <input type="hidden" name="projectId" value={projectId} />
+              <input type="hidden" name="category" value={DELIVERY_CATEGORY} />
+              <label className="min-w-0 flex-1">
+                <span className="sr-only">Qué más hace falta entregar</span>
+                <input
+                  name="title"
+                  required
+                  autoFocus
+                  placeholder="Ej. Versión para redes sociales"
+                  className="field-line mt-0"
+                />
+              </label>
+              <SubmitButton
+                pendingLabel="Añadiendo…"
+                className="btn btn-secondary btn-sm shrink-0"
+              >
+                Añadir
+              </SubmitButton>
+              <button
+                type="button"
+                onClick={() => setAdding(false)}
+                className="link-action shrink-0"
+              >
+                Cancelar
+              </button>
+            </form>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setAdding(true)}
+              className="link-action hover:!text-accent"
+            >
+              + Añadir algo más
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

@@ -20,24 +20,26 @@ function relativeTime(date: Date): string {
   return date.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
 }
 
-// Función 2 (plan Free, sin restricciones): bloque compacto, no una
-// página aparte — solo las últimas entradas, sin paginación ni filtros.
+// Función 2 (plan Free, sin restricciones): solo las últimas entradas, sin paginación ni filtros.
+// Filas sobre el papel: quién y qué a la izquierda, cuándo a la derecha.
 export function ActivityFeed({ entries }: { entries: ActivityEntry[] }) {
   if (entries.length === 0) return null;
 
   return (
-    <div className="mt-6 border border-line p-4">
-      <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
-        Actividad reciente
-      </p>
-      <div className="mt-3 space-y-2">
+    <section aria-labelledby="activity-title">
+      <h2 id="activity-title" className="font-display text-xl font-black tracking-tight">
+        Actividad
+      </h2>
+      <ul className="mt-4 divide-y divide-line border-y border-line">
         {entries.map((entry) => (
-          <p key={entry.id} className="font-mono text-xs text-muted">
-            <span className="text-fg">{entry.userName ?? "Alguien"}</span> {entry.summary} ·{" "}
-            {relativeTime(entry.createdAt)}
-          </p>
+          <li key={entry.id} className="flex items-baseline justify-between gap-4 py-3">
+            <p className="min-w-0 font-sans text-sm leading-snug text-muted">
+              <span className="font-semibold text-fg">{entry.userName ?? "Alguien"}</span> {entry.summary}
+            </p>
+            <span className="shrink-0 font-mono text-[11px] text-muted">{relativeTime(entry.createdAt)}</span>
+          </li>
         ))}
-      </div>
-    </div>
+      </ul>
+    </section>
   );
 }

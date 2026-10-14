@@ -11,7 +11,8 @@ import {
 import { PersonAvailabilityStatus } from "@/lib/generated/prisma";
 import { PageHeader } from "@/components/PageHeader";
 import { SubmitButton } from "@/components/SubmitButton";
-import { SectionTabs } from "@/components/SectionTabs";
+
+const LABEL = "font-mono text-[10px] tracking-[0.18em] text-muted uppercase";
 
 const STATUS_LABELS: Record<PersonAvailabilityStatus, string> = {
   AVAILABLE: "Disponible",
@@ -20,13 +21,10 @@ const STATUS_LABELS: Record<PersonAvailabilityStatus, string> = {
 
 export default async function PersonDetailPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ personId: string }>;
-  searchParams: Promise<{ tab?: string }>;
 }) {
   const { personId } = await params;
-  const { tab } = await searchParams;
 
   const profile = await getCurrentProfile();
   if (!profile) return null;
@@ -55,276 +53,219 @@ export default async function PersonDetailPage({
   const uploadPhotoAction = uploadPersonPhoto.bind(null, personId);
   const availabilityAction = setPersonAvailability.bind(null, personId);
 
+  const fullName = `${person.firstName} ${person.lastName ?? ""}`.trim();
+  const projectCount = actorRoles.length + crewRoles.length;
+  const fields: {
+    name: string;
+    label: string;
+    value: string;
+    wide?: boolean;
+    type?: string;
+    placeholder?: string;
+  }[] = [
+    { name: "firstName", label: "Nombre", value: person.firstName },
+    { name: "lastName", label: "Apellidos", value: person.lastName ?? "" },
+    { name: "primaryRole", label: "Rol principal", value: person.primaryRole ?? "" },
+    { name: "rate", label: "Tarifa (€ / día)", value: person.rate?.toString() ?? "", type: "number" },
+    {
+      name: "otherRoles",
+      label: "Otros roles",
+      value: person.otherRoles.join(", "),
+      wide: true,
+      placeholder: "Separados por comas: operadora de cámara, foquista…",
+    },
+    { name: "email", label: "Email", value: person.email ?? "" },
+    { name: "phone", label: "Teléfono", value: person.phone ?? "" },
+    { name: "address", label: "Dirección", value: person.address ?? "", wide: true },
+  ];
+
   return (
-    <div>
+    <div className="pb-16">
       <PageHeader
         backHref="/app/equipo"
         backLabel="← Equipo"
-        eyebrow="Recursos"
-        title={`${person.firstName} ${person.lastName ?? ""}`.trim()}
+        eyebrow="Equipo"
+        title={fullName}
+        description={
+          [person.primaryRole, projectCount > 0 ? `${projectCount} ${projectCount === 1 ? "proyecto" : "proyectos"}` : null]
+            .filter(Boolean)
+            .join(" · ") || undefined
+        }
       />
 
-      <div className="mt-8">
-        <SectionTabs
-          ariaLabel="Secciones de la ficha"
-          initial={tab}
-          tabs={[
-            {
-              id: "datos",
-              label: "Datos",
-              content: (
-                <div>
-                        <form
-                          action={uploadPhotoAction}
-                          className="mt-6 flex flex-wrap items-center gap-4"
-                        >
-                          {person.photoUrl && (
-                            <Image
-                              src={person.photoUrl}
-                              alt=""
-                              width={64}
-                              height={64}
-                              unoptimized
-                              className="h-16 w-16 rounded-full object-cover"
-                            />
-                          )}
-                          <input
-                            type="file"
-                            name="photo"
-                            accept="image/*"
-                            required
-                            className="font-mono text-xs text-muted"
-                          />
-                          <SubmitButton
-                            pendingLabel="Subiendo…"
-                            savedLabel="✓ Subida"
-                            className="btn btn-secondary btn-sm"
-                          >
-                            Subir foto
-                          </SubmitButton>
-                        </form>
+      <div className="mt-12 grid gap-x-16 gap-y-14 lg:grid-cols-[minmax(0,1fr)_320px]">
+        {/* ------------------------------------------------ ficha */}
+        <section aria-labelledby="ficha">
+          <h2 id="ficha" className="border-b border-line pb-3 font-display text-xl font-black tracking-tight uppercase">
+            Ficha
+          </h2>
+          <form action={updateAction} className="mt-6 grid gap-x-8 gap-y-6 sm:grid-cols-2">
+            {fields.map((field) => (
+              <label key={field.name} className={`block ${field.wide ? "sm:col-span-2" : ""}`}>
+                <span className={LABEL}>{field.label}</span>
+                <input
+                  name={field.name}
+                  type={field.type}
+                  step={field.type === "number" ? "0.01" : undefined}
+                  required={field.name === "firstName"}
+                  defaultValue={field.value}
+                  placeholder={field.placeholder}
+                  className="field-line"
+                />
+              </label>
+            ))}
+            <label className="block sm:col-span-2">
+              <span className={LABEL}>Notas</span>
+              <textarea
+                name="notes"
+                defaultValue={person.notes ?? ""}
+                rows={3}
+                placeholder="Alergias, talla de vestuario, con quién suele trabajar…"
+                className="field mt-2 w-full leading-relaxed"
+              />
+            </label>
+            <div className="sm:col-span-2">
+              <SubmitButton pendingLabel="Guardando…" savedLabel="✓ Guardado" className="btn btn-primary">
+                Guardar ficha
+              </SubmitButton>
+            </div>
+          </form>
+        </section>
 
-                        <form
-                          action={updateAction}
-                          className="mt-8 grid gap-4 border border-line p-5 sm:grid-cols-2 lg:grid-cols-3"
-                        >
-                          <label className="flex flex-col gap-1">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-                              Nombre
-                            </span>
-                            <input
-                              name="firstName"
-                              defaultValue={person.firstName}
-                              required
-                              className="field px-3 py-2 text-sm"
-                            />
-                          </label>
-                          <label className="flex flex-col gap-1">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-                              Apellidos
-                            </span>
-                            <input
-                              name="lastName"
-                              defaultValue={person.lastName ?? ""}
-                              className="field px-3 py-2 text-sm"
-                            />
-                          </label>
-                          <label className="flex flex-col gap-1">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-                              Rol principal
-                            </span>
-                            <input
-                              name="primaryRole"
-                              defaultValue={person.primaryRole ?? ""}
-                              className="field px-3 py-2 text-sm"
-                            />
-                          </label>
-                          <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-3">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-                              Otros roles (separados por comas)
-                            </span>
-                            <input
-                              name="otherRoles"
-                              defaultValue={person.otherRoles.join(", ")}
-                              className="field px-3 py-2 text-sm"
-                            />
-                          </label>
-                          <label className="flex flex-col gap-1">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-                              Email
-                            </span>
-                            <input
-                              name="email"
-                              defaultValue={person.email ?? ""}
-                              className="field px-3 py-2 text-sm"
-                            />
-                          </label>
-                          <label className="flex flex-col gap-1">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-                              Teléfono
-                            </span>
-                            <input
-                              name="phone"
-                              defaultValue={person.phone ?? ""}
-                              className="field px-3 py-2 text-sm"
-                            />
-                          </label>
-                          <label className="flex flex-col gap-1">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-                              Tarifa
-                            </span>
-                            <input
-                              name="rate"
-                              type="number"
-                              step="0.01"
-                              defaultValue={person.rate?.toString() ?? ""}
-                              className="field px-3 py-2 text-sm"
-                            />
-                          </label>
-                          <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-3">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-                              Dirección
-                            </span>
-                            <input
-                              name="address"
-                              defaultValue={person.address ?? ""}
-                              className="field px-3 py-2 text-sm"
-                            />
-                          </label>
-                          <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-3">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-                              Notas
-                            </span>
-                            <textarea
-                              name="notes"
-                              defaultValue={person.notes ?? ""}
-                              rows={2}
-                              className="field px-3 py-2 text-sm"
-                            />
-                          </label>
-                          <div>
-                            <SubmitButton
-                              pendingLabel="Guardando…"
-                              savedLabel="✓ Guardado"
-                              className="btn btn-secondary"
-                            >
-                              Guardar
-                            </SubmitButton>
-                          </div>
-                        </form>
-                </div>
-              ),
-            },
-            {
-              id: "proyectos",
-              label: "Proyectos",
-              count: actorRoles.length + crewRoles.length,
-              content: (
-                <div>
-                          {actorRoles.length === 0 && crewRoles.length === 0 ? (
-                            <p className="mt-3 font-mono text-sm text-muted">
-                              Todavía no está vinculada/o a ningún proyecto.
-                            </p>
-                          ) : (
-                            <ul className="mt-3 space-y-1.5">
-                              {actorRoles.map((actor) => (
-                                <li key={actor.id} className="font-mono text-sm">
-                                  {actor.project.name}{" "}
-                                  <span className="text-muted">— Actor/Actriz</span>
-                                </li>
-                              ))}
-                              {crewRoles.map((crew) => (
-                                <li key={crew.id} className="font-mono text-sm">
-                                  {crew.project.name}{" "}
-                                  <span className="text-muted">
-                                    — Equipo técnico{crew.role ? ` (${crew.role})` : ""}
-                                  </span>
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                </div>
-              ),
-            },
-            {
-              id: "disponibilidad",
-              label: "Disponibilidad",
-              count: availability.length,
-              content: (
-                <div>
-                          <form
-                            action={availabilityAction}
-                            className="mt-4 flex flex-wrap items-center gap-2"
-                          >
-                            <input
-                              type="date"
-                              name="date"
-                              required
-                              className="field px-3 py-2 text-sm"
-                            />
-                            <select
-                              name="status"
-                              defaultValue="UNAVAILABLE"
-                              className="field px-3 py-2 text-sm"
-                            >
-                              {Object.values(PersonAvailabilityStatus).map((value) => (
-                                <option key={value} value={value} className="bg-bg">
-                                  {STATUS_LABELS[value]}
-                                </option>
-                              ))}
-                            </select>
-                            <input
-                              name="note"
-                              placeholder="Nota"
-                              className="field px-3 py-2 text-sm"
-                            />
-                            <SubmitButton
-                              pendingLabel="Guardando…"
-                              savedLabel="✓ Guardado"
-                              className="btn btn-secondary btn-sm"
-                            >
-                              Guardar día
-                            </SubmitButton>
-                          </form>
+        <aside className="space-y-12">
+          {/* ------------------------------------------------ foto */}
+          <section aria-labelledby="foto">
+            <h2 id="foto" className={LABEL}>
+              Foto
+            </h2>
+            <form action={uploadPhotoAction} className="mt-3 flex items-center gap-4">
+              {person.photoUrl ? (
+                <Image
+                  src={person.photoUrl}
+                  alt={`Foto de ${fullName}`}
+                  width={72}
+                  height={72}
+                  unoptimized
+                  className="h-[72px] w-[72px] shrink-0 rounded-full object-cover"
+                />
+              ) : (
+                <span
+                  aria-hidden
+                  className="grid h-[72px] w-[72px] shrink-0 place-items-center rounded-full bg-fg/[0.07] font-display text-xl font-black text-muted"
+                >
+                  {`${person.firstName.charAt(0)}${person.lastName?.charAt(0) ?? ""}`.toUpperCase()}
+                </span>
+              )}
+              <div className="min-w-0 space-y-2">
+                <label className="block">
+                  <span className="sr-only">Elegir foto</span>
+                  <input
+                    type="file"
+                    name="photo"
+                    accept="image/*"
+                    required
+                    className="w-full font-sans text-[13px] text-muted file:mr-3 file:cursor-pointer file:rounded-full file:border-0 file:bg-fg/[0.07] file:px-3 file:py-1.5 file:font-mono file:text-[11px] file:tracking-widest file:text-fg file:uppercase"
+                  />
+                </label>
+                <SubmitButton pendingLabel="Subiendo…" savedLabel="✓ Subida" className="link-action text-fg">
+                  {person.photoUrl ? "Cambiar foto" : "Subir foto"}
+                </SubmitButton>
+              </div>
+            </form>
+          </section>
 
-                          {availability.length > 0 && (
-                            <div className="mt-6 border-t border-line">
-                              {availability.map((entry) => (
-                                <div
-                                  key={entry.id}
-                                  className="flex items-center justify-between gap-4 border-b border-line py-2.5"
-                                >
-                                  <span className="font-mono text-sm">
-                                    {entry.date.toLocaleDateString("es-ES")} —{" "}
-                                    <span
-                                      className={
-                                        entry.status === "UNAVAILABLE" ? "text-accent" : ""
-                                      }
-                                    >
-                                      {STATUS_LABELS[entry.status]}
-                                    </span>
-                                    {entry.note ? ` · ${entry.note}` : ""}
-                                  </span>
-                                  <form
-                                    action={deletePersonAvailability.bind(null, personId, entry.id)}
-                                  >
-                                    <DeleteButton
-                                      confirmMessage="¿Eliminar esta entrada de disponibilidad?"
-                                      className="link-action"
-                                    />
-                                  </form>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                </div>
-              ),
-            },
-          ]}
-        />
+          {/* ------------------------------------------------ proyectos */}
+          <section aria-labelledby="proyectos">
+            <h2 id="proyectos" className={`${LABEL} border-b border-line pb-2`}>
+              En proyectos
+            </h2>
+            {projectCount === 0 ? (
+              <p className="py-3 font-sans text-sm leading-relaxed text-muted">
+                Todavía en ningún proyecto. Se le asigna desde Personajes (como actor) o Desglose (equipo técnico).
+              </p>
+            ) : (
+              <ul className="divide-y divide-line">
+                {actorRoles.map((actor) => (
+                  <li key={actor.id} className="py-2.5">
+                    <p className="font-sans text-[15px]">{actor.project.name}</p>
+                    <p className="font-sans text-[13px] text-muted">Actor / actriz</p>
+                  </li>
+                ))}
+                {crewRoles.map((crew) => (
+                  <li key={crew.id} className="py-2.5">
+                    <p className="font-sans text-[15px]">{crew.project.name}</p>
+                    <p className="font-sans text-[13px] text-muted">
+                      Equipo técnico{crew.role ? ` · ${crew.role}` : ""}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          {/* ------------------------------------------------ disponibilidad */}
+          <section aria-labelledby="disponibilidad">
+            <h2 id="disponibilidad" className={`${LABEL} border-b border-line pb-2`}>
+              Disponibilidad
+            </h2>
+            {availability.length > 0 && (
+              <ul className="divide-y divide-line">
+                {availability.map((entry) => (
+                  <li key={entry.id} className="flex items-center justify-between gap-3 py-2.5">
+                    <span className="min-w-0">
+                      <span className="flex items-center gap-2 font-sans text-[15px]">
+                        <span
+                          aria-hidden
+                          className={`h-2 w-2 shrink-0 rounded-full ${
+                            entry.status === "UNAVAILABLE" ? "bg-danger" : "bg-success"
+                          }`}
+                        />
+                        {entry.date.toLocaleDateString("es-ES", { weekday: "short", day: "numeric", month: "short" })}
+                        <span className={entry.status === "UNAVAILABLE" ? "text-danger" : "text-success"}>
+                          {STATUS_LABELS[entry.status]}
+                        </span>
+                      </span>
+                      {entry.note && <span className="block truncate pl-4 font-sans text-[13px] text-muted">{entry.note}</span>}
+                    </span>
+                    <form action={deletePersonAvailability.bind(null, personId, entry.id)}>
+                      <DeleteButton confirmMessage="¿Eliminar esta entrada de disponibilidad?" className="link-action">
+                        Quitar
+                      </DeleteButton>
+                    </form>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <form action={availabilityAction} className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-line pt-4">
+              <label className="block">
+                <span className={LABEL}>Día</span>
+                <input type="date" name="date" required className="field-line" />
+              </label>
+              <label className="block">
+                <span className={LABEL}>Estado</span>
+                <select name="status" defaultValue="UNAVAILABLE" className="field-line">
+                  {Object.values(PersonAvailabilityStatus).map((value) => (
+                    <option key={value} value={value}>
+                      {STATUS_LABELS[value]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="col-span-2 block">
+                <span className={LABEL}>Nota</span>
+                <input name="note" placeholder="Opcional: otro rodaje, viaje…" className="field-line" />
+              </label>
+              <div className="col-span-2">
+                <SubmitButton pendingLabel="Guardando…" savedLabel="✓ Guardado" className="btn btn-outline btn-sm">
+                  Marcar el día
+                </SubmitButton>
+              </div>
+            </form>
+          </section>
+        </aside>
       </div>
 
-      <form action={deletePerson.bind(null, personId)} className="mt-10">
+      <form action={deletePerson.bind(null, personId)} className="mt-16 border-t border-line pt-4">
         <DeleteButton
           confirmMessage="¿Eliminar a esta persona del directorio? No se puede deshacer."
           className="link-action"

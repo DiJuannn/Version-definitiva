@@ -4,6 +4,7 @@ import { createContext, useContext } from "react";
 import Link from "next/link";
 import { Handle, NodeResizer, Position, type Node, type NodeProps } from "@xyflow/react";
 import { useMap } from "@/components/project-map/mapContext";
+import { inkColor, inkTint } from "@/components/project-map/board-utils";
 import { MAP_COLORS, MAP_ENTITY_LABELS, NOTE_COLORS, type MapItem } from "@/lib/project-map-types";
 
 // Elementos de la pizarra: nota, texto, imagen, forma, sección y cosas del proyecto (escenas,
@@ -26,7 +27,7 @@ function useItems(): ItemContext {
   return ctx;
 }
 
-const FIELD = "nodrag nowheel w-full bg-transparent outline-none placeholder:opacity-50 focus:bg-white/5";
+const FIELD = "nodrag nowheel w-full bg-transparent outline-none placeholder:opacity-50 focus:bg-fg/5";
 const LABEL = "font-mono text-[9px] tracking-widest uppercase";
 
 // Cuatro puntos de unión (arriba, derecha, abajo, izquierda). Se ven al pasar el
@@ -82,7 +83,7 @@ function Frame({
           type="button"
           onClick={() => remove(id)}
           aria-label="Quitar elemento"
-          className="nodrag absolute top-1 right-1 z-10 hidden h-5 w-5 items-center justify-center rounded-full bg-black/60 text-xs leading-none text-white hover:bg-danger group-hover:flex focus-visible:flex"
+          className="nodrag absolute top-1 right-1 z-10 hidden h-5 w-5 items-center justify-center rounded-full bg-fg/70 text-xs leading-none text-bg hover:bg-danger group-hover:flex focus-visible:flex"
         >
           ×
         </button>
@@ -97,7 +98,7 @@ function Frame({
 function Note({ id, item, selected }: { id: string; item: MapItem; selected: boolean }) {
   const { update, readOnly } = useItems();
   return (
-    <Frame id={id} selected={selected} minW={100} minH={70} className="shadow-lg" style={{ background: item.color ?? NOTE_COLORS[0], color: "#1a1a1a" }}>
+    <Frame id={id} selected={selected} minW={100} minH={70} className="shadow-[0_1px_2px_rgba(23,23,27,0.12),0_6px_16px_-8px_rgba(23,23,27,0.3)]" style={{ background: item.color ?? NOTE_COLORS[0], color: "#1a1a1a" }}>
       <div className="flex h-full flex-col p-3">
         <textarea
           value={item.text ?? ""}
@@ -117,7 +118,7 @@ function Note({ id, item, selected }: { id: string; item: MapItem; selected: boo
                 aria-label={`Color ${c}`}
                 aria-pressed={item.color === c}
                 onClick={() => update(id, { color: c })}
-                className={`h-4 w-4 rounded-full border ${item.color === c ? "border-black" : "border-black/20"}`}
+                className={`h-4 w-4 rounded-full border ${item.color === c ? "border-[#1a1a1a]" : "border-[#1a1a1a]/20"}`}
                 style={{ background: c }}
               />
             ))}
@@ -146,7 +147,7 @@ function TextBlock({ id, item, selected }: { id: string; item: MapItem; selected
         maxLength={1000}
         aria-label="Texto"
         className={`${FIELD} h-full resize-none px-1 font-display leading-tight ${TEXT_SIZE[item.size ?? "m"]}`}
-        style={{ color: item.color ?? MAP_COLORS[6] }}
+        style={{ color: inkColor(item.color ?? MAP_COLORS[6]) }}
       />
     </Frame>
   );
@@ -155,7 +156,7 @@ function TextBlock({ id, item, selected }: { id: string; item: MapItem; selected
 function ImageItemView({ id, item, selected }: { id: string; item: MapItem; selected: boolean }) {
   const { update, readOnly } = useItems();
   return (
-    <Frame id={id} selected={selected} minW={80} minH={70} className="border border-line bg-bg-raised">
+    <Frame id={id} selected={selected} minW={80} minH={70} className="rounded-md border border-line bg-bg-raised">
       <div className="flex h-full flex-col">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -193,7 +194,7 @@ function ShapeItemView({ id, item, selected }: { id: string; item: MapItem; sele
       selected={selected}
       minW={60}
       minH={40}
-      style={{ background: `${color}33`, border: `2px solid ${color}`, borderRadius: SHAPE_RADIUS[item.shape ?? "rect"] }}
+      style={{ background: inkTint(color, 0.2), border: `2px solid ${inkColor(color)}`, borderRadius: SHAPE_RADIUS[item.shape ?? "rect"] }}
     >
       <div className="flex h-full items-center justify-center px-3">
         <input
@@ -214,7 +215,7 @@ function SectionItemView({ id, item, selected }: { id: string; item: MapItem; se
   const { update, readOnly } = useItems();
   const color = item.color ?? MAP_COLORS[5];
   return (
-    <Frame id={id} selected={selected} minW={160} minH={100} handles={false} style={{ background: `${color}14`, border: `2px dashed ${color}88` }}>
+    <Frame id={id} selected={selected} minW={160} minH={100} handles={false} style={{ background: inkTint(color, 0.08), border: `2px dashed ${inkTint(color, 0.53)}` }}>
       <input
         value={item.title ?? ""}
         readOnly={readOnly}
@@ -223,7 +224,7 @@ function SectionItemView({ id, item, selected }: { id: string; item: MapItem; se
         maxLength={120}
         aria-label="Título de la sección"
         className={`${FIELD} px-3 py-2 font-mono text-xs tracking-widest uppercase`}
-        style={{ color }}
+        style={{ color: inkColor(color) }}
       />
     </Frame>
   );
@@ -239,7 +240,7 @@ function EntityCard({ id, item, selected }: { id: string; item: MapItem; selecte
   const heading = MAP_ENTITY_LABELS[kind].one;
 
   return (
-    <Frame id={id} selected={selected} minW={160} minH={80} className="border border-accent/50 bg-bg-raised">
+    <Frame id={id} selected={selected} minW={160} minH={80} className="rounded-md border border-accent/40 bg-bg-raised">
       <div className="flex h-full flex-col gap-1 p-3">
         <p className={`${LABEL} text-accent`}>{heading} · del proyecto</p>
         {e ? (

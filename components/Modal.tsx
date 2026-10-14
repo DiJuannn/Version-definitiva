@@ -14,6 +14,7 @@ export function Modal({
   title,
   description,
   tone = "default",
+  size = "sm",
   children,
 }: {
   open: boolean;
@@ -21,6 +22,8 @@ export function Modal({
   title: string;
   description?: string;
   tone?: "default" | "danger";
+  // Ancho del diálogo: "sm" para confirmaciones, "lg" para formularios largos.
+  size?: "sm" | "md" | "lg";
   children: ReactNode;
 }) {
   const titleId = useId();
@@ -79,7 +82,9 @@ export function Modal({
         aria-labelledby={titleId}
         aria-describedby={description ? descId : undefined}
         tabIndex={-1}
-        className={`sheet w-full max-w-sm p-6 outline-none ${
+        className={`paper max-h-[calc(100dvh-2rem)] w-full overflow-y-auto p-6 outline-none ${
+          size === "lg" ? "max-w-2xl" : size === "md" ? "max-w-lg" : "max-w-sm"
+        } ${
           tone === "danger" ? "border-t-4 border-danger" : ""
         }`}
       >

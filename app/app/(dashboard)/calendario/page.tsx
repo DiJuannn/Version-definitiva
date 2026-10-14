@@ -7,7 +7,7 @@ import { ChipOption } from "@/components/ChipOption";
 import { SubmitButton } from "@/components/SubmitButton";
 import { PageHeader } from "@/components/PageHeader";
 import { FormField } from "@/components/FormField";
-import { LinkPendingHint } from "@/components/LinkPendingHint";
+import { CreateDialog, DialogCancel } from "@/components/CreateDialog";
 import { CalendarEventType } from "@/lib/generated/prisma";
 
 const EVENT_TYPE_LABELS: Record<CalendarEventType, string> = {
@@ -78,6 +78,16 @@ const EVENT_TYPE_ICON: Record<CalendarEventType, (props: IconProps) => React.JSX
   OTHER: OtherEventIcon,
 };
 
+// Color de cada tipo (siempre de los tokens): el rodaje es lo que manda en
+// el mes y va relleno; el resto son puntos de color con su icono.
+const EVENT_TYPE_TONE: Record<CalendarEventType, string> = {
+  REHEARSAL: "text-accent",
+  MEETING: "text-fg",
+  DEADLINE: "text-danger",
+  DELIVERY: "text-success",
+  OTHER: "text-muted",
+};
+
 const WEEKDAYS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
 function parseMonthParam(month: string | undefined): Date {
@@ -137,6 +147,9 @@ export default async function CalendarioPage({
       date: event.date,
       Icon: EVENT_TYPE_ICON[event.type],
       label: event.title,
+      kind: EVENT_TYPE_LABELS[event.type],
+      tone: EVENT_TYPE_TONE[event.type],
+      project: event.project?.name ?? null,
       href: null as string | null,
       deletableId: event.id,
     })),
@@ -144,7 +157,10 @@ export default async function CalendarioPage({
       id: `day-${day.id}`,
       date: day.date,
       Icon: ShootingDayIcon,
-      label: `Rodaje — ${day.project.name}`,
+      label: day.project.name,
+      kind: "Rodaje",
+      tone: "text-accent",
+      project: null as string | null,
       href: `/app/${day.projectId}/plan-de-rodaje/${day.id}`,
       deletableId: null as string | null,
     })),
@@ -180,218 +196,246 @@ export default async function CalendarioPage({
     .map((day) => ({ day, entries: dayEntries.filter((entry) => sameDay(entry.date, day)) }))
     .filter((d) => d.entries.length > 0);
 
+  const monthName = monthStart.toLocaleDateString("es-ES", { month: "long" });
+  const sortedAgenda = agendaDays.map(({ day, entries }) => ({
+    day,
+    // Rodajes primero dentro del día.
+    entries: [...entries].sort((a, b) => Number(Boolean(b.href)) - Number(Boolean(a.href))),
+  }));
+
   return (
-    <div>
+    <div className="pb-16">
       <PageHeader
-        eyebrow="Organización"
+        eyebrow="Calendario"
         title={monthStart.toLocaleDateString("es-ES", { month: "long", year: "numeric" })}
-        description="Rodajes de todos tus proyectos y los eventos de la productora."
+        description="Los días de rodaje de todos tus proyectos y los eventos de la productora: ensayos, reuniones, entregas y fechas límite."
         actions={
-          <div className="flex items-center gap-1">
-            <Link
-              href={`/app/calendario?month=${toMonthParam(prevMonth)}`}
-              aria-label="Mes anterior"
-              className="btn btn-outline btn-sm"
+          <>
+            <nav aria-label="Cambiar de mes" className="inline-flex items-center rounded-full bg-fg/[0.06] p-1">
+              <Link
+                href={`/app/calendario?month=${toMonthParam(prevMonth)}`}
+                aria-label="Mes anterior"
+                className="grid h-8 w-8 place-items-center rounded-full text-muted transition-colors hover:bg-bg-raised hover:text-fg"
+              >
+                ←
+              </Link>
+              <Link
+                href="/app/calendario"
+                className="rounded-full px-3 py-1.5 font-mono text-[11px] tracking-widest text-muted uppercase transition-colors hover:bg-bg-raised hover:text-fg"
+              >
+                Hoy
+              </Link>
+              <Link
+                href={`/app/calendario?month=${toMonthParam(nextMonth)}`}
+                aria-label="Mes siguiente"
+                className="grid h-8 w-8 place-items-center rounded-full text-muted transition-colors hover:bg-bg-raised hover:text-fg"
+              >
+                →
+              </Link>
+            </nav>
+            <CreateDialog
+              label="Añadir evento"
+              title="Nuevo evento"
+              description="Los días de rodaje no se añaden aquí: salen solos del Plan de rodaje de cada proyecto."
             >
-              ←
-            </Link>
-            <Link href="/app/calendario" className="btn btn-outline btn-sm">
-              Hoy
-            </Link>
-            <Link
-              href={`/app/calendario?month=${toMonthParam(nextMonth)}`}
-              aria-label="Mes siguiente"
-              className="btn btn-outline btn-sm"
-            >
-              →
-            </Link>
-          </div>
+              <form action={createCalendarEvent} className="grid gap-4">
+                <FormField label="Qué es">
+                  <input name="title" required placeholder="Ej.: ensayo con el reparto" className="field w-full" />
+                </FormField>
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField label="Fecha">
+                    <input type="date" name="date" required className="field w-full" />
+                  </FormField>
+                  <FormField label="Proyecto">
+                    <select name="projectId" defaultValue="" className="field w-full">
+                      <option value="">Sin proyecto</option>
+                      {projects.map((project) => (
+                        <option key={project.id} value={project.id}>
+                          {project.name}
+                        </option>
+                      ))}
+                    </select>
+                  </FormField>
+                </div>
+                <fieldset>
+                  <legend className="font-mono text-[10px] tracking-widest text-muted uppercase">Tipo</legend>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {Object.values(CalendarEventType).map((value) => (
+                      <ChipOption
+                        key={value}
+                        type="radio"
+                        name="type"
+                        value={value}
+                        label={EVENT_TYPE_LABELS[value]}
+                        defaultChecked={value === "OTHER"}
+                      />
+                    ))}
+                  </div>
+                </fieldset>
+                <div className="mt-1 flex items-center gap-4">
+                  <SubmitButton pendingLabel="Añadiendo…" savedLabel="✓ Añadido" className="btn btn-primary">
+                    Añadir al calendario
+                  </SubmitButton>
+                  <DialogCancel />
+                </div>
+              </form>
+            </CreateDialog>
+          </>
         }
       />
 
-      {/* Móvil: agenda por días (la rejilla de 7 columnas no cabe). */}
-      <div className="mt-6 md:hidden">
-        {agendaDays.length === 0 ? (
-          <p className="font-sans text-sm text-muted">Nada este mes. Añade un evento abajo.</p>
-        ) : (
-          <div className="border-t border-line">
-            {agendaDays.map(({ day, entries }) => (
-              <div key={day.toISOString()} className="flex gap-4 border-b border-line py-3">
-                <div className="w-12 shrink-0 text-center">
-                  <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
-                    {day.toLocaleDateString("es-ES", { weekday: "short" })}
-                  </p>
-                  <p
-                    className={`font-display text-2xl leading-none font-black ${
-                      sameDay(day, today) ? "text-accent" : ""
-                    }`}
-                  >
-                    {day.getDate()}
-                  </p>
-                </div>
-                <div className="min-w-0 flex-1 space-y-1.5">
-                  {entries.map((entry) =>
+      {/* Resumen del mes y leyenda, en una línea. */}
+      <div className="mt-10 flex flex-wrap items-baseline justify-between gap-x-8 gap-y-3">
+        <p className="flex flex-wrap items-baseline gap-x-6 gap-y-1 font-sans text-sm text-muted">
+          <span>
+            <span className="font-display text-2xl font-black text-fg tabular-nums">{shootingDays.length}</span>{" "}
+            {shootingDays.length === 1 ? "día de rodaje" : "días de rodaje"}
+          </span>
+          <span>
+            <span className="font-display text-2xl font-black text-fg tabular-nums">{events.length}</span>{" "}
+            {events.length === 1 ? "evento" : "eventos"}
+          </span>
+        </p>
+        <ul aria-label="Leyenda" className="hidden flex-wrap items-center gap-x-5 gap-y-1 font-sans text-[13px] text-muted md:flex">
+          <li className="flex items-center gap-1.5">
+            <span aria-hidden className="h-2.5 w-4 rounded-sm bg-accent" />
+            Rodaje
+          </li>
+          {Object.values(CalendarEventType).map((value) => {
+            const Icon = EVENT_TYPE_ICON[value];
+            return (
+              <li key={value} className="flex items-center gap-1.5">
+                <Icon className={`h-3.5 w-3.5 ${EVENT_TYPE_TONE[value]}`} />
+                {EVENT_TYPE_LABELS[value]}
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+
+      {/* Escritorio: el mes en rejilla, solo con líneas. */}
+      <div className="mt-4 hidden md:block">
+        <div className="grid grid-cols-7">
+          {WEEKDAYS.map((day) => (
+            <p key={day} className="eyebrow px-2 pb-2">
+              {day}
+            </p>
+          ))}
+        </div>
+        <div className="grid grid-cols-7 border-b border-line">
+          {weeks.flat().map((day, i) => {
+            const isCurrentMonth = day.getMonth() === monthStart.getMonth();
+            const isToday = sameDay(day, today);
+            const entriesForDay = dayEntries.filter((entry) => sameDay(entry.date, day));
+            return (
+              <div
+                key={day.toISOString()}
+                className={`min-h-28 border-t border-line p-1.5 ${i % 7 === 0 ? "" : "border-l"} ${
+                  isCurrentMonth ? "" : "bg-fg/[0.025]"
+                }`}
+              >
+                <p
+                  className={`grid h-6 w-6 place-items-center rounded-full font-mono text-[11px] tabular-nums ${
+                    isToday ? "bg-accent font-bold text-bg" : isCurrentMonth ? "text-fg" : "text-muted/60"
+                  }`}
+                >
+                  {day.getDate()}
+                </p>
+                <div className="mt-1 space-y-1">
+                  {entriesForDay.map((entry) =>
                     entry.href ? (
                       <Link
                         key={entry.id}
                         href={entry.href}
-                        className="flex items-center gap-2 font-mono text-xs hover:text-accent"
+                        title={`Rodaje · ${entry.label}`}
+                        className="flex items-center gap-1 truncate rounded bg-accent px-1.5 py-0.5 font-sans text-[11px] font-medium text-bg transition-opacity hover:opacity-85"
                       >
-                        <entry.Icon className="h-3.5 w-3.5 shrink-0 text-accent" />
-                        {entry.label}
+                        <entry.Icon className="h-3 w-3 shrink-0" />
+                        <span className="truncate">{entry.label}</span>
                       </Link>
                     ) : (
-                      <p key={entry.id} className="flex items-center gap-2 font-mono text-xs">
-                        <entry.Icon className="h-3.5 w-3.5 shrink-0 text-muted" />
-                        {entry.label}
+                      <p
+                        key={entry.id}
+                        title={`${entry.kind} · ${entry.label}`}
+                        className="flex items-center gap-1 truncate px-0.5 font-sans text-[11px] leading-tight"
+                      >
+                        <entry.Icon className={`h-3 w-3 shrink-0 ${entry.tone}`} />
+                        <span className="truncate">{entry.label}</span>
                       </p>
                     ),
                   )}
                 </div>
               </div>
-            ))}
-          </div>
-        )}
+            );
+          })}
+        </div>
       </div>
 
-      <div className="mt-6 hidden grid-cols-7 border-l border-t border-line md:grid">
-        {WEEKDAYS.map((day) => (
-          <div
-            key={day}
-            className="border-b border-r border-line bg-bg-raised px-2 py-1.5 font-mono text-[10px] tracking-widest text-muted uppercase"
-          >
-            {day}
-          </div>
-        ))}
-        {weeks.flat().map((day) => {
-          const isCurrentMonth = day.getMonth() === monthStart.getMonth();
-          const entriesForDay = dayEntries.filter((entry) => sameDay(entry.date, day));
-          return (
-            <div
-              key={day.toISOString()}
-              className={`min-h-28 border-b border-r border-line p-1.5 ${
-                isCurrentMonth ? "" : "opacity-30"
-              } ${sameDay(day, today) ? "bg-accent/10" : ""}`}
-            >
-              <p className={`font-mono text-[11px] ${sameDay(day, today) ? "font-bold text-accent" : "text-muted"}`}>{day.getDate()}</p>
-              <div className="mt-1 space-y-1">
-                {entriesForDay.map((entry) =>
-                  entry.href ? (
-                    <Link
-                      key={entry.id}
-                      href={entry.href}
-                      className="flex items-center gap-1 truncate font-mono text-[10px] hover:text-accent"
-                    >
-                      <entry.Icon className="h-2.5 w-2.5 shrink-0" />
-                      <span className="truncate">{entry.label}</span>
-                    </Link>
-                  ) : (
-                    <p key={entry.id} className="flex items-center gap-1 truncate font-mono text-[10px]">
-                      <entry.Icon className="h-2.5 w-2.5 shrink-0" />
-                      <span className="truncate">{entry.label}</span>
-                    </p>
-                  ),
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <section className="mt-10">
-        <h2 className="font-mono text-xs tracking-widest text-accent uppercase">
-          Añadir evento
+      {/* Agenda del mes: en móvil es la vista principal; en escritorio, el
+          detalle de la rejilla (y donde se borran los eventos). */}
+      <section aria-labelledby="agenda" className="mt-8 md:mt-16">
+        <h2 id="agenda" className="hidden border-b border-line pb-3 font-display text-xl font-black tracking-tight uppercase md:block">
+          Agenda de {monthName}
         </h2>
-        <form
-          action={createCalendarEvent}
-          className="mt-4 grid gap-2 border border-line p-4 sm:grid-cols-2 lg:grid-cols-5"
-        >
-          <FormField label="Título" className="sm:col-span-2">
-            <input
-              name="title"
-              required
-              className="field px-2 py-1.5 text-sm"
-            />
-          </FormField>
-          <FormField label="Fecha">
-            <input
-              type="date"
-              name="date"
-              required
-              className="field px-2 py-1.5 text-sm"
-            />
-          </FormField>
-          <FormField label="Proyecto">
-          <select
-            name="projectId"
-            defaultValue=""
-            className="field px-2 py-1.5 text-sm"
-          >
-            <option value="" className="bg-bg">
-              Sin proyecto
-            </option>
-            {projects.map((project) => (
-              <option key={project.id} value={project.id} className="bg-bg">
-                {project.name}
-              </option>
-            ))}
-          </select>
-          </FormField>
-
-          <div className="sm:col-span-2 lg:col-span-5">
-            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-              Tipo
-            </span>
-            <div className="mt-1.5 flex flex-wrap gap-2">
-              {Object.values(CalendarEventType).map((value) => (
-                <ChipOption
-                  key={value}
-                  type="radio"
-                  name="type"
-                  value={value}
-                  label={EVENT_TYPE_LABELS[value]}
-                  defaultChecked={value === "OTHER"}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className="sm:col-span-2 lg:col-span-5">
-            <SubmitButton
-              pendingLabel="Añadiendo…"
-              className="btn btn-secondary"
-            >
-              Añadir
-            </SubmitButton>
-          </div>
-        </form>
-
-        {events.length > 0 && (
-          <div className="mt-6 border-t border-line">
-            {events.map((event) => {
-              const Icon = EVENT_TYPE_ICON[event.type];
+        {sortedAgenda.length === 0 ? (
+          <p className="border-t border-line py-10 font-sans text-sm text-muted md:border-t-0">
+            Nada en {monthName}. Los días de rodaje aparecen solos al crearlos en el Plan de rodaje de un proyecto; los
+            demás eventos se añaden con «Añadir evento».
+          </p>
+        ) : (
+          <ol className="divide-y divide-line border-y border-line md:border-t-0">
+            {sortedAgenda.map(({ day, entries }) => {
+              const isToday = sameDay(day, today);
               return (
-              <div
-                key={event.id}
-                className="flex items-center justify-between gap-4 border-b border-line py-3"
-              >
-                <span className="flex items-center gap-2 font-mono text-sm">
-                  <Icon className="h-4 w-4 shrink-0 text-muted" />
-                  {event.date.toLocaleDateString("es-ES")} — {event.title}
-                  {event.project && (
-                    <span className="text-muted">({event.project.name})</span>
-                  )}
-                </span>
-                <form action={deleteCalendarEvent.bind(null, event.id)}>
-                  <DeleteButton
-                    confirmMessage="¿Eliminar este evento del calendario?"
-                    className="link-action"
-                  />
-                </form>
-              </div>
+                <li key={day.toISOString()} className="grid grid-cols-[3.5rem_minmax(0,1fr)] gap-4 py-4 sm:grid-cols-[5rem_minmax(0,1fr)]">
+                  <div className={isToday ? "text-accent" : ""}>
+                    <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
+                      {day.toLocaleDateString("es-ES", { weekday: "short" }).replace(".", "")}
+                    </p>
+                    <p className="font-display text-3xl leading-none font-black tabular-nums">{day.getDate()}</p>
+                    {isToday && <p className="mt-1 font-mono text-[10px] tracking-widest uppercase">Hoy</p>}
+                  </div>
+                  <ul className="min-w-0 space-y-2.5 pt-0.5">
+                    {entries.map((entry) => (
+                      <li key={entry.id} className="flex items-center justify-between gap-4">
+                        {entry.href ? (
+                          <Link href={entry.href} className="group flex min-w-0 items-center gap-3">
+                            <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-accent text-bg">
+                              <entry.Icon className="h-3.5 w-3.5" />
+                            </span>
+                            <span className="min-w-0">
+                              <span className="block truncate font-sans text-[15px] font-medium transition-colors group-hover:text-accent">
+                                Rodaje · {entry.label}
+                              </span>
+                              <span className="block font-sans text-[13px] text-muted">Ver el día en el Plan de rodaje →</span>
+                            </span>
+                          </Link>
+                        ) : (
+                          <span className="flex min-w-0 items-center gap-3">
+                            <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full bg-fg/[0.06] ${entry.tone}`}>
+                              <entry.Icon className="h-3.5 w-3.5" />
+                            </span>
+                            <span className="min-w-0">
+                              <span className="block truncate font-sans text-[15px]">{entry.label}</span>
+                              <span className="block truncate font-sans text-[13px] text-muted">
+                                {entry.kind}
+                                {entry.project ? ` · ${entry.project}` : ""}
+                              </span>
+                            </span>
+                          </span>
+                        )}
+                        {entry.deletableId && (
+                          <form action={deleteCalendarEvent.bind(null, entry.deletableId)} className="shrink-0">
+                            <DeleteButton confirmMessage="¿Eliminar este evento del calendario?" className="link-action" />
+                          </form>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </li>
               );
             })}
-          </div>
+          </ol>
         )}
       </section>
     </div>

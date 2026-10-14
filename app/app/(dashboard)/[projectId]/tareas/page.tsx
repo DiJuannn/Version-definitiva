@@ -20,20 +20,20 @@ export default async function ProjectTareasPage({
   const base = `/app/${projectId}/tareas`;
 
   return (
-    <div>
+    <div className="pb-16">
       <PageHeader
         eyebrow="Gestión"
         title="Tareas"
-        description="Los pendientes de este proyecto. Marca una como hecha con la casilla."
+        description="Lo que falta por hacer en este proyecto. Marca una tarea como hecha con su casilla."
+        actions={
+          <ScopeToggle
+            items={[
+              { label: "Este proyecto", href: base, active: true },
+              { label: "Toda la organización", href: "/app/tareas", active: false },
+            ]}
+          />
+        }
       />
-      <div className="mt-6">
-        <ScopeToggle
-          items={[
-            { label: "Este proyecto", href: base, active: true },
-            { label: "Toda la organización", href: "/app/tareas", active: false },
-          ]}
-        />
-      </div>
       <TasksView
         organizationId={project.organizationId}
         projectId={projectId}

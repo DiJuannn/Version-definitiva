@@ -35,35 +35,28 @@ function subscribeZone(callback: () => void) {
   };
 }
 
-function FestivalCard({ festival }: { festival: Festival }) {
+function FestivalRow({ festival }: { festival: Festival }) {
   return (
-    <li className="border border-line bg-bg-raised/40 p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="font-display text-base font-bold">{festival.name}</p>
-          <p className="font-mono text-xs text-muted">
-            {festival.city}
-            {festival.when ? ` · suele ser en ${festival.when.charAt(0).toLowerCase()}${festival.when.slice(1)}` : ""}
-          </p>
-        </div>
-        <ul className="flex flex-wrap gap-1.5">
-          {festival.kinds.map((kind) => (
-            <li key={kind} className="rounded-full border border-line px-2 py-0.5 font-mono text-[10px] tracking-widest text-muted uppercase">
-              {KIND_LABELS[kind]}
-            </li>
-          ))}
-        </ul>
+    <li className="border-t border-line py-4 first:border-t-0 lg:[&:nth-child(2)]:border-t-0">
+      <div className="flex items-baseline justify-between gap-4">
+        <p className="min-w-0 font-sans text-[15px] font-medium">{festival.name}</p>
+        <a
+          href={festival.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="link-action shrink-0 !min-h-0"
+          aria-label={`Web oficial de ${festival.name} (se abre en otra pestaña)`}
+        >
+          Web ↗
+        </a>
       </div>
-      <p className="mt-2 font-sans text-sm text-muted">{festival.note}</p>
-      <a
-        href={festival.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="link-action mt-3 inline-flex"
-        aria-label={`Web oficial de ${festival.name} (se abre en otra pestaña)`}
-      >
-        Web oficial ↗
-      </a>
+      <p className="font-mono text-[11px] text-muted">
+        {festival.city}
+        {festival.when ? ` · suele ser en ${festival.when.charAt(0).toLowerCase()}${festival.when.slice(1)}` : ""}
+        {" · "}
+        {festival.kinds.map((kind) => KIND_LABELS[kind]).join(", ")}
+      </p>
+      <p className="mt-1.5 font-sans text-sm leading-relaxed text-muted">{festival.note}</p>
     </li>
   );
 }
@@ -71,11 +64,14 @@ function FestivalCard({ festival }: { festival: Festival }) {
 function Group({ title, festivals }: { title: string; festivals: Festival[] }) {
   if (festivals.length === 0) return null;
   return (
-    <div className="mt-8">
-      <p className="font-mono text-[11px] tracking-widest text-accent uppercase">{title}</p>
-      <ul className="mt-3 grid gap-3 sm:grid-cols-2">
+    <div className="mt-10">
+      <h3 className="flex items-baseline justify-between gap-4">
+        <span className="font-display text-lg font-bold">{title}</span>
+        <span className="eyebrow">{festivals.length}</span>
+      </h3>
+      <ul className={`sheet mt-3 grid px-5 sm:px-6 ${festivals.length > 1 ? "lg:grid-cols-2 lg:gap-x-10" : ""}`}>
         {festivals.map((f) => (
-          <FestivalCard key={f.name} festival={f} />
+          <FestivalRow key={f.name} festival={f} />
         ))}
       </ul>
     </div>
@@ -104,15 +100,18 @@ export function FestivalGuide({ projectType }: { projectType: string | null }) {
   }
 
   return (
-    <div>
-      <div className="mt-8 flex flex-wrap items-end gap-x-6 gap-y-3">
+    <section aria-labelledby="guia-title" className="mt-20 border-t border-line pt-10">
+      <h2 id="guia-title" className="font-display text-2xl font-black tracking-tight">
+        Dónde presentarlo
+      </h2>
+      <p className="mt-1 max-w-2xl font-sans text-sm text-muted">
+        Una guía de festivales para empezar. Elige tu zona y verás primero los cercanos.
+      </p>
+
+      <div className="mt-6 flex flex-wrap items-end gap-x-8 gap-y-3">
         <label className="flex flex-col gap-1">
-          <span className="font-mono text-[10px] tracking-widest text-muted uppercase">¿Dónde vives?</span>
-          <select
-            value={zone}
-            onChange={(e) => chooseZone(e.target.value)}
-            className="field px-3 py-2 text-sm"
-          >
+          <span className="eyebrow">¿Dónde vives?</span>
+          <select value={zone} onChange={(e) => chooseZone(e.target.value)} className="field min-w-56">
             <option value="" className="bg-bg">
               Elige tu zona
             </option>
@@ -124,7 +123,7 @@ export function FestivalGuide({ projectType }: { projectType: string | null }) {
           </select>
         </label>
         {projectKinds && (
-          <label className="flex items-center gap-2 pb-2 font-sans text-sm">
+          <label className="flex items-center gap-2 pb-2.5 font-sans text-sm">
             <input
               type="checkbox"
               checked={allKinds}
@@ -136,14 +135,8 @@ export function FestivalGuide({ projectType }: { projectType: string | null }) {
         )}
       </div>
 
-      {!zone && (
-        <p className="mt-6 max-w-xl font-sans text-sm text-muted">
-          Elige tu zona y te enseño primero los festivales cercanos. Si no eliges ninguna, verás la lista completa abajo.
-        </p>
-      )}
-
       {zone && inZone.length === 0 && (
-        <p className="mt-6 max-w-xl border border-dashed border-line p-4 font-sans text-sm text-muted">
+        <p className="mt-6 max-w-2xl border-l-2 border-warn pl-3 font-sans text-sm text-muted">
           No tengo todavía festivales de {zone} en la lista para este formato. Mira los del resto de {country}, los online y
           los buscadores de convocatorias de más abajo: allí están casi todos.
         </p>
@@ -163,42 +156,62 @@ export function FestivalGuide({ projectType }: { projectType: string | null }) {
         </>
       )}
 
-      <div className="mt-10 border border-accent/40 bg-bg-raised/40 p-6">
-        <p className="font-mono text-[11px] tracking-widest text-accent uppercase">Buscar convocatorias abiertas</p>
-        <p className="mt-2 max-w-xl font-sans text-sm text-muted">
-          Las fechas de inscripción cambian cada año y los festivales que aquí no salen son muchísimos. Estas
-          plataformas enseñan las convocatorias abiertas, con su plazo y su precio, y desde ellas envías tu proyecto.
-        </p>
-        <ul className="mt-4 grid gap-3 sm:grid-cols-2">
-          {SUBMISSION_PLATFORMS.map((p) => (
-            <li key={p.name} className="border border-line p-4">
-              <p className="font-display text-base font-bold">{p.name}</p>
-              <p className="mt-1 font-sans text-sm text-muted">{p.note}</p>
-              <a
-                href={p.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="link-action mt-3 inline-flex"
-                aria-label={`Abrir ${p.name} (se abre en otra pestaña)`}
-              >
-                Abrir {p.name} ↗
-              </a>
-            </li>
-          ))}
-        </ul>
-      </div>
+      <div className="mt-16 grid gap-x-16 gap-y-12 lg:grid-cols-2">
+        <section aria-labelledby="plataformas-title">
+          <h3 id="plataformas-title" className="font-display text-lg font-bold">
+            Buscar convocatorias abiertas
+          </h3>
+          <p className="mt-1 font-sans text-sm leading-relaxed text-muted">
+            Los plazos cambian cada año y hay muchísimos más festivales. Estas plataformas enseñan las convocatorias abiertas,
+            con plazo y precio, y desde ellas se envía el proyecto.
+          </p>
+          <ul className="mt-4 divide-y divide-line border-y border-line">
+            {SUBMISSION_PLATFORMS.map((p) => (
+              <li key={p.name}>
+                <a
+                  href={p.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex items-baseline justify-between gap-4 py-3"
+                  aria-label={`${p.name}: ${p.note} (se abre en otra pestaña)`}
+                >
+                  <span className="min-w-0">
+                    <span className="block font-sans text-[15px] font-medium transition-colors group-hover:text-accent">
+                      {p.name}
+                    </span>
+                    <span className="block font-sans text-sm text-muted">{p.note}</span>
+                  </span>
+                  <span aria-hidden className="shrink-0 font-mono text-xs text-muted group-hover:text-accent">
+                    ↗
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
 
-      <div className="mt-8 border border-line p-6">
-        <p className="font-mono text-[11px] tracking-widest text-accent uppercase">Antes de enviar</p>
-        <ul className="mt-3 grid gap-2 font-sans text-sm text-muted sm:grid-cols-2">
-          <li>○ El montaje final exportado, con subtítulos en inglés si puedes.</li>
-          <li>○ Sinopsis corta y larga, y la ficha técnica y artística.</li>
-          <li>○ Cartel y 3-5 fotogramas o fotos de rodaje en buena calidad.</li>
-          <li>○ Un enlace privado para verlo (Vimeo, YouTube no listado).</li>
-          <li>○ Ojo con el estreno: muchos festivales piden que aún no esté público en internet.</li>
-          <li>○ Lee las bases de cada festival: plazo, duración máxima y año de producción.</li>
-        </ul>
+        <section aria-labelledby="antes-title">
+          <h3 id="antes-title" className="font-display text-lg font-bold">
+            Antes de enviar
+          </h3>
+          <p className="mt-1 font-sans text-sm text-muted">Lo que piden casi todos.</p>
+          <ul className="mt-4 space-y-3 font-sans text-sm leading-relaxed">
+            {[
+              "El montaje final exportado, con subtítulos en inglés si puedes.",
+              "Sinopsis corta y larga, y la ficha técnica y artística.",
+              "Cartel y 3-5 fotogramas o fotos de rodaje en buena calidad.",
+              "Un enlace privado para verlo (Vimeo, YouTube no listado).",
+              "Ojo con el estreno: muchos festivales piden que aún no esté público en internet.",
+              "Lee las bases de cada festival: plazo, duración máxima y año de producción.",
+            ].map((item) => (
+              <li key={item} className="flex gap-3">
+                <span aria-hidden className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full border border-muted" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </section>
       </div>
-    </div>
+    </section>
   );
 }

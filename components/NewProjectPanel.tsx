@@ -1,57 +1,41 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { createProject } from "@/lib/actions/projects";
 import { CreateProjectForm } from "@/components/CreateProjectForm";
+import { Modal } from "@/components/Modal";
 
-// El formulario ya no flota en una cajita diminuta anclada a la esquina —
-// se despliega a todo el ancho, debajo de la cabecera, con el mismo peso
-// visual que el resto de formularios de la app.
-export function NewProjectPanel({ hasProjects }: { hasProjects: boolean }) {
+// «Nuevo proyecto»: un botón que abre el formulario en un diálogo (papel), en vez de un
+// formulario siempre abierto o desplegado a todo el ancho encima de la lista.
+export function NewProjectPanel({ className = "btn btn-primary" }: { className?: string }) {
   const [open, setOpen] = useState(false);
 
   return (
     <>
-      <div className="flex items-center justify-between">
-        <p className="font-mono text-[10px] tracking-widest text-accent uppercase">
-          Proyectos recientes
-        </p>
-        <div className="flex items-center gap-4">
-          {hasProjects && (
-            <button
-              type="button"
-              onClick={() => setOpen((v) => !v)}
-              aria-expanded={open}
-              className="flex items-center gap-1.5 font-mono text-[10px] tracking-widest text-muted uppercase transition hover:text-accent"
-            >
-              <span
-                className={`inline-block text-sm leading-none transition-transform ${open ? "rotate-45" : ""}`}
-              >
-                +
-              </span>
-              Nuevo proyecto
-            </button>
-          )}
-          <Link
-            href="/app/proyectos"
-            className="font-mono text-[10px] tracking-widest text-muted uppercase hover:text-accent"
-          >
-            Ver todos →
-          </Link>
-        </div>
-      </div>
-      {open && hasProjects && (
-        <div className="mt-4 border border-line p-4 sm:p-5">
+      <button type="button" onClick={() => setOpen(true)} aria-haspopup="dialog" className={className}>
+        <span aria-hidden className="text-sm leading-none">+</span>
+        Nuevo proyecto
+      </button>
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        title="Nuevo proyecto"
+        description="Ponle un nombre; el tipo, las fechas y el resto los rellenas luego en su ficha."
+      >
+        <div className="mt-5">
           <CreateProjectForm
             action={createProject}
-            formClassName="flex flex-col gap-3 sm:flex-row sm:items-center"
+            formClassName="flex flex-col gap-3"
             inputClassName="field w-full px-3 py-2.5 text-sm"
-            buttonClassName="shrink-0 rounded-full bg-accent px-6 py-2.5 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90 disabled:opacity-70"
+            buttonClassName="btn btn-primary self-start"
+            buttonLabel="Crear proyecto"
             autoFocus
           />
         </div>
-      )}
+        <button type="button" onClick={() => setOpen(false)} className="link-action mt-3 !px-0">
+          Cancelar
+        </button>
+      </Modal>
     </>
   );
 }

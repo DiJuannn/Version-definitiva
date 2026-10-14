@@ -26,7 +26,8 @@ export function BreakdownCategorySelect({
           action(formData);
         });
       }}
-      className="field px-1.5 py-1 font-mono text-[10px] tracking-widest text-muted uppercase disabled:opacity-50"
+      aria-label="Categoría (cambiarla mueve el elemento)"
+      className="field w-full cursor-pointer border-transparent bg-transparent px-2 py-1 font-mono text-[10px] tracking-widest text-muted uppercase hover:border-line hover:text-fg disabled:opacity-50"
     >
       {Object.entries(BREAKDOWN_CATEGORY_LABELS).map(([value, label]) => (
         <option key={value} value={value} className="bg-bg">

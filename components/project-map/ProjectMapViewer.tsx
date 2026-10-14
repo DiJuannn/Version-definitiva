@@ -32,7 +32,7 @@ function Viewer({ tools, entities, layout }: { tools: MapToolCard[]; entities: M
   return (
     <MapProvider value={mapCtx}>
       <ItemProvider value={itemCtx}>
-        <div className="h-[calc(100dvh-9rem)] min-h-[420px] border border-line">
+        <div className="h-[calc(100dvh-9rem)] min-h-[420px] overflow-hidden rounded-xl border border-line">
           <ReactFlow<AnyNode>
             nodes={nodes}
             edges={edges}

@@ -19,14 +19,14 @@ export default async function FestivalesPage({
   const submissions = await listFestivalSubmissionsCore(projectId);
 
   return (
-    <div>
+    <div className="pb-16">
       <PageHeader
         eyebrow="Entrega"
         title="Festivales"
         description={
           <>
-            Dónde presentar «{project.name}». Elige tu zona y te enseño primero los festivales de tu zona. Las fechas y los
-            plazos cambian cada año: mira siempre la convocatoria oficial.{" "}
+            Lleva la cuenta de a qué festivales mandas «{project.name}» y descubre dónde más presentarlo. Las fechas y
+            los plazos cambian cada año: mira siempre la convocatoria oficial.{" "}
             {!project.type && (
               <>
                 Indica el tipo de proyecto en{" "}

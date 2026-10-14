@@ -28,51 +28,53 @@ export function CallSheetShare({
   }
 
   return (
-    <div className="mt-6 border border-line p-4 print:hidden">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
-            Enlace para el equipo
+    <section aria-labelledby="cs-share" className="print:hidden">
+      <h2 id="cs-share" className="font-display text-lg font-bold">
+        Enlace para el equipo
+      </h2>
+      <p className="mt-1 font-sans text-sm leading-relaxed text-muted">
+        {link
+          ? "Cualquiera con el enlace ve esta hoja sin cuenta. Solo lectura, sin teléfonos ni correos."
+          : "Un enlace de solo lectura para mandarlo por WhatsApp. El equipo no necesita cuenta."}
+      </p>
+      {link ? (
+        <>
+          <p
+            className="mt-3 truncate border-l-2 border-success pl-3 font-mono text-xs text-fg"
+            title={link}
+          >
+            {link}
           </p>
-          <p className="mt-1 font-sans text-sm text-muted">
-            {link
-              ? "Cualquiera con este enlace puede ver el call sheet, sin cuenta. Solo lectura."
-              : "Genera un enlace de solo lectura para mandarlo por WhatsApp, sin que el equipo necesite cuenta."}
-          </p>
-        </div>
-        {link ? (
-          <div className="flex items-center gap-4">
+          <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2">
             <CopyLinkButton link={link} />
             <button
               type="button"
               disabled={pending}
               onClick={() => change(false)}
-              className="link-action disabled:opacity-60"
+              className="link-action hover:!text-danger disabled:opacity-60"
             >
               {pending ? "Quitando…" : "Dejar de compartir"}
             </button>
           </div>
-        ) : (
-          <button
-            type="button"
-            disabled={pending}
-            onClick={() => change(true)}
-            className="btn btn-secondary disabled:opacity-60"
-          >
-            {pending ? "Creando…" : "Crear enlace"}
-          </button>
-        )}
-      </div>
-      {link && (
-        <p className="mt-3 truncate font-mono text-xs text-muted" title={link}>
-          {link}
-        </p>
+        </>
+      ) : (
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => change(true)}
+          className="btn btn-primary mt-4"
+        >
+          {pending ? "Creando…" : "Crear enlace"}
+        </button>
       )}
       {error && (
-        <p className="mt-2 font-mono text-xs text-danger" role="alert">
+        <p
+          className="mt-3 border-l-2 border-danger pl-3 font-sans text-sm text-danger"
+          role="alert"
+        >
           {error}
         </p>
       )}
-    </div>
+    </section>
   );
 }

@@ -19,7 +19,7 @@ function relativeDay(date: Date): string {
   return `En ${days} días`;
 }
 
-// Lo primero que se ve al entrar en un proyecto: qué es, en qué estado está,
+// Lo primero que se ve al entrar en un proyecto (cuando ya tiene datos): qué es, en qué estado está,
 // cuánto lleva hecho, cuándo es el próximo rodaje y cómo va el dinero.
 export function ProjectHeaderCard({
   projectId,
@@ -42,89 +42,74 @@ export function ProjectHeaderCard({
   const actualPct = base > 0 ? Math.min(100, (budget.actual / base) * 100) : 0;
   const over = budget.target !== null && budget.actual > budget.target;
 
+  const LABEL = "eyebrow";
+  const VALUE = "mt-2 font-display text-2xl font-black tracking-tight";
+
+  // Tres datos en fila sobre el papel, separados por una línea vertical (sin una caja por dato).
   return (
     <section
       aria-label="Estado del proyecto"
-      className="mt-6 grid gap-px overflow-hidden border border-line bg-line lg:grid-cols-[1.2fr_1fr_1fr]"
+      className="mt-8 grid gap-y-6 border-y border-line py-6 sm:grid-cols-3 sm:divide-x sm:divide-line"
     >
-      <div className="bg-bg-raised p-5">
-        <p className="font-mono text-[10px] tracking-widest text-muted uppercase">Estado</p>
-        <div className="mt-2 flex items-center gap-3">
+      <div className="sm:pr-8">
+        <p className={LABEL}>Estado</p>
+        <div className="mt-3">
           <StatusPill status={status} />
         </div>
-        <div className="mt-4">
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-line">
-            <div className="h-full rounded-full bg-accent" style={{ width: `${pct}%` }} />
-          </div>
-          <p className="mt-2 font-mono text-[11px] text-muted">
-            {requiredDone}/{required.length} pasos requeridos · {pct}%
-          </p>
+        <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-line" aria-hidden>
+          <div className="h-full rounded-full bg-accent" style={{ width: `${pct}%` }} />
         </div>
+        <p className="mt-2 font-sans text-xs text-muted">
+          {requiredDone} de {required.length} pasos esenciales · {pct}%
+        </p>
       </div>
 
-      <div className="bg-bg-raised p-5">
-        <p className="font-mono text-[10px] tracking-widest text-muted uppercase">Próximo rodaje</p>
+      <div className="sm:px-8">
+        <p className={LABEL}>Próximo rodaje</p>
         {nextShoot ? (
-          <Link
-            href={`/app/${projectId}/plan-de-rodaje/${nextShoot.id}`}
-            className="group mt-2 block"
-          >
-            <p className="font-display text-2xl font-black transition-colors group-hover:text-accent">
-              {relativeDay(nextShoot.date)}
+          <Link href={`/app/${projectId}/plan-de-rodaje/${nextShoot.id}`} className="group block">
+            <p className={`${VALUE} transition-colors group-hover:text-accent`}>{relativeDay(nextShoot.date)}</p>
+            <p className="mt-1 font-sans text-xs text-muted first-letter:uppercase">
+              {nextShoot.date.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })} ·{" "}
+              {nextShoot.scenesCount} escena{nextShoot.scenesCount === 1 ? "" : "s"}
             </p>
-            <p className="mt-1 font-mono text-[11px] text-muted">
-              {nextShoot.date.toLocaleDateString("es-ES", {
-                weekday: "long",
-                day: "numeric",
-                month: "long",
-              })}
-            </p>
-            <p className="mt-1 font-mono text-[11px]">
-              {nextShoot.scenesCount} escena{nextShoot.scenesCount === 1 ? "" : "s"} ·{" "}
-              <span className={nextShoot.hasCallSheet ? "text-success" : "text-warn"}>
-                {nextShoot.hasCallSheet ? "call sheet creado" : "call sheet sin crear"}
-              </span>
+            <p className={`mt-1 font-sans text-xs ${nextShoot.hasCallSheet ? "text-success" : "text-warn"}`}>
+              {nextShoot.hasCallSheet ? "Hoja de llamada lista" : "Hoja de llamada sin crear"}
             </p>
           </Link>
         ) : (
-          <div className="mt-2">
-            <p className="font-display text-2xl font-black text-muted">—</p>
-            <Link
-              href={`/app/${projectId}/plan-de-rodaje`}
-              className="mt-1 inline-block font-mono text-[11px] text-muted underline decoration-line underline-offset-4 hover:text-fg"
-            >
-              Sin rodajes planificados · Crear plan
+          <>
+            <p className={`${VALUE} text-muted`}>Sin fecha</p>
+            <Link href={`/app/${projectId}/plan-de-rodaje`} className="mt-1 inline-block font-sans text-xs text-accent hover:underline">
+              Crear el plan de rodaje →
             </Link>
-          </div>
+          </>
         )}
       </div>
 
-      <div className="bg-bg-raised p-5">
-        <p className="font-mono text-[10px] tracking-widest text-muted uppercase">Presupuesto</p>
+      <div className="sm:pl-8">
+        <p className={LABEL}>Presupuesto</p>
         {hasBudget ? (
-          <Link href={`/app/${projectId}/presupuesto`} className="group mt-2 block">
-            <p className="font-display text-2xl font-black transition-colors group-hover:text-accent">
+          <Link href={`/app/${projectId}/presupuesto`} className="group block">
+            <p className={`${VALUE} transition-colors group-hover:text-accent`}>
               {currency(budget.actual)}
-              <span className="ml-1.5 font-mono text-[11px] font-normal text-muted">gastado</span>
+              <span className="ml-1.5 font-sans text-xs font-normal tracking-normal text-muted">gastado</span>
             </p>
-            <div className="mt-2 h-1 w-full bg-line">
-              <div
-                className={`h-full ${over ? "bg-danger" : "bg-accent"}`}
-                style={{ width: `${actualPct}%` }}
-              />
+            <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-line" aria-hidden>
+              <div className={`h-full rounded-full ${over ? "bg-danger" : "bg-accent"}`} style={{ width: `${actualPct}%` }} />
             </div>
-            <p className="mt-1.5 font-mono text-[11px] text-muted">
+            <p className="mt-2 font-sans text-xs text-muted">
               {currency(budget.planned)} previstos
               {budget.target !== null ? ` · objetivo ${currency(budget.target)}` : ""}
             </p>
           </Link>
         ) : (
-          <Link
-            href={`/app/${projectId}/presupuesto`}
-            className="mt-2 inline-block font-mono text-[11px] text-muted underline decoration-line underline-offset-4 hover:text-fg"
-          >
-            Sin presupuesto · Crear categorías
-          </Link>
+          <>
+            <p className={`${VALUE} text-muted`}>—</p>
+            <Link href={`/app/${projectId}/presupuesto`} className="mt-1 inline-block font-sans text-xs text-accent hover:underline">
+              Preparar las categorías →
+            </Link>
+          </>
         )}
       </div>
     </section>

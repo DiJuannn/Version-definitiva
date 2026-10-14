@@ -17,27 +17,26 @@ export function DeleteAccountCard({ soleMember }: { soleMember: boolean }) {
   const canSubmit = confirmText.trim().toUpperCase() === CONFIRM_PHRASE;
 
   return (
-    <section className="mt-10 border border-accent/40 p-6">
-      <p className="font-mono text-xs tracking-widest text-accent uppercase">
-        Zona de riesgo
-      </p>
+    // Aviso con barra roja a la izquierda, no un recuadro.
+    <div className="mt-6 max-w-2xl border-l-2 border-danger pl-5">
+      <p className="font-display text-lg font-bold">Eliminar mi cuenta</p>
 
       {!open ? (
         <>
-          <p className="mt-3 font-mono text-xs text-muted">
-            Borrar tu cuenta es permanente y no se puede deshacer.
+          <p className="mt-1 font-sans text-sm leading-relaxed text-muted">
+            Es permanente y no se puede deshacer.
           </p>
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="link-action mt-4"
+            className="btn btn-outline btn-sm mt-4 hover:!border-danger hover:!text-danger"
           >
-            Eliminar mi cuenta
+            Quiero eliminar mi cuenta
           </button>
         </>
       ) : (
-        <div className="mt-3">
-          <p className="font-sans text-sm text-muted">
+        <div className="mt-1">
+          <p className="font-sans text-sm leading-relaxed text-muted">
             {soleMember ? (
               <>
                 Eres la única persona de tu organización — al borrar tu cuenta se
@@ -52,18 +51,20 @@ export function DeleteAccountCard({ soleMember }: { soleMember: boolean }) {
               </>
             )}
           </p>
-          <p className="mt-4 font-mono text-[10px] tracking-widest text-muted uppercase">
-            Escribe &ldquo;{CONFIRM_PHRASE}&rdquo; para confirmar
-          </p>
-          <input
-            value={confirmText}
-            onChange={(e) => setConfirmText(e.target.value)}
-            className="field mt-2 w-full max-w-sm px-3 py-2 text-sm"
-            autoComplete="off"
-          />
+          <label className="mt-5 block max-w-sm">
+            <span className="font-mono text-[10px] tracking-[0.18em] text-muted uppercase">
+              Escribe &ldquo;{CONFIRM_PHRASE}&rdquo; para confirmar
+            </span>
+            <input
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+              className="field-line font-mono uppercase"
+              autoComplete="off"
+            />
+          </label>
 
           {state?.error && (
-            <p className="mt-3 font-mono text-xs text-danger">{state.error}</p>
+            <p role="alert" className="mt-3 font-sans text-sm text-danger">{state.error}</p>
           )}
 
           <div className="mt-5 flex items-center gap-4">
@@ -71,7 +72,7 @@ export function DeleteAccountCard({ soleMember }: { soleMember: boolean }) {
               <button
                 type="submit"
                 disabled={!canSubmit || pending}
-                className="btn btn-primary"
+                className="btn btn-danger"
               >
                 {pending ? "Borrando…" : "Borrar definitivamente"}
               </button>
@@ -89,6 +90,6 @@ export function DeleteAccountCard({ soleMember }: { soleMember: boolean }) {
           </div>
         </div>
       )}
-    </section>
+    </div>
   );
 }

@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { EmptyState } from "@/components/EmptyState";
-import { ListRow } from "@/components/ListRow";
+import { LinkPendingHint } from "@/components/LinkPendingHint";
 import { PageHeader } from "@/components/PageHeader";
 import { ScopeToggle } from "@/components/ScopeToggle";
 import { LocationsLibrary } from "@/components/LocationsLibrary";
@@ -43,65 +43,74 @@ export default async function ProjectLocationsPage({
       });
 
   return (
-    <div>
+    <div className="pb-16">
       <PageHeader
         eyebrow="Gestión"
         title="Localizaciones"
+        description={
+          library
+            ? "Todas las localizaciones de tu organización. Aquí se crean y se editan, y luego se asignan a las escenas desde Guion."
+            : "Las que ya usan las escenas de este proyecto. Para crear o editar una, ve a «Toda la biblioteca»."
+        }
+        actions={
+          <ScopeToggle
+            items={[
+              { label: "En este proyecto", href: base, active: !library },
+              { label: "Toda la biblioteca", href: `${base}?ver=biblioteca`, active: library },
+            ]}
+          />
+        }
       />
-      <div className="mt-6">
-        <ScopeToggle
-          items={[
-            { label: "Usadas en este proyecto", href: base, active: !library },
-            { label: "Toda la biblioteca", href: `${base}?ver=biblioteca`, active: library },
-          ]}
-        />
-      </div>
 
       {library ? (
         <LocationsLibrary organizationId={project.organizationId} from={projectId} />
+      ) : locations.length === 0 ? (
+        <EmptyState
+          title="Ninguna escena tiene localización todavía"
+          description="Se asignan desde Guion: en cada escena eliges una de la biblioteca o creas una nueva."
+          actionLabel="Ir a Guion"
+          actionHref={`/app/${projectId}/guion`}
+        />
       ) : (
-        <>
-          <p className="mt-4 max-w-2xl font-sans text-sm text-muted">
-            Las que ya usan las escenas de este proyecto. Se asignan desde{" "}
-            <Link href={`/app/${projectId}/guion`} className="text-fg hover:text-accent">
-              Guion
+        <section aria-label="Localizaciones del proyecto" className="mt-10">
+          <p className="eyebrow">
+            {locations.length} {locations.length === 1 ? "localización" : "localizaciones"} ·{" "}
+            <Link href={`/app/${projectId}/guion`} className="hover:text-accent">
+              se asignan desde Guion →
             </Link>
-            ; para crear o editar, usa la pestaña «Toda la biblioteca».
           </p>
-          {locations.length === 0 ? (
-            <EmptyState
-              title="Ninguna escena tiene localización todavía"
-              description="Asígnalas desde Guion, eligiendo de la biblioteca o creando una nueva."
-            />
-          ) : (
-            <div className="mt-6 border-t border-line">
-              {locations.map((location) => (
-                <ListRow
-                  key={location.id}
+          <ul className="sheet mt-3 divide-y divide-line px-5 sm:px-6">
+            {locations.map((location) => (
+              <li key={location.id}>
+                <Link
                   href={`/app/localizaciones/${location.id}?from=${projectId}`}
-                  title={
-                    <span className="font-display text-lg font-bold transition-colors group-hover:text-accent">
+                  className="group flex items-center gap-4 py-4"
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-sans text-base font-medium transition-colors group-hover:text-accent">
                       {location.name}
                     </span>
-                  }
-                  meta={
-                    [location.address, location.contactName].filter(Boolean).join(" · ") ||
-                    "Sin datos"
-                  }
-                  trailing={
-                    <span className="flex items-center gap-3 font-mono text-xs text-muted">
-                      {location.latitude === null && (
-                        <span className="text-warn">Sin coordenadas</span>
-                      )}
-                      {location._count.scenes} escena
-                      {location._count.scenes === 1 ? "" : "s"}
+                    <span className="block truncate font-sans text-sm text-muted">
+                      {[location.address, location.contactName].filter(Boolean).join(" · ") || "Sin dirección ni contacto"}
                     </span>
-                  }
-                />
-              ))}
-            </div>
-          )}
-        </>
+                  </span>
+                  {location.latitude === null && (
+                    <span className="hidden border-l-2 border-warn pl-2 font-mono text-[11px] text-warn sm:inline">
+                      Sin coordenadas
+                    </span>
+                  )}
+                  <span className="shrink-0 font-mono text-xs text-muted tabular-nums">
+                    {location._count.scenes} escena{location._count.scenes === 1 ? "" : "s"}
+                  </span>
+                  <span aria-hidden className="text-muted transition-colors group-hover:text-accent">
+                    →
+                  </span>
+                  <LinkPendingHint className="shrink-0" />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
     </div>
   );

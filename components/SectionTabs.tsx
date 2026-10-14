@@ -151,7 +151,7 @@ export function SectionTabs({
         })}
       </div>
 
-      <div className="mt-6 min-w-0 lg:mt-0">
+      <div className={`mt-6 min-w-0 ${side ? "lg:mt-0" : ""}`}>
         {tabs.map((tab) => (
           <div
             key={tab.id}

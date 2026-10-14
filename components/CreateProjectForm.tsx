@@ -37,7 +37,7 @@ export function CreateProjectForm({
         </SubmitButton>
       </form>
       {state?.error && (
-        <p className="mt-2 font-mono text-xs text-danger" role="alert">
+        <p className="mt-3 border-l-2 border-danger pl-3 font-sans text-sm text-danger" role="alert">
           {state.error}
           {state.upgrade && (
             <>

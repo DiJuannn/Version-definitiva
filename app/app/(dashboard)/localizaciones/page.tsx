@@ -7,11 +7,11 @@ export default async function LocalizacionesPage() {
   if (!profile) return null;
 
   return (
-    <div>
+    <div className="pb-16">
       <PageHeader
         eyebrow="Recursos"
         title="Localizaciones"
-        description="Biblioteca de la organización: se eligen desde el Guion de cualquier proyecto, sin recrearlas."
+        description="Los sitios donde rodáis, con su contacto, permisos y fotos. Se guardan una vez y se eligen desde el Guion de cualquier proyecto."
       />
       <LocationsLibrary organizationId={profile.organizationId} />
     </div>

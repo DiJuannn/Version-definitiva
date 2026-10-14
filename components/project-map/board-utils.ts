@@ -34,8 +34,20 @@ export const sizeOf = (n: AnyNode) => ({
 
 const EDGE_DEFAULT = "#8a8a84";
 
+// El último color de MAP_COLORS es «tinta clara» (#f2f0ea): nació para el lienzo negro. Ahora el
+// lienzo sigue la tinta de la página (claro en Taller, negro en la pizarra pública), así que ese
+// color se pinta con el texto de la página para que se vea en los dos.
+const LIGHT_INK = "#f2f0ea";
+export function inkColor(color: string): string {
+  return color.toLowerCase() === LIGHT_INK ? "var(--fg)" : color;
+}
+// Versión translúcida de un color (fondos de formas y secciones). alpha en 0–1.
+export function inkTint(color: string, alpha: number): string {
+  return `color-mix(in srgb, ${inkColor(color)} ${Math.round(alpha * 100)}%, transparent)`;
+}
+
 export function toRfEdge(e: MapEdge, selected: boolean): Edge {
-  const color = e.color ?? EDGE_DEFAULT;
+  const color = inkColor(e.color ?? EDGE_DEFAULT);
   return {
     id: e.id,
     source: e.source,
@@ -46,8 +58,8 @@ export function toRfEdge(e: MapEdge, selected: boolean): Edge {
     selected,
     style: { stroke: color, strokeWidth: selected ? 3 : 2, strokeDasharray: e.dashed ? "7 5" : undefined },
     markerEnd: e.arrow === false ? undefined : { type: MarkerType.ArrowClosed, color },
-    labelStyle: { fill: "#f2f0ea", fontSize: 12 },
-    labelBgStyle: { fill: "#0a0a0a" },
+    labelStyle: { fill: "var(--fg)", fontSize: 12 },
+    labelBgStyle: { fill: "var(--bg-raised)" },
     labelBgPadding: [6, 3],
     labelBgBorderRadius: 2,
   };

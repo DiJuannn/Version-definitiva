@@ -155,7 +155,7 @@ export default async function PersonajesPage({ params }: { params: Promise<{ pro
                     </span>
                   </summary>
 
-                  <div className="sheet mb-6 grid gap-x-12 gap-y-8 p-6 sm:ml-[76px] sm:p-8 lg:grid-cols-[minmax(0,1fr)_280px]">
+                  <div className="paper mb-6 grid gap-x-12 gap-y-8 p-6 sm:ml-[76px] sm:p-8 lg:grid-cols-[minmax(0,1fr)_280px]">
                     <div className="min-w-0">
                       {traits.length > 0 ? (
                         <dl className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
@@ -278,7 +278,7 @@ export default async function PersonajesPage({ params }: { params: Promise<{ pro
                       {contact.length > 0 && <> · {contact.join(" · ")}</>}
                     </span>
                   </summary>
-                  <form action={updateActor.bind(null, projectId, a.id)} className="sheet mb-5 grid gap-x-8 gap-y-4 p-6 sm:grid-cols-2 lg:grid-cols-3">
+                  <form action={updateActor.bind(null, projectId, a.id)} className="paper mb-5 grid gap-x-8 gap-y-4 p-6 sm:grid-cols-2 lg:grid-cols-3">
                     {(
                       [
                         ["name", "Nombre", a.name, "text"],
@@ -323,7 +323,7 @@ export default async function PersonajesPage({ params }: { params: Promise<{ pro
             <span className="group-open:hidden">+ Añadir actor</span>
             <span className="hidden group-open:inline">Nuevo actor</span>
           </summary>
-          <form action={createActor.bind(null, projectId)} className="sheet mt-4 grid gap-x-8 gap-y-4 p-6 sm:grid-cols-2 lg:grid-cols-3">
+          <form action={createActor.bind(null, projectId)} className="paper mt-4 grid gap-x-8 gap-y-4 p-6 sm:grid-cols-2 lg:grid-cols-3">
             <label className="block">
               <span className={LABEL}>Del directorio de Equipo</span>
               <select name="personId" defaultValue="" className={FIELD}>

@@ -64,7 +64,7 @@
   color-scheme: dark;
 }
 .taller-paper,
-.taller-desk .sheet {
+.taller-desk .paper {
   --bg: #e3e1dc;
   --bg-raised: #f5f4f0;
   --fg: #1d1c21;
@@ -86,7 +86,7 @@ body:has(.taller-desk) > div[aria-hidden].fixed {
 .taller-desk ::selection {
   background: rgba(179, 164, 230, 0.3);
 }
-.taller-desk .sheet ::selection {
+.taller-desk .paper ::selection {
   background: rgba(90, 70, 168, 0.18);
 }
 
@@ -105,15 +105,21 @@ body:has(.taller-desk) > div[aria-hidden].fixed {
 /* Piezas del espacio de trabajo. En @layer components para que cualquier
    utilidad de Tailwind (px-2, w-full…) pueda ajustarlas en el sitio. */
 @layer components {
-  /* Hoja de papel: lo que se lee o se rellena (formularios, fichas, tablas,
-     listas de trabajo). Nunca una hoja dentro de otra ni una caja dentro de
+  /* Hoja: superficie de la mesa, un punto más clara que ella, para listas y
+     tablas de trabajo. Nunca una hoja dentro de otra ni una caja dentro de
      una hoja: dentro se separa con líneas (divide-y) y espacio. */
   .sheet {
-    background: #eceae5;
+    background: var(--bg-raised);
     border-radius: 0.75rem;
-    box-shadow:
-      0 1px 0 rgba(255, 255, 255, 0.5) inset,
-      0 18px 40px -24px rgba(0, 0, 0, 0.8);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--fg) 7%, transparent);
+  }
+  /* Papel: lo que se rellena o se lee como documento (formularios, modales,
+     fichas abiertas, hojas de llamada, contratos). Claro pero no blanco puro.
+     Dentro, los tokens pasan solos a la versión clara. */
+  .paper {
+    background: #e6e4df;
+    border-radius: 0.75rem;
+    box-shadow: 0 18px 40px -24px rgba(0, 0, 0, 0.8);
   }
   /* Losa: superficie de la propia mesa, para navegar o resumir (atajos a
      herramientas, tarjetas de proyecto, cifras). Tampoco se anidan. */
@@ -415,6 +421,7 @@ input[type="radio"] {
 }
 
 /* Botón de texto (Editar, Cancelar, Eliminar…) con zona táctil decente. */
+@layer components {
 .link-action {
   display: inline-flex;
   align-items: center;
@@ -430,6 +437,7 @@ input[type="radio"] {
 }
 .link-action:hover {
   color: var(--fg);
+}
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -830,6 +838,7 @@ body:has(.sp-light) > div[aria-hidden].fixed {
 
 /* Campo de una sola línea (sin caja): se escribe sobre una raya, como en
    un formulario de papel. Para las herramientas rediseñadas de Taller. */
+@layer components {
 .field-line {
   display: block;
   width: 100%;
@@ -848,4 +857,5 @@ body:has(.sp-light) > div[aria-hidden].fixed {
 }
 .field-line:focus {
   border-bottom-color: var(--accent);
+}
 }

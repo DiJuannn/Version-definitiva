@@ -3,10 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { isProjectOwnerPro } from "@/lib/project-plan";
 import { PageHeader } from "@/components/PageHeader";
+import { LEGAL_INPUT, LegalField, LegalTemplateForm } from "@/components/gestion/LegalTemplateForm";
 
-const inputClass =
-  "field w-full px-3 py-2 text-sm";
-const labelClass = "font-mono text-[10px] tracking-widest text-muted uppercase";
 
 export default async function ContratoColaboracionPage({
   params,
@@ -33,61 +31,44 @@ export default async function ContratoColaboracionPage({
   ];
 
   return (
-    <div>
+    <div className="pb-16">
       <PageHeader
         backHref={`/app/${projectId}/documentos-legales`}
-        backLabel="← Plantilla de documentos"
+        backLabel="← Plantillas de documentos"
+        eyebrow="Plantilla legal"
         title="Contrato de colaboración"
+        description="Acuerdo básico con un actor o técnico: qué hace, cuándo y a cambio de qué."
       />
-      <p className="mt-3 max-w-2xl font-sans text-sm text-muted">
-        El nombre del proyecto y la productora se rellenan solos. Completa lo
-        demás — al generar el PDF se abre listo para imprimir y firmar.
-      </p>
 
-      <form
+      <LegalTemplateForm
         action={`/api/pdf/legal/${projectId}/contrato-colaboracion`}
-        method="POST"
-        target="_blank"
-        className="mt-6 grid gap-4 border border-line p-5 sm:grid-cols-2"
+        projectName={project.name}
+        tip="«Nombre completo» te sugiere a la gente del reparto y del equipo mientras escribes."
       >
-        <label className="flex flex-col gap-1">
-          <span className={labelClass}>Nombre completo</span>
-          <input name="nombre" list="people-list" required className={inputClass} />
+        <LegalField label="Nombre completo">
+          <input name="nombre" list="people-list" required className={LEGAL_INPUT} />
           <datalist id="people-list">
             {people.map((name) => (
               <option key={name} value={name} />
             ))}
           </datalist>
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className={labelClass}>DNI / identificación</span>
-          <input name="dni" className={inputClass} />
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className={labelClass}>Rol / función</span>
-          <input name="rol" placeholder="Ej. actor protagonista, director de fotografía" className={inputClass} />
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className={labelClass}>Fechas de colaboración</span>
-          <input name="fechas" className={inputClass} />
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className={labelClass}>Remuneración / contraprestación</span>
-          <input name="remuneracion" className={inputClass} />
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className={labelClass}>Condiciones adicionales</span>
-          <input name="condiciones" className={inputClass} />
-        </label>
-        <div>
-          <button
-            type="submit"
-            className="btn btn-secondary"
-          >
-            Generar PDF
-          </button>
-        </div>
-      </form>
+        </LegalField>
+        <LegalField label="DNI / identificación">
+          <input name="dni" className={LEGAL_INPUT} />
+        </LegalField>
+        <LegalField label="Rol / función">
+          <input name="rol" placeholder="Ej. actor protagonista, director de fotografía" className={LEGAL_INPUT} />
+        </LegalField>
+        <LegalField label="Fechas de colaboración">
+          <input name="fechas" placeholder="Ej. del 12 al 14 de octubre" className={LEGAL_INPUT} />
+        </LegalField>
+        <LegalField label="Remuneración / contraprestación">
+          <input name="remuneracion" placeholder="Ej. 150 € por jornada, o copia del corto" className={LEGAL_INPUT} />
+        </LegalField>
+        <LegalField label="Condiciones adicionales">
+          <input name="condiciones" className={LEGAL_INPUT} />
+        </LegalField>
+      </LegalTemplateForm>
     </div>
   );
 }

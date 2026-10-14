@@ -77,14 +77,15 @@ export function MapBoardTabs({
     router.refresh();
   }
 
+  // Pizarras como pastillas (no otra fila de pestañas debajo de Resumen / Mapa).
   const tab = (isActive: boolean) =>
-    `shrink-0 border px-3 py-1.5 font-mono text-[11px] tracking-wider uppercase transition-colors ${
-      isActive ? "border-accent text-accent" : "border-line text-muted hover:text-fg"
+    `inline-flex shrink-0 items-center rounded-full px-3.5 py-1.5 font-mono text-[11px] tracking-wider uppercase transition-colors ${
+      isActive ? "bg-fg text-bg" : "text-muted hover:bg-fg/5 hover:text-fg"
     }`;
   const small = "font-mono text-[11px] tracking-wider text-muted uppercase hover:text-accent";
 
   return (
-    <div className="mb-3">
+    <div className="mb-4">
       <div className="flex flex-wrap items-center gap-2">
         <nav aria-label="Pizarras del proyecto" className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
           {boards.map((b) => (
@@ -93,7 +94,12 @@ export function MapBoardTabs({
               {b.shared && <span className="ml-1.5 text-[9px] text-success" title="Compartida con un enlace">●</span>}
             </Link>
           ))}
-          <button type="button" onClick={() => open("new")} className={tab(mode === "new")} aria-expanded={mode === "new"}>
+          <button
+            type="button"
+            onClick={() => open("new")}
+            className={`${tab(false)} border border-dashed border-line ${mode === "new" ? "border-accent text-accent" : ""}`}
+            aria-expanded={mode === "new"}
+          >
             + Nueva pizarra
           </button>
         </nav>
@@ -142,7 +148,7 @@ export function MapBoardTabs({
       )}
 
       {mode === "share" && (
-        <div className="mt-3 max-w-2xl border border-line p-4">
+        <div className="mt-4 max-w-2xl border-l-2 border-accent pl-4">
           <p className="font-sans text-sm text-muted">
             {link
               ? "Cualquiera con este enlace puede ver esta pizarra, sin cuenta y solo en lectura."

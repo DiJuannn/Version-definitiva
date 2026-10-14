@@ -15,8 +15,10 @@ const dateFmt = new Intl.DateTimeFormat("es-ES", {
 });
 
 // La mesa de guiones: cada guion es su portada, en papel, como el que se
-// abre al entrar. Así el paso de Taller (oscuro) a la página (clara) empieza
-// aquí y no es un salto.
+// abre al entrar. La sombra de las portadas (globals.css, .sp-cover-sheet)
+// estaba pensada para fondo negro; sobre la mesa clara se suaviza aquí.
+const COVER_SHADOW =
+  "shadow-[0_0_0_1px_rgb(29_28_33/0.05),0_1px_2px_rgb(29_28_33/0.08),0_14px_28px_-18px_rgb(29_28_33/0.3)]! group-hover:shadow-[0_0_0_1px_var(--accent),0_22px_36px_-20px_rgb(29_28_33/0.35)]!";
 export default async function GuionesPage() {
   const profile = await getCurrentProfile();
   const screenplays = profile
@@ -52,7 +54,9 @@ export default async function GuionesPage() {
         {screenplays.map((s) => (
           <li key={s.id}>
             <Link href={`/app/guiones/${s.id}`} className="sp-cover group block">
-              <span className="sp-cover-sheet flex flex-col px-[10%] pt-[34%] pb-[8%] text-center text-[#1c1b19]">
+              <span
+                className={`sp-cover-sheet flex flex-col px-[10%] pt-[34%] pb-[8%] text-center text-[#1c1b19] ${COVER_SHADOW}`}
+              >
                 <span className="font-[family-name:var(--font-courier)] text-[clamp(11px,1.15vw,15px)] leading-tight font-bold uppercase underline underline-offset-4">
                   {s.title}
                 </span>
@@ -67,13 +71,30 @@ export default async function GuionesPage() {
                 </span>
               </span>
             </Link>
-            <div className="mt-3">
-              <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
-                {s.pageCount} pág. · {s.sceneCount} {s.sceneCount === 1 ? "escena" : "escenas"}
-                {s.project && <span className="text-accent"> · {s.project.name}</span>}
+            <div className="mt-4">
+              {/* En qué punto está: escribiéndose o ya en producción. */}
+              <p className="flex items-center gap-1.5 font-sans text-xs font-medium text-fg">
+                <span
+                  className={`h-1.5 w-1.5 shrink-0 rounded-full ${s.project ? "bg-accent" : "bg-muted/60"}`}
+                  aria-hidden
+                />
+                {s.project ? (
+                  <span className="truncate">
+                    En producción <span className="font-normal text-muted">· {s.project.name}</span>
+                  </span>
+                ) : (
+                  "En escritura"
+                )}
               </p>
-              {s.logline && <p className="mt-1.5 line-clamp-3 font-sans text-[13px] leading-snug text-fg/75">{s.logline}</p>}
-              <p className="mt-1.5 font-mono text-[10px] text-muted">{dateFmt.format(s.updatedAt)}</p>
+              {s.logline && (
+                <p className="mt-2 line-clamp-3 font-sans text-[13px] leading-relaxed text-muted">{s.logline}</p>
+              )}
+              <p className="mt-2 font-mono text-[10px] tracking-wide text-muted">
+                {s.pageCount} pág. · {s.sceneCount} {s.sceneCount === 1 ? "escena" : "escenas"}
+                <span className="block">
+                  Editado el <time dateTime={s.updatedAt.toISOString()}>{dateFmt.format(s.updatedAt)}</time>
+                </span>
+              </p>
             </div>
           </li>
         ))}

@@ -3,7 +3,10 @@ import { getProjectForCurrentUser } from "@/lib/project-access";
 import { isProjectOwnerPro } from "@/lib/project-plan";
 import { prisma } from "@/lib/prisma";
 import { getEditSelects } from "@/lib/edit-selects";
-import { formatProjectCreditsText, getProjectCredits } from "@/lib/project-credits";
+import {
+  formatProjectCreditsText,
+  getProjectCredits,
+} from "@/lib/project-credits";
 import { DELIVERY_CATEGORY } from "@/lib/delivery-checklist";
 import { PageHeader } from "@/components/PageHeader";
 import { SectionTabs } from "@/components/SectionTabs";
@@ -28,7 +31,10 @@ export default async function MontajePage({
   const [isPro, selects, cuts, deliveryTasks, credits] = await Promise.all([
     isProjectOwnerPro(project.organizationId),
     getEditSelects(projectId),
-    prisma.editCut.findMany({ where: { projectId }, orderBy: [{ order: "asc" }, { createdAt: "asc" }] }),
+    prisma.editCut.findMany({
+      where: { projectId },
+      orderBy: [{ order: "asc" }, { createdAt: "asc" }],
+    }),
     prisma.task.findMany({
       where: { projectId, category: DELIVERY_CATEGORY },
       orderBy: [{ status: "asc" }, { createdAt: "asc" }],
@@ -45,10 +51,11 @@ export default async function MontajePage({
       <PageHeader
         eyebrow="Entrega"
         title="Montaje"
-        description="La selección de tomas para quien monta, el registro de los cortes, la checklist de entrega y los créditos — todo a partir de lo que ya tiene el proyecto."
+        description="Lo que necesita quien monta y lo que falta para entregar: las tomas buenas, las versiones del montaje, la lista de entrega y los créditos. Todo sale de lo que ya tiene el proyecto."
       />
 
-      <div className="mt-8">
+      {/* SectionTabs pega el panel a las pestañas en escritorio: aquí se le da aire. */}
+      <div className="mt-10 lg:[&_[role=tabpanel]]:pt-6">
         <SectionTabs
           ariaLabel="Secciones de montaje"
           initial={tab ?? "seleccion"}
@@ -65,36 +72,70 @@ export default async function MontajePage({
                   />
                 ) : (
                   <div>
-                    <p className="max-w-2xl font-sans text-sm text-muted">
-                      Las tomas que marcaste como buenas durante el rodaje, por escena — {selects.scenesWithGood} de{" "}
-                      {selects.scenesShot} escenas rodadas tienen ya alguna.
+                    <p className="max-w-2xl font-sans text-[15px] leading-relaxed text-muted">
+                      Las tomas que marcaste como buenas en el rodaje, por
+                      escena: es lo que le pasas a quien monta.{" "}
+                      <span className="text-fg">
+                        {selects.scenesWithGood} de {selects.scenesShot} escenas
+                        rodadas
+                      </span>{" "}
+                      tienen ya alguna.
                     </p>
-                    <div className="mt-6 border-t border-line">
+                    <ol className="sheet mt-6 divide-y divide-line px-5 sm:px-8">
                       {selects.scenes.map((scene) => (
-                        <div key={scene.sceneNumber} className="border-b border-line py-4 last:border-b-0">
-                          <p className="font-display text-base font-bold">
-                            Escena {scene.sceneNumber}
-                            {scene.context ? <span className="ml-2 font-mono text-xs text-muted">{scene.context}</span> : null}
-                          </p>
+                        <li
+                          key={scene.sceneNumber}
+                          className="grid gap-x-8 gap-y-2 py-5 sm:grid-cols-[11rem_1fr]"
+                        >
+                          <div>
+                            <p className="font-display text-lg font-bold">
+                              Escena {scene.sceneNumber}
+                            </p>
+                            {scene.context && (
+                              <p className="font-sans text-sm text-muted">
+                                {scene.context}
+                              </p>
+                            )}
+                          </div>
                           {scene.shots.length === 0 ? (
-                            <p className="mt-1 font-mono text-xs text-warn">Sin ninguna toma buena todavía.</p>
+                            <p className="border-l-2 border-warn pl-3 font-sans text-sm text-warn">
+                              Sin ninguna toma buena todavía.
+                            </p>
                           ) : (
-                            <ul className="mt-2 space-y-2">
+                            <ul className="space-y-3">
                               {scene.shots.map((shot) => (
-                                <li key={shot.key} className="border-l-2 border-accent/40 pl-3">
-                                  <p className="font-mono text-sm">
-                                    {shot.label}
-                                    {shot.size ? ` · ${shot.size}` : ""} —{" "}
-                                    <span className="text-success">
-                                      toma{shot.goodTakes.length === 1 ? "" : "s"} buena{shot.goodTakes.length === 1 ? "" : "s"}{" "}
-                                      {shot.goodTakes.map((t) => t.take).join(", ")}
+                                <li key={shot.key}>
+                                  <p className="flex flex-wrap items-baseline gap-x-3">
+                                    <span className="font-mono text-sm text-accent">
+                                      {shot.label}
+                                    </span>
+                                    {shot.size && (
+                                      <span className="font-mono text-xs uppercase">
+                                        {shot.size}
+                                      </span>
+                                    )}
+                                    <span className="font-sans text-sm font-semibold text-success">
+                                      ✓ toma
+                                      {shot.goodTakes.length === 1
+                                        ? ""
+                                        : "s"}{" "}
+                                      {shot.goodTakes
+                                        .map((t) => t.take)
+                                        .join(", ")}
                                     </span>
                                   </p>
-                                  {shot.description && <p className="font-sans text-xs text-muted">{shot.description}</p>}
+                                  {shot.description && (
+                                    <p className="font-sans text-[13px] text-muted">
+                                      {shot.description}
+                                    </p>
+                                  )}
                                   {shot.goodTakes
                                     .filter((t) => t.notes)
                                     .map((t, i) => (
-                                      <p key={i} className="font-mono text-xs text-muted">
+                                      <p
+                                        key={i}
+                                        className="font-sans text-[13px] italic"
+                                      >
                                         Toma {t.take}: {t.notes}
                                       </p>
                                     ))}
@@ -102,9 +143,9 @@ export default async function MontajePage({
                               ))}
                             </ul>
                           )}
-                        </div>
+                        </li>
                       ))}
-                    </div>
+                    </ol>
                   </div>
                 ),
             },
@@ -130,7 +171,12 @@ export default async function MontajePage({
               id: "entrega",
               label: "Entrega",
               count: deliveryTasks.length,
-              content: <DeliveryChecklistPanel projectId={projectId} tasks={deliveryTasks} />,
+              content: (
+                <DeliveryChecklistPanel
+                  projectId={projectId}
+                  tasks={deliveryTasks}
+                />
+              ),
             },
             {
               id: "creditos",
@@ -149,13 +195,18 @@ export default async function MontajePage({
                 />
               ) : (
                 <div>
-                  <div className="flex items-center justify-between gap-4">
-                    <p className="max-w-2xl font-sans text-sm text-muted">
-                      Reparto y equipo técnico del proyecto, ordenados en el formato de los créditos de cierre.
+                  <div className="flex max-w-2xl flex-wrap items-center justify-between gap-4">
+                    <p className="font-sans text-[15px] leading-relaxed text-muted">
+                      Reparto y equipo técnico, en el orden de los créditos de
+                      cierre. Cópialos y pégalos en el montaje.
                     </p>
-                    <CopyTextButton text={creditsText} label="Copiar créditos" />
+                    <CopyTextButton
+                      text={creditsText}
+                      label="Copiar créditos"
+                    />
                   </div>
-                  <pre className="mt-6 max-w-2xl overflow-x-auto whitespace-pre-wrap border border-line bg-bg-raised/40 p-5 font-mono text-sm leading-relaxed">
+                  {/* Como se verán: centrados, en una hoja. */}
+                  <pre className="sheet mt-6 max-w-2xl overflow-x-auto px-6 py-10 text-center font-mono text-sm leading-loose whitespace-pre-wrap">
                     {creditsText}
                   </pre>
                 </div>

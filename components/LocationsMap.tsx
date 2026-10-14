@@ -17,7 +17,7 @@ const MARKER_ICON = L.divIcon({
   html: `
     <div style="position:relative;width:26px;height:26px;">
       <div style="position:absolute;inset:0;border-radius:9999px;background:var(--accent);opacity:0.25;"></div>
-      <div style="position:absolute;inset:6px;border-radius:9999px;background:var(--accent);border:2px solid var(--bg);"></div>
+      <div style="position:absolute;inset:6px;border-radius:9999px;background:var(--accent);border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,0.25);"></div>
     </div>
   `,
   iconSize: [26, 26],
@@ -25,7 +25,15 @@ const MARKER_ICON = L.divIcon({
   popupAnchor: [0, -13],
 });
 
-export function LocationsMap({ locations }: { locations: MapLocation[] }) {
+// Mapa claro, a juego con el área de trabajo: las teselas de OpenStreetMap
+// van algo desaturadas para que los marcadores (acento) sean lo que destaca.
+// Las clases van con «!» porque leaflet.css no está en ninguna capa y ganaría
+// a las utilidades de Tailwind. «isolate» encierra los z-index de Leaflet
+// (400–1000) para que no asomen por encima de los diálogos.
+const MAP_CLASS =
+  "isolate !bg-fg/[0.04] !font-sans [&_.leaflet-tile-pane]:[filter:saturate(0.35)_contrast(0.92)_brightness(1.03)] [&_.leaflet-popup-content-wrapper]:!rounded-lg [&_.leaflet-popup-content-wrapper]:!bg-bg-raised [&_.leaflet-popup-content-wrapper]:!text-fg [&_.leaflet-popup-tip]:!bg-bg-raised [&_.leaflet-control-zoom]:!border-0 [&_.leaflet-control-zoom]:!shadow-md [&_.leaflet-control-zoom_a]:!bg-bg-raised [&_.leaflet-control-zoom_a]:!text-fg [&_.leaflet-control-zoom_a]:!border-line [&_.leaflet-control-attribution]:!bg-bg-raised/80 [&_.leaflet-control-attribution]:!text-muted [&_.leaflet-control-attribution_a]:!text-muted";
+
+export function LocationsMap({ locations, className }: { locations: MapLocation[]; className?: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
 
@@ -61,11 +69,11 @@ export function LocationsMap({ locations }: { locations: MapLocation[] }) {
       }).addTo(map);
 
       marker.bindPopup(
-        `<div style="font-family: var(--font-jetbrains-mono), monospace; min-width:160px;">
-          <p style="margin:0 0 4px; font-weight:700; text-transform:uppercase; font-size:13px;">${escapeHtml(location.name)}</p>
-          ${location.address ? `<p style="margin:0 0 4px; font-size:11px; opacity:0.7;">${escapeHtml(location.address)}</p>` : ""}
-          <p style="margin:0 0 8px; font-size:11px; opacity:0.7;">${location.sceneCount} escena${location.sceneCount === 1 ? "" : "s"}</p>
-          <a href="/app/localizaciones/${location.id}" style="font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:var(--accent);">Ver ficha →</a>
+        `<div style="min-width:170px;">
+          <p style="margin:0 0 2px; font-weight:600; font-size:14px; color:var(--fg);">${escapeHtml(location.name)}</p>
+          ${location.address ? `<p style="margin:0 0 2px; font-size:12px; color:var(--muted);">${escapeHtml(location.address)}</p>` : ""}
+          <p style="margin:0 0 8px; font-size:12px; color:var(--muted);">${location.sceneCount} escena${location.sceneCount === 1 ? "" : "s"}</p>
+          <a href="/app/localizaciones/${location.id}" style="font-family: var(--font-jetbrains-mono), monospace; font-size:11px; text-transform:uppercase; letter-spacing:0.1em; color:var(--accent);">Ver ficha →</a>
         </div>`,
       );
 
@@ -84,7 +92,7 @@ export function LocationsMap({ locations }: { locations: MapLocation[] }) {
     };
   }, [locations]);
 
-  return <div ref={containerRef} className="vd-dark-map h-[420px] w-full" />;
+  return <div ref={containerRef} className={`${MAP_CLASS} w-full ${className ?? "h-[360px]"}`} />;
 }
 
 function escapeHtml(value: string): string {

@@ -3,10 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { isProjectOwnerPro } from "@/lib/project-plan";
 import { PageHeader } from "@/components/PageHeader";
+import { LEGAL_INPUT, LegalField, LegalTemplateForm } from "@/components/gestion/LegalTemplateForm";
 
-const inputClass =
-  "field w-full px-3 py-2 text-sm";
-const labelClass = "font-mono text-[10px] tracking-widest text-muted uppercase";
 
 export default async function PermisoRodajePage({
   params,
@@ -26,65 +24,47 @@ export default async function PermisoRodajePage({
   });
 
   return (
-    <div>
+    <div className="pb-16">
       <PageHeader
         backHref={`/app/${projectId}/documentos-legales`}
-        backLabel="← Plantilla de documentos"
+        backLabel="← Plantillas de documentos"
+        eyebrow="Plantilla legal"
         title="Permiso de rodaje"
+        description="Para que el propietario o responsable de un sitio autorice grabar allí, con fechas y horario."
       />
-      <p className="mt-3 max-w-2xl font-sans text-sm text-muted">
-        El nombre del proyecto y la productora se rellenan solos. Completa lo
-        demás — al generar el PDF se abre listo para imprimir y firmar.
-      </p>
 
-      <form
+      <LegalTemplateForm
         action={`/api/pdf/legal/${projectId}/permiso-rodaje`}
-        method="POST"
-        target="_blank"
-        className="mt-6 grid gap-4 border border-line p-5 sm:grid-cols-2"
+        projectName={project.name}
+        tip="«Localización» te sugiere las de tu biblioteca mientras escribes."
       >
-        <label className="flex flex-col gap-1">
-          <span className={labelClass}>Localización</span>
-          <input name="localizacion" list="locations-list" required className={inputClass} />
+        <LegalField label="Localización">
+          <input name="localizacion" list="locations-list" required className={LEGAL_INPUT} />
           <datalist id="locations-list">
             {locations.map((l) => (
               <option key={l.name} value={l.name} />
             ))}
           </datalist>
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className={labelClass}>Dirección</span>
-          <input name="direccion" className={inputClass} />
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className={labelClass}>Fechas de rodaje</span>
-          <input name="fechas" placeholder="Ej. 12-14 de octubre de 2026" className={inputClass} />
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className={labelClass}>Horario</span>
-          <input name="horario" placeholder="Ej. 08:00 - 20:00" className={inputClass} />
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className={labelClass}>Nombre de quien autoriza</span>
-          <input name="nombreAutoriza" required className={inputClass} />
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className={labelClass}>DNI / identificación</span>
-          <input name="dniAutoriza" className={inputClass} />
-        </label>
-        <label className="flex flex-col gap-1 sm:col-span-2">
-          <span className={labelClass}>Condiciones especiales</span>
-          <textarea name="condiciones" rows={3} className={inputClass} />
-        </label>
-        <div>
-          <button
-            type="submit"
-            className="btn btn-secondary"
-          >
-            Generar PDF
-          </button>
-        </div>
-      </form>
+        </LegalField>
+        <LegalField label="Dirección">
+          <input name="direccion" className={LEGAL_INPUT} />
+        </LegalField>
+        <LegalField label="Fechas de rodaje">
+          <input name="fechas" placeholder="Ej. 12-14 de octubre de 2026" className={LEGAL_INPUT} />
+        </LegalField>
+        <LegalField label="Horario">
+          <input name="horario" placeholder="Ej. 08:00 - 20:00" className={LEGAL_INPUT} />
+        </LegalField>
+        <LegalField label="Nombre de quien autoriza">
+          <input name="nombreAutoriza" required className={LEGAL_INPUT} />
+        </LegalField>
+        <LegalField label="DNI / identificación">
+          <input name="dniAutoriza" className={LEGAL_INPUT} />
+        </LegalField>
+        <LegalField label="Condiciones especiales" wide>
+          <textarea name="condiciones" rows={3} className={`${LEGAL_INPUT} resize-y`} />
+        </LegalField>
+      </LegalTemplateForm>
     </div>
   );
 }

@@ -49,10 +49,11 @@ type SceneRow = {
 };
 type State = { characters: Row[]; locations: Row[]; props: Row[]; scenes: SceneRow[] };
 
-const inputClass =
-  "field w-full px-2.5 py-1.5 text-sm";
-const smallSelect =
-  "field px-2 py-1.5 font-mono text-[11px] text-fg";
+const inputClass = "field w-full";
+// Campo de una línea para editar dentro de una fila (sin caja).
+const lineInput = "field-line mt-0 py-1";
+const smallSelect = "field px-2 py-1 font-mono text-[11px] text-fg";
+const LABEL = "eyebrow text-muted";
 const CATEGORY_KEYS = Object.keys(BREAKDOWN_CATEGORY_LABELS);
 
 // Aleatoria (no un contador): las claves se guardan en el borrador y no deben chocar con las nuevas.
@@ -155,6 +156,8 @@ export function ScriptAnalysisReview({
       if (saved) {
         const parsed = JSON.parse(saved) as State;
         if (parsed && Array.isArray(parsed.characters) && Array.isArray(parsed.scenes)) {
+          // Leer localStorage solo puede hacerse tras montar (no existe en el servidor).
+          // eslint-disable-next-line react-hooks/set-state-in-effect
           setState(parsed);
           setRestored(signature(parsed) !== signature(original));
         }
@@ -311,17 +314,17 @@ export function ScriptAnalysisReview({
 
   return (
     <div>
-      <ol className="mt-6 grid gap-3 sm:grid-cols-3">
+      <ol className="mt-8 grid max-w-4xl gap-5 sm:grid-cols-3 sm:gap-0">
         {[
           ["1", "Revisa", "La IA ha leído el guion y propone estas listas. Nada se guarda todavía."],
           ["2", "Corrige", "Cambia nombres y categorías, edita las escenas, quita lo que sobre o añade lo que falte."],
           ["3", "Importa", "Al final se crea solo lo marcado. Lo que ya existe en el proyecto se omite."],
         ].map(([n, title, text]) => (
-          <li key={n} className="flex gap-3 border border-line p-4">
-            <span className="font-display text-2xl leading-none font-black text-accent">{n}</span>
+          <li key={n} className="flex gap-4 sm:border-l sm:border-line sm:px-6 sm:first:border-l-0 sm:first:pl-0">
+            <span className="font-display text-3xl leading-none font-black text-accent">{n}</span>
             <div>
-              <p className="font-mono text-xs tracking-widest uppercase">{title}</p>
-              <p className="mt-1 font-sans text-xs text-muted">{text}</p>
+              <p className="font-sans text-sm font-semibold">{title}</p>
+              <p className="mt-0.5 font-sans text-sm leading-relaxed text-muted">{text}</p>
             </div>
           </li>
         ))}
@@ -330,16 +333,21 @@ export function ScriptAnalysisReview({
       {impact && (
         <section
           aria-label="Guion anterior"
-          className={`mt-6 border p-5 ${replace ? "border-warn/70" : "border-line"}`}
+          className="mt-12 border-t border-line pt-8"
         >
-          <p className="font-mono text-xs tracking-widest uppercase">Ya hay un guion en este proyecto</p>
-          <div className="mt-3 flex flex-wrap gap-2" role="group" aria-label="Qué hacer con el guion anterior">
+          <h2 className="font-display text-lg font-bold">Ya hay un guion en este proyecto</h2>
+          <p className="mt-1 font-sans text-sm text-muted">¿Este guion sustituye al anterior o lo completa?</p>
+          <div
+            className="mt-4 inline-flex flex-wrap rounded-full bg-fg/[0.06] p-1"
+            role="group"
+            aria-label="Qué hacer con el guion anterior"
+          >
             <Link
               href="?modo=reemplazar"
               replace
               aria-current={replace ? "true" : undefined}
-              className={`border px-3 py-2 font-mono text-[11px] tracking-widest uppercase transition-colors ${
-                replace ? "border-warn bg-warn/10 text-warn" : "border-line text-muted hover:text-fg"
+              className={`rounded-full px-4 py-1.5 font-mono text-[11px] tracking-widest uppercase transition-colors ${
+                replace ? "bg-bg-raised text-warn shadow-sm" : "text-muted hover:text-fg"
               }`}
             >
               Reemplazar el guion anterior
@@ -348,8 +356,8 @@ export function ScriptAnalysisReview({
               href="?modo=anadir"
               replace
               aria-current={!replace ? "true" : undefined}
-              className={`border px-3 py-2 font-mono text-[11px] tracking-widest uppercase transition-colors ${
-                !replace ? "border-accent bg-accent/10 text-accent" : "border-line text-muted hover:text-fg"
+              className={`rounded-full px-4 py-1.5 font-mono text-[11px] tracking-widest uppercase transition-colors ${
+                !replace ? "bg-bg-raised text-fg shadow-sm" : "text-muted hover:text-fg"
               }`}
             >
               Añadir a lo que ya hay
@@ -357,13 +365,14 @@ export function ScriptAnalysisReview({
           </div>
 
           {replace ? (
-            <div className="mt-4 space-y-3 font-sans text-sm">
-              <p className="text-warn">
-                ⚠ Todo lo del guion anterior se borrará y se reemplazará con este guion. Antes se guarda una copia automática que podrás restaurar desde Guion.
+            <div className="mt-6 max-w-4xl space-y-5 font-sans text-sm">
+              <p className="border-l-2 border-warn pl-4 text-[15px] leading-relaxed">
+                Todo lo del guion anterior se borrará y se reemplazará con este guion. Antes se guarda una copia
+                automática que podrás restaurar desde Guion.
               </p>
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-6 pl-4 sm:grid-cols-2">
                 <div>
-                  <p className="font-mono text-[10px] tracking-widest text-danger uppercase">Se borra</p>
+                  <p className="eyebrow text-danger">Se borra</p>
                   <ul className="mt-1.5 space-y-1 text-muted">
                     <li>
                       {impact.scenes} escena{impact.scenes === 1 ? "" : "s"}
@@ -382,7 +391,7 @@ export function ScriptAnalysisReview({
                   </ul>
                 </div>
                 <div>
-                  <p className="font-mono text-[10px] tracking-widest text-success uppercase">Se conserva</p>
+                  <p className="eyebrow text-success">Se conserva</p>
                   <ul className="mt-1.5 space-y-1 text-muted">
                     <li>
                       Los actores
@@ -401,7 +410,7 @@ export function ScriptAnalysisReview({
               </div>
             </div>
           ) : (
-            <p className="mt-3 font-sans text-sm text-muted">
+            <p className="mt-6 max-w-2xl border-l-2 border-accent pl-4 font-sans text-sm leading-relaxed text-muted">
               El guion nuevo se suma a lo que ya hay: las escenas con el mismo número se actualizan y lo que ya existe
               se omite. Si es otro guion distinto, elige &ldquo;Reemplazar&rdquo; para no mezclar los dos.
             </p>
@@ -410,7 +419,7 @@ export function ScriptAnalysisReview({
       )}
 
       {restored && (
-        <p className="mt-4 flex flex-wrap items-center gap-3 border border-line px-4 py-2.5 font-mono text-xs text-muted">
+        <p className="mt-8 flex flex-wrap items-center gap-x-3 gap-y-1 border-l-2 border-accent py-1 pl-4 font-sans text-sm text-muted">
           Se han recuperado tus correcciones anteriores.
           <button type="button" onClick={reset} className="link-action">
             Volver a la propuesta original
@@ -418,7 +427,11 @@ export function ScriptAnalysisReview({
         </p>
       )}
 
-      <div className="mt-8">
+      <div className="mt-12">
+        <h2 className="font-display text-lg font-bold">Lo que ha encontrado la IA</h2>
+        <p className="mt-1 mb-4 font-sans text-sm text-muted">
+          Desmarca lo que no quieras importar y corrige lo que haga falta. Tus cambios se guardan en este navegador.
+        </p>
         <SectionTabs
           ariaLabel="Qué ha encontrado la IA"
           initial="escenas"
@@ -502,9 +515,9 @@ export function ScriptAnalysisReview({
       </div>
 
       {/* Barra de importación: resumen vivo de lo que se creará. */}
-      <div className="sticky bottom-24 z-20 mt-10 flex items-center justify-between gap-4 border border-line bg-bg-raised/95 p-3 backdrop-blur-md sm:bottom-4 sm:gap-6 sm:p-4">
+      <div className="sheet sticky bottom-24 z-20 mt-10 flex items-center justify-between gap-4 bg-bg-raised/95 px-4 py-3 shadow-[0_18px_40px_-18px_color-mix(in_srgb,var(--fg)_35%,transparent)] backdrop-blur-md sm:bottom-4 sm:gap-6 sm:px-6 sm:py-4">
         <div className="min-w-0">
-          <p className="hidden font-mono text-[10px] tracking-widest text-muted uppercase sm:block">Se importará</p>
+          <p className="hidden eyebrow text-muted sm:block">Se importará</p>
           <p className="font-sans text-xs sm:mt-1 sm:text-sm">
             {totalToImport === 0 ? "Nada seleccionado todavía." : summary.join(" · ")}
           </p>
@@ -565,14 +578,14 @@ export function ScriptAnalysisReview({
 
 function Badge({ kind }: { kind: "nuevo" | "existe" | "repetido" | "actualiza" }) {
   const map = {
-    nuevo: ["Nuevo", "border-success/50 text-success"],
-    existe: ["Ya existe · se omite", "border-line text-muted"],
-    repetido: ["Repetido", "border-warn/50 text-warn"],
-    actualiza: ["Actualiza la escena existente", "border-warn/50 text-warn"],
+    nuevo: ["Nuevo", "bg-success/10 text-success"],
+    existe: ["Ya existe · se omite", "bg-fg/[0.06] text-muted"],
+    repetido: ["Repetido", "bg-warn/10 text-warn"],
+    actualiza: ["Actualiza la existente", "bg-warn/10 text-warn"],
   } as const;
   const [label, cls] = map[kind];
   return (
-    <span className={`shrink-0 border px-1.5 py-0.5 font-mono text-[10px] tracking-wide uppercase ${cls}`}>
+    <span className={`shrink-0 rounded-full px-2 py-0.5 font-mono text-[10px] tracking-wide uppercase ${cls}`}>
       {label}
     </span>
   );
@@ -622,7 +635,7 @@ function RowsTab({
             onChange={(e) => setQuery(e.target.value)}
             placeholder={`Buscar ${noun}…`}
             aria-label={`Buscar ${noun}`}
-            className="field w-full px-2.5 py-1.5 text-sm sm:w-56"
+            className="field w-full sm:w-56"
           />
         )}
         <button type="button" onClick={() => onAllOn(true)} className="link-action">
@@ -637,14 +650,14 @@ function RowsTab({
       </div>
 
       {rows.length === 0 ? (
-        <p className="mt-6 font-mono text-sm text-muted">La IA no ha propuesto ningún {noun}. Puedes añadirlos a mano.</p>
+        <p className="py-10 text-center font-sans text-sm text-muted">La IA no ha propuesto ningún {noun}. Puedes añadirlos a mano.</p>
       ) : (
-        <ul className="mt-4 border-t border-line">
+        <ul className="sheet mt-4 divide-y divide-line">
           {visible.map(({ r, i }) => {
             const status = statusOf(rows, i, existingNames);
             const dim = status !== "nuevo" || !r.on;
             return (
-              <li key={r.key} className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-line py-2.5">
+              <li key={r.key} className={`flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 sm:px-5 ${r.on ? "" : "opacity-60"}`}>
                 <input
                   type="checkbox"
                   checked={r.on}
@@ -657,7 +670,7 @@ function RowsTab({
                   onChange={(e) => onRename(r.key, e.target.value)}
                   placeholder={`Nombre del ${noun}`}
                   aria-label={`Nombre del ${noun}`}
-                  className={`min-w-0 flex-1 basis-40 ${inputClass} ${dim ? "text-muted" : ""}`}
+                  className={`min-w-0 flex-1 basis-40 ${lineInput} font-sans text-[15px] font-medium ${dim ? "text-muted" : ""}`}
                 />
                 {onCategory && (
                   <select
@@ -678,7 +691,7 @@ function RowsTab({
                   type="button"
                   onClick={() => onRemove(r.key)}
                   aria-label={`Quitar ${r.name || noun}`}
-                  className="link-action"
+                  className="link-action hover:text-danger"
                 >
                   Quitar
                 </button>
@@ -688,7 +701,7 @@ function RowsTab({
                     onChange={(e) => onNotes(r.key, e.target.value)}
                     placeholder="Notas (opcional)"
                     aria-label="Notas"
-                    className={`w-full ${inputClass} text-xs text-muted sm:ml-7 sm:w-[calc(100%-1.75rem)]`}
+                    className={`w-full ${lineInput} border-transparent text-sm text-muted hover:border-line sm:ml-8 sm:w-[calc(100%-2rem)]`}
                   />
                 )}
               </li>
@@ -714,10 +727,10 @@ function ChipPicker({
   const remaining = options.filter((o) => !selected.some((s) => lower(s) === lower(o)));
   return (
     <div>
-      <p className="font-mono text-[10px] tracking-widest text-muted uppercase">{label}</p>
+      <p className={LABEL}>{label}</p>
       <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
         {selected.map((name, i) => (
-          <span key={`${name}-${i}`} className="inline-flex items-center gap-1.5 border border-line px-2 py-1 font-mono text-xs">
+          <span key={`${name}-${i}`} className="inline-flex items-center gap-1.5 rounded-full bg-accent/10 py-1 pr-2 pl-3 font-sans text-xs">
             {name}
             <button
               type="button"
@@ -777,7 +790,7 @@ function ScenesTab({
   const listId = "analysis-locations";
 
   if (scenes.length === 0) {
-    return <p className="font-mono text-sm text-muted">La IA no ha propuesto ninguna escena.</p>;
+    return <p className="py-10 text-center font-sans text-sm text-muted">La IA no ha propuesto ninguna escena.</p>;
   }
 
   return (
@@ -794,15 +807,15 @@ function ScenesTab({
         <button type="button" onClick={() => onAllOn(false)} className="link-action">
           Quitar marcas
         </button>
-        <span className="ml-auto font-mono text-[11px] text-muted">Pulsa &ldquo;Editar&rdquo; para corregir los detalles de una escena.</span>
+        <span className="ml-auto font-sans text-xs text-muted">Pulsa «Editar» para corregir los detalles de una escena.</span>
       </div>
 
-      <ul className="mt-4 space-y-3">
+      <ul className="sheet mt-4 divide-y divide-line">
         {scenes.map((s) => {
           const isOpen = open === s.key;
           const updates = existingNumbers.includes(s.number.trim());
           return (
-            <li key={s.key} className={`border p-4 ${s.on ? "border-line" : "border-line opacity-60"}`}>
+            <li key={s.key} className={`px-4 py-4 sm:px-5 ${s.on ? "" : "opacity-60"}`}>
               <div className="flex flex-wrap items-start gap-3">
                 <input
                   type="checkbox"
@@ -843,20 +856,20 @@ function ScenesTab({
                   type="button"
                   onClick={() => setOpen(isOpen ? null : s.key)}
                   aria-expanded={isOpen}
-                  className="btn btn-outline btn-sm shrink-0"
+                  className="link-action shrink-0 text-fg"
                 >
                   {isOpen ? "Cerrar" : "Editar"}
                 </button>
               </div>
 
               {isOpen && (
-                <div className="mt-4 grid gap-4 border-t border-line pt-4 sm:grid-cols-2">
-                  <label className="flex flex-col gap-1">
-                    <span className="font-mono text-[10px] tracking-widest text-muted uppercase">Número</span>
+                <div className="mt-5 grid gap-x-6 gap-y-5 border-t border-line pt-5 sm:ml-7 sm:grid-cols-2">
+                  <label className="flex flex-col gap-1.5">
+                    <span className={LABEL}>Número</span>
                     <input value={s.number} onChange={(e) => onPatch(s.key, { number: e.target.value })} className={inputClass} />
                   </label>
-                  <label className="flex flex-col gap-1">
-                    <span className="font-mono text-[10px] tracking-widest text-muted uppercase">Localización</span>
+                  <label className="flex flex-col gap-1.5">
+                    <span className={LABEL}>Localización</span>
                     <input
                       value={s.locationName}
                       onChange={(e) => onPatch(s.key, { locationName: e.target.value })}
@@ -865,8 +878,8 @@ function ScenesTab({
                       className={inputClass}
                     />
                   </label>
-                  <label className="flex flex-col gap-1">
-                    <span className="font-mono text-[10px] tracking-widest text-muted uppercase">Interior / exterior</span>
+                  <label className="flex flex-col gap-1.5">
+                    <span className={LABEL}>Interior / exterior</span>
                     <select value={s.intExt} onChange={(e) => onPatch(s.key, { intExt: e.target.value })} className={inputClass}>
                       <option value="" className="bg-bg">Sin indicar</option>
                       {Object.entries(INT_EXT_LABELS).map(([v, l]) => (
@@ -874,8 +887,8 @@ function ScenesTab({
                       ))}
                     </select>
                   </label>
-                  <label className="flex flex-col gap-1">
-                    <span className="font-mono text-[10px] tracking-widest text-muted uppercase">Momento del día</span>
+                  <label className="flex flex-col gap-1.5">
+                    <span className={LABEL}>Momento del día</span>
                     <select value={s.dayPart} onChange={(e) => onPatch(s.key, { dayPart: e.target.value })} className={inputClass}>
                       <option value="" className="bg-bg">Sin indicar</option>
                       {Object.entries(DAY_PART_LABELS).map(([v, l]) => (
@@ -883,16 +896,16 @@ function ScenesTab({
                       ))}
                     </select>
                   </label>
-                  <label className="flex flex-col gap-1 sm:col-span-2">
-                    <span className="font-mono text-[10px] tracking-widest text-muted uppercase">Resumen</span>
+                  <label className="flex flex-col gap-1.5 sm:col-span-2">
+                    <span className={LABEL}>Resumen</span>
                     <textarea rows={2} value={s.description} onChange={(e) => onPatch(s.key, { description: e.target.value })} className={inputClass} />
                   </label>
-                  <label className="flex flex-col gap-1 sm:col-span-2">
-                    <span className="font-mono text-[10px] tracking-widest text-muted uppercase">Acción</span>
+                  <label className="flex flex-col gap-1.5 sm:col-span-2">
+                    <span className={LABEL}>Acción</span>
                     <textarea rows={3} value={s.action} onChange={(e) => onPatch(s.key, { action: e.target.value })} className={inputClass} />
                   </label>
-                  <label className="flex flex-col gap-1 sm:col-span-2">
-                    <span className="font-mono text-[10px] tracking-widest text-muted uppercase">Diálogos y notas</span>
+                  <label className="flex flex-col gap-1.5 sm:col-span-2">
+                    <span className={LABEL}>Diálogos y notas</span>
                     <textarea rows={2} value={s.dialogueNotes} onChange={(e) => onPatch(s.key, { dialogueNotes: e.target.value })} className={inputClass} />
                   </label>
                   <div className="sm:col-span-2">

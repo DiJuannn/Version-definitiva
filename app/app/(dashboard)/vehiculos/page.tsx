@@ -7,11 +7,11 @@ export default async function VehiculosPage() {
   if (!profile) return null;
 
   return (
-    <div>
+    <div className="pb-16">
       <PageHeader
         eyebrow="Recursos"
         title="Vehículos"
-        description="Flota de la organización: se reserva por día de rodaje desde cualquier proyecto, sin recrearla."
+        description="La flota de la productora. Se apunta una vez y se reserva para cada día de rodaje desde el Plan de rodaje de cualquier proyecto."
       />
       <VehiclesFleet organizationId={profile.organizationId} />
     </div>

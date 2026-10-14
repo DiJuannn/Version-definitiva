@@ -3,10 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { isProjectOwnerPro } from "@/lib/project-plan";
 import { PageHeader } from "@/components/PageHeader";
+import { LEGAL_INPUT, LegalField, LegalTemplateForm } from "@/components/gestion/LegalTemplateForm";
 
-const inputClass =
-  "field w-full px-3 py-2 text-sm";
-const labelClass = "font-mono text-[10px] tracking-widest text-muted uppercase";
 
 export default async function NdaPage({
   params,
@@ -26,49 +24,35 @@ export default async function NdaPage({
   const people = [...actors.map((a) => a.name), ...crewMembers.map((c) => c.name)];
 
   return (
-    <div>
+    <div className="pb-16">
       <PageHeader
         backHref={`/app/${projectId}/documentos-legales`}
-        backLabel="← Plantilla de documentos"
+        backLabel="← Plantillas de documentos"
+        eyebrow="Plantilla legal"
         title="Acuerdo de confidencialidad"
+        description="Para quien vaya a leer el guion o ver material sin estrenar: se compromete a no contarlo ni difundirlo."
       />
-      <p className="mt-3 max-w-2xl font-sans text-sm text-muted">
-        El nombre del proyecto y la productora se rellenan solos. Completa lo
-        demás — al generar el PDF se abre listo para imprimir y firmar.
-      </p>
 
-      <form
+      <LegalTemplateForm
         action={`/api/pdf/legal/${projectId}/nda`}
-        method="POST"
-        target="_blank"
-        className="mt-6 grid gap-4 border border-line p-5 sm:grid-cols-2"
+        projectName={project.name}
+        tip="«Nombre completo» te sugiere a la gente del reparto y del equipo mientras escribes."
       >
-        <label className="flex flex-col gap-1">
-          <span className={labelClass}>Nombre completo</span>
-          <input name="nombre" list="people-list" required className={inputClass} />
+        <LegalField label="Nombre completo">
+          <input name="nombre" list="people-list" required className={LEGAL_INPUT} />
           <datalist id="people-list">
             {people.map((name) => (
               <option key={name} value={name} />
             ))}
           </datalist>
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className={labelClass}>DNI / identificación</span>
-          <input name="dni" className={inputClass} />
-        </label>
-        <label className="flex flex-col gap-1 sm:col-span-2">
-          <span className={labelClass}>Duración del acuerdo</span>
-          <input name="duracion" placeholder="Ej. hasta el estreno del proyecto, o 2 años" className={inputClass} />
-        </label>
-        <div>
-          <button
-            type="submit"
-            className="btn btn-secondary"
-          >
-            Generar PDF
-          </button>
-        </div>
-      </form>
+        </LegalField>
+        <LegalField label="DNI / identificación">
+          <input name="dni" className={LEGAL_INPUT} />
+        </LegalField>
+        <LegalField label="Duración del acuerdo" wide>
+          <input name="duracion" placeholder="Ej. hasta el estreno del proyecto, o 2 años" className={LEGAL_INPUT} />
+        </LegalField>
+      </LegalTemplateForm>
     </div>
   );
 }

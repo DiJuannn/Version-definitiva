@@ -63,15 +63,16 @@ export default async function ClaquetaPage({
   return (
     <div>
       <PageHeader
+        eyebrow="Producción"
         title="Claqueta digital"
+        description={
+          scenes.length > 0
+            ? "Pon el móvil delante de la cámara y toca el tablero al empezar cada toma: suena el golpe y la toma queda apuntada en el parte de script."
+            : "Pon el móvil delante de la cámara y toca el tablero al empezar cada toma. Este proyecto aún no tiene escenas: escribe el número a mano."
+        }
       />
-      <p className="mt-3 max-w-2xl font-sans text-sm text-muted">
-        {scenes.length > 0
-          ? "Elige la escena de la lista o escríbela a mano, ajusta la toma y toca el tablero para marcar."
-          : "Este proyecto todavía no tiene escenas — escribe el número a mano."}
-      </p>
 
-      <div className="mt-8">
+      <div className="mt-10">
         <ClaquetaBoard
           projectId={projectId}
           projectName={project.name}

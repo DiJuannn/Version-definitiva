@@ -27,8 +27,8 @@ export function FeatureIntro({
   if (dismissed) return null;
 
   return (
-    <div className="mt-6 flex items-start justify-between gap-4 border border-line bg-bg-raised p-4">
-      <p className="font-mono text-xs leading-relaxed text-muted">{children}</p>
+    <div className="mt-6 flex items-start justify-between gap-4 border-l-2 border-accent py-1 pl-4">
+      <p className="font-sans text-sm leading-relaxed text-muted">{children}</p>
       <button
         type="button"
         onClick={() => {

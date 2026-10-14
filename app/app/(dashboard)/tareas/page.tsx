@@ -15,24 +15,26 @@ export default async function TareasPage({
   const projects = await listProjectsForProfile(profile);
 
   return (
-    <div>
+    <div className="pb-16">
       <PageHeader
         eyebrow="Organización"
         title="Tareas"
-        description="Pendientes de toda la productora, con o sin proyecto. Marca una como hecha con la casilla."
+        description="Lo pendiente de toda la productora, con o sin proyecto. Toca el círculo para darla por hecha."
+        actions={
+          projects.length > 0 ? (
+            <ScopeToggle
+              items={[
+                { label: "Todas", href: "/app/tareas", active: true },
+                ...projects.slice(0, 3).map((p) => ({
+                  label: p.name,
+                  href: `/app/${p.id}/tareas`,
+                  active: false,
+                })),
+              ]}
+            />
+          ) : undefined
+        }
       />
-      <div className="mt-6">
-        <ScopeToggle
-          items={[
-            { label: "Toda la organización", href: "/app/tareas", active: true },
-            ...projects.slice(0, 3).map((p) => ({
-              label: p.name,
-              href: `/app/${p.id}/tareas`,
-              active: false,
-            })),
-          ]}
-        />
-      </div>
       <TasksView
         organizationId={profile.organizationId}
         showCompleted={completadas === "1"}

@@ -7,7 +7,10 @@ import type { AnalyzeShotListState } from "@/lib/actions/shot-list-import";
 function UploadStatus() {
   const { pending } = useFormStatus();
   return pending ? (
-    <span className="font-mono text-xs text-muted">Leyendo el documento y proponiendo los planos… puede tardar un minuto.</span>
+    <span className="inline-flex items-center gap-2 font-sans text-xs text-muted" role="status">
+      <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
+      Leyendo el documento… puede tardar un minuto.
+    </span>
   ) : null;
 }
 
@@ -26,7 +29,7 @@ export function ShotListUploadForm({
 
   return (
     <form action={formAction} className="flex flex-wrap items-center gap-3">
-      <label className="btn btn-secondary btn-sm cursor-pointer">
+      <label className="btn btn-secondary cursor-pointer has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-accent">
         Importar guion técnico
         <input
           type="file"
@@ -42,7 +45,7 @@ export function ShotListUploadForm({
       </label>
       <UploadStatus />
       {state?.error && (
-        <p className="w-full font-mono text-xs text-danger">{state.error}</p>
+        <p className="w-full border-l-2 border-danger pl-3 font-sans text-xs text-danger">{state.error}</p>
       )}
     </form>
   );

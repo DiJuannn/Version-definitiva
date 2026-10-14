@@ -42,7 +42,7 @@ export function DossierEmailButton({ projectId }: { projectId: string }) {
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="font-mono text-xs text-muted hover:text-accent"
+          className="link-action"
         >
           Cancelar
         </button>

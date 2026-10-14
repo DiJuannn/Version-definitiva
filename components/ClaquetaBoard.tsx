@@ -54,7 +54,8 @@ function playClapSound(delaySeconds: number) {
         .webkitAudioContext;
     // Un solo contexto reutilizado: crear uno nuevo en cada toque añade
     // retraso variable, justo lo que desincroniza la marca.
-    if (!sharedAudio || sharedAudio.state === "closed") sharedAudio = new AudioContextClass();
+    if (!sharedAudio || sharedAudio.state === "closed")
+      sharedAudio = new AudioContextClass();
     const ctx = sharedAudio;
     if (ctx.state === "suspended") void ctx.resume();
     const at = ctx.currentTime + delaySeconds;
@@ -154,16 +155,23 @@ export function ClaquetaBoard({
   const [sceneId, setSceneId] = useState(scenes[0]?.id ?? "");
   const [manualSceneNumber, setManualSceneNumber] = useState("");
   const selectedScene =
-    sceneEntryMode === "list" ? scenes.find((s) => s.id === sceneId) ?? null : null;
-  const sceneNumber = selectedScene ? selectedScene.number : manualSceneNumber.trim();
+    sceneEntryMode === "list"
+      ? (scenes.find((s) => s.id === sceneId) ?? null)
+      : null;
+  const sceneNumber = selectedScene
+    ? selectedScene.number
+    : manualSceneNumber.trim();
 
   // Última toma usada por escena+plano; se actualiza en cada clap para que
   // volver a una escena ya rodada hoy siga donde se quedó.
   const [takeMap, setTakeMap] = useState(lastTakeByKey);
-  const nextTakeFor = (scene: string, shot: string) => (takeMap[takeKey(scene, shot)] ?? 0) + 1;
+  const nextTakeFor = (scene: string, shot: string) =>
+    (takeMap[takeKey(scene, shot)] ?? 0) + 1;
 
   const [shotNumber, setShotNumber] = useState("");
-  const [take, setTake] = useState(() => (sceneNumber ? nextTakeFor(sceneNumber, "") : 1));
+  const [take, setTake] = useState(() =>
+    sceneNumber ? nextTakeFor(sceneNumber, "") : 1,
+  );
   const [director, setDirector] = useState("");
   const [camera, setCamera] = useState("");
   const [clip, setClip] = useState("");
@@ -186,11 +194,20 @@ export function ClaquetaBoard({
   useEffect(() => {
     const saved = readSaved(projectId);
     if (saved) {
-      const mode = saved.sceneEntryMode === "manual" || scenes.length === 0 ? "manual" : "list";
-      const id = saved.sceneId && scenes.some((s) => s.id === saved.sceneId) ? saved.sceneId : scenes[0]?.id ?? "";
+      const mode =
+        saved.sceneEntryMode === "manual" || scenes.length === 0
+          ? "manual"
+          : "list";
+      const id =
+        saved.sceneId && scenes.some((s) => s.id === saved.sceneId)
+          ? saved.sceneId
+          : (scenes[0]?.id ?? "");
       const manual = saved.manualSceneNumber ?? "";
       const shot = saved.shotNumber ?? "";
-      const scene = mode === "list" ? scenes.find((s) => s.id === id)?.number ?? "" : manual.trim();
+      const scene =
+        mode === "list"
+          ? (scenes.find((s) => s.id === id)?.number ?? "")
+          : manual.trim();
       // Nunca por debajo de lo que ya hay guardado en el servidor para esa
       // escena+plano: repetir un número de toma es peor que saltarse uno.
       const serverNext = scene ? nextTakeFor(scene, shot) : 1;
@@ -212,13 +229,33 @@ export function ClaquetaBoard({
 
   useEffect(() => {
     if (!restored) return;
-    const data: SavedBoard = { sceneEntryMode, sceneId, manualSceneNumber, shotNumber, director, camera, clip, take };
+    const data: SavedBoard = {
+      sceneEntryMode,
+      sceneId,
+      manualSceneNumber,
+      shotNumber,
+      director,
+      camera,
+      clip,
+      take,
+    };
     try {
       window.localStorage.setItem(storageKey(projectId), JSON.stringify(data));
     } catch {
       // Sin almacenamiento (modo privado estricto): la claqueta sigue funcionando sin memoria.
     }
-  }, [restored, projectId, sceneEntryMode, sceneId, manualSceneNumber, shotNumber, director, camera, clip, take]);
+  }, [
+    restored,
+    projectId,
+    sceneEntryMode,
+    sceneId,
+    manualSceneNumber,
+    shotNumber,
+    director,
+    camera,
+    clip,
+    take,
+  ]);
 
   // Escena nueva o plano nuevo = toma 1 (o la siguiente a la última que ya
   // tenga esa escena+plano).
@@ -313,7 +350,9 @@ export function ClaquetaBoard({
           retries.current.delete(optimisticId);
           setLog((prev) =>
             prev.map((entry) =>
-              entry.id === optimisticId ? { ...entry, id: result.id, failed: false } : entry,
+              entry.id === optimisticId
+                ? { ...entry, id: result.id, failed: false }
+                : entry,
             ),
           );
         }
@@ -326,9 +365,14 @@ export function ClaquetaBoard({
         // historial marcada como "sin guardar" y con reintento.
         retries.current.set(optimisticId, persist);
         setLog((prev) =>
-          prev.map((entry) => (entry.id === optimisticId ? { ...entry, failed: true } : entry)),
+          prev.map((entry) =>
+            entry.id === optimisticId ? { ...entry, failed: true } : entry,
+          ),
         );
-        toast("error", `No se guardó la toma ${thisTake} de la escena ${sceneNumber}. Reintenta cuando haya conexión.`);
+        toast(
+          "error",
+          `No se guardó la toma ${thisTake} de la escena ${sceneNumber}. Reintenta cuando haya conexión.`,
+        );
       }
     }
     await persist();
@@ -342,10 +386,16 @@ export function ClaquetaBoard({
 
   async function setGood(entry: ClapLogEntry) {
     const next = !entry.good;
-    setLog((prev) => prev.map((l) => (l.id === entry.id ? { ...l, good: next } : l)));
-    const ok = await updateClapLog(projectId, entry.id, { good: next }).catch(() => false);
+    setLog((prev) =>
+      prev.map((l) => (l.id === entry.id ? { ...l, good: next } : l)),
+    );
+    const ok = await updateClapLog(projectId, entry.id, { good: next }).catch(
+      () => false,
+    );
     if (!ok) {
-      setLog((prev) => prev.map((l) => (l.id === entry.id ? { ...l, good: entry.good } : l)));
+      setLog((prev) =>
+        prev.map((l) => (l.id === entry.id ? { ...l, good: entry.good } : l)),
+      );
       toast("error", "No se pudo marcar la toma.");
     }
   }
@@ -354,10 +404,18 @@ export function ClaquetaBoard({
     setEditingNoteId(null);
     const notes = value.trim() || null;
     if (notes === (entry.notes ?? null)) return;
-    setLog((prev) => prev.map((l) => (l.id === entry.id ? { ...l, notes } : l)));
-    const ok = await updateClapLog(projectId, entry.id, { notes }).catch(() => false);
+    setLog((prev) =>
+      prev.map((l) => (l.id === entry.id ? { ...l, notes } : l)),
+    );
+    const ok = await updateClapLog(projectId, entry.id, { notes }).catch(
+      () => false,
+    );
     if (!ok) {
-      setLog((prev) => prev.map((l) => (l.id === entry.id ? { ...l, notes: entry.notes ?? null } : l)));
+      setLog((prev) =>
+        prev.map((l) =>
+          l.id === entry.id ? { ...l, notes: entry.notes ?? null } : l,
+        ),
+      );
       toast("error", "No se pudo guardar la nota.");
     }
   }
@@ -402,7 +460,11 @@ export function ClaquetaBoard({
               más se usa en rodaje) un tablero pegado arriba terminaba
               deslizándose por encima de la ficha de ajustes de debajo,
               solapando los campos y volviéndolos ilegibles. */}
-          <div className="select-none">
+          {/* La claqueta es un objeto de rodaje y se enseña a cámara: es negra a
+              propósito, aunque la página sea clara. .taller-ink fija sus colores
+              (fondo negro, texto claro) pase lo que pase alrededor; las rayas y
+              el destello blanco son colores fijos por la misma razón. */}
+          <div className="taller-ink select-none">
             {/* Chapeta de dos piezas, como una claqueta de verdad: la de arriba
                 está ABIERTA en reposo (bisagra a la izquierda) y al tocar se
                 cierra de golpe sobre la fija. Así, en cámara, el fotograma en
@@ -435,292 +497,338 @@ export function ClaquetaBoard({
               type="button"
               onClick={handleClap}
               disabled={!sceneNumber}
-              className="relative block w-full border-2 border-fg bg-black px-4 py-5 text-left transition-colors hover:border-accent disabled:cursor-not-allowed disabled:opacity-60 sm:px-7 sm:py-7"
+              className="relative block w-full rounded-b-md border-2 border-fg bg-bg px-4 py-5 text-left text-fg shadow-2xl transition-colors hover:border-accent focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent disabled:cursor-not-allowed disabled:opacity-60 sm:px-7 sm:py-7"
             >
-            <div className="flex items-baseline justify-between gap-3 border-b border-fg/25 pb-3">
-              <div className="min-w-0">
-                <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
-                  Producción
-                </p>
-                <p className="mt-0.5 truncate font-display text-sm font-bold text-fg sm:text-base">
-                  {projectName}
+              <div className="flex items-baseline justify-between gap-3 border-b border-fg/25 pb-3">
+                <div className="min-w-0">
+                  <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
+                    Producción
+                  </p>
+                  <p className="mt-0.5 truncate font-display text-sm font-bold text-fg sm:text-base">
+                    {projectName}
+                  </p>
+                </div>
+                <p className="shrink-0 font-mono text-[10px] tracking-widest text-fg/50">
+                  {today}
                 </p>
               </div>
-              <p className="shrink-0 font-mono text-[10px] tracking-widest text-fg/50">
-                {today}
+
+              <div className="mt-3 grid grid-cols-3 gap-3 border-b border-fg/25 pb-3">
+                <div className="min-w-0">
+                  <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
+                    Director
+                  </p>
+                  <p className="mt-0.5 truncate font-mono text-sm text-fg">
+                    {director || "—"}
+                  </p>
+                </div>
+                <div className="min-w-0">
+                  <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
+                    Cámara
+                  </p>
+                  <p className="mt-0.5 truncate font-mono text-sm text-fg">
+                    {camera || "—"}
+                  </p>
+                </div>
+                <div className="min-w-0">
+                  <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
+                    Clip
+                  </p>
+                  <p className="mt-0.5 truncate font-mono text-sm text-fg">
+                    {clip || "—"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 grid grid-cols-3 divide-x divide-fg/25 border-b border-fg/25 pb-4">
+                <div className="min-w-0 pr-2 sm:pr-4">
+                  <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
+                    Escena
+                  </p>
+                  <p className="mt-1 truncate font-display text-3xl font-bold text-fg sm:text-5xl">
+                    {sceneNumber || "—"}
+                  </p>
+                </div>
+                <div className="min-w-0 px-2 sm:px-4">
+                  <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
+                    Plano
+                  </p>
+                  <p className="mt-1 truncate font-display text-3xl font-bold text-fg sm:text-5xl">
+                    {shotNumber || "—"}
+                  </p>
+                </div>
+                <div className="min-w-0 pl-2 sm:pl-4">
+                  <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
+                    Toma
+                  </p>
+                  <p className="mt-1 truncate font-display text-3xl font-bold text-accent sm:text-5xl">
+                    {take}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 sm:divide-x sm:divide-fg/25">
+                <div className="sm:pr-4">
+                  <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
+                    Int/Ext
+                  </p>
+                  <p className="mt-0.5 font-mono text-sm text-fg">
+                    {intExtLabel}
+                  </p>
+                </div>
+                <div className="sm:pl-4">
+                  <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
+                    Día/Noche
+                  </p>
+                  <p className="mt-0.5 font-mono text-sm text-fg">
+                    {dayPartLabel}
+                  </p>
+                </div>
+              </div>
+
+              <p className="mt-5 text-center font-mono text-[10px] tracking-[0.35em] text-fg/40 uppercase">
+                {!sceneNumber
+                  ? "Elige una escena"
+                  : saving
+                    ? "Guardando…"
+                    : "Toca para claquetar"}
               </p>
-            </div>
 
-            <div className="mt-3 grid grid-cols-3 gap-3 border-b border-fg/25 pb-3">
-              <div className="min-w-0">
-                <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
-                  Director
-                </p>
-                <p className="mt-0.5 truncate font-mono text-sm text-fg">{director || "—"}</p>
-              </div>
-              <div className="min-w-0">
-                <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
-                  Cámara
-                </p>
-                <p className="mt-0.5 truncate font-mono text-sm text-fg">{camera || "—"}</p>
-              </div>
-              <div className="min-w-0">
-                <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
-                  Clip
-                </p>
-                <p className="mt-0.5 truncate font-mono text-sm text-fg">{clip || "—"}</p>
-              </div>
-            </div>
-
-            <div className="mt-4 grid grid-cols-3 divide-x divide-fg/25 border-b border-fg/25 pb-4">
-              <div className="min-w-0 pr-2 sm:pr-4">
-                <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
-                  Escena
-                </p>
-                <p className="mt-1 truncate font-display text-3xl font-bold text-fg sm:text-5xl">
-                  {sceneNumber || "—"}
-                </p>
-              </div>
-              <div className="min-w-0 px-2 sm:px-4">
-                <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
-                  Plano
-                </p>
-                <p className="mt-1 truncate font-display text-3xl font-bold text-fg sm:text-5xl">
-                  {shotNumber || "—"}
-                </p>
-              </div>
-              <div className="min-w-0 pl-2 sm:pl-4">
-                <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
-                  Toma
-                </p>
-                <p className="mt-1 truncate font-display text-3xl font-bold text-accent sm:text-5xl">
-                  {take}
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-4 grid grid-cols-2 sm:divide-x sm:divide-fg/25">
-              <div className="sm:pr-4">
-                <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
-                  Int/Ext
-                </p>
-                <p className="mt-0.5 font-mono text-sm text-fg">{intExtLabel}</p>
-              </div>
-              <div className="sm:pl-4">
-                <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
-                  Día/Noche
-                </p>
-                <p className="mt-0.5 font-mono text-sm text-fg">{dayPartLabel}</p>
-              </div>
-            </div>
-
-            <p className="mt-5 text-center font-mono text-[10px] tracking-[0.35em] text-fg/40 uppercase">
-              {!sceneNumber ? "Elige una escena" : saving ? "Guardando…" : "Toca para claquetar"}
-            </p>
-
-            {/* Destello blanco en el instante del cierre — lo más visible en
+              {/* Destello blanco en el instante del cierre — lo más visible en
                 cámara (varios fotogramas a tope y luego se apaga). */}
-            <AnimatePresence>
-              {clapping && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: [0, 1, 1, 0] }}
-                  exit={{ opacity: 0 }}
-                  transition={{
-                    duration: (CLOSE_MS + HOLD_MS) / 1000,
-                    times: [0, CLOSE_MS / (CLOSE_MS + HOLD_MS), (CLOSE_MS + 180) / (CLOSE_MS + HOLD_MS), 1],
-                    ease: "linear",
-                  }}
-                  className="pointer-events-none absolute inset-0 bg-white"
+              <AnimatePresence>
+                {clapping && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: [0, 1, 1, 0] }}
+                    exit={{ opacity: 0 }}
+                    transition={{
+                      duration: (CLOSE_MS + HOLD_MS) / 1000,
+                      times: [
+                        0,
+                        CLOSE_MS / (CLOSE_MS + HOLD_MS),
+                        (CLOSE_MS + 180) / (CLOSE_MS + HOLD_MS),
+                        1,
+                      ],
+                      ease: "linear",
+                    }}
+                    className="pointer-events-none absolute inset-0 bg-white"
+                  />
+                )}
+              </AnimatePresence>
+            </button>
+          </div>
+
+          {/* Lo que pone la claqueta: se escribe aquí, sobre la página, y el
+              tablero de arriba se actualiza en vivo. */}
+          <div className="mt-10">
+            <h2 className="font-display text-lg font-bold">
+              Lo que pone la claqueta
+            </h2>
+            <p className="mt-1 font-sans text-sm text-muted">
+              La toma sube sola al marcar. Director, cámara y clip se recuerdan
+              en este dispositivo.
+            </p>
+          </div>
+          <div className="mt-5 grid gap-x-6 gap-y-5 sm:grid-cols-2">
+            <label className="flex min-w-0 flex-col gap-1">
+              <div className="flex items-center justify-between gap-2">
+                <span className="eyebrow">Escena</span>
+                {scenes.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={
+                      sceneEntryMode === "list"
+                        ? switchToManualScene
+                        : switchToSceneList
+                    }
+                    className="font-mono text-[10px] tracking-widest text-accent uppercase underline-offset-2 hover:underline"
+                  >
+                    {sceneEntryMode === "list"
+                      ? "Escribir a mano"
+                      : "Elegir de la lista"}
+                  </button>
+                )}
+              </div>
+              {sceneEntryMode === "list" ? (
+                <select
+                  value={sceneId}
+                  onChange={(e) => pickScene(e.target.value)}
+                  className="field w-full min-w-0 py-2.5"
+                >
+                  {scenes.map((scene) => (
+                    <option key={scene.id} value={scene.id}>
+                      {scene.number} —{" "}
+                      {
+                        INT_EXT_LABELS[
+                          scene.intExt as keyof typeof INT_EXT_LABELS
+                        ]
+                      }
+                      {" · "}
+                      {
+                        DAY_PART_LABELS[
+                          scene.dayPart as keyof typeof DAY_PART_LABELS
+                        ]
+                      }
+                      {scene.locationName ? ` · ${scene.locationName}` : ""}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  value={manualSceneNumber}
+                  onChange={(e) => updateManualSceneNumber(e.target.value)}
+                  placeholder="Número de escena (ej. 04)"
+                  autoFocus={scenes.length > 0}
+                  className="field w-full min-w-0 py-2.5"
                 />
               )}
-            </AnimatePresence>
-          </button>
-          </div>
+            </label>
 
-          {/* Ficha de ajustes — mismo panel que el tablero (mismo borde,
-              mismo fondo), para que se sienta como una sola pieza y no como
-              dos bloques sueltos. El tablero ya se actualiza en vivo con
-              estos campos según se escriben — esto solo une cómo se ven. */}
-          <div className="grid gap-3 rounded-b-sm border-2 border-t-0 border-fg bg-black px-4 pt-4 pb-5 sm:grid-cols-2 sm:px-7 sm:pb-7">
-          <label className="flex min-w-0 flex-col gap-1">
-            <div className="flex items-center justify-between gap-2">
-              <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-                Escena
-              </span>
-              {scenes.length > 0 && (
+            <div className="flex min-w-0 flex-col gap-1">
+              <span className="eyebrow">Toma</span>
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={sceneEntryMode === "list" ? switchToManualScene : switchToSceneList}
-                  className="font-mono text-[10px] tracking-widest text-muted uppercase underline-offset-2 hover:text-accent hover:underline"
+                  onClick={() => setTake((t) => Math.max(1, t - 1))}
+                  className="h-12 w-12 shrink-0 rounded-full border border-line font-mono text-xl text-fg transition hover:border-accent hover:text-accent active:scale-95"
+                  aria-label="Restar toma"
                 >
-                  {sceneEntryMode === "list" ? "Escribir a mano" : "Elegir de la lista"}
+                  −
                 </button>
-              )}
+                <input
+                  type="number"
+                  min={1}
+                  value={take}
+                  onChange={(e) =>
+                    setTake(Math.max(1, Number(e.target.value) || 1))
+                  }
+                  className="field h-12 w-full px-3 text-center font-mono text-lg"
+                />
+                <button
+                  type="button"
+                  onClick={() => setTake((t) => t + 1)}
+                  className="h-12 w-12 shrink-0 rounded-full border border-line font-mono text-xl text-fg transition hover:border-accent hover:text-accent active:scale-95"
+                  aria-label="Sumar toma"
+                >
+                  +
+                </button>
+              </div>
             </div>
-            {sceneEntryMode === "list" ? (
-              <select
-                value={sceneId}
-                onChange={(e) => pickScene(e.target.value)}
-                className="field w-full min-w-0 px-3 py-2.5 text-sm"
-              >
-                {scenes.map((scene) => (
-                  <option key={scene.id} value={scene.id} className="bg-bg">
-                    {scene.number} — {INT_EXT_LABELS[scene.intExt as keyof typeof INT_EXT_LABELS]}
-                    {" · "}
-                    {DAY_PART_LABELS[scene.dayPart as keyof typeof DAY_PART_LABELS]}
-                    {scene.locationName ? ` · ${scene.locationName}` : ""}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <input
-                value={manualSceneNumber}
-                onChange={(e) => updateManualSceneNumber(e.target.value)}
-                placeholder="Número de escena (ej. 04)"
-                autoFocus={scenes.length > 0}
-                className="field w-full min-w-0 px-3 py-2.5 text-sm"
-              />
-            )}
-          </label>
 
-          <div className="flex min-w-0 flex-col gap-1">
-            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-              Toma
-            </span>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setTake((t) => Math.max(1, t - 1))}
-                className="h-14 w-14 shrink-0 border border-line font-mono text-xl text-muted transition hover:border-accent hover:text-accent active:scale-95"
-                aria-label="Restar toma"
-              >
-                −
-              </button>
+            <label className="flex flex-col gap-1">
+              <span className="eyebrow">Plano (opcional)</span>
               <input
-                type="number"
-                min={1}
-                value={take}
-                onChange={(e) => setTake(Math.max(1, Number(e.target.value) || 1))}
-                className="field h-14 w-full px-3 text-center font-mono text-lg"
+                value={shotNumber}
+                onChange={(e) => updateShotNumber(e.target.value)}
+                placeholder="Plano (ej. 3A)"
+                className="field py-2.5"
               />
-              <button
-                type="button"
-                onClick={() => setTake((t) => t + 1)}
-                className="h-14 w-14 shrink-0 border border-line font-mono text-xl text-muted transition hover:border-accent hover:text-accent active:scale-95"
-                aria-label="Sumar toma"
-              >
-                +
-              </button>
-            </div>
-          </div>
-
-          <label className="flex flex-col gap-1">
-            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-              Plano (opcional)
-            </span>
-            <input
-              value={shotNumber}
-              onChange={(e) => updateShotNumber(e.target.value)}
-              placeholder="Plano (ej. 3A)"
-              className="field px-3 py-2.5 text-sm"
-            />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="flex items-center gap-1.5 font-mono text-[10px] tracking-widest text-muted uppercase">
-              Clip de cámara (opcional)
-              {clip && (
-                <span className="flex items-center gap-1 normal-case tracking-normal text-accent">
-                  <span className="h-1 w-1 rounded-full bg-accent" />
-                  sube solo
-                </span>
-              )}
-            </span>
-            <input
-              value={clip}
-              onChange={(e) => setClip(e.target.value)}
-              placeholder="Archivo de la cámara (ej. C0009)"
-              autoCapitalize="characters"
-              className={`border bg-transparent px-3 py-2.5 font-mono text-sm outline-none transition-colors focus:border-accent ${clip ? "border-accent/40" : "border-line"}`}
-            />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="flex items-center gap-1.5 font-mono text-[10px] tracking-widest text-muted uppercase">
-              Director (opcional)
-              {/* Aviso puramente visual: toda la claqueta se recuerda en este
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="eyebrow flex items-center gap-1.5">
+                Clip de cámara (opcional)
+                {clip && (
+                  <span className="flex items-center gap-1 normal-case tracking-normal text-accent">
+                    <span className="h-1 w-1 rounded-full bg-accent" />
+                    sube solo
+                  </span>
+                )}
+              </span>
+              <input
+                value={clip}
+                onChange={(e) => setClip(e.target.value)}
+                placeholder="Archivo de la cámara (ej. C0009)"
+                autoCapitalize="characters"
+                className="field py-2.5 font-mono"
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="eyebrow flex items-center gap-1.5">
+                Director (opcional)
+                {/* Aviso puramente visual: toda la claqueta se recuerda en este
                   navegador aunque salgas a otra herramienta (ver readSaved). */}
-              {director && (
-                <span className="flex items-center gap-1 normal-case tracking-normal text-accent">
-                  <span className="h-1 w-1 rounded-full bg-accent" />
-                  se mantiene
-                </span>
-              )}
-            </span>
-            <input
-              value={director}
-              onChange={(e) => setDirector(e.target.value)}
-              placeholder="Nombre del director"
-              className={`border bg-transparent px-3 py-2.5 text-sm outline-none transition-colors focus:border-accent ${director ? "border-accent/40" : "border-line"}`}
-            />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="flex items-center gap-1.5 font-mono text-[10px] tracking-widest text-muted uppercase">
-              Cámara (opcional)
-              {camera && (
-                <span className="flex items-center gap-1 normal-case tracking-normal text-accent">
-                  <span className="h-1 w-1 rounded-full bg-accent" />
-                  se mantiene
-                </span>
-              )}
-            </span>
-            <input
-              value={camera}
-              onChange={(e) => setCamera(e.target.value)}
-              placeholder="Cámara (ej. A)"
-              className={`border bg-transparent px-3 py-2.5 text-sm outline-none transition-colors focus:border-accent ${camera ? "border-accent/40" : "border-line"}`}
-            />
-          </label>
-        </div>
+                {director && (
+                  <span className="flex items-center gap-1 normal-case tracking-normal text-accent">
+                    <span className="h-1 w-1 rounded-full bg-accent" />
+                    se mantiene
+                  </span>
+                )}
+              </span>
+              <input
+                value={director}
+                onChange={(e) => setDirector(e.target.value)}
+                placeholder="Nombre del director"
+                className="field py-2.5"
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="eyebrow flex items-center gap-1.5">
+                Cámara (opcional)
+                {camera && (
+                  <span className="flex items-center gap-1 normal-case tracking-normal text-accent">
+                    <span className="h-1 w-1 rounded-full bg-accent" />
+                    se mantiene
+                  </span>
+                )}
+              </span>
+              <input
+                value={camera}
+                onChange={(e) => setCamera(e.target.value)}
+                placeholder="Cámara (ej. A)"
+                className="field py-2.5"
+              />
+            </label>
+          </div>
         </div>
       </div>
 
       <div>
-        <div className="flex items-baseline justify-between gap-3">
-          <p className="font-mono text-[10px] tracking-widest text-accent uppercase">
-            Últimas tomas
-          </p>
-          <Link href={`/app/${projectId}/script`} className="link-action !text-muted hover:!text-accent">
-            Ver script →
+        <div className="flex items-baseline justify-between gap-3 border-b-2 border-fg pb-2">
+          <h2 className="font-display text-lg font-bold">Últimas tomas</h2>
+          <Link
+            href={`/app/${projectId}/script`}
+            className="link-action hover:!text-accent"
+          >
+            Parte de script →
           </Link>
         </div>
         {log.length === 0 ? (
-          <p className="mt-3 font-mono text-xs text-muted">
-            Todavía no se ha marcado ninguna toma.
+          <p className="mt-4 font-sans text-sm leading-relaxed text-muted">
+            Aún no se ha marcado ninguna toma. Cada vez que toques la claqueta,
+            la toma aparece aquí: márcala como buena (✓) o añádele una nota.
           </p>
         ) : (
-          <div className="mt-3 space-y-3">
+          <div className="mt-2 space-y-6">
             {groupedLog.map((group) => {
               const isCurrentScene =
                 sceneNumber !== "" && group.sceneNumber === sceneNumber;
               return (
-                <div
+                <section
                   key={group.sceneNumber}
-                  className={`border ${isCurrentScene ? "border-accent" : "border-line"}`}
+                  aria-label={`Escena ${group.sceneNumber}`}
                 >
-                  <div
-                    className={`flex items-center justify-between px-3 py-1.5 font-mono text-[10px] tracking-widest uppercase ${
-                      isCurrentScene ? "bg-accent text-bg" : "bg-bg-raised text-muted"
+                  <p
+                    className={`flex items-center justify-between pt-3 pb-1 font-mono text-[11px] tracking-widest uppercase ${
+                      isCurrentScene ? "text-accent" : "text-muted"
                     }`}
                   >
                     <span>Escena {group.sceneNumber}</span>
-                    {isCurrentScene && <span>Ahora</span>}
-                  </div>
-                  <div className="divide-y divide-line">
+                    {isCurrentScene && (
+                      <span className="flex items-center gap-1.5">
+                        <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                        Ahora
+                      </span>
+                    )}
+                  </p>
+                  <div className="divide-y divide-line border-y border-line">
                     {group.entries.map((entry) => (
                       <div
                         key={entry.id}
-                        className={`flex items-center justify-between gap-3 border-l-2 px-3 py-2.5 ${
-                          entry.good ? "border-success bg-success/5" : "border-transparent"
+                        className={`flex items-center justify-between gap-3 border-l-2 py-2.5 pr-1 pl-3 ${
+                          entry.good
+                            ? "border-success bg-success/5"
+                            : "border-transparent"
                         }`}
                       >
                         {!entry.failed && !entry.id.startsWith("pending-") && (
@@ -729,7 +837,7 @@ export function ClaquetaBoard({
                             onClick={() => setGood(entry)}
                             aria-pressed={Boolean(entry.good)}
                             aria-label={`Toma ${entry.take}: ${entry.good ? "quitar de buenas" : "marcar como buena"}`}
-                            className={`flex h-6 w-6 shrink-0 items-center justify-center border text-xs transition-colors ${
+                            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs transition-colors ${
                               entry.good
                                 ? "border-success bg-success text-bg"
                                 : "border-line text-transparent hover:border-success hover:text-success"
@@ -739,26 +847,42 @@ export function ClaquetaBoard({
                           </button>
                         )}
                         <div className="min-w-0 flex-1">
-                          <p className="font-mono text-sm">
-                            {entry.shotNumber ? `Plano ${entry.shotNumber} · ` : ""}
-                            Toma {entry.take}
-                            {entry.clip ? <span className="text-muted"> · {entry.clip}</span> : ""}
+                          <p className="flex flex-wrap items-baseline gap-x-2">
+                            <span className="font-display text-base font-bold">
+                              Toma {entry.take}
+                            </span>
+                            {entry.shotNumber && (
+                              <span className="font-sans text-sm">
+                                Plano {entry.shotNumber}
+                              </span>
+                            )}
+                            {entry.clip && (
+                              <span className="font-mono text-[11px] text-muted">
+                                {entry.clip}
+                              </span>
+                            )}
                             {entry.failed && (
-                              <span className="ml-2 text-[10px] tracking-widest text-warn uppercase">
+                              <span className="font-mono text-[10px] tracking-widest text-warn uppercase">
                                 Sin guardar
                               </span>
                             )}
                           </p>
                           <p className="font-mono text-[10px] text-muted">
-                            {[entry.director, entry.camera].filter(Boolean).join(" · ") || "—"}
+                            {[entry.director, entry.camera]
+                              .filter(Boolean)
+                              .join(" · ") || "—"}
                             {" · "}
-                            {new Date(entry.createdAt).toLocaleTimeString("es-ES", {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                              second: "2-digit",
-                            })}
+                            {new Date(entry.createdAt).toLocaleTimeString(
+                              "es-ES",
+                              {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                second: "2-digit",
+                              },
+                            )}
                           </p>
-                          {!entry.failed && !entry.id.startsWith("pending-") &&
+                          {!entry.failed &&
+                            !entry.id.startsWith("pending-") &&
                             (editingNoteId === entry.id ? (
                               <input
                                 autoFocus
@@ -767,9 +891,10 @@ export function ClaquetaBoard({
                                 onBlur={(e) => saveNote(entry, e.target.value)}
                                 onKeyDown={(e) => {
                                   if (e.key === "Enter") e.currentTarget.blur();
-                                  if (e.key === "Escape") setEditingNoteId(null);
+                                  if (e.key === "Escape")
+                                    setEditingNoteId(null);
                                 }}
-                                className="mt-1 w-full border border-accent bg-transparent px-2 py-1 font-mono text-[11px] outline-none"
+                                className="field mt-1 w-full px-2 py-1 font-mono text-[11px]"
                               />
                             ) : (
                               <button
@@ -794,14 +919,19 @@ export function ClaquetaBoard({
                         ) : (
                           !entry.id.startsWith("pending-") && (
                             <form action={() => handleDeleteLog(entry.id)}>
-                              <DeleteButton />
+                              <DeleteButton
+                                aria-label={`Eliminar la toma ${entry.take}`}
+                                className="link-action px-1.5 hover:!text-danger"
+                              >
+                                ✕
+                              </DeleteButton>
                             </form>
                           )
                         )}
                       </div>
                     ))}
                   </div>
-                </div>
+                </section>
               );
             })}
           </div>

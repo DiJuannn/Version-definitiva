@@ -42,14 +42,14 @@ export function ToolNodeView({ data, selected }: NodeProps<ToolNode>) {
             onClick={() => hide(card.key)}
             aria-label={`Ocultar «${card.title}»`}
             title="Ocultar esta tarjeta"
-            className="nodrag absolute top-1 right-1 z-10 hidden h-5 w-5 items-center justify-center rounded-full bg-black/60 text-xs leading-none text-white hover:bg-danger group-hover:flex focus-visible:flex"
+            className="nodrag absolute top-1 right-1 z-10 hidden h-5 w-5 items-center justify-center rounded-full bg-fg/70 text-xs leading-none text-bg hover:bg-danger group-hover:flex focus-visible:flex"
           >
             ×
           </button>
         </>
       )}
       <div
-        className={`flex h-full w-full flex-col gap-1 overflow-hidden border bg-bg-raised p-3 ${
+        className={`flex h-full w-full flex-col gap-1 overflow-hidden rounded-md border bg-bg-raised p-3 shadow-[0_1px_2px_color-mix(in_srgb,var(--fg)_6%,transparent)] ${
           card.key === "proyecto" ? "border-accent/60" : "border-line"
         }`}
       >
@@ -85,7 +85,7 @@ export function ToolNodeView({ data, selected }: NodeProps<ToolNode>) {
               disabled={busy || readOnly}
               onChange={(e) => changeStatus(e.target.value)}
               aria-label="Estado del proyecto"
-              className="mt-1 w-full border border-line bg-bg px-2 py-1.5 font-mono text-xs"
+              className="field mt-1 w-full px-2 py-1.5 font-mono text-xs"
             >
               {card.project.options.map((o) => (
                 <option key={o.value} value={o.value}>
@@ -108,7 +108,7 @@ export function ToolNodeView({ data, selected }: NodeProps<ToolNode>) {
                     disabled={busy || readOnly}
                     onClick={() => completeTask(t.id)}
                     aria-label={`Completar «${t.title}»`}
-                    className="nodrag mt-0.5 h-4 w-4 shrink-0 border border-muted/60 hover:border-accent"
+                    className="nodrag mt-0.5 h-4 w-4 shrink-0 rounded-sm border border-muted/60 hover:border-accent"
                   />
                   <span className="min-w-0 font-sans text-xs leading-snug">
                     {t.title}

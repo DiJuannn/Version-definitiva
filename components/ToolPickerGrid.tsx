@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ToolCard } from "@/components/ToolCard";
 import { CreateProjectForm } from "@/components/CreateProjectForm";
 import { Modal } from "@/components/Modal";
 import { createProjectAndOpenTool } from "@/lib/actions/projects";
@@ -38,21 +37,35 @@ export function ToolPickerGrid({
 
   return (
     <>
+      {/* Atajos: losas compactas (icono, nombre y una línea), agrupadas por fase. */}
       {groups.map((group) => (
-        <div key={group.label} className="mt-8 first:mt-0">
-          <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
-            {group.label}
-          </p>
-          <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+        <div key={group.label} className="mt-10 first:mt-0">
+          <p className="eyebrow text-accent">{group.label}</p>
+          <div className="mt-3 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {group.tools.map((tool) => (
-              <ToolCard
+              <button
                 key={tool.label}
-                icon={tool.icon}
-                label={tool.label}
-                description={tool.description}
-                badge={tool.pro ? "PRO" : undefined}
+                type="button"
                 onClick={() => handleToolClick(tool)}
-              />
+                className="tile group flex items-start gap-3.5 p-4 text-left transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_0_0_1px_var(--accent)] focus-visible:shadow-[0_0_0_2px_var(--accent)] focus-visible:outline-none active:scale-[0.99]"
+              >
+                <span className="mt-0.5 h-6 w-6 shrink-0 text-muted transition-colors group-hover:text-accent">{tool.icon}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center gap-2">
+                    <span className="font-display text-[15px] font-bold transition-colors group-hover:text-accent">
+                      {tool.label}
+                    </span>
+                    {tool.pro && (
+                      <span className="rounded-full bg-accent/15 px-1.5 py-px font-mono text-[9px] tracking-widest text-accent uppercase">
+                        PRO
+                      </span>
+                    )}
+                  </span>
+                  <span className="mt-1 line-clamp-2 block font-sans text-[13px] leading-snug text-muted">
+                    {tool.description}
+                  </span>
+                </span>
+              </button>
             ))}
           </div>
         </div>
@@ -70,21 +83,22 @@ export function ToolPickerGrid({
               action={createProjectAndOpenTool.bind(null, pickerTool.href)}
               formClassName="flex flex-col gap-3"
               inputClassName="field w-full px-3 py-2 text-sm"
-              buttonClassName="btn btn-secondary"
+              buttonClassName="btn btn-primary self-start"
               autoFocus
             />
           </div>
         )}
         {pickerTool && projects.length > 0 && (
-          <div className="mt-4 max-h-72 divide-y divide-line overflow-y-auto border-t border-line">
+          <div className="mt-5 max-h-72 divide-y divide-line overflow-y-auto border-y border-line">
             {projects.map((project) => (
               <button
                 key={project.id}
                 type="button"
                 onClick={() => router.push(`/app/${project.id}/${pickerTool.href}`)}
-                className="block min-h-11 w-full py-3 text-left font-mono text-sm transition-colors hover:text-accent"
+                className="flex min-h-11 w-full items-center justify-between gap-3 py-3 text-left font-sans text-[15px] transition-colors hover:text-accent"
               >
                 {project.name}
+                <span aria-hidden className="text-muted">→</span>
               </button>
             ))}
           </div>
@@ -92,7 +106,7 @@ export function ToolPickerGrid({
         <button
           type="button"
           onClick={() => setPickerTool(null)}
-          className="link-action mt-4"
+          className="link-action mt-3 !px-0"
         >
           Cancelar
         </button>

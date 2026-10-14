@@ -19,17 +19,16 @@ import { ChipOption } from "@/components/ChipOption";
 import { PageHeader } from "@/components/PageHeader";
 import { FileOpenLink } from "@/components/FileOpenLink";
 import { SubmitButton } from "@/components/SubmitButton";
-import { SectionTabs } from "@/components/SectionTabs";
 
 export default async function LocationDetailPage({
   params,
   searchParams,
 }: {
   params: Promise<{ locationId: string }>;
-  searchParams: Promise<{ tab?: string; from?: string }>;
+  searchParams: Promise<{ from?: string }>;
 }) {
   const { locationId } = await params;
-  const { tab, from } = await searchParams;
+  const { from } = await searchParams;
 
   const profile = await getCurrentProfile();
   if (!profile) return null;
@@ -69,315 +68,232 @@ export default async function LocationDetailPage({
   const addVideoAction = addLocationVideo.bind(null, locationId);
   const selectedCharacteristics = new Set(location.characteristics);
 
+  const LABEL = "font-mono text-[10px] tracking-[0.18em] text-muted uppercase";
+  const hasCoords = location.latitude !== null && location.longitude !== null;
+  const textFields: { name: string; label: string; value: string; type?: string; placeholder?: string }[] = [
+    { name: "name", label: "Nombre", value: location.name },
+    { name: "address", label: "Dirección", value: location.address ?? "" },
+    { name: "contactName", label: "Contacto", value: location.contactName ?? "" },
+    { name: "contactPhone", label: "Teléfono de contacto", value: location.contactPhone ?? "" },
+    { name: "availability", label: "Disponibilidad", value: location.availability ?? "", placeholder: "Fines de semana…" },
+    { name: "cost", label: "Coste (€)", value: location.cost?.toString() ?? "", type: "number" },
+  ];
+  const notes: { name: string; label: string; value: string; placeholder: string }[] = [
+    { name: "permitsNotes", label: "Permisos", value: location.permitsNotes ?? "", placeholder: "Qué hay que pedir y a quién" },
+    { name: "restrictions", label: "Restricciones", value: location.restrictions ?? "", placeholder: "Horarios, ruido, qué no se puede mover…" },
+    { name: "productionNotes", label: "Notas de producción", value: location.productionNotes ?? "", placeholder: "Luz, enchufes, dónde aparcar…" },
+    { name: "notes", label: "Notas", value: location.notes ?? "", placeholder: "" },
+  ];
+
   return (
-    <div>
+    <div className="pb-16">
       <PageHeader
         backHref={backHref}
         backLabel={backLabel}
-        eyebrow="Recursos"
-        title={`${location.name}`}
+        eyebrow="Localización"
+        title={location.name}
+        description={location.address ?? undefined}
       />
 
-      {usageByProject.size > 0 && (
-        <p className="mt-2 font-mono text-xs text-muted">
-          Usada en:{" "}
-          {[...usageByProject.values()]
-            .map((entry) => `${entry.name} (${entry.count})`)
-            .join(", ")}
-        </p>
-      )}
+      <p className="mt-4 font-sans text-sm text-muted">
+        {usageByProject.size > 0 ? (
+          <>
+            Usada en{" "}
+            {[...usageByProject.values()].map((entry, i) => (
+              <span key={entry.name}>
+                {i > 0 && ", "}
+                <span className="text-fg">{entry.name}</span> ({entry.count} {entry.count === 1 ? "escena" : "escenas"})
+              </span>
+            ))}
+            .
+          </>
+        ) : (
+          "Todavía no la usa ninguna escena. Se asigna desde el Guion de cada proyecto."
+        )}
+      </p>
 
-      <div className="mt-8">
-        <SectionTabs
-          ariaLabel="Secciones de la localización"
-          initial={tab}
-          tabs={[
-            {
-              id: "datos",
-              label: "Datos",
-              content: (
-                <div>
-                        {location.latitude !== null && location.longitude !== null && (
-                          <div className="mt-6 border border-line">
-                            <LocationsMapClient
-                              locations={[
-                                {
-                                  id: location.id,
-                                  name: location.name,
-                                  address: location.address,
-                                  latitude: location.latitude,
-                                  longitude: location.longitude,
-                                  sceneCount: scenesUsingLocation.length,
-                                },
-                              ]}
-                            />
-                          </div>
-                        )}
+      {/* ------------------------------------------------ ficha */}
+      <form action={updateAction} className="mt-12 grid gap-x-16 gap-y-12 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <section aria-labelledby="ficha" className="min-w-0">
+          <h2 id="ficha" className="border-b border-line pb-3 font-display text-xl font-black tracking-tight uppercase">
+            Ficha
+          </h2>
+          <div className="mt-6 grid gap-x-8 gap-y-6 sm:grid-cols-2">
+            {textFields.map((field) => (
+              <label key={field.name} className="block">
+                <span className={LABEL}>{field.label}</span>
+                <input
+                  name={field.name}
+                  type={field.type}
+                  step={field.type === "number" ? "0.01" : undefined}
+                  required={field.name === "name"}
+                  defaultValue={field.value}
+                  placeholder={field.placeholder}
+                  className="field-line"
+                />
+              </label>
+            ))}
+          </div>
 
-                        <form
-                          action={updateAction}
-                          className="mt-8 grid gap-4 border border-line p-5 sm:grid-cols-2 lg:grid-cols-3"
-                        >
-                          <label className="flex flex-col gap-1">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-                              Nombre
-                            </span>
-                            <input
-                              name="name"
-                              defaultValue={location.name}
-                              required
-                              className="field px-3 py-2 text-sm"
-                            />
-                          </label>
-                          <label className="flex flex-col gap-1">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-                              Dirección
-                            </span>
-                            <input
-                              name="address"
-                              defaultValue={location.address ?? ""}
-                              className="field px-3 py-2 text-sm"
-                            />
-                          </label>
-                          <label className="flex flex-col gap-1">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-                              Contacto
-                            </span>
-                            <input
-                              name="contactName"
-                              defaultValue={location.contactName ?? ""}
-                              className="field px-3 py-2 text-sm"
-                            />
-                          </label>
-                          <label className="flex flex-col gap-1">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-                              Teléfono de contacto
-                            </span>
-                            <input
-                              name="contactPhone"
-                              defaultValue={location.contactPhone ?? ""}
-                              className="field px-3 py-2 text-sm"
-                            />
-                          </label>
-                          <label className="flex flex-col gap-1">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-                              Disponibilidad
-                            </span>
-                            <input
-                              name="availability"
-                              defaultValue={location.availability ?? ""}
-                              className="field px-3 py-2 text-sm"
-                            />
-                          </label>
-                          <label className="flex flex-col gap-1">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-                              Coste
-                            </span>
-                            <input
-                              name="cost"
-                              type="number"
-                              step="0.01"
-                              defaultValue={location.cost?.toString() ?? ""}
-                              className="field px-3 py-2 text-sm"
-                            />
-                          </label>
-                          <label className="flex flex-col gap-1">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-                              Latitud
-                            </span>
-                            <input
-                              name="latitude"
-                              type="number"
-                              step="any"
-                              defaultValue={location.latitude ?? ""}
-                              className="field px-3 py-2 text-sm"
-                            />
-                          </label>
-                          <label className="flex flex-col gap-1">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-                              Longitud
-                            </span>
-                            <input
-                              name="longitude"
-                              type="number"
-                              step="any"
-                              defaultValue={location.longitude ?? ""}
-                              className="field px-3 py-2 text-sm"
-                            />
-                          </label>
-                          <GeocodeButton />
+          <fieldset className="mt-8">
+            <legend className={LABEL}>Qué tiene</legend>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {Object.values(LocationCharacteristic).map((value) => (
+                <ChipOption
+                  key={value}
+                  type="checkbox"
+                  name="characteristics"
+                  value={value}
+                  label={LOCATION_CHARACTERISTIC_LABELS[value]}
+                  defaultChecked={selectedCharacteristics.has(value)}
+                />
+              ))}
+            </div>
+          </fieldset>
 
-                          <div className="sm:col-span-2 lg:col-span-3">
-                            <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
-                              Características
-                            </p>
-                            <div className="mt-2 flex flex-wrap gap-2">
-                              {Object.values(LocationCharacteristic).map((value) => (
-                                <ChipOption
-                                  key={value}
-                                  type="checkbox"
-                                  name="characteristics"
-                                  value={value}
-                                  label={LOCATION_CHARACTERISTIC_LABELS[value]}
-                                  defaultChecked={selectedCharacteristics.has(value)}
-                                />
-                              ))}
-                            </div>
-                          </div>
+          <div className="mt-8 grid gap-x-8 gap-y-6 sm:grid-cols-2">
+            {notes.map((field) => (
+              <label key={field.name} className="block">
+                <span className={LABEL}>{field.label}</span>
+                <textarea
+                  name={field.name}
+                  defaultValue={field.value}
+                  rows={3}
+                  placeholder={field.placeholder}
+                  className="field mt-2 w-full leading-relaxed"
+                />
+              </label>
+            ))}
+          </div>
 
-                          <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-3">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-                              Permisos
-                            </span>
-                            <textarea
-                              name="permitsNotes"
-                              defaultValue={location.permitsNotes ?? ""}
-                              rows={2}
-                              className="field px-3 py-2 text-sm"
-                            />
-                          </label>
-                          <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-3">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-                              Restricciones
-                            </span>
-                            <textarea
-                              name="restrictions"
-                              defaultValue={location.restrictions ?? ""}
-                              rows={2}
-                              className="field px-3 py-2 text-sm"
-                            />
-                          </label>
-                          <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-3">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-                              Notas de producción
-                            </span>
-                            <textarea
-                              name="productionNotes"
-                              defaultValue={location.productionNotes ?? ""}
-                              rows={2}
-                              className="field px-3 py-2 text-sm"
-                            />
-                          </label>
-                          <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-3">
-                            <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
-                              Notas
-                            </span>
-                            <textarea
-                              name="notes"
-                              defaultValue={location.notes ?? ""}
-                              rows={2}
-                              className="field px-3 py-2 text-sm"
-                            />
-                          </label>
-                          <div>
-                            <SubmitButton
-                              pendingLabel="Guardando…"
-                              savedLabel="✓ Guardado"
-                              className="btn btn-secondary"
-                            >
-                              Guardar
-                            </SubmitButton>
-                          </div>
-                        </form>
+          <div className="mt-8">
+            <SubmitButton pendingLabel="Guardando…" savedLabel="✓ Guardado" className="btn btn-primary">
+              Guardar ficha
+            </SubmitButton>
+          </div>
+        </section>
+
+        {/* El mapa y las coordenadas van en la misma ficha (mismo formulario). */}
+        <aside aria-labelledby="mapa" className="space-y-4">
+          <h2 id="mapa" className={`${LABEL} border-b border-line pb-2`}>
+            En el mapa
+          </h2>
+          {hasCoords ? (
+            <div className="overflow-hidden rounded-xl">
+              <LocationsMapClient
+                className="h-[260px]"
+                locations={[
+                  {
+                    id: location.id,
+                    name: location.name,
+                    address: location.address,
+                    latitude: location.latitude as number,
+                    longitude: location.longitude as number,
+                    sceneCount: scenesUsingLocation.length,
+                  },
+                ]}
+              />
+            </div>
+          ) : (
+            <p className="border-l-2 border-warn pl-3 font-sans text-sm leading-relaxed text-muted">
+              Aún no está situada. Escribe la dirección en la ficha y pulsa «Buscar en el mapa», o pon las coordenadas a
+              mano. Luego guarda.
+            </p>
+          )}
+          <div className="grid grid-cols-2 gap-x-4 gap-y-4">
+            <label className="block">
+              <span className={LABEL}>Latitud</span>
+              <input name="latitude" type="number" step="any" defaultValue={location.latitude ?? ""} className="field-line" />
+            </label>
+            <label className="block">
+              <span className={LABEL}>Longitud</span>
+              <input name="longitude" type="number" step="any" defaultValue={location.longitude ?? ""} className="field-line" />
+            </label>
+            <GeocodeButton />
+          </div>
+        </aside>
+      </form>
+
+      {/* ------------------------------------------------ fotos */}
+      <section aria-labelledby="fotos" className="mt-20">
+        <div className="flex flex-wrap items-end justify-between gap-4 border-b border-line pb-3">
+          <h2 id="fotos" className="flex items-baseline gap-3 font-display text-xl font-black tracking-tight uppercase">
+            Fotografías
+            <span className="font-mono text-[11px] font-normal tracking-widest text-muted">{location.photoUrls.length}</span>
+          </h2>
+          <form action={addPhotoAction} className="flex flex-wrap items-center gap-3">
+            <label>
+              <span className="sr-only">Elegir foto</span>
+              <input
+                type="file"
+                name="photo"
+                accept="image/*"
+                required
+                className="max-w-[16rem] font-sans text-[13px] text-muted file:mr-3 file:cursor-pointer file:rounded-full file:border-0 file:bg-fg/[0.07] file:px-3 file:py-1.5 file:font-mono file:text-[11px] file:tracking-widest file:text-fg file:uppercase"
+              />
+            </label>
+            <SubmitButton pendingLabel="Subiendo…" savedLabel="✓ Subida" className="btn btn-secondary btn-sm">
+              Subir foto
+            </SubmitButton>
+          </form>
+        </div>
+
+        {location.photoUrls.length > 0 ? (
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {location.photoUrls.map((url) => (
+              <figure key={url} className="group">
+                <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-fg/[0.05]">
+                  <Image src={url} alt="" fill unoptimized className="object-cover" />
                 </div>
-              ),
-            },
-            {
-              id: "fotos",
-              label: "Fotografías",
-              count: location.photoUrls.length,
-              content: (
-                <div>
-                          <form action={addPhotoAction} className="mt-4 flex flex-wrap items-center gap-3">
-                            <input
-                              type="file"
-                              name="photo"
-                              accept="image/*"
-                              required
-                              className="font-mono text-xs text-muted"
-                            />
-                            <SubmitButton
-                              pendingLabel="Subiendo…"
-                              savedLabel="✓ Subida"
-                              className="btn btn-secondary btn-sm"
-                            >
-                              Subir
-                            </SubmitButton>
-                          </form>
+                <form action={removeLocationPhoto.bind(null, locationId, url)} className="mt-1">
+                  <DeleteButton confirmMessage="¿Eliminar esta foto?" className="link-action">
+                    Quitar
+                  </DeleteButton>
+                </form>
+              </figure>
+            ))}
+          </div>
+        ) : (
+          <p className="py-6 font-sans text-sm text-muted">
+            Sin fotos todavía. Las de la visita de localización ayudan a dirección y a arte a preparar el rodaje.
+          </p>
+        )}
+      </section>
 
-                          {location.photoUrls.length > 0 && (
-                            <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-                              {location.photoUrls.map((url) => (
-                                <div key={url} className="group relative aspect-square">
-                                  <Image src={url} alt="" fill unoptimized className="object-cover" />
-                                  <form
-                                    action={removeLocationPhoto.bind(null, locationId, url)}
-                                    className="absolute inset-x-0 bottom-0 bg-bg/80 p-1 transition-opacity focus-within:opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100"
-                                  >
-                                    <DeleteButton
-                                      confirmMessage="¿Eliminar esta foto?"
-                                      className="w-full font-mono text-[10px] tracking-widest text-muted uppercase hover:text-accent"
-                                    />
-                                  </form>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                </div>
-              ),
-            },
-            {
-              id: "videos",
-              label: "Vídeos",
-              count: location.videoUrls.length,
-              content: (
-                <div>
-                          <form action={addVideoAction} className="mt-4 flex max-w-md gap-2">
-                            <input
-                              name="videoUrl"
-                              placeholder="URL del vídeo"
-                              required
-                              className="field w-full px-3 py-2 text-sm"
-                            />
-                            <SubmitButton
-                              pendingLabel="Añadiendo…"
-                              savedLabel="✓ Añadido"
-                              className="btn btn-secondary btn-sm shrink-0"
-                            >
-                              Añadir
-                            </SubmitButton>
-                          </form>
-                          {location.videoUrls.length > 0 && (
-                            <div className="mt-4 border-t border-line">
-                              {location.videoUrls.map((url) => (
-                                <div
-                                  key={url}
-                                  className="flex items-center justify-between gap-4 border-b border-line py-3"
-                                >
-                                  <FileOpenLink
-                                    href={url}
-                                    className="truncate font-mono text-sm hover:text-accent"
-                                  >
-                                    {url}
-                                  </FileOpenLink>
-                                  <form action={removeLocationVideo.bind(null, locationId, url)}>
-                                    <DeleteButton
-                                      confirmMessage="¿Eliminar este vídeo?"
-                                      className="link-action"
-                                    />
-                                  </form>
-                                </div>
-                              ))}
-                            </div>
-                          )}
-                </div>
-              ),
-            },
-          ]}
-        />
-      </div>
+      {/* ------------------------------------------------ vídeos */}
+      <section aria-labelledby="videos" className="mt-16">
+        <h2 id="videos" className="flex items-baseline gap-3 border-b border-line pb-3 font-display text-xl font-black tracking-tight uppercase">
+          Vídeos
+          <span className="font-mono text-[11px] font-normal tracking-widest text-muted">{location.videoUrls.length}</span>
+        </h2>
+        {location.videoUrls.length > 0 && (
+          <ul className="divide-y divide-line">
+            {location.videoUrls.map((url) => (
+              <li key={url} className="flex items-center justify-between gap-4 py-3">
+                <FileOpenLink href={url} className="min-w-0 truncate font-sans text-[15px] hover:text-accent">
+                  {url}
+                </FileOpenLink>
+                <form action={removeLocationVideo.bind(null, locationId, url)}>
+                  <DeleteButton confirmMessage="¿Eliminar este vídeo?" className="link-action">
+                    Quitar
+                  </DeleteButton>
+                </form>
+              </li>
+            ))}
+          </ul>
+        )}
+        <form action={addVideoAction} className="flex items-end gap-4 border-t border-line pt-4">
+          <label className="min-w-0 flex-1">
+            <span className="sr-only">Enlace del vídeo</span>
+            <input name="videoUrl" placeholder="Pega el enlace de un vídeo (YouTube, Vimeo, Drive…)" required className="field-line" />
+          </label>
+          <SubmitButton pendingLabel="Añadiendo…" savedLabel="✓ Añadido" className="link-action text-fg">
+            Añadir
+          </SubmitButton>
+        </form>
+      </section>
 
-      <form action={deleteLocation.bind(null, locationId)} className="mt-10">
+      <form action={deleteLocation.bind(null, locationId)} className="mt-16 border-t border-line pt-4">
         <DeleteButton
           confirmMessage="¿Eliminar esta localización? Se desvinculará de las escenas que la usen."
           className="link-action"

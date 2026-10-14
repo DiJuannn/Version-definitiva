@@ -17,9 +17,9 @@ function SaveRow({ onDone }: { onDone: () => void }) {
     wasPending.current = pending;
   }, [pending, onDone]);
   return (
-    <button type="submit" disabled={pending} className="btn btn-secondary btn-sm">
+    <button type="submit" disabled={pending} className="btn btn-primary">
       {pending && <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current" />}
-      {pending ? "Guardando…" : "Guardar"}
+      {pending ? "Guardando…" : "Guardar la ficha"}
     </button>
   );
 }
@@ -85,67 +85,69 @@ export function ProjectSummaryCard({
       },
     ].filter((field) => field.value);
 
+    // Ficha en una hoja de papel, como lista de definiciones: etiqueta a la izquierda, dato a la
+    // derecha, una raya entre filas (sin cajas dentro).
     return (
-      <div className="border border-line p-5">
-        <div className="flex items-center justify-between">
-          <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
-            Datos del proyecto
-          </p>
-          <button
-            type="button"
-            onClick={() => setEditing(true)}
-            className="font-mono text-[10px] tracking-widest text-muted uppercase hover:text-accent"
-          >
+      <section aria-labelledby="project-facts-title" className="sheet p-6 sm:p-8">
+        <div className="flex items-baseline justify-between gap-4">
+          <h2 id="project-facts-title" className="font-display text-lg font-black tracking-tight">
+            Ficha del proyecto
+          </h2>
+          <button type="button" onClick={() => setEditing(true)} className="link-action">
             Editar
           </button>
         </div>
 
         {fields.length === 0 && !project.notes ? (
-          <p className="mt-4 font-mono text-sm text-muted">
-            Sin datos todavía — pulsa &ldquo;Editar&rdquo; para rellenarlos.
-          </p>
+          <div className="mt-4 border-t border-line pt-5">
+            <p className="max-w-md font-sans text-sm leading-relaxed text-muted">
+              Director, producción, duración, fechas y presupuesto previsto: los datos que salen en el dossier.
+            </p>
+            <button type="button" onClick={() => setEditing(true)} className="btn btn-outline mt-4">
+              Rellenar la ficha
+            </button>
+          </div>
         ) : (
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <dl className="mt-4 divide-y divide-line border-t border-line">
             {fields.map((field) => (
-              <div key={field.label}>
-                <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
-                  {field.label}
-                </p>
-                <p className="mt-0.5 font-mono text-sm">{field.value}</p>
+              <div key={field.label} className="grid grid-cols-[minmax(0,9rem)_1fr] gap-4 py-3">
+                <dt className="pt-0.5 font-sans text-[13px] text-muted">{field.label}</dt>
+                <dd className="font-sans text-sm">{field.value}</dd>
               </div>
             ))}
-          </div>
+            {project.notes && (
+              <div className="grid grid-cols-[minmax(0,9rem)_1fr] gap-4 py-3">
+                <dt className="pt-0.5 font-sans text-[13px] text-muted">Notas</dt>
+                <dd className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-muted">{project.notes}</dd>
+              </div>
+            )}
+          </dl>
         )}
-
-        {project.notes && (
-          <p className="mt-4 whitespace-pre-wrap font-mono text-sm text-muted">
-            {project.notes}
-          </p>
-        )}
-      </div>
+      </section>
     );
   }
+
+  const LBL = "font-sans text-[13px] text-muted";
 
   return (
     <form
       action={updateAction}
-      className="grid gap-4 border border-line p-5 sm:grid-cols-2 lg:grid-cols-3"
+      aria-label="Editar la ficha del proyecto"
+      className="sheet grid gap-x-5 gap-y-4 p-6 sm:grid-cols-2 sm:p-8"
     >
-      <div className="flex items-center justify-between sm:col-span-2 lg:col-span-3">
-        <p className="font-mono text-[10px] tracking-widest text-muted uppercase">
-          Datos del proyecto
-        </p>
+      <div className="flex items-baseline justify-between sm:col-span-2">
+        <h2 className="font-display text-lg font-black tracking-tight">Editar la ficha</h2>
         <button
           type="button"
           onClick={() => setEditing(false)}
-          className="font-mono text-[10px] tracking-widest text-muted uppercase hover:text-accent"
+          className="link-action"
         >
           Cancelar
         </button>
       </div>
 
       <label className="flex flex-col gap-1">
-        <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+        <span className={LBL}>
           Nombre
         </span>
         <input
@@ -157,7 +159,7 @@ export function ProjectSummaryCard({
       </label>
 
       <label className="flex flex-col gap-1">
-        <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+        <span className={LBL}>
           Tipo
         </span>
         <input
@@ -168,8 +170,8 @@ export function ProjectSummaryCard({
         />
       </label>
 
-      <div className="flex flex-col gap-1 sm:col-span-2 lg:col-span-3">
-        <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+      <div className="flex flex-col gap-1.5 sm:col-span-2">
+        <span className={LBL}>
           Estado
         </span>
         <div className="flex flex-wrap gap-2">
@@ -187,7 +189,7 @@ export function ProjectSummaryCard({
       </div>
 
       <label className="flex flex-col gap-1">
-        <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+        <span className={LBL}>
           Director
         </span>
         <input
@@ -198,7 +200,7 @@ export function ProjectSummaryCard({
       </label>
 
       <label className="flex flex-col gap-1">
-        <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+        <span className={LBL}>
           Producción
         </span>
         <input
@@ -209,7 +211,7 @@ export function ProjectSummaryCard({
       </label>
 
       <label className="flex flex-col gap-1">
-        <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+        <span className={LBL}>
           Duración
         </span>
         <input
@@ -221,7 +223,7 @@ export function ProjectSummaryCard({
       </label>
 
       <label className="flex flex-col gap-1">
-        <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+        <span className={LBL}>
           Presupuesto previsto (€)
         </span>
         <input
@@ -235,7 +237,7 @@ export function ProjectSummaryCard({
       </label>
 
       <label className="flex flex-col gap-1">
-        <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+        <span className={LBL}>
           Fecha de inicio
         </span>
         <input
@@ -247,7 +249,7 @@ export function ProjectSummaryCard({
       </label>
 
       <label className="flex flex-col gap-1">
-        <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+        <span className={LBL}>
           Fecha de fin
         </span>
         <input
@@ -258,8 +260,8 @@ export function ProjectSummaryCard({
         />
       </label>
 
-      <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-3">
-        <span className="font-mono text-[10px] tracking-widest text-muted uppercase">
+      <label className="flex flex-col gap-1 sm:col-span-2">
+        <span className={LBL}>
           Notas
         </span>
         <textarea
@@ -270,13 +272,16 @@ export function ProjectSummaryCard({
         />
       </label>
 
-      <div>
+      <div className="flex items-center gap-4 border-t border-line pt-5 sm:col-span-2">
         <SaveRow
           onDone={() => {
             setEditing(false);
             toast("success", "Datos del proyecto guardados");
           }}
         />
+        <button type="button" onClick={() => setEditing(false)} className="link-action">
+          Cancelar
+        </button>
       </div>
     </form>
   );

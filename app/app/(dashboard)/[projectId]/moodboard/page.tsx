@@ -32,7 +32,7 @@ export default async function MoodboardPage({
       <PageHeader
         eyebrow="Preproducción"
         title="Moodboard"
-        description="Un tablero libre para reunir referencias: notas, imágenes, paletas y tarjetas de tu proyecto (escenas, personajes y localizaciones) que se actualizan solas."
+        description="Reúne cómo se va a ver y a sentir tu película: fotos, paletas, referencias y notas. Las escenas, personajes y lugares que traigas del proyecto se actualizan solos."
       />
       <div className="mt-8">
         <MoodboardLoader

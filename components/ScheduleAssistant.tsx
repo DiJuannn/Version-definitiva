@@ -8,8 +8,8 @@ import {
   type ScheduleProposal,
 } from "@/lib/actions/schedule-assistant";
 
-const INPUT =
-  "field px-3 py-2 text-sm";
+const INPUT = "field";
+const LABEL = "eyebrow";
 
 function formatDay(key: string) {
   const text = new Date(`${key}T00:00:00Z`).toLocaleDateString("es-ES", {
@@ -75,13 +75,15 @@ export function ScheduleAssistant({
 
   const body = (
     <div>
-      <p className="max-w-xl font-sans text-sm text-muted">
-        Dime cuándo empiezas a rodar y cuántas escenas te caben al día. Te propongo las jornadas juntando las escenas
-        de un mismo sitio y ordenándolas por luz. Tú lo revisas: no se crea nada hasta que lo aceptes.
+      <p className="max-w-xl font-sans text-[15px] leading-relaxed text-muted">
+        Dime cuándo empiezas a rodar y cuántas escenas te caben al día. Te
+        propongo las jornadas juntando las escenas de un mismo sitio y
+        ordenándolas por luz. Tú lo revisas: no se crea nada hasta que lo
+        aceptes.
       </p>
-      <div className="mt-5 flex flex-wrap items-end gap-4">
+      <div className="mt-6 flex flex-wrap items-end gap-x-5 gap-y-4">
         <label className="flex flex-col gap-1">
-          <span className="font-mono text-[10px] tracking-widest text-muted uppercase">Primer día de rodaje</span>
+          <span className={LABEL}>Primer día de rodaje</span>
           <input
             type="date"
             required
@@ -94,7 +96,7 @@ export function ScheduleAssistant({
           />
         </label>
         <label className="flex flex-col gap-1">
-          <span className="font-mono text-[10px] tracking-widest text-muted uppercase">Escenas por día</span>
+          <span className={LABEL}>Escenas por día</span>
           <select
             value={perDay}
             onChange={(e) => {
@@ -104,13 +106,13 @@ export function ScheduleAssistant({
             className={INPUT}
           >
             {[1, 2, 3, 4, 5, 6, 8, 10].map((n) => (
-              <option key={n} value={n} className="bg-bg">
+              <option key={n} value={n}>
                 {n}
               </option>
             ))}
           </select>
         </label>
-        <label className="flex items-center gap-2 pb-2 font-sans text-sm">
+        <label className="flex h-[38px] items-center gap-2 font-sans text-sm">
           <input
             type="checkbox"
             checked={weekendsOnly}
@@ -122,48 +124,90 @@ export function ScheduleAssistant({
           />
           Solo sábados y domingos
         </label>
-        <button type="button" onClick={propose} disabled={pending || applying} className="btn btn-primary disabled:opacity-60">
-          {pending ? "Calculando…" : proposal?.ok ? "Recalcular" : "Ver propuesta"}
+        <button
+          type="button"
+          onClick={propose}
+          disabled={pending || applying}
+          className={`btn ${proposal?.ok ? "btn-outline" : "btn-primary"}`}
+        >
+          {pending
+            ? "Calculando…"
+            : proposal?.ok
+              ? "Recalcular"
+              : "Ver propuesta"}
         </button>
       </div>
 
-      {error && <p role="alert" className="mt-4 font-mono text-xs text-danger">{error}</p>}
+      {error && (
+        <p
+          role="alert"
+          className="mt-5 border-l-2 border-danger pl-3 font-sans text-sm text-danger"
+        >
+          {error}
+        </p>
+      )}
 
       {proposal?.ok && (
-        <div className="mt-6">
-          <p className="font-mono text-[11px] tracking-widest text-accent uppercase">
-            Propuesta · {proposal.days.length} día{proposal.days.length === 1 ? "" : "s"} para {proposal.totalScenes} escena
+        <div className="mt-8">
+          <p className="eyebrow text-accent">
+            Propuesta · {proposal.days.length} día
+            {proposal.days.length === 1 ? "" : "s"} para {proposal.totalScenes}{" "}
+            escena
             {proposal.totalScenes === 1 ? "" : "s"}
           </p>
           <ol className="mt-3 border-t border-line">
             {proposal.days.map((day, i) => (
-              <li key={day.date} className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-b border-line py-3">
+              <li
+                key={day.date}
+                className="grid grid-cols-[3.5rem_1fr] items-baseline gap-x-4 gap-y-1 border-b border-line py-3 sm:grid-cols-[3.5rem_1fr_auto]"
+              >
+                <span className="eyebrow">Día {i + 1}</span>
                 <div className="min-w-0">
-                  <p className="font-display text-sm font-bold">
-                    Día {i + 1} · {formatDay(day.date)}
+                  <p className="font-display text-base font-bold">
+                    {formatDay(day.date)}
                   </p>
-                  <p className="font-mono text-xs text-muted">{day.locations.join(" · ")}</p>
+                  {day.locations.length > 0 && (
+                    <p className="font-sans text-sm text-muted">
+                      {day.locations.join(" · ")}
+                    </p>
+                  )}
                 </div>
-                <p className="font-mono text-xs">Escenas {day.scenes.map((s) => s.label).join(", ")}</p>
+                <p className="col-start-2 font-mono text-xs sm:col-start-auto">
+                  Escenas {day.scenes.map((s) => s.label).join(", ")}
+                </p>
               </li>
             ))}
           </ol>
           <div className="mt-5 flex flex-wrap items-center gap-4">
-            <button type="button" onClick={apply} disabled={applying} className="btn btn-primary disabled:opacity-60">
+            <button
+              type="button"
+              onClick={apply}
+              disabled={applying}
+              className="btn btn-primary"
+            >
               {applying ? "Creando…" : "Crear este plan"}
             </button>
-            <p className="font-sans text-xs text-muted">Después puedes mover escenas entre días en el tablero de abajo.</p>
+            <p className="font-sans text-sm text-muted">
+              Después puedes mover escenas entre días en el tablero.
+            </p>
           </div>
         </div>
       )}
     </div>
   );
 
+  // Sin días todavía: el asistente es el primer paso, a la vista y en papel.
   if (!hasDays) {
     return (
-      <section aria-labelledby="schedule-assistant" className="mt-8 border border-accent/40 bg-bg-raised/40 p-6 sm:p-8">
-        <p className="font-mono text-[11px] tracking-widest text-accent uppercase">Te lo preparo yo</p>
-        <h2 id="schedule-assistant" className="mt-1.5 font-display text-2xl font-black tracking-tight sm:text-3xl">
+      <section
+        aria-labelledby="schedule-assistant"
+        className="sheet mt-10 p-6 sm:p-10"
+      >
+        <p className="eyebrow text-accent">Te lo preparo yo</p>
+        <h2
+          id="schedule-assistant"
+          className="mt-1.5 font-display text-2xl font-black tracking-tight sm:text-3xl"
+        >
           Crea tu plan de rodaje
         </h2>
         <div className="mt-3">{body}</div>
@@ -171,15 +215,28 @@ export function ScheduleAssistant({
     );
   }
 
+  // Con días: una línea de aviso que se despliega en una hoja.
   return (
-    <details className="group mt-8 border border-line">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 font-mono text-[11px] tracking-widest text-muted uppercase hover:text-accent [&::-webkit-details-marker]:hidden">
+    <details className="group mt-10">
+      <summary className="flex cursor-pointer list-none items-center gap-3 border-l-2 border-accent py-1 pl-4 font-sans text-[15px] hover:text-accent [&::-webkit-details-marker]:hidden">
         <span>
-          Repartir con el asistente las {unscheduled} escena{unscheduled === 1 ? "" : "s"} sin día
+          {unscheduled === 1 ? "Queda " : "Quedan "}
+          <strong className="font-semibold">
+            {unscheduled} escena{unscheduled === 1 ? "" : "s"} sin día
+          </strong>
+          .{" "}
+          <span className="text-accent">
+            {unscheduled === 1 ? "¿Te la reparto?" : "¿Te las reparto?"}
+          </span>
         </span>
-        <span aria-hidden className="transition-transform group-open:rotate-90">→</span>
+        <span
+          aria-hidden
+          className="text-accent transition-transform group-open:rotate-90"
+        >
+          →
+        </span>
       </summary>
-      <div className="border-t border-line p-5">{body}</div>
+      <div className="sheet mt-4 p-6 sm:p-8">{body}</div>
     </details>
   );
 }

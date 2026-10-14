@@ -31,6 +31,57 @@ import type { MoodboardProposal } from "@/lib/moodboard-ai";
 
 const nodeTypes = { card: CardNodeView };
 
+// Lienzo claro: React Flow toma sus colores de estas variables, que a su vez
+// salen de los tokens de Taller (así no hay grises fijos).
+const FLOW_THEME = {
+  "--xy-background-color": "transparent",
+  "--xy-background-pattern-dots-color": "color-mix(in srgb, var(--fg) 20%, transparent)",
+  "--xy-controls-button-background-color": "var(--bg-raised)",
+  "--xy-controls-button-background-color-hover": "color-mix(in srgb, var(--fg) 6%, var(--bg-raised))",
+  "--xy-controls-button-color": "var(--fg)",
+  "--xy-controls-button-color-hover": "var(--fg)",
+  "--xy-controls-button-border-color": "var(--line)",
+  "--xy-controls-box-shadow":
+    "0 1px 2px color-mix(in srgb, var(--fg) 12%, transparent), 0 8px 20px -12px color-mix(in srgb, var(--fg) 40%, transparent)",
+  "--xy-minimap-background-color": "var(--bg-raised)",
+  "--xy-minimap-mask-background-color": "color-mix(in srgb, var(--fg) 7%, transparent)",
+  "--xy-minimap-node-background-color": "color-mix(in srgb, var(--fg) 22%, transparent)",
+  "--xy-attribution-background-color": "transparent",
+} as React.CSSProperties;
+
+// Sombra de lo que flota sobre la mesa (barra, menús, avisos).
+const FLOAT_SHADOW =
+  "0 1px 2px color-mix(in srgb, var(--fg) 10%, transparent), 0 12px 32px -14px color-mix(in srgb, var(--fg) 40%, transparent)";
+
+// Iconos de trazo (24×24) de la barra de herramientas.
+const ICONS = {
+  note: "M5 4h14v11l-5 5H5zM14 20v-5h5",
+  image: "M4 5h16v14H4zM4 16l4.5-4.5 4 4 2.5-2.5L20 18M15.5 9.5h.01",
+  palette:
+    "M12 3a9 9 0 1 0 0 18c1.2 0 1.8-.8 1.8-1.7 0-1.4-1.3-1.8-1.3-3 0-.9.7-1.6 1.7-1.6H17a4 4 0 0 0 4-4C21 6.4 17 3 12 3zM7.5 11.5h.01M10 7.5h.01M15 7.5h.01",
+  reference: "M4 5h16v14H4zM8 5v14M16 5v14M4 9h4M4 15h4M16 9h4M16 15h4",
+  project: "M4 7h6l2 2h8v10H4zM12 12v4M10 14h4",
+  upload: "M12 16V4M7 9l5-5 5 5M4 20h16",
+};
+
+function Icon({ d }: { d: string }) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d={d} />
+    </svg>
+  );
+}
+
 type Props = {
   projectId: string;
   initialCards: MoodboardCard[];
@@ -510,28 +561,101 @@ function Board(props: Props) {
 
   const status =
     saveState === "error"
-      ? { text: "Error al guardar", tone: "text-danger" }
+      ? { text: "No se ha guardado", tone: "text-danger", dot: "bg-danger" }
       : saveState === "saving"
-        ? { text: "Guardando…", tone: "text-muted" }
+        ? {
+            text: "Guardando…",
+            tone: "text-muted",
+            dot: "bg-muted animate-pulse",
+          }
         : dirty
-          ? { text: "Cambios sin guardar", tone: "text-muted" }
-          : { text: "✓ Guardado", tone: "text-success" };
+          ? { text: "Cambios sin guardar", tone: "text-muted", dot: "bg-warn" }
+          : { text: "Guardado", tone: "text-muted", dot: "bg-success" };
 
-  const btn =
-    "border border-line bg-bg-raised px-2.5 py-1.5 font-mono text-[11px] tracking-wider uppercase transition-colors hover:border-accent hover:text-accent disabled:opacity-50";
+  const tool =
+    "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-sans text-[13px] font-medium text-fg/80 transition-colors hover:bg-fg/[0.06] hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:outline-none aria-expanded:bg-fg/[0.06] aria-expanded:text-fg disabled:opacity-50";
+  const toolAi =
+    "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-sans text-[13px] font-medium text-accent transition-colors hover:bg-accent/10 focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:outline-none";
+  const toolLabel = "hidden md:inline";
+  const popover = "absolute top-full left-0 z-20 mt-2 rounded-xl bg-bg-raised";
+  const popRow =
+    "flex w-full items-start gap-3 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-fg/[0.05] focus-visible:bg-fg/[0.05] focus-visible:outline-none";
 
   const projectItems =
     projectTab === "scenes"
-      ? lookup.scenes.map((s) => ({ key: s.id, title: `Escena ${s.number}`, sub: s.heading, type: "scene" as const, label: s.number }))
+      ? lookup.scenes.map((s) => ({
+          key: s.id,
+          title: `Escena ${s.number}`,
+          sub: s.heading,
+          type: "scene" as const,
+          label: s.number,
+        }))
       : projectTab === "characters"
-        ? lookup.characters.map((c) => ({ key: c.id, title: c.name, sub: c.actor ?? "Sin actor", type: "character" as const, label: c.name }))
-        : lookup.locations.map((l) => ({ key: l.id, title: l.name, sub: l.address ?? "", type: "location" as const, label: l.name }));
+        ? lookup.characters.map((c) => ({
+            key: c.id,
+            title: c.name,
+            sub: c.actor ?? "Sin actor",
+            type: "character" as const,
+            label: c.name,
+          }))
+        : lookup.locations.map((l) => ({
+            key: l.id,
+            title: l.name,
+            sub: l.address ?? "",
+            type: "location" as const,
+            label: l.name,
+          }));
+
+  // Estado de guardado y quién más está en el tablero (arriba a la derecha;
+  // en móvil, abajo, para no tapar la barra de herramientas).
+  const others = uniquePeers(peers);
+  const saveStatus = (
+    <div
+      className="flex items-center gap-3 rounded-full bg-bg-raised/90 py-1 pr-3 pl-2 font-sans text-xs backdrop-blur"
+      style={{ boxShadow: FLOAT_SHADOW }}
+    >
+      {others.length > 0 && (
+        <span className="flex -space-x-1.5" aria-label={`${others.length} personas más en el moodboard`}>
+          {others.slice(0, 5).map((p) => (
+            <span
+              key={p.userId}
+              title={`${p.name} está en este moodboard`}
+              className="flex h-6 w-6 items-center justify-center rounded-full font-mono text-[10px] font-bold text-[#17171b] ring-2 ring-bg-raised"
+              style={{ background: p.color }}
+            >
+              {p.name.slice(0, 1).toUpperCase()}
+            </span>
+          ))}
+        </span>
+      )}
+      {!isPro && (
+        <span className={atFreeLimit ? "text-warn" : "text-muted"} title="Tarjetas usadas en el plan gratuito">
+          {nodes.length} de {freeLimit} tarjetas
+        </span>
+      )}
+      <span className={`flex items-center gap-1.5 ${status.tone}`} role="status">
+        <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} aria-hidden />
+        {status.text}
+      </span>
+      {saveState === "error" && (
+        <button type="button" onClick={() => void save()} className="link-action text-accent">
+          Reintentar
+        </button>
+      )}
+    </div>
+  );
 
   return (
     <BoardProvider value={ctx}>
+      {/* La mesa de referencias: siempre en claro (taller-paper), sea cual sea
+          el fondo de alrededor; las tarjetas son papeles encima. */}
       <div
         ref={wrapperRef}
-        className="relative h-[calc(100dvh-16rem)] min-h-[520px] border border-line"
+        className="taller-paper relative h-[calc(100dvh-16rem)] min-h-[520px] overflow-hidden rounded-xl"
+        style={{
+          background: "color-mix(in srgb, var(--fg) 4%, var(--bg))",
+          boxShadow: "inset 0 0 0 1px color-mix(in srgb, var(--fg) 8%, transparent)",
+        }}
         onPointerMove={onPointerMove}
         onPointerLeave={onPointerLeave}
         onDragOver={(e) => {
@@ -543,7 +667,7 @@ function Board(props: Props) {
           nodes={nodes}
           nodeTypes={nodeTypes}
           onNodesChange={onNodesChange}
-          colorMode="dark"
+          colorMode="light"
           minZoom={0.1}
           maxZoom={2}
           fitView={initialCards.length > 0}
@@ -555,93 +679,187 @@ function Board(props: Props) {
           panOnScroll={false}
           zoomOnDoubleClick={false}
           proOptions={{ hideAttribution: false }}
+          style={FLOW_THEME}
         >
-          <Background gap={24} size={1} />
-          <Controls showInteractive={false} />
-          <MiniMap pannable zoomable className="hidden! sm:block!" maskColor="rgba(0,0,0,0.6)" />
+          <Background gap={22} size={1.2} />
+          <Controls showInteractive={false} className="overflow-hidden rounded-lg" />
+          {nodes.length > 0 && <MiniMap pannable zoomable className="hidden! overflow-hidden rounded-lg sm:block!" />}
 
           <RemoteCursors cursors={cursors} />
-          <Panel position="top-left" className="m-2! max-w-[calc(100%-1rem)]">
-            <div className="flex flex-wrap items-center gap-1.5">
-              <button type="button" className={btn} onClick={() => addCard({ type: "note", w: 220, h: 150, color: NOTE_COLORS[0] })}>
-                + Nota
+          <Panel position="top-left" className="m-3! max-w-[calc(100%-1.5rem)]">
+            <div
+              className="flex flex-wrap items-center gap-0.5 rounded-xl bg-bg-raised p-1"
+              style={{ boxShadow: FLOAT_SHADOW }}
+              role="toolbar"
+              aria-label="Añadir al tablero"
+            >
+              <button
+                type="button"
+                className={tool}
+                title="Nota"
+                onClick={() =>
+                  addCard({
+                    type: "note",
+                    w: 220,
+                    h: 150,
+                    color: NOTE_COLORS[0],
+                  })
+                }
+              >
+                <Icon d={ICONS.note} />
+                <span className={toolLabel}>Nota</span>
               </button>
               <div className="relative">
-                <button type="button" className={btn} onClick={() => setMenu(menu === "image" ? null : "image")} aria-expanded={menu === "image"}>
-                  + Imagen{uploading > 0 ? " …" : ""}
+                <button
+                  type="button"
+                  className={tool}
+                  title="Imagen"
+                  onClick={() => setMenu(menu === "image" ? null : "image")}
+                  aria-expanded={menu === "image"}
+                  aria-haspopup="true"
+                >
+                  <Icon d={ICONS.image} />
+                  <span className={toolLabel}>{uploading > 0 ? "Subiendo…" : "Imagen"}</span>
                 </button>
                 {menu === "image" && (
-                  <div className="absolute top-full left-0 z-20 mt-1 w-72 border border-line bg-bg-raised p-3 shadow-xl">
-                    <button
-                      type="button"
-                      className="w-full border border-line px-3 py-2 font-mono text-[11px] tracking-wider uppercase hover:border-accent hover:text-accent"
-                      onClick={() => fileRef.current?.click()}
-                    >
-                      Subir desde el dispositivo
+                  <div
+                    className={`${popover} w-[min(20rem,calc(100vw-3rem))] p-1.5`}
+                    style={{ boxShadow: FLOAT_SHADOW }}
+                  >
+                    <button type="button" className={popRow} onClick={() => fileRef.current?.click()}>
+                      <span className="mt-0.5 text-accent">
+                        <Icon d={ICONS.upload} />
+                      </span>
+                      <span>
+                        <span className="block font-sans text-sm font-medium text-fg">Subir desde el dispositivo</span>
+                        <span className="block font-sans text-xs text-muted">JPG, PNG o WebP · hasta 5 a la vez</span>
+                      </span>
                     </button>
-                    <p className="my-2 text-center font-mono text-[10px] text-muted uppercase">o pega un enlace</p>
-                    <div className="flex gap-1.5">
-                      <input
-                        value={imageUrl}
-                        onChange={(e) => setImageUrl(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && void addImageUrl()}
-                        placeholder="https://…/imagen.jpg"
-                        aria-label="Enlace de la imagen"
-                        className="field min-w-0 flex-1 px-2 py-1.5 text-xs"
-                      />
-                      <button type="button" className={btn} onClick={() => void addImageUrl()}>
-                        Añadir
-                      </button>
+                    <div className="mt-1 border-t border-line px-2.5 pt-3 pb-2">
+                      <label htmlFor="mb-image-url" className="eyebrow">
+                        O pega un enlace
+                      </label>
+                      <div className="mt-1.5 flex gap-1.5">
+                        <input
+                          id="mb-image-url"
+                          value={imageUrl}
+                          onChange={(e) => setImageUrl(e.target.value)}
+                          onKeyDown={(e) => e.key === "Enter" && void addImageUrl()}
+                          placeholder="https://…/imagen.jpg"
+                          className="field min-w-0 flex-1 px-2.5 py-1.5 text-xs"
+                        />
+                        <button type="button" className="btn btn-primary btn-sm" onClick={() => void addImageUrl()}>
+                          Añadir
+                        </button>
+                      </div>
+                      <p className="mt-2.5 font-sans text-xs text-muted">
+                        También puedes arrastrar imágenes al tablero.
+                      </p>
                     </div>
-                    <p className="mt-2 font-sans text-[11px] text-muted">También puedes soltar imágenes directamente sobre el tablero.</p>
                   </div>
                 )}
               </div>
-              <button type="button" className={btn} onClick={() => addCard({ type: "palette", w: 300, h: 150, title: "Paleta", colors: ["#1f2a44", "#c8553d", "#f2d0a4", "#588b8b", "#ffffff"] })}>
-                + Paleta
+              <button
+                type="button"
+                className={tool}
+                title="Paleta de color"
+                onClick={() =>
+                  addCard({
+                    type: "palette",
+                    w: 300,
+                    h: 150,
+                    title: "Paleta",
+                    colors: ["#1f2a44", "#c8553d", "#f2d0a4", "#588b8b", "#ffffff"],
+                  })
+                }
+              >
+                <Icon d={ICONS.palette} />
+                <span className={toolLabel}>Paleta</span>
               </button>
-              <button type="button" className={btn} onClick={() => addCard({ type: "reference", w: 270, h: 210, kind: "Película" })}>
-                + Referencia
+              <button
+                type="button"
+                className={tool}
+                title="Referencia (película, foto, cuadro…)"
+                onClick={() =>
+                  addCard({
+                    type: "reference",
+                    w: 270,
+                    h: 210,
+                    kind: "Película",
+                  })
+                }
+              >
+                <Icon d={ICONS.reference} />
+                <span className={toolLabel}>Referencia</span>
               </button>
               <div className="relative">
-                <button type="button" className={btn} onClick={() => setMenu(menu === "project" ? null : "project")} aria-expanded={menu === "project"}>
-                  + Del proyecto
+                <button
+                  type="button"
+                  className={tool}
+                  title="Escenas, personajes y lugares del proyecto"
+                  onClick={() => setMenu(menu === "project" ? null : "project")}
+                  aria-expanded={menu === "project"}
+                  aria-haspopup="true"
+                >
+                  <Icon d={ICONS.project} />
+                  <span className={toolLabel}>Del proyecto</span>
                 </button>
                 {menu === "project" && (
-                  <div className="absolute top-full left-0 z-20 mt-1 w-72 border border-line bg-bg-raised shadow-xl">
-                    <div className="flex border-b border-line" role="tablist">
+                  <div className={`${popover} w-[min(20rem,calc(100vw-3rem))]`} style={{ boxShadow: FLOAT_SHADOW }}>
+                    <p className="px-4 pt-3 font-sans text-xs leading-relaxed text-muted">
+                      Tarjetas vivas: si cambias la escena o el personaje, la tarjeta se actualiza sola.
+                    </p>
+                    <div className="mt-2 flex gap-4 border-b border-line px-4" role="tablist">
                       {(
                         [
-                          ["scenes", "Escenas"],
-                          ["characters", "Personajes"],
-                          ["locations", "Lugares"],
+                          ["scenes", "Escenas", lookup.scenes.length],
+                          ["characters", "Personajes", lookup.characters.length],
+                          ["locations", "Lugares", lookup.locations.length],
                         ] as const
-                      ).map(([id, label]) => (
+                      ).map(([id, label, count]) => (
                         <button
                           key={id}
                           type="button"
                           role="tab"
                           aria-selected={projectTab === id}
                           onClick={() => setProjectTab(id)}
-                          className={`flex-1 px-2 py-2 font-mono text-[10px] tracking-wider uppercase ${projectTab === id ? "text-accent" : "text-muted hover:text-fg"}`}
+                          className={`-mb-px border-b-2 py-2 font-sans text-[13px] font-medium transition-colors ${projectTab === id ? "border-accent text-fg" : "border-transparent text-muted hover:text-fg"}`}
                         >
                           {label}
+                          <span className="ml-1 font-mono text-[10px] text-muted">{count}</span>
                         </button>
                       ))}
                     </div>
-                    <div className="max-h-64 overflow-y-auto">
+                    <div className="max-h-64 overflow-y-auto p-1.5">
                       {projectItems.length === 0 ? (
-                        <p className="p-3 font-sans text-xs text-muted">Todavía no hay nada de esto en el proyecto.</p>
+                        <p className="px-2.5 py-4 font-sans text-xs text-muted">
+                          Todavía no hay nada de esto en el proyecto.
+                        </p>
                       ) : (
                         projectItems.map((item) => (
                           <button
                             key={item.key}
                             type="button"
-                            onClick={() => addCard({ type: item.type, w: 240, h: 130, refId: item.key, label: item.label })}
-                            className="block w-full border-b border-line px-3 py-2 text-left hover:bg-white/5"
+                            onClick={() =>
+                              addCard({
+                                type: item.type,
+                                w: 240,
+                                h: 130,
+                                refId: item.key,
+                                label: item.label,
+                              })
+                            }
+                            className={popRow}
                           >
-                            <span className="block font-display text-sm font-bold">{item.title}</span>
-                            {item.sub && <span className="block truncate font-mono text-[11px] text-muted">{item.sub}</span>}
+                            <span className="min-w-0">
+                              <span className="block font-sans text-sm font-medium text-fg">{item.title}</span>
+                              {item.sub && (
+                                <span className="block truncate font-sans text-xs text-muted">{item.sub}</span>
+                              )}
+                            </span>
+                            <span className="ml-auto self-center font-sans text-lg leading-none text-muted" aria-hidden>
+                              +
+                            </span>
                           </button>
                         ))
                       )}
@@ -649,8 +867,20 @@ function Board(props: Props) {
                   </div>
                 )}
               </div>
-              <button type="button" className={`${btn} border-accent/60 text-accent`} onClick={() => setAiOpen(true)}>
-                ✦ Referencias con IA{isPro ? "" : ` · ${Math.max(0, aiLimit - aiUsed)} gratis`}
+              <span className="mx-1 h-5 w-px bg-line" aria-hidden />
+              <button type="button" className={toolAi} title="Referencias con IA" onClick={() => setAiOpen(true)}>
+                <span aria-hidden className="text-[13px]">
+                  ✦
+                </span>
+                <span className={toolLabel}>Referencias con IA</span>
+                {!isPro && (
+                  <span
+                    className="rounded-full bg-accent/12 px-1.5 font-mono text-[10px] leading-4"
+                    title="Sugerencias gratis que te quedan"
+                  >
+                    {Math.max(0, aiLimit - aiUsed)}
+                  </span>
+                )}
               </button>
               <input
                 ref={fileRef}
@@ -666,63 +896,79 @@ function Board(props: Props) {
                 }}
               />
             </div>
-            {menu && <button type="button" aria-label="Cerrar menú" className="fixed inset-0 z-10 cursor-default" onClick={() => setMenu(null)} />}
+            {menu && (
+              <button
+                type="button"
+                aria-label="Cerrar menú"
+                className="fixed inset-0 -z-10 cursor-default"
+                onClick={() => setMenu(null)}
+              />
+            )}
           </Panel>
 
-          <Panel position="top-right" className="m-2!">
-            <div className="flex items-center gap-3 border border-line bg-bg-raised px-3 py-1.5 font-mono text-[11px]">
-              {uniquePeers(peers).length > 0 && (
-                <span className="flex items-center gap-1" aria-label={`${uniquePeers(peers).length} personas más en el moodboard`}>
-                  {uniquePeers(peers).slice(0, 5).map((p) => (
-                    <span
-                      key={p.userId}
-                      title={`${p.name} está en este moodboard`}
-                      className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-black"
-                      style={{ background: p.color }}
-                    >
-                      {p.name.slice(0, 1).toUpperCase()}
-                    </span>
-                  ))}
-                </span>
-              )}
-              {!isPro && (
-                <span className={atFreeLimit ? "text-warn" : "text-muted"}>
-                  {nodes.length}/{freeLimit}
-                </span>
-              )}
-              <span className={status.tone} role="status">
-                {status.text}
-              </span>
-              {saveState === "error" && (
-                <button type="button" onClick={() => void save()} className="text-accent underline">
-                  Reintentar
-                </button>
-              )}
-            </div>
+          <Panel position="top-right" className="m-3! hidden sm:block">
+            {saveStatus}
+          </Panel>
+          <Panel position="bottom-center" className="mb-3! sm:hidden">
+            {saveStatus}
           </Panel>
         </ReactFlow>
 
         {nodes.length === 0 && (
-          <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-6 text-center">
-            <div className="max-w-sm">
-              <p className="font-display text-lg font-bold">Tu moodboard está vacío</p>
-              <p className="mt-2 font-sans text-sm text-muted">
-                Añade notas, imágenes, paletas y referencias, o suelta imágenes aquí. Con «+ Del proyecto» traes
-                escenas, personajes y localizaciones que se actualizan solas.
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-6 pt-24 text-center">
+            <div className="max-w-md">
+              <p className="eyebrow">Tablero vacío</p>
+              <p className="mt-2 font-display text-2xl leading-tight font-bold text-fg">
+                Empieza con la primera referencia
               </p>
+              <p className="mx-auto mt-3 max-w-sm font-sans text-sm leading-relaxed text-muted">
+                Arrastra fotos desde tu ordenador, usa la barra de arriba o pide a la IA una primera tanda de
+                referencias a partir de tu sinopsis y tus escenas.
+              </p>
+              <div className="pointer-events-auto mt-6 flex flex-wrap items-center justify-center gap-2">
+                <button type="button" className="btn btn-primary" onClick={() => setAiOpen(true)}>
+                  ✦ Proponer referencias con IA
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  onClick={() =>
+                    addCard({
+                      type: "note",
+                      w: 220,
+                      h: 150,
+                      color: NOTE_COLORS[0],
+                    })
+                  }
+                >
+                  Escribir una nota
+                </button>
+              </div>
             </div>
           </div>
         )}
 
         {(notice || saveError) && (
-          <div className="absolute bottom-3 left-1/2 z-20 flex max-w-[92%] -translate-x-1/2 items-center gap-3 border border-warn/60 bg-bg-raised px-4 py-2 font-sans text-xs shadow-xl" role="alert">
+          <div
+            className="absolute bottom-16 left-1/2 z-20 flex w-max max-w-[92%] -translate-x-1/2 items-center gap-3 rounded-r-lg border-l-2 border-warn bg-bg-raised py-2.5 pr-3 pl-4 font-sans text-[13px] text-fg sm:bottom-4"
+            style={{ boxShadow: FLOAT_SHADOW }}
+            role="alert"
+          >
             <span>{notice ?? saveError}</span>
             {!isPro && (notice ?? saveError ?? "").includes("gratuito") && (
-              <Link href="/app/organizacion" className="font-mono text-[11px] tracking-wider text-accent uppercase underline">
+              <Link href="/app/organizacion" className="link-action shrink-0 text-accent">
                 Ver PRO
               </Link>
             )}
-            <button type="button" aria-label="Cerrar aviso" onClick={() => { setNotice(null); setSaveError(null); }} className="text-muted hover:text-fg">
+            <button
+              type="button"
+              aria-label="Cerrar aviso"
+              onClick={() => {
+                setNotice(null);
+                setSaveError(null);
+              }}
+              className="shrink-0 rounded px-1 text-lg leading-none text-muted hover:text-fg"
+            >
               ×
             </button>
           </div>
