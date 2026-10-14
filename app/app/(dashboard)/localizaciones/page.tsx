@@ -1,6 +1,6 @@
 import { getCurrentProfile } from "@/lib/current-user";
 import { PageHeader } from "@/components/PageHeader";
-import { LocationsLibrary } from "@/components/LocationsLibrary";
+import { LocationsLibrary, NewLocationButton } from "@/components/LocationsLibrary";
 
 export default async function LocalizacionesPage() {
   const profile = await getCurrentProfile();
@@ -11,9 +11,10 @@ export default async function LocalizacionesPage() {
       <PageHeader
         eyebrow="Recursos"
         title="Localizaciones"
-        description="Los sitios donde rodáis, con su contacto, permisos y fotos. Se guardan una vez y se eligen desde el Guion de cualquier proyecto."
+        description="Dónde rodáis, en el mapa, con su contacto y lo que tiene cada sitio. Se guardan una vez y se eligen desde el Guion de cualquier proyecto."
+        actions={<NewLocationButton />}
       />
-      <LocationsLibrary organizationId={profile.organizationId} />
+      <LocationsLibrary organizationId={profile.organizationId} hideCreate />
     </div>
   );
 }

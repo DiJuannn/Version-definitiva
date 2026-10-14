@@ -95,7 +95,7 @@ export default async function LocationDetailPage({
         description={location.address ?? undefined}
       />
 
-      <p className="mt-4 font-sans text-sm text-muted">
+      <p className="mt-6 font-sans text-[15px] text-muted">
         {usageByProject.size > 0 ? (
           <>
             Usada en{" "}
@@ -111,14 +111,28 @@ export default async function LocationDetailPage({
           "Todavía no la usa ninguna escena. Se asigna desde el Guion de cada proyecto."
         )}
       </p>
+      {(location.contactPhone || location.contactName) && (
+        <p className="mt-3 flex flex-wrap items-center gap-2 font-sans text-sm text-muted">
+          Contacto: <span className="text-fg">{location.contactName ?? "sin nombre"}</span>
+          {location.contactPhone && (
+            <a
+              href={`tel:${location.contactPhone.replace(/\s+/g, "")}`}
+              className="inline-flex min-h-8 items-center gap-1.5 rounded-full bg-fg/[0.06] px-3 text-fg tabular-nums transition-colors hover:bg-accent hover:text-bg"
+            >
+              <span aria-hidden>☎</span> {location.contactPhone}
+            </a>
+          )}
+        </p>
+      )}
 
       {/* ------------------------------------------------ ficha */}
-      <form action={updateAction} className="mt-12 grid gap-x-16 gap-y-12 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <section aria-labelledby="ficha" className="min-w-0">
-          <h2 id="ficha" className="border-b border-line pb-3 font-display text-xl font-black tracking-tight uppercase">
-            Ficha
+      <form action={updateAction} className="mt-10 grid items-start gap-x-10 gap-y-12 lg:grid-cols-[minmax(0,1fr)_340px]">
+        {/* La ficha es papel: es lo que se rellena. */}
+        <section aria-labelledby="ficha" className="paper min-w-0 p-5 sm:p-8">
+          <h2 id="ficha" className="border-b border-line pb-4 font-display text-xl font-black tracking-tight">
+            Ficha de la localización
           </h2>
-          <div className="mt-6 grid gap-x-8 gap-y-6 sm:grid-cols-2">
+          <div className="mt-6 grid gap-5 sm:grid-cols-2">
             {textFields.map((field) => (
               <label key={field.name} className="block">
                 <span className={LABEL}>{field.label}</span>
@@ -129,7 +143,7 @@ export default async function LocationDetailPage({
                   required={field.name === "name"}
                   defaultValue={field.value}
                   placeholder={field.placeholder}
-                  className="field-line"
+                  className="field mt-1.5 w-full"
                 />
               </label>
             ))}
@@ -151,7 +165,7 @@ export default async function LocationDetailPage({
             </div>
           </fieldset>
 
-          <div className="mt-8 grid gap-x-8 gap-y-6 sm:grid-cols-2">
+          <div className="mt-8 grid gap-5 sm:grid-cols-2">
             {notes.map((field) => (
               <label key={field.name} className="block">
                 <span className={LABEL}>{field.label}</span>
@@ -160,7 +174,7 @@ export default async function LocationDetailPage({
                   defaultValue={field.value}
                   rows={3}
                   placeholder={field.placeholder}
-                  className="field mt-2 w-full leading-relaxed"
+                  className="field mt-1.5 w-full leading-relaxed"
                 />
               </label>
             ))}
@@ -175,7 +189,7 @@ export default async function LocationDetailPage({
 
         {/* El mapa y las coordenadas van en la misma ficha (mismo formulario). */}
         <aside aria-labelledby="mapa" className="space-y-4">
-          <h2 id="mapa" className={`${LABEL} border-b border-line pb-2`}>
+          <h2 id="mapa" className="font-display text-lg font-black tracking-tight uppercase">
             En el mapa
           </h2>
           {hasCoords ? (
@@ -203,11 +217,11 @@ export default async function LocationDetailPage({
           <div className="grid grid-cols-2 gap-x-4 gap-y-4">
             <label className="block">
               <span className={LABEL}>Latitud</span>
-              <input name="latitude" type="number" step="any" defaultValue={location.latitude ?? ""} className="field-line" />
+              <input name="latitude" type="number" step="any" defaultValue={location.latitude ?? ""} className="field mt-1.5 w-full" />
             </label>
             <label className="block">
               <span className={LABEL}>Longitud</span>
-              <input name="longitude" type="number" step="any" defaultValue={location.longitude ?? ""} className="field-line" />
+              <input name="longitude" type="number" step="any" defaultValue={location.longitude ?? ""} className="field mt-1.5 w-full" />
             </label>
             <GeocodeButton />
           </div>
@@ -215,8 +229,8 @@ export default async function LocationDetailPage({
       </form>
 
       {/* ------------------------------------------------ fotos */}
-      <section aria-labelledby="fotos" className="mt-20">
-        <div className="flex flex-wrap items-end justify-between gap-4 border-b border-line pb-3">
+      <section aria-labelledby="fotos" className="mt-16">
+        <div className="flex flex-wrap items-end justify-between gap-4">
           <h2 id="fotos" className="flex items-baseline gap-3 font-display text-xl font-black tracking-tight uppercase">
             Fotografías
             <span className="font-mono text-[11px] font-normal tracking-widest text-muted">{location.photoUrls.length}</span>
@@ -262,7 +276,7 @@ export default async function LocationDetailPage({
 
       {/* ------------------------------------------------ vídeos */}
       <section aria-labelledby="videos" className="mt-16">
-        <h2 id="videos" className="flex items-baseline gap-3 border-b border-line pb-3 font-display text-xl font-black tracking-tight uppercase">
+        <h2 id="videos" className="flex items-baseline gap-3 pb-3 font-display text-xl font-black tracking-tight uppercase">
           Vídeos
           <span className="font-mono text-[11px] font-normal tracking-widest text-muted">{location.videoUrls.length}</span>
         </h2>
@@ -296,7 +310,7 @@ export default async function LocationDetailPage({
       <form action={deleteLocation.bind(null, locationId)} className="mt-16 border-t border-line pt-4">
         <DeleteButton
           confirmMessage="¿Eliminar esta localización? Se desvinculará de las escenas que la usen."
-          className="link-action"
+          className="link-action hover:!text-danger"
         >
           Eliminar localización
         </DeleteButton>

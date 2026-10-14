@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { PdfLink } from "@/components/PdfLink";
@@ -25,7 +26,7 @@ export default async function CallSheetDetailPage({
   const summary = await getShootingDaySummary(dayId);
   if (!summary || summary.shootingDay.projectId !== projectId) notFound();
 
-  const [allCharacters, allCrewMembers] = await Promise.all([
+  const [allCharacters, allCrewMembers, projectDays] = await Promise.all([
     prisma.character.findMany({
       where: { projectId },
       orderBy: { name: "asc" },
@@ -36,7 +37,13 @@ export default async function CallSheetDetailPage({
       orderBy: { name: "asc" },
       select: { id: true, name: true, role: true },
     }),
+    prisma.shootingDay.findMany({
+      where: { projectId },
+      orderBy: { date: "asc" },
+      select: { id: true },
+    }),
   ]);
+  const dayNumber = projectDays.findIndex((d) => d.id === dayId) + 1;
 
   const callSheet = summary.shootingDay.callSheet;
   const shareToken = summary.shootingDay.shareToken;
@@ -82,8 +89,13 @@ export default async function CallSheetDetailPage({
         <PageHeader
           backHref={`/app/${projectId}/call-sheets`}
           backLabel="← Hojas de llamada"
-          eyebrow="Hoja de llamada"
+          eyebrow={
+            dayNumber > 0
+              ? `Hoja de llamada · Día ${dayNumber} de ${projectDays.length}`
+              : "Hoja de llamada"
+          }
           title={dayLabel}
+          description="El documento que recibe el equipo la víspera. Se rellena con el plan del día; las horas y quién sale se corrigen aquí mismo, sobre la hoja."
           actions={
             <>
               <PrintButton label="Imprimir" />
@@ -92,6 +104,28 @@ export default async function CallSheetDetailPage({
           }
         />
       </div>
+
+      {/* Cómo voy: estado de la hoja en una línea. */}
+      {callSheet && (
+        <p className="mt-6 font-sans text-[15px] text-muted print:hidden">
+          <span className="font-semibold text-success">✓ Hoja creada</span>
+          {" · "}
+          {shareToken ? (
+            <span className="text-fg">compartida con enlace</span>
+          ) : (
+            "aún sin compartir"
+          )}
+          {" · "}
+          {summary.sceneAssignments.length}{" "}
+          {summary.sceneAssignments.length === 1 ? "escena" : "escenas"},{" "}
+          {summary.characters.length + summary.crewMembers.length} personas
+          citadas
+          {!callSheet.generalCallTime && (
+            <span className="text-warn"> · falta la citación general</span>
+          )}
+          .
+        </p>
+      )}
 
       {!callSheet && (
         <div className="mt-8 flex flex-wrap items-center justify-between gap-x-8 gap-y-3 border-l-2 border-warn pl-5 print:hidden">
@@ -119,6 +153,8 @@ export default async function CallSheetDetailPage({
         <CallSheetView
           projectName={project.name}
           summary={summary}
+          dayNumber={dayNumber > 0 ? dayNumber : undefined}
+          totalDays={projectDays.length}
           edit={{
             projectId,
             shootingDayId: dayId,
@@ -177,6 +213,17 @@ export default async function CallSheetDetailPage({
           </form>
         </aside>
       </div>
+
+      <p className="mt-16 border-t border-line pt-5 font-sans text-sm text-muted print:hidden">
+        Siguiente, el día del rodaje:{" "}
+        <Link
+          href={`/app/${projectId}/claqueta`}
+          className="font-medium text-fg underline decoration-accent/50 underline-offset-4 transition-colors hover:text-accent hover:decoration-accent"
+        >
+          Claqueta →
+        </Link>{" "}
+        — cada toma queda apuntada en el parte de script.
+      </p>
     </div>
   );
 }

@@ -82,35 +82,55 @@ export function DeliveryChecklistPanel({
     );
   }
 
+  const pending = tasks.filter((t) => t.status !== "DONE");
+  const ready = tasks.filter((t) => t.status === "DONE");
+
   return (
     <div className="max-w-3xl">
-      {/* Progreso como cifra y barra, sin caja. */}
-      <div className="flex items-end gap-6">
-        <p className="font-display text-3xl leading-none font-black tabular-nums">
-          {done}
-          <span className="text-muted">/{tasks.length}</span>
+      {/* Progreso: cifra grande y una barra con un tramo por pieza de la entrega. */}
+      <div>
+        <p className="font-sans text-[15px] text-muted">
+          <span className="font-display text-3xl leading-none font-black text-fg tabular-nums">
+            {done}
+            <span className="text-muted">/{tasks.length}</span>
+          </span>{" "}
+          {done === tasks.length
+            ? "· todo listo para entregar"
+            : `piezas listas · faltan ${tasks.length - done}`}
         </p>
-        <div className="flex-1 pb-1">
-          <p className="eyebrow">
-            {done === tasks.length
-              ? "Todo listo para entregar"
-              : "Listos para entregar"}
-          </p>
-          <div className="mt-2 h-1 overflow-hidden rounded-full bg-line">
-            <div
-              className="h-full bg-success"
-              style={{ width: `${Math.round((done / tasks.length) * 100)}%` }}
+        <div className="mt-3 flex gap-1" aria-hidden>
+          {tasks.map((t) => (
+            <span
+              key={t.id}
+              className={`h-1.5 flex-1 rounded-full ${t.status === "DONE" ? "bg-success" : "bg-line"}`}
             />
-          </div>
+          ))}
         </div>
       </div>
 
       <div className="sheet mt-6 px-5 sm:px-8">
-        <ul className="divide-y divide-line">
-          {tasks.map((task) => (
-            <Item key={task.id} task={task} />
-          ))}
-        </ul>
+        {pending.length > 0 && (
+          <>
+            <p className="eyebrow pt-4 pb-1">Falta</p>
+            <ul className="divide-y divide-line">
+              {pending.map((task) => (
+                <Item key={task.id} task={task} />
+              ))}
+            </ul>
+          </>
+        )}
+        {ready.length > 0 && (
+          <>
+            <p className="eyebrow border-t border-line pt-4 pb-1 text-success first:border-t-0">
+              Listo
+            </p>
+            <ul className="divide-y divide-line">
+              {ready.map((task) => (
+                <Item key={task.id} task={task} />
+              ))}
+            </ul>
+          </>
+        )}
         <div className="border-t border-line py-3">
           {adding ? (
             <form

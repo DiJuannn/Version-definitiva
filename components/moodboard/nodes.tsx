@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext } from "react";
+import { createContext, useContext, useState } from "react";
 import Link from "next/link";
 import { NodeResizer, type Node, type NodeProps } from "@xyflow/react";
 import { NOTE_COLORS, REFERENCE_KINDS, type MoodboardCard, type MoodboardLookup } from "@/lib/moodboard-types";
@@ -28,7 +28,7 @@ function useBoard(): BoardContext {
 // enfocarlos, un leve fondo para saber dónde estás escribiendo.
 const FIELD =
   "nodrag nowheel w-full rounded-sm bg-transparent outline-none placeholder:text-current placeholder:opacity-40 focus:bg-fg/[0.04]";
-const LABEL = "font-mono text-[9px] tracking-widest uppercase";
+const LABEL = "font-mono text-[10px] tracking-widest uppercase";
 
 // Las tarjetas son papeles sobre la mesa: sin borde, con una sombra corta
 // y suave (calculada desde el color del texto, así sirve en claro).
@@ -121,19 +121,34 @@ function NoteCard({ id, card, selected }: { id: string; card: MoodboardCard; sel
 
 function ImageCard({ id, card, selected }: { id: string; card: MoodboardCard; selected: boolean }) {
   const { update } = useBoard();
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const failed = failedUrl === card.url;
+  const setFailed = (v: boolean) => setFailedUrl(v ? (card.url ?? null) : null);
   return (
     <Frame id={id} selected={selected} minW={100} minH={80} className="bg-bg-raised">
       {/* Como una copia en papel: la foto con margen y el pie escrito debajo. */}
       <div className="flex h-full flex-col p-1.5 pb-0">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={card.url}
-          alt={card.caption ?? "Imagen del moodboard"}
-          loading="lazy"
-          decoding="async"
-          draggable={false}
-          className="min-h-0 w-full flex-1 rounded-[3px] bg-fg/5 object-cover"
-        />
+        {failed ? (
+          // Si la foto ya no se puede cargar (enlace caído), se dice claro en
+          // vez de dejar el icono roto del navegador.
+          <div className="flex min-h-0 w-full flex-1 flex-col items-center justify-center gap-1.5 rounded-[3px] bg-fg/[0.06] px-3 text-center text-muted">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M4 5h16v14H4zM4 16l4.5-4.5 4 4 2.5-2.5L20 18M3 3l18 18" />
+            </svg>
+            <span className="font-sans text-[11px] leading-snug">La imagen no se puede cargar</span>
+          </div>
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={card.url}
+            alt={card.caption ?? "Imagen del moodboard"}
+            loading="lazy"
+            decoding="async"
+            draggable={false}
+            onError={() => setFailed(true)}
+            className="min-h-0 w-full flex-1 rounded-[3px] bg-fg/5 object-cover"
+          />
+        )}
         <input
           value={card.caption ?? ""}
           onChange={(e) => update(id, { caption: e.target.value })}

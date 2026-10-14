@@ -626,8 +626,8 @@ export function ClaquetaBoard({
               Lo que pone la claqueta
             </h2>
             <p className="mt-1 font-sans text-sm text-muted">
-              La toma sube sola al marcar. Director, cámara y clip se recuerdan
-              en este dispositivo.
+              Escribe aquí y el tablero cambia en vivo. Al marcar, la toma sube
+              sola y queda apuntada en el parte de script.
             </p>
           </div>
           <div className="mt-5 grid gap-x-6 gap-y-5 sm:grid-cols-2">
@@ -743,6 +743,15 @@ export function ClaquetaBoard({
                 className="field py-2.5 font-mono"
               />
             </label>
+            {/* Lo que no cambia de toma en toma, separado de lo que sí. */}
+            <div className="border-t border-line pt-4 sm:col-span-2">
+              <p className="font-sans text-sm font-semibold">
+                Se mantiene todo el rodaje
+              </p>
+              <p className="font-sans text-xs text-muted">
+                Se recuerda en este dispositivo.
+              </p>
+            </div>
             <label className="flex flex-col gap-1">
               <span className="eyebrow flex items-center gap-1.5">
                 Director (opcional)
@@ -796,7 +805,8 @@ export function ClaquetaBoard({
         {log.length === 0 ? (
           <p className="mt-4 font-sans text-sm leading-relaxed text-muted">
             Aún no se ha marcado ninguna toma. Cada vez que toques la claqueta,
-            la toma aparece aquí: márcala como buena (✓) o añádele una nota.
+            la toma aparece aquí: toca su número para rodearla (buena) o añádele
+            una nota.
           </p>
         ) : (
           <div className="mt-2 space-y-6">
@@ -813,7 +823,16 @@ export function ClaquetaBoard({
                       isCurrentScene ? "text-accent" : "text-muted"
                     }`}
                   >
-                    <span>Escena {group.sceneNumber}</span>
+                    <span>
+                      Escena {group.sceneNumber}
+                      <span className="ml-2 tracking-normal normal-case">
+                        · {group.entries.length}{" "}
+                        {group.entries.length === 1 ? "toma" : "tomas"}
+                        {group.entries.some((e) => e.good)
+                          ? ` · ${group.entries.filter((e) => e.good).length} buena${group.entries.filter((e) => e.good).length === 1 ? "" : "s"}`
+                          : ""}
+                      </span>
+                    </span>
                     {isCurrentScene && (
                       <span className="flex items-center gap-1.5">
                         <span className="h-1.5 w-1.5 rounded-full bg-accent" />
@@ -825,10 +844,8 @@ export function ClaquetaBoard({
                     {group.entries.map((entry) => (
                       <div
                         key={entry.id}
-                        className={`flex items-center justify-between gap-3 border-l-2 py-2.5 pr-1 pl-3 ${
-                          entry.good
-                            ? "border-success bg-success/5"
-                            : "border-transparent"
+                        className={`flex items-center justify-between gap-3 py-2.5 pr-1 pl-1.5 ${
+                          entry.good ? "bg-success/10" : ""
                         }`}
                       >
                         {!entry.failed && !entry.id.startsWith("pending-") && (
@@ -837,23 +854,36 @@ export function ClaquetaBoard({
                             onClick={() => setGood(entry)}
                             aria-pressed={Boolean(entry.good)}
                             aria-label={`Toma ${entry.take}: ${entry.good ? "quitar de buenas" : "marcar como buena"}`}
-                            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs transition-colors ${
+                            title={
                               entry.good
-                                ? "border-success bg-success text-bg"
-                                : "border-line text-transparent hover:border-success hover:text-success"
+                                ? "Toma buena (rodeada)"
+                                : "Marcar como buena"
+                            }
+                            // Convención de la script: la toma buena, rodeada.
+                            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full font-mono text-base tabular-nums transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${
+                              entry.good
+                                ? "border-[2.5px] border-success font-bold text-success"
+                                : "border-2 border-dashed border-line text-fg hover:border-success hover:text-success"
                             }`}
                           >
-                            ✓
+                            {entry.take}
                           </button>
+                        )}
+                        {(entry.failed || entry.id.startsWith("pending-")) && (
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center font-mono text-base text-muted tabular-nums">
+                            {entry.take}
+                          </span>
                         )}
                         <div className="min-w-0 flex-1">
                           <p className="flex flex-wrap items-baseline gap-x-2">
                             <span className="font-display text-base font-bold">
-                              Toma {entry.take}
+                              {entry.shotNumber
+                                ? `Plano ${entry.shotNumber}`
+                                : `Toma ${entry.take}`}
                             </span>
                             {entry.shotNumber && (
-                              <span className="font-sans text-sm">
-                                Plano {entry.shotNumber}
+                              <span className="font-sans text-sm text-muted">
+                                toma {entry.take}
                               </span>
                             )}
                             {entry.clip && (

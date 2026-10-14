@@ -18,13 +18,13 @@ export function DeleteAccountCard({ soleMember }: { soleMember: boolean }) {
 
   return (
     // Aviso con barra roja a la izquierda, no un recuadro.
-    <div className="mt-6 max-w-2xl border-l-2 border-danger pl-5">
+    <div className="mt-4 max-w-2xl">
       <p className="font-display text-lg font-bold">Eliminar mi cuenta</p>
 
       {!open ? (
         <>
           <p className="mt-1 font-sans text-sm leading-relaxed text-muted">
-            Es permanente y no se puede deshacer.
+            Borra tu usuario y tu acceso al Taller. Es permanente y no se puede deshacer.
           </p>
           <button
             type="button"

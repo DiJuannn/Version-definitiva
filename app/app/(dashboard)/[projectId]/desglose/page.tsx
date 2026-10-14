@@ -13,27 +13,21 @@ import { BreakdownCategory } from "@/lib/generated/prisma";
 import { PageHeader } from "@/components/PageHeader";
 import { SubmitButton } from "@/components/SubmitButton";
 import { BreakdownCategorySelect } from "@/components/BreakdownCategorySelect";
+import { CreateDialog, DialogCancel } from "@/components/CreateDialog";
+import { NextTool, SceneSlug } from "@/components/preproduccion/SceneSlug";
+import { BREAKDOWN_COLUMNS, CATEGORY_COLOR, type BreakdownColumn } from "@/components/preproduccion/palette";
 
-// El desglose es una sola hoja con todos los elementos agrupados por
-// categoría (antes, una pestaña por categoría: con pocos elementos obligaba a
-// ir abriendo pestañas para ver qué había). Arriba, la cuenta por categoría
-// sirve de índice. Añadir es un botón que abre un formulario pequeño.
+// El desglose como se hace en producción: una matriz ESCENAS × CATEGORÍAS,
+// cada categoría con su color de siempre, y en cada celda cuántas cosas de
+// esa categoría pide la escena. La columna final suma, así se ve de un
+// vistazo qué escena es «cara». Debajo, la lista de elementos por categoría
+// (donde se añaden, se recolocan y se borran). Reparto y figuración no son
+// elementos de desglose: salen de la ficha de cada escena (personajes
+// marcados y notas de extras), pero se pintan aquí porque son lo primero que
+// mira cualquiera al leer un desglose.
 
-// Nombres cortos para el índice; el nombre completo sigue siendo
-// BREAKDOWN_CATEGORY_LABELS (aparece en el selector "mover a").
-const SHORT_LABELS: Record<BreakdownCategory, string> = {
-  PROP: "Atrezzo",
-  WARDROBE: "Vestuario",
-  MAKEUP_HAIR: "Maquillaje",
-  VEHICLE: "Vehículos",
-  SOUND: "Sonido",
-  VFX: "Efectos",
-  LIGHTING: "Iluminación",
-  EQUIPMENT: "Material técnico",
-};
-
-const POPOVER =
-  "sheet absolute left-0 z-30 mt-2 w-[min(22rem,calc(100vw-2rem))] p-5 shadow-[0_18px_40px_-16px_rgba(0,0,0,0.6)] sm:left-auto sm:right-0";
+// Texto oscuro sobre las celdas de color: los colores son claros (mesa oscura).
+const ON_COLOR = "#141317";
 
 export default async function DesglosePage({
   params,
@@ -46,17 +40,36 @@ export default async function DesglosePage({
   const project = await getProjectForCurrentUser(projectId);
   if (!project) notFound();
 
-  const elements = await prisma.breakdownElement.findMany({
-    where: { projectId },
-    orderBy: { name: "asc" },
-    select: {
-      id: true,
-      name: true,
-      notes: true,
-      category: true,
-      _count: { select: { scenes: true } },
-    },
-  });
+  const [elements, scenes] = await Promise.all([
+    prisma.breakdownElement.findMany({
+      where: { projectId },
+      orderBy: { name: "asc" },
+      select: {
+        id: true,
+        name: true,
+        notes: true,
+        category: true,
+        scenes: { select: { scene: { select: { id: true, number: true, order: true } } } },
+      },
+    }),
+    // Solo lectura: las escenas con lo que piden, para la matriz.
+    prisma.scene.findMany({
+      where: { projectId },
+      orderBy: [{ order: "asc" }, { number: "asc" }],
+      select: {
+        id: true,
+        number: true,
+        intExt: true,
+        dayPart: true,
+        extrasNotes: true,
+        location: { select: { name: true } },
+        characters: { select: { character: { select: { name: true } } } },
+        breakdownElements: {
+          select: { breakdownElement: { select: { name: true, category: true } } },
+        },
+      },
+    }),
+  ]);
 
   const createElementAction = createBreakdownElement.bind(null, projectId);
   const groups = Object.values(BreakdownCategory).map((category) => ({
@@ -64,8 +77,29 @@ export default async function DesglosePage({
     items: elements.filter((el) => el.category === category),
   }));
   const filled = groups.filter((g) => g.items.length > 0);
-  const emptyNames = groups.filter((g) => g.items.length === 0).map((g) => SHORT_LABELS[g.category]);
-  const unassigned = elements.filter((el) => el._count.scenes === 0).length;
+  const unassigned = elements.filter((el) => el.scenes.length === 0);
+
+  // Matriz: por escena, qué nombres hay en cada columna.
+  const rows = scenes.map((scene) => {
+    const cells = new Map<BreakdownColumn, string[]>();
+    cells.set(
+      "CAST",
+      scene.characters.map((c) => c.character.name),
+    );
+    cells.set("EXTRAS", scene.extrasNotes?.trim() ? [scene.extrasNotes.trim()] : []);
+    for (const { breakdownElement } of scene.breakdownElements) {
+      const list = cells.get(breakdownElement.category) ?? [];
+      list.push(breakdownElement.name);
+      cells.set(breakdownElement.category, list);
+    }
+    const total = [...cells.values()].reduce((n, l) => n + l.length, 0);
+    return { scene, cells, total };
+  });
+  const maxTotal = Math.max(1, ...rows.map((r) => r.total));
+  const heaviest = rows.filter((r) => r.total === maxTotal && r.total > 0);
+  const usedColumns = new Set(
+    rows.flatMap((r) => [...r.cells.entries()].filter(([, l]) => l.length > 0).map(([k]) => k)),
+  );
 
   const addForm = (
     <form action={createElementAction} className="grid gap-4">
@@ -87,49 +121,37 @@ export default async function DesglosePage({
         <span className="eyebrow text-muted">Notas (opcional)</span>
         <input name="notes" placeholder="Dos unidades, de época…" className="field" />
       </label>
-      <div>
+      <div className="flex items-center gap-4">
         <SubmitButton pendingLabel="Añadiendo…" savedLabel="✓ Añadido" className="btn btn-primary">
           Añadir al desglose
         </SubmitButton>
+        <DialogCancel />
       </div>
     </form>
   );
+
+  const sceneLink = (id: string) => `/app/${projectId}/guion/${id}`;
 
   return (
     <div className="pb-16">
       <PageHeader
         eyebrow="Preproducción"
         title="Desglose"
-        description={
-          <>
-            Todo lo que hay que conseguir para rodar: atrezzo, vestuario, vehículos, material… Aquí está la lista; qué
-            sale en cada escena se marca en la ficha de la escena, en{" "}
-            <Link href={`/app/${projectId}/guion`} className="text-fg underline decoration-line underline-offset-4 hover:text-accent">
-              Guion
-            </Link>
-            . Las personas del equipo están en{" "}
-            <Link href={`/app/${projectId}/equipo`} className="text-fg underline decoration-line underline-offset-4 hover:text-accent">
-              Equipo técnico
-            </Link>
-            .
-          </>
-        }
+        description="Qué pide cada escena para poder rodarla, por categorías y con su color. Lo que sale en cada escena se marca en su ficha, en Guion."
         actions={
           elements.length > 0 ? (
-            <details className="group relative">
-              <summary className="btn btn-primary list-none [&::-webkit-details-marker]:hidden">
-                <span aria-hidden className="transition-transform group-open:rotate-45">
-                  +
-                </span>
-                Añadir elemento
-              </summary>
-              <div className={POPOVER}>{addForm}</div>
-            </details>
+            <CreateDialog
+              label="Añadir elemento"
+              title="Añadir al desglose"
+              description="Después márcalo en las escenas donde sale, desde la ficha de cada escena."
+            >
+              {addForm}
+            </CreateDialog>
           ) : undefined
         }
       />
 
-      {elements.length === 0 ? (
+      {elements.length === 0 && scenes.length === 0 ? (
         <section className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_24rem]">
           <div className="max-w-md">
             <h2 className="font-display text-xl font-bold">Empieza la lista</h2>
@@ -141,92 +163,286 @@ export default async function DesglosePage({
               , la IA propone el atrezzo y el vestuario por ti.
             </p>
           </div>
-          <div className="sheet p-6">{addForm}</div>
+          <div className="paper p-6">{addForm}</div>
         </section>
       ) : (
         <>
-          {/* Índice: cuántos hay de cada cosa, y salto a su grupo. */}
-          <nav aria-label="Categorías" className="mt-10 flex flex-wrap gap-x-8 gap-y-4">
-            {filled.map((g) => (
-              <a
-                key={g.category}
-                href={`#cat-${g.category.toLowerCase()}`}
-                className="group flex items-baseline gap-2"
-              >
-                <span className="font-display text-2xl font-black tabular-nums group-hover:text-accent">
-                  {g.items.length}
-                </span>
-                <span className="eyebrow text-muted group-hover:text-fg">{SHORT_LABELS[g.category]}</span>
-              </a>
-            ))}
-          </nav>
-          {unassigned > 0 && (
-            <p className="mt-6 border-l-2 border-warn pl-3 font-sans text-sm text-muted">
-              {unassigned === 1 ? "1 elemento no está" : `${unassigned} elementos no están`} en ninguna escena todavía.
-              Márcalos en la ficha de cada escena.
+          {/* ------------------------------------------------ cómo voy */}
+          <dl className="mt-9 flex flex-wrap items-baseline gap-x-8 gap-y-3">
+            <div className="flex items-baseline gap-2">
+              <dd className="font-display text-2xl leading-none font-black tabular-nums">{elements.length}</dd>
+              <dt className="font-sans text-sm text-muted">{elements.length === 1 ? "elemento" : "elementos"}</dt>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <dd className="font-display text-2xl leading-none font-black tabular-nums">
+                {filled.length}
+                <span className="text-muted">/{groups.length}</span>
+              </dd>
+              <dt className="font-sans text-sm text-muted">categorías con algo</dt>
+            </div>
+            {heaviest.length > 0 && (
+              <div className="flex items-baseline gap-2 sm:border-l sm:border-line sm:pl-8">
+                <dt className="font-sans text-sm text-muted">La más cargada:</dt>
+                <dd className="font-sans text-sm">
+                  {heaviest.map((r, i) => (
+                    <span key={r.scene.id}>
+                      {i > 0 && ", "}
+                      <Link href={sceneLink(r.scene.id)} className="font-semibold hover:text-accent">
+                        escena {r.scene.number}
+                      </Link>
+                    </span>
+                  ))}{" "}
+                  <span className="text-muted">({cosas(maxTotal)})</span>
+                </dd>
+              </div>
+            )}
+          </dl>
+          {unassigned.length > 0 && (
+            <p className="mt-6 border-l-2 border-warn py-0.5 pl-4 font-sans text-[15px]">
+              <strong className="font-semibold">
+                {unassigned.length === 1 ? "1 elemento no está" : `${unassigned.length} elementos no están`} en ninguna
+                escena:
+              </strong>{" "}
+              <span className="text-muted">
+                {unassigned.map((e) => e.name).join(", ")}. Márcalos en la ficha de la escena donde salen, o bórralos si
+                sobran.
+              </span>
             </p>
           )}
 
-          <div className="sheet mt-8">
-            {filled.map((g) => (
-              <section
-                key={g.category}
-                id={`cat-${g.category.toLowerCase()}`}
-                aria-labelledby={`cat-${g.category.toLowerCase()}-t`}
-                className="scroll-mt-40 border-t border-line first:border-t-0"
-              >
-                <h2
-                  id={`cat-${g.category.toLowerCase()}-t`}
-                  className="flex items-baseline justify-between gap-4 px-5 pt-6 pb-2 sm:px-7"
-                >
-                  <span className="font-display text-lg font-bold">{BREAKDOWN_CATEGORY_LABELS[g.category]}</span>
-                  <span className="font-mono text-[11px] text-muted">{g.items.length}</span>
+          {/* ------------------------------------------------ matriz */}
+          {scenes.length > 0 && (
+            <section aria-labelledby="desglose-matriz" className="mt-10">
+              <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
+                <h2 id="desglose-matriz" className="font-display text-lg font-bold">
+                  Escena por escena
                 </h2>
-                <ul className="divide-y divide-line">
-                  {g.items.map((item) => (
-                    <li
-                      key={item.id}
-                      className="group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-5 py-3 sm:grid-cols-[minmax(0,1fr)_7rem_11rem_auto] sm:px-7"
-                    >
-                      <span className="min-w-0">
-                        <span className="block font-sans text-[15px] font-medium">{item.name}</span>
-                        {item.notes && <span className="block font-sans text-[13px] text-muted">{item.notes}</span>}
-                      </span>
-                      <span
-                        className={`text-right font-mono text-[11px] sm:text-left ${
-                          item._count.scenes === 0 ? "text-warn" : "text-muted"
-                        }`}
+                <p className="font-sans text-xs text-muted">Pasa el ratón por una celda para ver qué es.</p>
+              </div>
+              <div className="sheet mt-3 overflow-x-auto">
+                <table className="w-full min-w-[46rem] border-collapse text-left">
+                  <caption className="sr-only">
+                    Matriz de desglose: escenas en filas, categorías en columnas, con el número de elementos de cada
+                    categoría en cada escena.
+                  </caption>
+                  <thead>
+                    <tr className="border-b border-line">
+                      <th
+                        scope="col"
+                        className="sticky left-0 z-10 bg-bg-raised py-3 pr-3 pl-5 align-bottom font-mono text-[10px] font-normal tracking-widest text-muted uppercase"
                       >
-                        {item._count.scenes === 0
-                          ? "Sin escena"
-                          : `${item._count.scenes} escena${item._count.scenes === 1 ? "" : "s"}`}
-                      </span>
-                      <span className="min-w-0">
-                        <BreakdownCategorySelect
-                          category={item.category}
-                          action={updateBreakdownElementCategory.bind(null, projectId, item.id)}
-                        />
-                      </span>
-                      <form action={deleteBreakdownElement.bind(null, projectId, item.id)} className="justify-self-end">
-                        <DeleteButton
-                          confirmMessage="¿Eliminar este elemento del desglose?"
-                          className="link-action hover:text-danger"
-                        />
-                      </form>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ))}
-          </div>
-
-          {emptyNames.length > 0 && (
-            <p className="mt-5 font-sans text-sm text-muted">
-              Sin elementos todavía: {emptyNames.join(", ")}.
-            </p>
+                        Escena
+                      </th>
+                      {BREAKDOWN_COLUMNS.map((col) => (
+                        <th
+                          key={col.key}
+                          scope="col"
+                          title={col.label}
+                          className={`w-[3.75rem] px-1 pt-3 pb-2.5 text-center align-bottom font-sans text-[11px] leading-tight font-medium ${usedColumns.has(col.key) ? "text-fg" : "text-muted/60"}`}
+                        >
+                          <span
+                            aria-hidden
+                            className="mx-auto mb-1.5 block h-1 w-6 rounded-full"
+                            style={{ background: col.color, opacity: usedColumns.has(col.key) ? 1 : 0.35 }}
+                          />
+                          {col.short}
+                        </th>
+                      ))}
+                      <th
+                        scope="col"
+                        className="w-[8.5rem] py-3 pr-5 pl-3 text-right align-bottom font-mono text-[10px] font-normal tracking-widest text-muted uppercase"
+                      >
+                        Total
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-line">
+                    {rows.map(({ scene, cells, total }) => (
+                      <tr key={scene.id} className="group transition-colors hover:bg-accent/[0.04]">
+                        <th
+                          scope="row"
+                          className="sticky left-0 z-10 bg-bg-raised py-2.5 pr-3 pl-5 text-left font-normal"
+                        >
+                          <Link
+                            href={sceneLink(scene.id)}
+                            className="flex items-baseline gap-3 rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                          >
+                            <span className="w-7 shrink-0 font-display text-xl leading-none font-black tabular-nums group-hover:text-accent">
+                              {scene.number}
+                            </span>
+                            <SceneSlug
+                              intExt={scene.intExt}
+                              dayPart={scene.dayPart}
+                              location={scene.location?.name}
+                              className="hidden max-w-[17rem] truncate text-[13px] md:block"
+                            />
+                          </Link>
+                        </th>
+                        {BREAKDOWN_COLUMNS.map((col) => {
+                          const list = cells.get(col.key) ?? [];
+                          return (
+                            <td key={col.key} className="px-1 py-2.5 text-center">
+                              {list.length > 0 ? (
+                                <span
+                                  title={`${col.label}: ${list.join(", ")}`}
+                                  className="inline-flex h-7 min-w-7 items-center justify-center rounded-md px-1.5 font-mono text-[12px] font-bold tabular-nums"
+                                  style={{ background: col.color, color: ON_COLOR }}
+                                >
+                                  <span className="sr-only">{col.label}: </span>
+                                  {list.length}
+                                </span>
+                              ) : (
+                                <span aria-label={`${col.label}: nada`} className="text-muted/40">
+                                  ·
+                                </span>
+                              )}
+                            </td>
+                          );
+                        })}
+                        <td className="py-2.5 pr-5 pl-3">
+                          <span className="flex items-center justify-end gap-2.5">
+                            <span aria-hidden className="h-1.5 w-16 overflow-hidden rounded-full bg-fg/[0.08]">
+                              <span
+                                className={`block h-full rounded-full ${total === maxTotal && total > 0 ? "bg-fg" : "bg-fg/45"}`}
+                                style={{ width: `${Math.round((total / maxTotal) * 100)}%` }}
+                              />
+                            </span>
+                            <span
+                              className={`w-5 text-right font-display text-base tabular-nums ${total === maxTotal && total > 0 ? "font-black" : "font-bold text-muted"}`}
+                            >
+                              {total}
+                            </span>
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="mt-3 font-sans text-xs text-muted">
+                Reparto y figuración vienen de la ficha de cada escena (personajes marcados y notas de extras).
+              </p>
+            </section>
           )}
+
+          {/* ------------------------------------------------ lista por categoría */}
+          {filled.length > 0 && (
+            <section aria-labelledby="desglose-lista" className="mt-14">
+              <h2 id="desglose-lista" className="font-display text-lg font-bold">
+                Lo que hay que conseguir
+              </h2>
+              <nav aria-label="Categorías" className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
+                {filled.map((g) => (
+                  <a
+                    key={g.category}
+                    href={`#cat-${g.category.toLowerCase()}`}
+                    className="flex items-center gap-2 font-sans text-sm text-muted hover:text-fg"
+                  >
+                    <span aria-hidden className="h-2.5 w-2.5 rounded-full" style={{ background: CATEGORY_COLOR[g.category] }} />
+                    {BREAKDOWN_CATEGORY_LABELS[g.category]}
+                    <span className="font-mono text-[11px] tabular-nums">{g.items.length}</span>
+                  </a>
+                ))}
+              </nav>
+
+              <div className="sheet mt-5 overflow-hidden">
+                {filled.map((g) => (
+                  <section
+                    key={g.category}
+                    id={`cat-${g.category.toLowerCase()}`}
+                    aria-labelledby={`cat-${g.category.toLowerCase()}-t`}
+                    className="relative scroll-mt-40 border-t border-line first:border-t-0"
+                  >
+                    <span
+                      aria-hidden
+                      className="absolute inset-y-0 left-0 w-1"
+                      style={{ background: CATEGORY_COLOR[g.category] }}
+                    />
+                    <h3
+                      id={`cat-${g.category.toLowerCase()}-t`}
+                      className="flex items-baseline gap-3 px-5 pt-5 pb-1 sm:px-7"
+                    >
+                      <span className="font-display text-base font-bold">{BREAKDOWN_CATEGORY_LABELS[g.category]}</span>
+                      <span className="font-mono text-[11px] text-muted">{g.items.length}</span>
+                    </h3>
+                    <ul className="divide-y divide-line">
+                      {g.items.map((item) => {
+                        const inScenes = item.scenes
+                          .map((s) => s.scene)
+                          .sort((a, b) => a.order - b.order);
+                        return (
+                          <li
+                            key={item.id}
+                            className="group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 px-5 py-3 sm:grid-cols-[minmax(0,1fr)_12rem_10rem_auto] sm:px-7"
+                          >
+                            <span className="col-start-1 row-start-1 min-w-0">
+                              <span className="block font-sans text-[15px] font-medium">{item.name}</span>
+                              {item.notes && <span className="block font-sans text-[13px] text-muted">{item.notes}</span>}
+                            </span>
+                            <span className="col-span-2 col-start-1 row-start-2 flex flex-wrap items-center gap-1 sm:col-span-1 sm:col-start-2 sm:row-start-1">
+                              {inScenes.length === 0 ? (
+                                <span className="font-sans text-xs text-warn">En ninguna escena</span>
+                              ) : (
+                                <>
+                                  <span className="mr-1 font-sans text-xs text-muted">Esc.</span>
+                                  {inScenes.map((s) => (
+                                    <Link
+                                      key={s.id}
+                                      href={sceneLink(s.id)}
+                                      className="rounded bg-fg/[0.08] px-1.5 py-0.5 font-mono text-[11px] tabular-nums hover:bg-accent/20 hover:text-fg"
+                                    >
+                                      {s.number}
+                                    </Link>
+                                  ))}
+                                </>
+                              )}
+                            </span>
+                            <span className="col-start-1 row-start-3 -ml-2 min-w-0 max-w-[12rem] sm:col-start-3 sm:row-start-1 sm:ml-0 sm:max-w-none">
+                              <BreakdownCategorySelect
+                                category={item.category}
+                                action={updateBreakdownElementCategory.bind(null, projectId, item.id)}
+                              />
+                            </span>
+                            <form
+                              action={deleteBreakdownElement.bind(null, projectId, item.id)}
+                              className="col-start-2 row-start-1 justify-self-end sm:col-start-4"
+                            >
+                              <DeleteButton
+                                confirmMessage="¿Eliminar este elemento del desglose?"
+                                className="link-action hover:text-danger"
+                              />
+                            </form>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </section>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {elements.length === 0 && (
+            <div className="mt-12 max-w-md">
+              <h2 className="font-display text-lg font-bold">Aún no hay nada que conseguir</h2>
+              <p className="mt-2 font-sans text-sm text-muted">
+                Añade el atrezzo, vestuario o material que piden las escenas y márcalo en cada una.
+              </p>
+              <div className="paper mt-5 p-6">{addForm}</div>
+            </div>
+          )}
+
+          <NextTool
+            href={`/app/${projectId}/personajes`}
+            label="Personajes"
+            hint="Quién hace de quién, para poder citar al reparto."
+          />
         </>
       )}
     </div>
   );
+}
+
+function cosas(n: number) {
+  return `${n} ${n === 1 ? "cosa" : "cosas"}`;
 }

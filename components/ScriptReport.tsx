@@ -139,75 +139,89 @@ export function ScriptReport({
   const shotsRatio =
     report.shotsTotal > 0 ? report.shotsWithGood / report.shotsTotal : 0;
 
+  // Planos de la shot list que aún no tienen ninguna toma rodeada.
+  const missingGood = useMemo(() => {
+    const good = new Set<string>();
+    for (const day of report.days)
+      for (const scene of day.scenes)
+        for (const shot of scene.shots)
+          if (shot.shotNumber && shot.takes.some((t) => t.good))
+            good.add(
+              `${scene.sceneNumber.trim().toLowerCase()}|${shot.shotNumber.trim().toLowerCase()}`,
+            );
+    const missing: string[] = [];
+    for (const scene of report.scenes)
+      for (const shot of scene.shots)
+        if (
+          !good.has(
+            `${scene.number.trim().toLowerCase()}|${shot.number.trim().toLowerCase()}`,
+          )
+        )
+          missing.push(`${scene.number}.${shot.number}`);
+    return missing;
+  }, [report]);
+
   return (
     <div>
-      <div className="grid grid-cols-2 gap-x-10 gap-y-6 sm:flex sm:flex-wrap">
-        <div>
-          <p className="font-display text-2xl font-black tabular-nums">
-            {totals.takes}
-          </p>
-          <p className="mt-0.5 font-mono text-[10px] tracking-widest text-muted uppercase">
-            Tomas
-          </p>
-        </div>
-        <div>
-          <p className="font-display text-2xl font-black text-success tabular-nums">
-            {totals.good}
-          </p>
-          <p className="mt-0.5 font-mono text-[10px] tracking-widest text-muted uppercase">
-            Buenas
-          </p>
-        </div>
-        <div className="col-span-2 min-w-[16rem] sm:border-l sm:border-line sm:pl-10">
-          <p className="font-display text-2xl font-black tabular-nums">
-            {report.shotsWithGood}
-            <span className="text-muted">/{report.shotsTotal}</span>
-          </p>
-          <p className="mt-0.5 font-mono text-[10px] tracking-widest text-muted uppercase">
-            Planos de la shot list con toma buena
+      {/* Cómo voy: tomas, buenas y lo que falta por tener bueno. */}
+      <div className="flex flex-wrap items-end justify-between gap-x-10 gap-y-5">
+        <div className="max-w-2xl">
+          <p className="font-sans text-[15px] leading-relaxed text-muted">
+            <strong className="font-semibold text-fg">
+              {totals.takes} {totals.takes === 1 ? "toma" : "tomas"}
+            </strong>
+            {" · "}
+            <strong className="font-semibold text-success">
+              {totals.good} {totals.good === 1 ? "buena" : "buenas"}
+            </strong>{" "}
+            (las rodeadas)
+            {report.shotsTotal > 0 && (
+              <>
+                {" · "}
+                <strong className="font-semibold text-fg">
+                  {report.shotsWithGood} de {report.shotsTotal}
+                </strong>{" "}
+                planos de la shot list ya tienen toma buena
+              </>
+            )}
+            .
           </p>
           {report.shotsTotal > 0 && (
-            <div className="mt-2 h-1 w-full bg-line">
+            <div
+              className="mt-2.5 h-1 w-full max-w-md overflow-hidden rounded-full bg-line"
+              role="progressbar"
+              aria-label="Planos con toma buena"
+              aria-valuemin={0}
+              aria-valuemax={report.shotsTotal}
+              aria-valuenow={report.shotsWithGood}
+            >
               <div
                 className="h-full bg-success"
                 style={{ width: `${Math.round(shotsRatio * 100)}%` }}
               />
             </div>
           )}
-        </div>
-      </div>
-
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
-        <div
-          className="inline-flex rounded-full bg-fg/[0.06] p-1"
-          role="group"
-          aria-label="Filtro de tomas"
-        >
-          {[
-            { v: false, label: "Todas las tomas" },
-            { v: true, label: "Solo las buenas" },
-          ].map((opt) => (
-            <button
-              key={String(opt.v)}
-              type="button"
-              onClick={() => setOnlyGood(opt.v)}
-              aria-pressed={onlyGood === opt.v}
-              className={`rounded-full px-4 py-1.5 font-mono text-[11px] tracking-widest uppercase transition-colors ${
-                onlyGood === opt.v
-                  ? "bg-bg-raised text-fg shadow-sm"
-                  : "text-muted hover:text-fg"
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
+          {missingGood.length > 0 && totals.takes > 0 && (
+            <p className="mt-4 border-l-2 border-warn pl-3 font-sans text-sm">
+              <span className="font-semibold text-warn">
+                Sin toma buena todavía:
+              </span>{" "}
+              <span className="font-mono text-[13px]">
+                {missingGood.slice(0, 12).join(" · ")}
+                {missingGood.length > 12
+                  ? ` y ${missingGood.length - 12} más`
+                  : ""}
+              </span>
+            </p>
+          )}
         </div>
         <button
           type="button"
           onClick={() => setShowForm((v) => !v)}
-          className="btn btn-secondary btn-sm"
+          aria-expanded={showForm}
+          className="btn btn-primary"
         >
-          {showForm ? "Cerrar" : "+ Añadir toma a mano"}
+          {showForm ? "Cerrar" : "+ Apuntar toma a mano"}
         </button>
       </div>
 
@@ -224,121 +238,190 @@ export function ScriptReport({
       )}
 
       {report.days.length === 0 ? (
-        <div className="mt-10 py-10 text-center">
+        <div className="mt-14 py-10 text-center">
           <p className="font-display text-lg font-bold">Todavía no hay tomas</p>
           <p className="mx-auto mt-2 max-w-md font-sans text-sm text-muted">
             Marca tomas con la claqueta durante el rodaje y aparecerán aquí
-            solas, o apúntalas a mano con &ldquo;Añadir toma a mano&rdquo;.
+            solas, o apúntalas a mano con &ldquo;Apuntar toma a mano&rdquo;.
           </p>
         </div>
       ) : (
-        <div className="mt-8 space-y-10">
-          {[...report.days].reverse().map((day) => {
-            const dayTakes = day.scenes.flatMap((sc) =>
-              sc.shots.flatMap((sh) => sh.takes),
-            );
-            const dayGood = dayTakes.filter((t) => t.good).length;
-            const scenes = day.scenes
-              .map((scene) => ({
-                ...scene,
-                shots: scene.shots
-                  .map((shot) => ({
-                    ...shot,
-                    takes: onlyGood
-                      ? shot.takes.filter((t) => t.good)
-                      : shot.takes,
-                  }))
-                  .filter((shot) => shot.takes.length > 0),
-              }))
-              .filter((scene) => scene.shots.length > 0);
-            if (scenes.length === 0) return null;
-            return (
-              <section key={day.dateKey}>
-                <div className="flex flex-wrap items-baseline justify-between gap-2 pb-1">
-                  <h2 className="font-display text-lg font-black tracking-tight uppercase">
-                    {day.label}
-                  </h2>
-                  <p className="font-mono text-xs text-muted">
-                    {dayTakes.length} toma{dayTakes.length === 1 ? "" : "s"} ·{" "}
-                    {dayGood} buena{dayGood === 1 ? "" : "s"}
-                  </p>
-                </div>
+        <>
+          <div className="mt-10 flex flex-wrap items-center justify-between gap-3">
+            <div
+              className="inline-flex rounded-full bg-fg/[0.06] p-1"
+              role="group"
+              aria-label="Filtro de tomas"
+            >
+              {[
+                { v: false, label: "Todas las tomas" },
+                { v: true, label: "Solo las buenas" },
+              ].map((opt) => (
+                <button
+                  key={String(opt.v)}
+                  type="button"
+                  onClick={() => setOnlyGood(opt.v)}
+                  aria-pressed={onlyGood === opt.v}
+                  className={`rounded-full px-4 py-1.5 font-mono text-[11px] tracking-widest uppercase transition-colors focus-visible:outline-2 focus-visible:outline-accent ${
+                    onlyGood === opt.v
+                      ? "bg-bg-raised text-fg shadow-sm"
+                      : "text-muted hover:text-fg"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            <p className="flex items-center gap-2 font-sans text-sm text-muted">
+              <span
+                aria-hidden
+                className="inline-flex h-6 w-6 items-center justify-center rounded-full border-2 border-success font-mono text-xs font-bold text-success"
+              >
+                2
+              </span>
+              Toca el número de una toma para rodearla (buena).
+            </p>
+          </div>
 
-                <div className="sheet mt-3 divide-y divide-line overflow-hidden">
+          <div className="mt-6 space-y-10">
+            {[...report.days].reverse().map((day) => {
+              const dayTakes = day.scenes.flatMap((sc) =>
+                sc.shots.flatMap((sh) => sh.takes),
+              );
+              const dayGood = dayTakes.filter((t) => t.good).length;
+              const scenes = day.scenes
+                .map((scene) => ({
+                  ...scene,
+                  shots: scene.shots
+                    .map((shot) => ({
+                      ...shot,
+                      takes: onlyGood
+                        ? shot.takes.filter((t) => t.good)
+                        : shot.takes,
+                    }))
+                    .filter((shot) => shot.takes.length > 0),
+                }))
+                .filter((scene) => scene.shots.length > 0);
+              if (scenes.length === 0) return null;
+              return (
+                // Cada día, una hoja del parte: papel, como la que lleva la
+                // script en la carpeta.
+                <section
+                  key={day.dateKey}
+                  aria-label={`Parte del ${day.label}`}
+                  className="paper px-4 py-6 sm:px-8 sm:py-8"
+                >
+                  <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-1 border-b-4 border-fg pb-3">
+                    <div>
+                      <p className="font-mono text-[11px] font-semibold tracking-[0.2em] text-accent uppercase">
+                        Parte de script
+                      </p>
+                      <h2 className="mt-1 font-display text-2xl leading-none font-black tracking-tight uppercase">
+                        {day.label}
+                      </h2>
+                    </div>
+                    <p className="font-mono text-xs text-muted">
+                      {dayTakes.length} toma{dayTakes.length === 1 ? "" : "s"} ·{" "}
+                      {dayGood} buena{dayGood === 1 ? "" : "s"}
+                    </p>
+                  </header>
+
+                  {/* Cabecera de columnas (solo escritorio). */}
+                  <div
+                    aria-hidden
+                    className="hidden grid-cols-[5.5rem_3rem_3.5rem_5rem_minmax(0,1fr)_2rem] gap-x-4 border-b border-line pt-4 pb-2 sm:grid"
+                  >
+                    {["Plano", "Toma", "Hora", "Clip", "Nota", ""].map(
+                      (h, i) => (
+                        <span key={i} className="eyebrow">
+                          {h}
+                        </span>
+                      ),
+                    )}
+                  </div>
+
                   {scenes.map((scene) => (
-                    <div key={scene.sceneNumber}>
-                      <div className="flex flex-wrap items-baseline justify-between gap-2 px-5 pt-5 pb-1">
-                        <p className="font-display text-base font-bold">
+                    <div key={scene.sceneNumber} className="mt-5 first:mt-4">
+                      <h3 className="flex flex-wrap items-baseline gap-x-3 border-b-2 border-fg pb-1">
+                        <span className="font-display text-lg font-black">
                           Escena {scene.sceneNumber}
-                        </p>
+                        </span>
                         {scene.context && (
-                          <p className="font-mono text-[11px] text-muted">
+                          <span className="font-mono text-[11px] tracking-wider text-muted uppercase">
                             {scene.context}
-                          </p>
+                          </span>
                         )}
-                      </div>
-                      <div className="divide-y divide-line">
-                        {scene.shots.map((shot) => (
-                          <div key={shot.key} className="px-5 py-3">
-                            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                              <span className="font-mono text-sm text-accent">
-                                {shot.label}
-                              </span>
+                      </h3>
+                      {scene.shots.map((shot) => (
+                        <div
+                          key={shot.key}
+                          className="border-b border-line sm:grid sm:grid-cols-[5.5rem_minmax(0,1fr)] sm:gap-x-4"
+                        >
+                          <div className="pt-2.5 pb-1 sm:pb-2.5">
+                            <p className="font-mono text-sm font-semibold">
+                              {shot.label}
                               {shot.size && (
-                                <span className="font-mono text-xs uppercase">
+                                <span className="ml-1.5 font-normal text-muted uppercase">
                                   {shot.size}
                                 </span>
                               )}
-                              {shot.description && (
-                                <span className="font-mono text-xs text-muted">
-                                  {shot.description}
-                                </span>
-                              )}
-                              {shot.shotNumber && !shot.inShotList && (
-                                <span className="rounded-full bg-fg/[0.06] px-2 py-0.5 font-mono text-[10px] text-muted">
-                                  no está en la shot list
-                                </span>
-                              )}
-                            </div>
-                            <ul className="mt-2 space-y-1">
-                              {shot.takes.map((take) => (
-                                <li
-                                  key={take.id}
-                                  className={`grid grid-cols-[auto_4.5rem_4.5rem_3rem_1fr_auto] items-center gap-3 border-l-2 py-1.5 pl-3 ${
+                            </p>
+                            {shot.description && (
+                              <p className="mt-0.5 font-sans text-xs leading-snug text-muted sm:line-clamp-3">
+                                {shot.description}
+                              </p>
+                            )}
+                            {shot.shotNumber && !shot.inShotList && (
+                              <p className="mt-0.5 font-mono text-[10px] text-warn">
+                                no está en la shot list
+                              </p>
+                            )}
+                          </div>
+                          <ul className="pb-1.5 sm:py-1.5">
+                            {shot.takes.map((take) => (
+                              <li
+                                key={take.id}
+                                className={`grid grid-cols-[3rem_minmax(0,1fr)_2rem] items-center gap-x-4 rounded-md py-1 sm:grid-cols-[3rem_3.5rem_5rem_minmax(0,1fr)_2rem] ${
+                                  take.good ? "bg-success/10" : ""
+                                }`}
+                              >
+                                {/* El círculo de la script: la toma buena va rodeada. */}
+                                <button
+                                  type="button"
+                                  onClick={() => toggleGood(take)}
+                                  aria-pressed={take.good}
+                                  aria-label={`Toma ${take.take}: ${take.good ? "quitar de buenas" : "marcar como buena"}`}
+                                  title={
                                     take.good
-                                      ? "border-success bg-success/5"
-                                      : "border-transparent"
+                                      ? "Toma buena (rodeada)"
+                                      : "Marcar como buena"
+                                  }
+                                  className={`row-span-2 mx-auto flex h-9 w-9 sm:row-span-1 items-center justify-center rounded-full font-mono text-base tabular-nums transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent motion-reduce:transition-none ${
+                                    take.good
+                                      ? "border-[2.5px] border-success font-bold text-success"
+                                      : "border-2 border-transparent text-fg hover:border-dashed hover:border-success/60"
                                   }`}
                                 >
-                                  <button
-                                    type="button"
-                                    onClick={() => toggleGood(take)}
-                                    aria-pressed={take.good}
-                                    aria-label={`Toma ${take.take}: ${take.good ? "quitar de buenas" : "marcar como buena"}`}
-                                    className={`flex h-6 w-6 items-center justify-center border text-xs transition-colors ${
-                                      take.good
-                                        ? "border-success bg-success text-bg"
-                                        : "border-line text-transparent hover:border-success hover:text-success"
-                                    }`}
-                                  >
-                                    ✓
-                                  </button>
-                                  <span className="font-mono text-sm">
-                                    Toma {take.take}
+                                  {take.take}
+                                </button>
+                                <span className="font-mono text-xs text-muted tabular-nums sm:text-sm sm:text-fg">
+                                  {timeOf(take.at)}
+                                  <span className="sm:hidden">
+                                    {take.clip ? ` · ${take.clip}` : ""}
                                   </span>
-                                  <span
-                                    className="truncate font-mono text-[11px] text-muted"
-                                    title="Archivo de la cámara"
-                                  >
-                                    {take.clip ?? "—"}
-                                  </span>
-                                  <span className="font-mono text-[11px] text-muted">
-                                    {timeOf(take.at)}
-                                  </span>
+                                </span>
+                                <span
+                                  className="hidden truncate font-mono text-xs text-muted sm:block"
+                                  title="Archivo de la cámara"
+                                >
+                                  {take.clip ?? "—"}
+                                </span>
+                                <span className="col-start-2 row-start-2 min-w-0 sm:col-start-auto sm:row-start-auto">
                                   {editingNote === take.id ? (
                                     <input
                                       autoFocus
                                       defaultValue={take.notes ?? ""}
+                                      aria-label={`Nota de la toma ${take.take}`}
                                       placeholder="Nota (ej. se ve el micro)"
                                       onBlur={(e) =>
                                         saveNote(take, e.target.value)
@@ -349,40 +432,40 @@ export function ScriptReport({
                                         if (e.key === "Escape")
                                           setEditingNote(null);
                                       }}
-                                      className="min-w-0 border border-accent bg-transparent px-2 py-1 font-mono text-xs outline-none"
+                                      className="field-line w-full font-sans text-sm"
                                     />
                                   ) : (
                                     <button
                                       type="button"
                                       onClick={() => setEditingNote(take.id)}
-                                      className={`min-w-0 truncate text-left font-mono text-xs hover:text-accent ${
-                                        take.notes ? "text-fg" : "text-muted"
+                                      className={`w-full truncate rounded text-left font-sans text-sm hover:text-accent focus-visible:outline-2 focus-visible:outline-accent ${
+                                        take.notes ? "text-fg" : "text-muted/70"
                                       }`}
                                     >
                                       {take.notes ?? "+ nota"}
                                     </button>
                                   )}
-                                  <button
-                                    type="button"
-                                    onClick={() => remove(take.id)}
-                                    aria-label={`Eliminar la toma ${take.take}`}
-                                    className="px-1 font-mono text-[11px] text-muted hover:text-danger"
-                                  >
-                                    ✕
-                                  </button>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        ))}
-                      </div>
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => remove(take.id)}
+                                  aria-label={`Eliminar la toma ${take.take}`}
+                                  className="col-start-3 row-start-1 justify-self-end rounded px-1.5 py-1 font-mono text-[11px] text-muted hover:text-danger focus-visible:outline-2 focus-visible:outline-accent sm:col-start-auto sm:row-start-auto"
+                                >
+                                  ✕
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
                     </div>
                   ))}
-                </div>
-              </section>
-            );
-          })}
-        </div>
+                </section>
+              );
+            })}
+          </div>
+        </>
       )}
     </div>
   );
@@ -471,7 +554,7 @@ function ManualForm({
   return (
     <form
       onSubmit={submit}
-      className="sheet mt-4 grid gap-4 p-5 sm:grid-cols-2 sm:p-6 lg:grid-cols-4"
+      className="paper mt-6 grid gap-4 p-5 sm:grid-cols-2 sm:p-7 lg:grid-cols-4"
     >
       <label className="flex flex-col gap-1">
         <span className="font-mono text-[10px] tracking-widest text-muted uppercase">

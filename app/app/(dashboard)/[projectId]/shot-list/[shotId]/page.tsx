@@ -7,15 +7,25 @@ import { DeleteButton } from "@/components/DeleteButton";
 import { PageHeader } from "@/components/PageHeader";
 import { SubmitButton } from "@/components/SubmitButton";
 import { ChipOption } from "@/components/ChipOption";
+import { SceneSlug } from "@/components/preproduccion/SceneSlug";
+import {
+  AngleIcon,
+  MovementIcon,
+  SHOT_SIZE_NAMES,
+  ShotFrame,
+  shotSizeKind,
+} from "@/components/preproduccion/ShotFrame";
 
-// Ficha de un plano: una hoja con tres apartados (cámara, qué se ve, quién
-// sale) y el botón de guardar pegado abajo.
+// Ficha de un plano. A la izquierda, el plano como se ve en un guion técnico:
+// su encuadre dibujado, tamaño, ángulo, movimiento y estado. A la derecha, el
+// formulario en papel (cámara, qué se ve, quién sale) con el botón de guardar
+// pegado abajo.
 
 const LABEL = "eyebrow text-muted";
 
 function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
-    <section className="grid gap-x-10 gap-y-4 border-t border-line px-5 py-7 first:border-t-0 sm:px-8 lg:grid-cols-[13rem_minmax(0,1fr)]">
+    <section className="grid gap-y-4 border-t border-line px-5 py-7 first:border-t-0 sm:px-8">
       <div>
         <h2 className="font-display text-base font-bold">{title}</h2>
         {hint && <p className="mt-1 font-sans text-[13px] leading-relaxed text-muted">{hint}</p>}
@@ -41,16 +51,23 @@ export default async function ShotDetailPage({
       scene: {
         select: {
           number: true,
+          intExt: true,
+          dayPart: true,
+          location: { select: { name: true } },
           characters: { include: { character: true }, orderBy: { character: { name: "asc" } } },
         },
       },
       characters: { select: { characterId: true } },
+      shootingDay: { select: { date: true } },
+      _count: { select: { storyboard: true } },
     },
   });
   if (!shot) notFound();
 
   const selectedCharacterIds = new Set(shot.characters.map((c) => c.characterId));
   const updateAction = updateShot.bind(null, projectId, shotId);
+  const kind = shotSizeKind(shot.shotSize);
+  const inShot = shot.scene.characters.filter(({ character }) => selectedCharacterIds.has(character.id));
 
   const fields: Array<[string, string, string, string?]> = [
     ["shotType", "Tipo de plano", shot.shotType ?? "", "Establecimiento, detalle…"],
@@ -68,7 +85,7 @@ export default async function ShotDetailPage({
         backLabel="← Lista de planos"
         eyebrow={`Escena ${shot.scene.number}`}
         title={`Plano ${shot.scene.number}.${shot.number}`}
-        description={shot.description ?? undefined}
+        description="El encuadre de la izquierda se dibuja solo a partir del tamaño; cámbialo en el formulario."
         actions={
           <Link href={`/app/${projectId}/storyboard`} className="btn btn-outline">
             Ver en Storyboard
@@ -76,9 +93,82 @@ export default async function ShotDetailPage({
         }
       />
 
-      <form action={updateAction} className="sheet mt-8">
+      <div className="mt-8 grid items-start gap-8 lg:grid-cols-[minmax(0,19rem)_minmax(0,1fr)] xl:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] xl:gap-10">
+        <article aria-label={`Plano ${shot.scene.number}.${shot.number}`} className="sheet overflow-hidden lg:sticky lg:top-6">
+          <div className="p-5">
+            <ShotFrame size={shot.shotSize} className="w-full" />
+            <p className="mt-4 flex items-baseline justify-between gap-3">
+              <span className="font-display text-xl font-black">
+                {kind ? SHOT_SIZE_NAMES[kind] : (shot.shotSize ?? "Sin tamaño")}
+              </span>
+              {shot.done ? (
+                <span className="font-sans text-sm font-semibold text-success">✓ Rodado</span>
+              ) : (
+                <span className="font-sans text-sm text-muted">Por rodar</span>
+              )}
+            </p>
+            {shot.description && (
+              <p className="mt-2 font-sans text-[15px] leading-relaxed">{shot.description}</p>
+            )}
+          </div>
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-4 border-t border-line px-5 py-4 font-sans text-sm">
+            <div>
+              <dt className="eyebrow">Ángulo</dt>
+              <dd className="mt-1 flex items-center gap-2">
+                <AngleIcon angle={shot.angle} />
+                {shot.angle ?? <span className="text-muted">—</span>}
+              </dd>
+            </div>
+            <div>
+              <dt className="eyebrow">Movimiento</dt>
+              <dd className="mt-1 flex items-center gap-2">
+                <MovementIcon movement={shot.movement} />
+                {shot.movement ?? <span className="text-muted">—</span>}
+              </dd>
+            </div>
+            <div>
+              <dt className="eyebrow">Cámara · lente</dt>
+              <dd className="mt-1">
+                {[shot.camera, shot.lens].filter(Boolean).join(" · ") || <span className="text-muted">—</span>}
+              </dd>
+            </div>
+            <div>
+              <dt className="eyebrow">Duración</dt>
+              <dd className="mt-1">{shot.durationSec ? `${shot.durationSec} s` : <span className="text-muted">—</span>}</dd>
+            </div>
+          </dl>
+          <div className="space-y-2 border-t border-line px-5 py-4 font-sans text-sm">
+            <p>
+              <span className="text-muted">Escena {shot.scene.number}: </span>
+              <SceneSlug
+                intExt={shot.scene.intExt}
+                dayPart={shot.scene.dayPart}
+                location={shot.scene.location?.name}
+                className="text-[13px]"
+              />
+            </p>
+            <p>
+              <span className="text-muted">Sale: </span>
+              {inShot.length > 0 ? inShot.map(({ character }) => character.name).join(", ") : "nadie marcado"}
+            </p>
+            <p>
+              <span className="text-muted">Día de rodaje: </span>
+              {shot.shootingDay
+                ? shot.shootingDay.date.toLocaleDateString("es-ES", { weekday: "short", day: "numeric", month: "short" })
+                : "sin planificar"}
+              {" · "}
+              <Link href={`/app/${projectId}/storyboard`} className="text-accent hover:underline">
+                {shot._count.storyboard > 0
+                  ? `${shot._count.storyboard} viñeta${shot._count.storyboard === 1 ? "" : "s"}`
+                  : "sin viñeta"}
+              </Link>
+            </p>
+          </div>
+        </article>
+
+      <form action={updateAction} className="paper min-w-0">
         <Section title="Cámara" hint="Cómo se rueda el plano.">
-          <div className="grid gap-x-5 gap-y-5 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-x-5 gap-y-5 sm:grid-cols-2 2xl:grid-cols-4">
             <label className="flex flex-col gap-1.5">
               <span className={LABEL}>Número</span>
               <input name="number" defaultValue={shot.number} required className="field" />
@@ -143,6 +233,7 @@ export default async function ShotDetailPage({
           </SubmitButton>
         </div>
       </form>
+      </div>
 
       <form action={deleteShot.bind(null, projectId, shotId)} className="mt-6 flex justify-end">
         <DeleteButton

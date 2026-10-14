@@ -8,13 +8,13 @@ const MoodboardEditor = dynamic(() => import("@/components/moodboard/MoodboardEd
   ssr: false,
   loading: () => (
     <div
-      className="taller-paper flex h-[calc(100dvh-16rem)] min-h-[520px] items-center justify-center rounded-xl font-sans text-sm text-muted"
+      className="taller-paper mt-[4.5rem] flex h-[calc(100dvh-18rem)] min-h-[520px] items-center justify-center rounded-xl font-sans text-sm text-muted"
       style={{
-        background: "color-mix(in srgb, var(--fg) 4%, var(--bg))",
-        boxShadow: "inset 0 0 0 1px color-mix(in srgb, var(--fg) 8%, transparent)",
+        background: "#e6e4df",
+        boxShadow: "0 0 0 1px rgb(255 255 255 / 0.04), 0 30px 60px -30px rgb(0 0 0 / 0.9)",
       }}
     >
-      <span className="animate-pulse">Abriendo el tablero…</span>
+      <span className="motion-safe:animate-pulse">Abriendo el tablero…</span>
     </div>
   ),
 });

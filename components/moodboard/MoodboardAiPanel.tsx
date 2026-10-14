@@ -81,6 +81,7 @@ export function MoodboardAiPanel({
       open={open}
       onClose={onClose}
       title="Referencias con IA"
+      size="md"
       description="La IA lee el resumen de tu proyecto (sinopsis, personajes y escenas) y sugiere referencias para el moodboard."
     >
       {!isPro && usesLeft <= 0 && !proposal ? (

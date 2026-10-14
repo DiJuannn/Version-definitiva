@@ -16,6 +16,10 @@ export default async function CesionImagenPage({
   const project = await getProjectForCurrentUser(projectId);
   if (!project) notFound();
   if (!(await isProjectOwnerPro(project.organizationId))) notFound();
+  const organization = await prisma.organization.findUnique({
+    where: { id: project.organizationId },
+    select: { name: true },
+  });
 
   const actors = await prisma.actor.findMany({
     where: { projectId },
@@ -35,6 +39,8 @@ export default async function CesionImagenPage({
 
       <LegalTemplateForm
         action={`/api/pdf/legal/${projectId}/cesion-imagen`}
+        slug="cesion-imagen"
+        organizationName={organization?.name ?? ""}
         projectName={project.name}
         tip="«Nombre completo» te sugiere a los actores del proyecto mientras escribes."
       >

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
@@ -10,6 +11,9 @@ import { EmptyState } from "@/components/EmptyState";
 import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
 import { PageHeader } from "@/components/PageHeader";
 import { NewShootingDayButton } from "@/components/NewShootingDayButton";
+
+const plural = (n: number, one: string, many: string) =>
+  `${n} ${n === 1 ? one : many}`;
 
 export default async function PlanDeRodajePage({
   params,
@@ -26,6 +30,7 @@ export default async function PlanDeRodajePage({
     prisma.shootingDay.findMany({
       where: { projectId },
       orderBy: { date: "asc" },
+      include: { callSheet: { select: { generalCallTime: true } } },
     }),
     prisma.scene.findMany({
       where: { projectId },
@@ -33,6 +38,10 @@ export default async function PlanDeRodajePage({
       include: {
         location: true,
         shootingDayScenes: { select: { shootingDayId: true } },
+        characters: {
+          select: { character: { select: { name: true } } },
+          orderBy: { character: { name: "asc" } },
+        },
         shots: {
           orderBy: [{ order: "asc" }, { number: "asc" }],
           select: {
@@ -58,12 +67,23 @@ export default async function PlanDeRodajePage({
       day: "2-digit",
       month: "short",
     }),
+    longLabel: day.date.toLocaleDateString("es-ES", {
+      weekday: "short",
+      day: "numeric",
+      month: "long",
+    }),
+    callTime: day.callSheet?.generalCallTime ?? null,
     conflicts: conflicts.get(day.id) ?? [],
   }));
 
   const timelineScenes = scenes.map((scene) => ({
     id: scene.id,
     number: scene.number,
+    intExt: scene.intExt,
+    dayPart: scene.dayPart,
+    heading: scene.description,
+    characters: scene.characters.map((c) => c.character.name),
+    sceneDayIds: scene.shootingDayScenes.map((d) => d.shootingDayId),
     intExtLabel: INT_EXT_LABELS[scene.intExt],
     dayPartLabel: DAY_PART_LABELS[scene.dayPart],
     locationName: scene.location?.name ?? null,
@@ -78,11 +98,12 @@ export default async function PlanDeRodajePage({
     })),
   }));
 
-  const unscheduled = scenes.filter(
+  const unscheduledScenes = scenes.filter(
     (scene) =>
       scene.shootingDayScenes.length === 0 &&
       !scene.shots.some((sh) => sh.shootingDayId),
-  ).length;
+  );
+  const unscheduled = unscheduledScenes.length;
   const shotsTotal = scenes.reduce((n, scene) => n + scene.shots.length, 0);
   const shotsPlanned = scenes.reduce(
     (n, scene) => n + scene.shots.filter((sh) => sh.shootingDayId).length,
@@ -92,40 +113,23 @@ export default async function PlanDeRodajePage({
     (n, scene) => n + scene.shots.filter((sh) => sh.done).length,
     0,
   );
-
-  const stats = [
-    {
-      value: days.length,
-      label: days.length === 1 ? "día de rodaje" : "días de rodaje",
-    },
-    {
-      value: scenes.length - unscheduled,
-      of: scenes.length,
-      label: "escenas con día",
-    },
-    ...(shotsTotal > 0
-      ? [{ value: shotsPlanned, of: shotsTotal, label: "planos con día" }]
-      : []),
-    ...(shotsDone > 0
-      ? [
-          {
-            value: shotsDone,
-            label: shotsDone === 1 ? "plano rodado" : "planos rodados",
-          },
-        ]
-      : []),
-  ];
-
+  const missingList = unscheduledScenes.map((s) => s.number);
+  const listJoin = (items: string[]) =>
+    items.length <= 1
+      ? items.join("")
+      : `${items.slice(0, -1).join(", ")} y ${items[items.length - 1]}`;
+  const missingText =
+    missingList.length === 0
+      ? null
+      : missingList.length <= 4
+        ? `${missingList.length === 1 ? "falta" : "faltan"} ${listJoin(missingList.map((n) => `la ${n}`))}`
+        : `faltan ${missingList.length}`;
   return (
     <div>
       <PageHeader
         eyebrow="Producción"
         title="Plan de rodaje"
-        description={
-          days.length === 0
-            ? "Qué se rueda cada día. Reparte las escenas (o sus planos) entre los días de rodaje; con eso se hacen solas las hojas de llamada."
-            : "Arrastra una escena a otro día para cambiarla (en el móvil, mantenla pulsada). Se guarda sola. Pulsa la fecha de un día para ver su ficha."
-        }
+        description="El tablero de tiras: cada escena es una tira con su color de luz, y cada jornada la cabecera negra. Arrástrala al día en que se rueda (o usa su selector); se guarda sola."
         actions={
           <NewShootingDayButton
             action={createAction}
@@ -136,24 +140,48 @@ export default async function PlanDeRodajePage({
         }
       />
 
-      {/* Cifras sueltas sobre la página, sin caja por número. */}
-      {days.length > 0 && (
-        <dl className="mt-8 flex flex-wrap gap-x-12 gap-y-4">
-          {stats.map((s) => (
-            <div key={s.label}>
-              <dt className="sr-only">{s.label}</dt>
-              <dd className="font-display text-3xl leading-none font-black tabular-nums">
-                {s.value}
-                {s.of !== undefined && (
-                  <span className="text-muted">/{s.of}</span>
-                )}
-              </dd>
-              <dd aria-hidden className="eyebrow mt-1.5">
-                {s.label}
-              </dd>
-            </div>
-          ))}
-        </dl>
+      {/* Cómo voy: una línea en lenguaje claro, no un panel de cifras. */}
+      {scenes.length > 0 && (
+        <p className="mt-8 max-w-3xl font-sans text-[15px] leading-relaxed text-muted">
+          {days.length === 0 ? (
+            <>
+              Aún no hay jornadas. Crea el primer día o deja que te proponga un
+              plan.
+            </>
+          ) : (
+            <>
+              <strong className="font-semibold text-fg">
+                {plural(days.length, "jornada", "jornadas")}
+              </strong>
+              {" · "}
+              <strong
+                className={`font-semibold ${unscheduled === 0 ? "text-success" : "text-fg"}`}
+              >
+                {scenes.length - unscheduled} de {scenes.length} escenas
+              </strong>{" "}
+              con día
+              {missingText ? ` (${missingText})` : ""}
+              {shotsTotal > 0 && (
+                <>
+                  {" · "}
+                  <strong className="font-semibold text-fg">
+                    {shotsPlanned} de {shotsTotal} planos
+                  </strong>{" "}
+                  repartidos
+                </>
+              )}
+              {shotsDone > 0 && (
+                <>
+                  {" · "}
+                  <strong className="font-semibold text-success">
+                    {plural(shotsDone, "plano rodado", "planos rodados")}
+                  </strong>
+                </>
+              )}
+              .
+            </>
+          )}
+        </p>
       )}
 
       {unscheduled > 0 && (
@@ -178,6 +206,19 @@ export default async function PlanDeRodajePage({
           initialScenes={timelineScenes}
           viewerLabel={profile?.fullName || profile?.email || "Alguien"}
         />
+      )}
+
+      {days.length > 0 && (
+        <p className="mt-16 border-t border-line pt-5 font-sans text-sm text-muted">
+          Siguiente:{" "}
+          <Link
+            href={`/app/${projectId}/call-sheets`}
+            className="font-medium text-fg underline decoration-accent/50 underline-offset-4 transition-colors hover:text-accent hover:decoration-accent"
+          >
+            Hojas de llamada →
+          </Link>{" "}
+          — se rellenan solas con este plan.
+        </p>
       )}
     </div>
   );

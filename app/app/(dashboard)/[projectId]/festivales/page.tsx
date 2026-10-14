@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { listFestivalSubmissionsCore } from "@/lib/festival-submissions-core";
-import { PageHeader } from "@/components/PageHeader";
 import { FestivalGuide } from "@/components/FestivalGuide";
 import { FestivalSubmissionsPanel } from "@/components/FestivalSubmissionsPanel";
 
@@ -20,13 +19,12 @@ export default async function FestivalesPage({
 
   return (
     <div className="pb-16">
-      <PageHeader
-        eyebrow="Entrega"
+      <FestivalSubmissionsPanel
+        projectId={projectId}
         title="Festivales"
         description={
           <>
-            Lleva la cuenta de a qué festivales mandas «{project.name}» y descubre dónde más presentarlo. Las fechas y
-            los plazos cambian cada año: mira siempre la convocatoria oficial.{" "}
+            Tus plazos de envío en orden, con los días que quedan, y una guía para descubrir dónde presentar «{project.name}».{" "}
             {!project.type && (
               <>
                 Indica el tipo de proyecto en{" "}
@@ -38,9 +36,6 @@ export default async function FestivalesPage({
             )}
           </>
         }
-      />
-      <FestivalSubmissionsPanel
-        projectId={projectId}
         submissions={submissions.map((s) => ({
           id: s.id,
           festivalName: s.festivalName,
@@ -52,7 +47,7 @@ export default async function FestivalesPage({
           notes: s.notes,
         }))}
       />
-      <FestivalGuide projectType={project.type} />
+      <FestivalGuide projectType={project.type} trackedNames={submissions.map((s) => s.festivalName)} />
     </div>
   );
 }

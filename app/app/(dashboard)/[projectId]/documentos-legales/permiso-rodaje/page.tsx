@@ -16,6 +16,10 @@ export default async function PermisoRodajePage({
   const project = await getProjectForCurrentUser(projectId);
   if (!project) notFound();
   if (!(await isProjectOwnerPro(project.organizationId))) notFound();
+  const organization = await prisma.organization.findUnique({
+    where: { id: project.organizationId },
+    select: { name: true },
+  });
 
   const locations = await prisma.location.findMany({
     where: { organizationId: project.organizationId },
@@ -35,6 +39,8 @@ export default async function PermisoRodajePage({
 
       <LegalTemplateForm
         action={`/api/pdf/legal/${projectId}/permiso-rodaje`}
+        slug="permiso-rodaje"
+        organizationName={organization?.name ?? ""}
         projectName={project.name}
         tip="«Localización» te sugiere las de tu biblioteca mientras escribes."
       >

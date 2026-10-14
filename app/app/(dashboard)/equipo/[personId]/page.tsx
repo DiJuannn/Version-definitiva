@@ -79,27 +79,88 @@ export default async function PersonDetailPage({
     { name: "address", label: "Dirección", value: person.address ?? "", wide: true },
   ];
 
+  const initialsText = `${person.firstName.charAt(0)}${person.lastName?.charAt(0) ?? ""}`.toUpperCase();
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const upcoming = availability.filter((a) => a.date >= startOfToday);
+  const past = availability.length - upcoming.length;
+  const nextBusy = upcoming.find((a) => a.status === "UNAVAILABLE");
+  const projects = [
+    ...actorRoles.map((a) => ({ id: a.id, project: a.project.name, as: "Actor / actriz" })),
+    ...crewRoles.map((c) => ({ id: c.id, project: c.project.name, as: c.role ? `Equipo · ${c.role}` : "Equipo técnico" })),
+  ];
+
   return (
     <div className="pb-16">
       <PageHeader
         backHref="/app/equipo"
         backLabel="← Equipo"
-        eyebrow="Equipo"
+        eyebrow="Ficha de persona"
         title={fullName}
         description={
-          [person.primaryRole, projectCount > 0 ? `${projectCount} ${projectCount === 1 ? "proyecto" : "proyectos"}` : null]
+          [[person.primaryRole, ...person.otherRoles].filter(Boolean).join(" · "), projectCount > 0 ? `${projectCount} ${projectCount === 1 ? "proyecto" : "proyectos"}` : null]
             .filter(Boolean)
-            .join(" · ") || undefined
+            .join(" — ") || undefined
         }
       />
 
-      <div className="mt-12 grid gap-x-16 gap-y-14 lg:grid-cols-[minmax(0,1fr)_320px]">
-        {/* ------------------------------------------------ ficha */}
-        <section aria-labelledby="ficha">
-          <h2 id="ficha" className="border-b border-line pb-3 font-display text-xl font-black tracking-tight uppercase">
-            Ficha
-          </h2>
-          <form action={updateAction} className="mt-6 grid gap-x-8 gap-y-6 sm:grid-cols-2">
+      {/* Contacto a un clic y cómo está, antes que el formulario. */}
+      <div className="mt-6 flex flex-wrap items-center gap-2">
+        {person.email && (
+          <a href={`mailto:${person.email}`} className="inline-flex min-h-9 items-center gap-2 rounded-full bg-fg/[0.06] px-4 font-sans text-[14px] text-fg transition-colors hover:bg-accent hover:text-bg">
+            <span aria-hidden>✉</span> {person.email}
+          </a>
+        )}
+        {person.phone && (
+          <a href={`tel:${person.phone.replace(/\s+/g, "")}`} className="inline-flex min-h-9 items-center gap-2 rounded-full bg-fg/[0.06] px-4 font-sans text-[14px] text-fg transition-colors hover:bg-accent hover:text-bg tabular-nums">
+            <span aria-hidden>☎</span> {person.phone}
+          </a>
+        )}
+        {!person.email && !person.phone && (
+          <p className="border-l-2 border-warn pl-3 font-sans text-sm text-muted">
+            Sin email ni teléfono: añádelos en la ficha para poder convocarla.
+          </p>
+        )}
+      </div>
+      {nextBusy && (
+        <p className="mt-4 border-l-2 border-warn pl-3 font-sans text-sm text-muted">
+          <span className="text-fg">
+            No está disponible el{" "}
+            {nextBusy.date.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })}
+          </span>
+          {nextBusy.note ? ` (${nextBusy.note})` : ""}.
+        </p>
+      )}
+
+      <div className="mt-10 grid items-start gap-x-10 gap-y-14 lg:grid-cols-[minmax(0,1fr)_320px]">
+        {/* ------------------------------------------------ ficha (papel) */}
+        <section aria-labelledby="ficha" className="paper p-5 sm:p-8">
+          <div className="flex items-center gap-4 border-b border-line pb-5">
+            {person.photoUrl ? (
+              <Image
+                src={person.photoUrl}
+                alt={`Foto de ${fullName}`}
+                width={64}
+                height={64}
+                unoptimized
+                className="h-16 w-16 shrink-0 rounded-full object-cover"
+              />
+            ) : (
+              <span
+                aria-hidden
+                className="grid h-16 w-16 shrink-0 place-items-center rounded-full bg-accent/15 font-display text-xl font-black text-accent"
+              >
+                {initialsText}
+              </span>
+            )}
+            <div className="min-w-0">
+              <h2 id="ficha" className="font-display text-xl font-black tracking-tight">
+                Datos
+              </h2>
+              <p className="font-sans text-[13px] text-muted">Lo que se usa al convocarla y al presupuestar.</p>
+            </div>
+          </div>
+          <form action={updateAction} className="mt-6 grid gap-5 sm:grid-cols-2">
             {fields.map((field) => (
               <label key={field.name} className={`block ${field.wide ? "sm:col-span-2" : ""}`}>
                 <span className={LABEL}>{field.label}</span>
@@ -110,7 +171,7 @@ export default async function PersonDetailPage({
                   required={field.name === "firstName"}
                   defaultValue={field.value}
                   placeholder={field.placeholder}
-                  className="field-line"
+                  className="field mt-1.5 w-full"
                 />
               </label>
             ))}
@@ -121,10 +182,10 @@ export default async function PersonDetailPage({
                 defaultValue={person.notes ?? ""}
                 rows={3}
                 placeholder="Alergias, talla de vestuario, con quién suele trabajar…"
-                className="field mt-2 w-full leading-relaxed"
+                className="field mt-1.5 w-full leading-relaxed"
               />
             </label>
-            <div className="sm:col-span-2">
+            <div className="mt-1 sm:col-span-2">
               <SubmitButton pendingLabel="Guardando…" savedLabel="✓ Guardado" className="btn btn-primary">
                 Guardar ficha
               </SubmitButton>
@@ -133,70 +194,21 @@ export default async function PersonDetailPage({
         </section>
 
         <aside className="space-y-12">
-          {/* ------------------------------------------------ foto */}
-          <section aria-labelledby="foto">
-            <h2 id="foto" className={LABEL}>
-              Foto
-            </h2>
-            <form action={uploadPhotoAction} className="mt-3 flex items-center gap-4">
-              {person.photoUrl ? (
-                <Image
-                  src={person.photoUrl}
-                  alt={`Foto de ${fullName}`}
-                  width={72}
-                  height={72}
-                  unoptimized
-                  className="h-[72px] w-[72px] shrink-0 rounded-full object-cover"
-                />
-              ) : (
-                <span
-                  aria-hidden
-                  className="grid h-[72px] w-[72px] shrink-0 place-items-center rounded-full bg-fg/[0.07] font-display text-xl font-black text-muted"
-                >
-                  {`${person.firstName.charAt(0)}${person.lastName?.charAt(0) ?? ""}`.toUpperCase()}
-                </span>
-              )}
-              <div className="min-w-0 space-y-2">
-                <label className="block">
-                  <span className="sr-only">Elegir foto</span>
-                  <input
-                    type="file"
-                    name="photo"
-                    accept="image/*"
-                    required
-                    className="w-full font-sans text-[13px] text-muted file:mr-3 file:cursor-pointer file:rounded-full file:border-0 file:bg-fg/[0.07] file:px-3 file:py-1.5 file:font-mono file:text-[11px] file:tracking-widest file:text-fg file:uppercase"
-                  />
-                </label>
-                <SubmitButton pendingLabel="Subiendo…" savedLabel="✓ Subida" className="link-action text-fg">
-                  {person.photoUrl ? "Cambiar foto" : "Subir foto"}
-                </SubmitButton>
-              </div>
-            </form>
-          </section>
-
           {/* ------------------------------------------------ proyectos */}
           <section aria-labelledby="proyectos">
-            <h2 id="proyectos" className={`${LABEL} border-b border-line pb-2`}>
+            <h2 id="proyectos" className="font-display text-lg font-black tracking-tight uppercase">
               En proyectos
             </h2>
-            {projectCount === 0 ? (
-              <p className="py-3 font-sans text-sm leading-relaxed text-muted">
+            {projects.length === 0 ? (
+              <p className="mt-2 font-sans text-sm leading-relaxed text-muted">
                 Todavía en ningún proyecto. Se le asigna desde Personajes (como actor) o Desglose (equipo técnico).
               </p>
             ) : (
-              <ul className="divide-y divide-line">
-                {actorRoles.map((actor) => (
-                  <li key={actor.id} className="py-2.5">
-                    <p className="font-sans text-[15px]">{actor.project.name}</p>
-                    <p className="font-sans text-[13px] text-muted">Actor / actriz</p>
-                  </li>
-                ))}
-                {crewRoles.map((crew) => (
-                  <li key={crew.id} className="py-2.5">
-                    <p className="font-sans text-[15px]">{crew.project.name}</p>
-                    <p className="font-sans text-[13px] text-muted">
-                      Equipo técnico{crew.role ? ` · ${crew.role}` : ""}
-                    </p>
+              <ul className="mt-3 space-y-2">
+                {projects.map((p) => (
+                  <li key={p.id} className="border-l-2 border-accent pl-3">
+                    <p className="font-sans text-[15px]">{p.project}</p>
+                    <p className="font-sans text-[13px] text-muted">{p.as}</p>
                   </li>
                 ))}
               </ul>
@@ -205,45 +217,58 @@ export default async function PersonDetailPage({
 
           {/* ------------------------------------------------ disponibilidad */}
           <section aria-labelledby="disponibilidad">
-            <h2 id="disponibilidad" className={`${LABEL} border-b border-line pb-2`}>
+            <h2 id="disponibilidad" className="font-display text-lg font-black tracking-tight uppercase">
               Disponibilidad
             </h2>
+            <p className="mt-1 font-sans text-[13px] text-muted">
+              Marca los días que no puede (o que confirma) para cuadrar el plan de rodaje.
+              {past > 0 ? ` ${past} ${past === 1 ? "día pasado" : "días pasados"} al final.` : ""}
+            </p>
             {availability.length > 0 && (
-              <ul className="divide-y divide-line">
-                {availability.map((entry) => (
-                  <li key={entry.id} className="flex items-center justify-between gap-3 py-2.5">
-                    <span className="min-w-0">
-                      <span className="flex items-center gap-2 font-sans text-[15px]">
-                        <span
-                          aria-hidden
-                          className={`h-2 w-2 shrink-0 rounded-full ${
-                            entry.status === "UNAVAILABLE" ? "bg-danger" : "bg-success"
-                          }`}
-                        />
-                        {entry.date.toLocaleDateString("es-ES", { weekday: "short", day: "numeric", month: "short" })}
-                        <span className={entry.status === "UNAVAILABLE" ? "text-danger" : "text-success"}>
-                          {STATUS_LABELS[entry.status]}
+              <ul className="mt-3 space-y-1.5">
+                {[...upcoming, ...availability.filter((a) => a.date < startOfToday)].map((entry) => {
+                  const busy = entry.status === "UNAVAILABLE";
+                  const isPast = entry.date < startOfToday;
+                  return (
+                    <li key={entry.id} className={`flex items-center gap-3 ${isPast ? "opacity-50" : ""}`}>
+                      <span
+                        className={`grid w-10 shrink-0 overflow-hidden rounded-md text-center leading-none ${
+                          busy ? "bg-danger/15 text-danger" : "bg-success/15 text-success"
+                        }`}
+                      >
+                        <span className="py-0.5 font-mono text-[9px] tracking-widest uppercase">
+                          {entry.date.toLocaleDateString("es-ES", { month: "short" }).replace(".", "")}
                         </span>
+                        <span className="pb-1 font-display text-base font-black tabular-nums">{entry.date.getDate()}</span>
                       </span>
-                      {entry.note && <span className="block truncate pl-4 font-sans text-[13px] text-muted">{entry.note}</span>}
-                    </span>
-                    <form action={deletePersonAvailability.bind(null, personId, entry.id)}>
-                      <DeleteButton confirmMessage="¿Eliminar esta entrada de disponibilidad?" className="link-action">
-                        Quitar
-                      </DeleteButton>
-                    </form>
-                  </li>
-                ))}
+                      <span className="min-w-0 flex-1">
+                        <span className={`block font-sans text-[14px] ${busy ? "text-danger" : "text-success"}`}>
+                          {STATUS_LABELS[entry.status]}
+                          <span className="text-muted">
+                            {" "}
+                            · {entry.date.toLocaleDateString("es-ES", { weekday: "long" })}
+                          </span>
+                        </span>
+                        {entry.note && <span className="block truncate font-sans text-[13px] text-muted">{entry.note}</span>}
+                      </span>
+                      <form action={deletePersonAvailability.bind(null, personId, entry.id)}>
+                        <DeleteButton confirmMessage="¿Eliminar esta entrada de disponibilidad?" className="link-action">
+                          Quitar
+                        </DeleteButton>
+                      </form>
+                    </li>
+                  );
+                })}
               </ul>
             )}
-            <form action={availabilityAction} className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-line pt-4">
+            <form action={availabilityAction} className="mt-5 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-line pt-4">
               <label className="block">
                 <span className={LABEL}>Día</span>
-                <input type="date" name="date" required className="field-line" />
+                <input type="date" name="date" required className="field mt-1.5 w-full" />
               </label>
               <label className="block">
                 <span className={LABEL}>Estado</span>
-                <select name="status" defaultValue="UNAVAILABLE" className="field-line">
+                <select name="status" defaultValue="UNAVAILABLE" className="field mt-1.5 w-full">
                   {Object.values(PersonAvailabilityStatus).map((value) => (
                     <option key={value} value={value}>
                       {STATUS_LABELS[value]}
@@ -253,7 +278,7 @@ export default async function PersonDetailPage({
               </label>
               <label className="col-span-2 block">
                 <span className={LABEL}>Nota</span>
-                <input name="note" placeholder="Opcional: otro rodaje, viaje…" className="field-line" />
+                <input name="note" placeholder="Opcional: otro rodaje, viaje…" className="field mt-1.5 w-full" />
               </label>
               <div className="col-span-2">
                 <SubmitButton pendingLabel="Guardando…" savedLabel="✓ Guardado" className="btn btn-outline btn-sm">
@@ -262,17 +287,39 @@ export default async function PersonDetailPage({
               </div>
             </form>
           </section>
+
+          {/* ------------------------------------------------ foto */}
+          <section aria-labelledby="foto">
+            <h2 id="foto" className="font-display text-lg font-black tracking-tight uppercase">
+              Foto
+            </h2>
+            <form action={uploadPhotoAction} className="mt-3 space-y-2">
+              <label className="block">
+                <span className="sr-only">Elegir foto</span>
+                <input
+                  type="file"
+                  name="photo"
+                  accept="image/*"
+                  required
+                  className="w-full font-sans text-[13px] text-muted file:mr-3 file:cursor-pointer file:rounded-full file:border-0 file:bg-fg/[0.07] file:px-3 file:py-1.5 file:font-mono file:text-[11px] file:tracking-widest file:text-fg file:uppercase"
+                />
+              </label>
+              <SubmitButton pendingLabel="Subiendo…" savedLabel="✓ Subida" className="link-action text-fg">
+                {person.photoUrl ? "Cambiar foto" : "Subir foto"}
+              </SubmitButton>
+            </form>
+          </section>
+
+          <form action={deletePerson.bind(null, personId)} className="border-t border-line pt-4">
+            <DeleteButton
+              confirmMessage="¿Eliminar a esta persona del directorio? No se puede deshacer."
+              className="link-action hover:!text-danger"
+            >
+              Eliminar persona
+            </DeleteButton>
+          </form>
         </aside>
       </div>
-
-      <form action={deletePerson.bind(null, personId)} className="mt-16 border-t border-line pt-4">
-        <DeleteButton
-          confirmMessage="¿Eliminar a esta persona del directorio? No se puede deshacer."
-          className="link-action"
-        >
-          Eliminar persona
-        </DeleteButton>
-      </form>
     </div>
   );
 }

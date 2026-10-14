@@ -4,11 +4,10 @@ import { createLocation } from "@/lib/actions/locations";
 import { LOCATION_CHARACTERISTIC_LABELS } from "@/lib/labels";
 import { LocationCharacteristic } from "@/lib/generated/prisma";
 import { GeocodeButton } from "@/components/GeocodeButton";
-import { LocationsMapClient } from "@/components/LocationsMapClient";
+import { LocationsExplorer } from "@/components/LocationsExplorer";
 import { FormField } from "@/components/FormField";
 import { ChipOption } from "@/components/ChipOption";
 import { CreateDialog, DialogCancel } from "@/components/CreateDialog";
-import { LinkPendingHint } from "@/components/LinkPendingHint";
 import { SubmitButton } from "@/components/SubmitButton";
 
 // Alta de localización. En el diálogo va en una columna; en línea (biblioteca
@@ -66,17 +65,34 @@ function NewLocationForm({ inline }: { inline?: boolean }) {
   );
 }
 
+// Botón «Añadir localización» con su diálogo, para las acciones de la
+// cabecera de la página.
+export function NewLocationButton() {
+  return (
+    <CreateDialog
+      label="Añadir localización"
+      title="Nueva localización"
+      description="Fotos, permisos y notas de producción se añaden después en su ficha."
+    >
+      <NewLocationForm />
+    </CreateDialog>
+  );
+}
+
 // Biblioteca de localizaciones de la organización (mapa, alta y listado). La
 // usan /app/localizaciones y la pestaña «Toda la biblioteca» de las
 // localizaciones de un proyecto.
 export async function LocationsLibrary({
   organizationId,
   from,
+  hideCreate,
 }: {
   organizationId: string;
   // projectId de origen: si viene de la pestaña "biblioteca" de un
   // proyecto, para que el detalle de cada localización sepa volver ahí.
   from?: string;
+  // La página ya pone «Añadir localización» en su cabecera.
+  hideCreate?: boolean;
 }) {
   const locations = await prisma.location.findMany({
     where: { organizationId },
@@ -93,21 +109,9 @@ export async function LocationsLibrary({
     },
   });
 
-  const mappedLocations = locations
-    .filter((l) => l.latitude !== null && l.longitude !== null)
-    .map((l) => ({
-      id: l.id,
-      name: l.name,
-      address: l.address,
-      latitude: l.latitude as number,
-      longitude: l.longitude as number,
-      sceneCount: l._count.scenes,
-    }));
-  const unmapped = locations.length - mappedLocations.length;
-
   if (locations.length === 0) {
     return (
-      <section aria-labelledby="primera-localizacion" className="mt-12 border-t border-line pt-10">
+      <section aria-labelledby="primera-localizacion" className="mt-12 pt-4">
         <h2 id="primera-localizacion" className="font-display text-xl font-bold">
           Añade la primera localización
         </h2>
@@ -115,88 +119,73 @@ export async function LocationsLibrary({
           Se guarda una vez y luego se elige desde el Guion de cualquier proyecto. Con la dirección, «Buscar en el
           mapa» la sitúa para verla aquí junto a las demás.
         </p>
-        <div className="mt-8 max-w-3xl">
+        <div className="paper mt-8 max-w-3xl p-6">
           <NewLocationForm inline />
         </div>
       </section>
     );
   }
 
+  // Numeradas en el orden de la lista, para encontrarlas en el mapa.
+  let n = 0;
+  const numbered = locations.map((l) => ({
+    ...l,
+    label: l.latitude !== null && l.longitude !== null ? String(++n) : null,
+  }));
+  const mappedLocations = numbered
+    .filter((l) => l.label !== null)
+    .map((l) => ({
+      id: l.id,
+      name: l.name,
+      address: l.address,
+      latitude: l.latitude as number,
+      longitude: l.longitude as number,
+      sceneCount: l._count.scenes,
+      label: l.label ?? undefined,
+    }));
+  const unmapped = numbered.filter((l) => l.label === null);
+  const used = locations.filter((l) => l._count.scenes > 0).length;
+  const href = (id: string) => `/app/localizaciones/${id}${from ? `?from=${from}` : ""}`;
+
   return (
     <>
-      <div className="mt-10 flex flex-wrap items-center justify-between gap-x-8 gap-y-4">
-        <p className="flex flex-wrap items-baseline gap-x-6 gap-y-1 font-sans text-sm text-muted">
-          <span>
-            <span className="font-display text-2xl font-black text-fg tabular-nums">{locations.length}</span>{" "}
-            {locations.length === 1 ? "localización" : "localizaciones"}
-          </span>
-          <span>
-            <span className="font-display text-2xl font-black text-fg tabular-nums">{mappedLocations.length}</span> en
-            el mapa
-          </span>
+      {/* Cómo voy */}
+      <div className="mt-8 flex flex-wrap items-center justify-between gap-x-8 gap-y-4">
+        <p className="font-sans text-[15px] leading-relaxed text-muted">
+          <span className="font-display text-2xl font-black text-fg tabular-nums">{locations.length}</span>{" "}
+          {locations.length === 1 ? "localización" : "localizaciones"} · {mappedLocations.length} en el mapa ·{" "}
+          {used === 0 ? "ninguna asignada todavía a una escena" : `${used} en uso en escenas`}.
         </p>
-        <CreateDialog
-          label="Añadir localización"
-          title="Nueva localización"
-          description="Fotos, permisos y notas de producción se añaden después en su ficha."
-        >
-          <NewLocationForm />
-        </CreateDialog>
+        {!hideCreate && <NewLocationButton />}
       </div>
-
-      {mappedLocations.length > 0 && (
-        <div className="mt-5 overflow-hidden rounded-xl">
-          <LocationsMapClient locations={mappedLocations} />
-        </div>
-      )}
-      {unmapped > 0 && (
-        <p className="mt-5 border-l-2 border-warn pl-3 font-sans text-sm text-muted">
-          {unmapped === locations.length
-            ? "Ninguna está en el mapa todavía."
-            : `${unmapped} ${unmapped === 1 ? "no sale" : "no salen"} en el mapa.`}{" "}
-          Abre su ficha y pulsa «Buscar en el mapa» con la dirección escrita.
+      {unmapped.length > 0 && (
+        <p className="mt-3 border-l-2 border-warn pl-3 font-sans text-sm text-muted">
+          Sin situar en el mapa:{" "}
+          {unmapped.map((l, i) => (
+            <span key={l.id}>
+              {i > 0 && ", "}
+              <Link href={href(l.id)} className="text-fg hover:text-accent">
+                {l.name}
+              </Link>
+            </span>
+          ))}
+          . Abre su ficha y pulsa «Buscar en el mapa» con la dirección escrita.
         </p>
       )}
 
-      <ul className="mt-8 divide-y divide-line border-y border-line">
-        {locations.map((location) => (
-          <li key={location.id}>
-            <Link
-              href={`/app/localizaciones/${location.id}${from ? `?from=${from}` : ""}`}
-              className="group flex items-center gap-5 py-4"
-            >
-              <span className="min-w-0 flex-1">
-                <span className="block truncate font-sans text-[17px] font-medium transition-colors group-hover:text-accent">
-                  {location.name}
-                </span>
-                <span className="block truncate font-sans text-[13px] text-muted">
-                  {[location.address, location.contactName].filter(Boolean).join(" · ") || "Sin dirección ni contacto"}
-                </span>
-                {location.characteristics.length > 0 && (
-                  <span className="mt-1 hidden truncate font-mono text-[10px] tracking-widest text-muted/80 uppercase sm:block">
-                    {location.characteristics.map((c) => LOCATION_CHARACTERISTIC_LABELS[c]).join(" · ")}
-                  </span>
-                )}
-              </span>
-              {location.latitude === null && (
-                <span className="hidden shrink-0 items-center gap-1.5 font-mono text-[11px] tracking-wide text-warn uppercase sm:flex">
-                  <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
-                  Sin mapa
-                </span>
-              )}
-              <span className="w-20 shrink-0 text-right font-mono text-[11px] tracking-wide text-muted uppercase tabular-nums">
-                {location._count.scenes > 0
-                  ? `${location._count.scenes} ${location._count.scenes === 1 ? "escena" : "escenas"}`
-                  : "Sin usar"}
-              </span>
-              <span aria-hidden className="font-sans text-base text-muted transition-colors group-hover:text-accent">
-                →
-              </span>
-              <LinkPendingHint className="shrink-0" />
-            </Link>
-          </li>
-        ))}
-      </ul>
+      <LocationsExplorer
+        mapLocations={mappedLocations}
+        locations={numbered.map((l) => ({
+          id: l.id,
+          href: href(l.id),
+          name: l.name,
+          address: l.address,
+          contactName: l.contactName,
+          characteristics: l.characteristics.map((c) => LOCATION_CHARACTERISTIC_LABELS[c]),
+          sceneCount: l._count.scenes,
+          label: l.label,
+        }))}
+      />
     </>
   );
 }

@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { isProjectOwnerPro } from "@/lib/project-plan";
 import { PageHeader } from "@/components/PageHeader";
@@ -15,6 +16,10 @@ export default async function AutorizacionMenorPage({
   const project = await getProjectForCurrentUser(projectId);
   if (!project) notFound();
   if (!(await isProjectOwnerPro(project.organizationId))) notFound();
+  const organization = await prisma.organization.findUnique({
+    where: { id: project.organizationId },
+    select: { name: true },
+  });
 
   return (
     <div className="pb-16">
@@ -28,6 +33,8 @@ export default async function AutorizacionMenorPage({
 
       <LegalTemplateForm
         action={`/api/pdf/legal/${projectId}/autorizacion-menor`}
+        slug="autorizacion-menor"
+        organizationName={organization?.name ?? ""}
         projectName={project.name}
         warning="Revisa siempre este documento con asesoría legal antes de usarlo: con menores, las normas cambian mucho según el país y la comunidad."
       >

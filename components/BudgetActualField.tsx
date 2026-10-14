@@ -25,12 +25,15 @@ export function BudgetActualField({
   description,
   planned,
   actual,
+  overrun = false,
 }: {
   projectId: string;
   itemId: string;
   description: string;
   planned: number;
   actual: number | null;
+  // Gastado por encima de lo previsto: la raya y la cifra pasan a aviso.
+  overrun?: boolean;
 }) {
   const [state, formAction] = useActionState<BudgetActualState, FormData>(
     setBudgetItemActual.bind(null, projectId, itemId),
@@ -56,7 +59,7 @@ export function BudgetActualField({
       {/* Sin caja: el importe se escribe sobre una raya, verde cuando ya está pagado. */}
       <div
         className={`flex items-baseline border-b transition-colors focus-within:border-accent ${
-          isDone ? "border-success" : "border-line hover:border-muted"
+          overrun ? "border-warn" : isDone ? "border-success" : "border-line hover:border-muted"
         }`}
       >
         <input
@@ -67,7 +70,7 @@ export function BudgetActualField({
           defaultValue={actual ?? ""}
           placeholder="Sin gastar"
           className={`w-24 bg-transparent py-1 text-right font-mono text-sm tabular-nums outline-none placeholder:font-sans placeholder:text-xs placeholder:text-muted/70 ${
-            isDone ? "text-success" : ""
+            overrun ? "text-warn" : isDone ? "text-success" : ""
           }`}
         />
         <span aria-hidden className="pl-1 font-mono text-xs text-muted">

@@ -30,12 +30,14 @@ export function CreateDialog({
   title,
   description,
   variant = "primary",
+  size = "md",
   children,
 }: {
   label: string;
   title: string;
   description?: string;
   variant?: "primary" | "outline";
+  size?: "sm" | "md" | "lg";
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -51,8 +53,8 @@ export function CreateDialog({
         </span>
         {label}
       </button>
-      <Modal open={open} onClose={() => setOpen(false)} title={title} description={description}>
-        {/* El Modal no desplaza su contenido: el formulario sí, por si no cabe. */}
+      <Modal open={open} onClose={() => setOpen(false)} title={title} description={description} size={size}>
+        {/* El formulario desplaza su contenido por si no cabe. */}
         <div
           className="-mx-6 mt-5 max-h-[min(70vh,640px)] overflow-y-auto px-6 pb-1"
           onResetCapture={() => setOpen(false)}

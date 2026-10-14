@@ -16,6 +16,10 @@ export default async function NdaPage({
   const project = await getProjectForCurrentUser(projectId);
   if (!project) notFound();
   if (!(await isProjectOwnerPro(project.organizationId))) notFound();
+  const organization = await prisma.organization.findUnique({
+    where: { id: project.organizationId },
+    select: { name: true },
+  });
 
   const [actors, crewMembers] = await Promise.all([
     prisma.actor.findMany({ where: { projectId }, orderBy: { name: "asc" }, select: { name: true } }),
@@ -35,6 +39,8 @@ export default async function NdaPage({
 
       <LegalTemplateForm
         action={`/api/pdf/legal/${projectId}/nda`}
+        slug="nda"
+        organizationName={organization?.name ?? ""}
         projectName={project.name}
         tip="«Nombre completo» te sugiere a la gente del reparto y del equipo mientras escribes."
       >

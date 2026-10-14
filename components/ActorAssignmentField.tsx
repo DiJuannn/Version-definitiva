@@ -49,9 +49,11 @@ export function ActorAssignmentField({
   }
 
   if (!editing) {
-    return (
-      <div className="flex items-center gap-2">
-        <span className="font-mono text-xs">{currentName}</span>
+    // Con actor: su nombre grande y «Cambiar». Sin actor: el hueco se ve
+    // como lo que es, algo por hacer, con un botón claro para asignarlo.
+    return defaultActorId ? (
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <span className="font-display text-xl font-black tracking-tight">{currentName}</span>
         <button
           type="button"
           onClick={() => {
@@ -59,17 +61,37 @@ export function ActorAssignmentField({
             setConfirming(false);
             setEditing(true);
           }}
-          className="link-action"
+          className="link-action !px-0"
         >
-          Editar
+          Cambiar
         </button>
+      </div>
+    ) : (
+      <div className="flex flex-wrap items-center gap-3">
+        <span className="inline-flex items-center gap-2 font-sans text-sm text-warn">
+          <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-warn" />
+          Sin actor
+        </span>
+        {actors.length > 0 && (
+          <button
+            type="button"
+            onClick={() => {
+              setActorId(defaultActorId);
+              setConfirming(false);
+              setEditing(true);
+            }}
+            className="btn btn-primary btn-sm"
+          >
+            Asignar actor
+          </button>
+        )}
       </div>
     );
   }
 
   return (
     <div className="flex flex-col gap-1">
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-3">
         <select
           name="actorId"
           value={actorId}
@@ -78,7 +100,8 @@ export function ActorAssignmentField({
             setConfirming(false);
           }}
           autoFocus
-          className="field px-2 py-1.5 text-xs"
+          aria-label="Actor"
+          className="field min-w-0 flex-1"
         >
           <option value="" className="bg-bg">
             Sin actor
@@ -100,9 +123,7 @@ export function ActorAssignmentField({
         ) : (
           <button
             type="submit"
-            className={`font-mono text-xs tracking-widest uppercase ${
-              conflictName ? "text-warn" : "text-muted hover:text-fg"
-            }`}
+            className={`btn btn-sm ${conflictName ? "btn-outline text-warn" : "btn-primary"}`}
           >
             {conflictName ? "¿Seguro? Confirmar" : "Guardar"}
           </button>
@@ -116,7 +137,7 @@ export function ActorAssignmentField({
         </button>
       </div>
       {conflictName && (
-        <p className="font-mono text-[10px] text-warn">
+        <p className="font-sans text-xs text-warn">
           Ya interpreta a {conflictName} — pulsa Guardar dos veces si quieres
           que interprete a los dos.
         </p>

@@ -23,6 +23,14 @@ export default async function CallSheetsPage({
     include: {
       callSheet: { select: { id: true, generalCallTime: true } },
       _count: { select: { scenes: true } },
+      scenes: {
+        orderBy: { order: "asc" },
+        select: {
+          scene: {
+            select: { number: true, location: { select: { name: true } } },
+          },
+        },
+      },
     },
   });
 
@@ -31,29 +39,66 @@ export default async function CallSheetsPage({
   ).length;
   const ready = days.filter((day) => day.callSheet).length;
 
+  const dayShort = (d: Date) =>
+    d.toLocaleDateString("es-ES", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+    });
+  const missing = days
+    .map((day, index) => ({ day, index }))
+    .filter(({ day }) => !day.callSheet);
+
+  // Estado de cada hoja, de menos a más avanzada.
+  function stateOf(day: (typeof days)[number]) {
+    if (!day.callSheet)
+      return day._count.scenes > 0
+        ? { label: "Sin crear", tone: "text-warn", dot: "border border-warn" }
+        : {
+            label: "Día sin escenas",
+            tone: "text-muted",
+            dot: "border border-muted",
+          };
+    if (day.reminderSentAt)
+      return { label: "Enviada", tone: "text-success", dot: "bg-success" };
+    if (day.shareToken)
+      return { label: "Compartida", tone: "text-accent", dot: "bg-accent" };
+    return { label: "Creada", tone: "text-fg", dot: "bg-fg" };
+  }
+
   return (
     <div>
       <PageHeader
         eyebrow="Producción"
         title="Hojas de llamada"
-        description={
-          <>
-            La hoja que recibe el equipo la víspera: a qué hora, dónde y qué se
-            rueda. Hay una por cada día del{" "}
-            <Link
-              href={`/app/${projectId}/plan-de-rodaje`}
-              className="text-fg underline decoration-accent/50 underline-offset-4 hover:decoration-accent"
-            >
-              plan de rodaje
-            </Link>
-            , y se rellena sola con lo que ya está planificado.
-          </>
-        }
+        description="La hoja que recibe el equipo la víspera: a qué hora, dónde y qué se rueda. Hay una por jornada del plan de rodaje y se rellena sola."
       />
+
+      {/* Cómo voy. */}
+      {days.length > 0 && (
+        <p className="mt-8 font-sans text-[15px] text-muted">
+          <strong
+            className={`font-semibold ${ready === days.length ? "text-success" : "text-fg"}`}
+          >
+            {ready} de {days.length} hojas creadas
+          </strong>
+          {missing.length > 0 && missing.length <= 3
+            ? ` · ${missing.length === 1 ? "falta la del" : "faltan las de los"} ${missing
+                .map(
+                  ({ day, index }) =>
+                    `día ${index + 1} (${dayShort(day.date)})`,
+                )
+                .join(", ")}`
+            : missing.length > 3
+              ? ` · faltan ${missing.length}`
+              : " · todas listas para mandar"}
+          .
+        </p>
+      )}
 
       {/* Aviso con barra lateral: lo pendiente y la acción que lo resuelve. */}
       {pendingDays > 0 && (
-        <section className="mt-10 flex flex-wrap items-center justify-between gap-x-8 gap-y-4 border-l-2 border-accent pl-5">
+        <section className="mt-6 flex flex-wrap items-center justify-between gap-x-8 gap-y-4 border-l-2 border-warn pl-5">
           <div className="max-w-xl">
             <h2 className="font-display text-lg font-bold">
               {pendingDays === 1
@@ -85,78 +130,131 @@ export default async function CallSheetsPage({
         />
       ) : (
         <section aria-labelledby="dias" className="mt-12">
-          <div className="flex items-baseline justify-between gap-4 border-b border-line pb-3">
-            <h2 id="dias" className="eyebrow">
-              Días de rodaje
-            </h2>
-            <p className="eyebrow">
-              {ready} de {days.length} listas
-            </p>
-          </div>
-          <ol>
-            {days.map((day, index) => (
-              <li key={day.id} className="border-b border-line">
-                <Link
-                  href={`/app/${projectId}/call-sheets/${day.id}`}
-                  className="group grid grid-cols-[3.5rem_1fr_auto] items-center gap-x-5 gap-y-1 py-5 sm:grid-cols-[4.5rem_1fr_8rem_7rem_8rem]"
-                >
-                  {/* La fecha como en un calendario de pared. */}
-                  <span className="text-center">
-                    <span className="block font-display text-3xl leading-none font-black tabular-nums sm:text-4xl">
-                      {day.date.toLocaleDateString("es-ES", { day: "numeric" })}
-                    </span>
-                    <span className="eyebrow mt-1 block">
-                      {day.date.toLocaleDateString("es-ES", { month: "short" })}
-                    </span>
-                  </span>
-                  <span className="min-w-0">
-                    <span className="eyebrow block">Día {index + 1}</span>
-                    <span className="mt-0.5 block font-display text-lg font-bold first-letter:uppercase transition-colors group-hover:text-accent">
-                      {day.date.toLocaleDateString("es-ES", {
-                        weekday: "long",
-                      })}
-                    </span>
-                    <span className="block font-sans text-sm text-muted sm:hidden">
-                      {day._count.scenes} escena
-                      {day._count.scenes === 1 ? "" : "s"}
-                      {day.callSheet?.generalCallTime
-                        ? ` · llamada ${day.callSheet.generalCallTime}`
-                        : ""}
-                    </span>
-                  </span>
-                  <span className="hidden font-sans text-sm text-muted sm:block">
-                    {day._count.scenes} escena
-                    {day._count.scenes === 1 ? "" : "s"}
-                  </span>
-                  <span className="hidden sm:block">
-                    {day.callSheet?.generalCallTime ? (
-                      <>
-                        <span className="eyebrow block">Llamada</span>
-                        <span className="font-mono text-base tabular-nums">
-                          {day.callSheet.generalCallTime}
-                        </span>
-                      </>
-                    ) : (
-                      <span className="font-sans text-sm text-muted">
-                        Sin hora
-                      </span>
-                    )}
-                  </span>
-                  <span
-                    className={`flex items-center gap-2 justify-self-end font-mono text-[11px] tracking-widest uppercase ${
-                      day.callSheet ? "text-success" : "text-muted"
-                    }`}
+          <h2 id="dias" className="sr-only">
+            Hojas por jornada
+          </h2>
+          <ol className="border-t border-line">
+            {days.map((day, index) => {
+              const state = stateOf(day);
+              const places = [
+                ...new Set(
+                  day.scenes
+                    .map((s) => s.scene.location?.name)
+                    .filter((n): n is string => Boolean(n)),
+                ),
+              ];
+              return (
+                <li key={day.id} className="border-b border-line">
+                  <Link
+                    href={`/app/${projectId}/call-sheets/${day.id}`}
+                    className="group grid grid-cols-[2.25rem_3.25rem_minmax(0,1fr)] items-center gap-x-4 gap-y-2 py-5 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent sm:grid-cols-[2.5rem_4rem_minmax(0,1fr)_7rem_9rem_1rem] sm:gap-x-6"
                   >
+                    {/* Miniatura de la hoja: papel si existe, contorno si falta. */}
                     <span
                       aria-hidden
-                      className={`h-2 w-2 rounded-full ${day.callSheet ? "bg-success" : "border border-muted"}`}
-                    />
-                    {day.callSheet ? "Lista" : "Sin generar"}
-                  </span>
-                </Link>
-              </li>
-            ))}
+                      className={`flex h-11 w-8 flex-col gap-1 rounded-[3px] px-1.5 pt-2 transition-transform group-hover:-translate-y-0.5 motion-reduce:transition-none sm:h-12 sm:w-9 ${
+                        day.callSheet
+                          ? "bg-[#e6e4df] shadow-md"
+                          : "border border-dashed border-muted/60"
+                      }`}
+                    >
+                      {day.callSheet && (
+                        <>
+                          <span className="h-1 w-full rounded-full bg-[#1d1c21]" />
+                          <span className="h-0.5 w-3/4 rounded-full bg-[#1d1c21]/40" />
+                          <span className="h-0.5 w-full rounded-full bg-[#1d1c21]/40" />
+                          <span className="h-0.5 w-2/3 rounded-full bg-[#1d1c21]/40" />
+                        </>
+                      )}
+                    </span>
+                    {/* La fecha como en un calendario de pared. */}
+                    <span className="text-center">
+                      <span className="block font-display text-3xl leading-none font-black tabular-nums">
+                        {day.date.toLocaleDateString("es-ES", {
+                          day: "numeric",
+                        })}
+                      </span>
+                      <span className="eyebrow mt-1 block">
+                        {day.date.toLocaleDateString("es-ES", {
+                          month: "short",
+                        })}
+                      </span>
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block font-display text-lg leading-tight font-bold transition-colors group-hover:text-accent">
+                        Día {index + 1}{" "}
+                        <span className="font-sans text-base font-normal text-muted first-letter:uppercase">
+                          ·{" "}
+                          {day.date.toLocaleDateString("es-ES", {
+                            weekday: "long",
+                          })}
+                        </span>
+                      </span>
+                      <span className="mt-0.5 block truncate font-sans text-sm text-muted">
+                        {day._count.scenes === 0
+                          ? "Sin escenas en el plan"
+                          : `Esc. ${day.scenes.map((s) => s.scene.number).join(", ")}${places.length > 0 ? ` · ${places.join(", ")}` : ""}`}
+                      </span>
+                      {/* En el móvil, hora y estado bajo el título. */}
+                      <span className="mt-1.5 flex items-center gap-3 font-mono text-[11px] tracking-widest uppercase sm:hidden">
+                        {day.callSheet?.generalCallTime && (
+                          <span className="tabular-nums">
+                            {day.callSheet.generalCallTime}
+                          </span>
+                        )}
+                        <span
+                          className={`flex items-center gap-1.5 ${state.tone}`}
+                        >
+                          <span
+                            aria-hidden
+                            className={`h-2 w-2 rounded-full ${state.dot}`}
+                          />
+                          {state.label}
+                        </span>
+                      </span>
+                    </span>
+                    <span className="hidden sm:block">
+                      <span className="eyebrow block">Citación</span>
+                      <span className="font-mono text-lg tabular-nums">
+                        {day.callSheet?.generalCallTime ?? (
+                          <span className="text-muted">—:—</span>
+                        )}
+                      </span>
+                    </span>
+                    <span
+                      className={`hidden items-center gap-2 font-mono text-[11px] tracking-widest uppercase sm:flex ${state.tone}`}
+                    >
+                      <span
+                        aria-hidden
+                        className={`h-2 w-2 shrink-0 rounded-full ${state.dot}`}
+                      />
+                      {state.label}
+                    </span>
+                    <span
+                      aria-hidden
+                      className="hidden font-mono text-sm text-muted transition-transform group-hover:translate-x-1 group-hover:text-accent motion-reduce:transition-none sm:block"
+                    >
+                      →
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
           </ol>
+          <p className="mt-4 font-sans text-xs text-muted">
+            Creada: la hoja existe · Compartida: tiene enlace para el equipo ·
+            Enviada: el equipo ya recibió el recordatorio por email.
+          </p>
+
+          <p className="mt-14 border-t border-line pt-5 font-sans text-sm text-muted">
+            Siguiente, el día del rodaje:{" "}
+            <Link
+              href={`/app/${projectId}/claqueta`}
+              className="font-medium text-fg underline decoration-accent/50 underline-offset-4 transition-colors hover:text-accent hover:decoration-accent"
+            >
+              Claqueta →
+            </Link>
+          </p>
         </section>
       )}
     </div>

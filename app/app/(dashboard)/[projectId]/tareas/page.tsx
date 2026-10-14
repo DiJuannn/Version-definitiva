@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { PageHeader } from "@/components/PageHeader";
 import { ScopeToggle } from "@/components/ScopeToggle";
-import { TasksView } from "@/components/TasksView";
+import { NewProjectTaskButton, ProjectTasksBoard } from "@/components/gestion/ProjectTasksBoard";
 
 export default async function ProjectTareasPage({
   params,
@@ -24,17 +24,20 @@ export default async function ProjectTareasPage({
       <PageHeader
         eyebrow="Gestión"
         title="Tareas"
-        description="Lo que falta por hacer en este proyecto. Marca una tarea como hecha con su casilla."
+        description="Lo que falta por hacer en este proyecto, ordenado por cuándo toca. Márcala con su círculo al terminar."
         actions={
-          <ScopeToggle
-            items={[
-              { label: "Este proyecto", href: base, active: true },
-              { label: "Toda la organización", href: "/app/tareas", active: false },
-            ]}
-          />
+          <>
+            <ScopeToggle
+              items={[
+                { label: "Este proyecto", href: base, active: true },
+                { label: "Toda la organización", href: "/app/tareas", active: false },
+              ]}
+            />
+            <NewProjectTaskButton projectId={projectId} />
+          </>
         }
       />
-      <TasksView
+      <ProjectTasksBoard
         organizationId={project.organizationId}
         projectId={projectId}
         showCompleted={completadas === "1"}

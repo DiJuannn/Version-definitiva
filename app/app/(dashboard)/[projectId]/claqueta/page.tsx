@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
@@ -15,37 +16,47 @@ export default async function ClaquetaPage({
   const project = await getProjectForCurrentUser(projectId);
   if (!project) notFound();
 
-  const [scenes, recentLog, lastTakeByKey] = await Promise.all([
-    prisma.scene.findMany({
-      where: { projectId },
-      orderBy: [{ order: "asc" }, { number: "asc" }],
-      select: {
-        id: true,
-        number: true,
-        intExt: true,
-        dayPart: true,
-        location: { select: { name: true } },
-      },
-    }),
-    prisma.clapLog.findMany({
-      where: { projectId },
-      orderBy: { createdAt: "desc" },
-      take: 20,
-      select: {
-        id: true,
-        sceneNumber: true,
-        shotNumber: true,
-        take: true,
-        director: true,
-        camera: true,
-        clip: true,
-        good: true,
-        notes: true,
-        createdAt: true,
-      },
-    }),
-    getLastTakeByKey(projectId),
-  ]);
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+
+  const [scenes, recentLog, lastTakeByKey, todayTakes, todayGood] =
+    await Promise.all([
+      prisma.scene.findMany({
+        where: { projectId },
+        orderBy: [{ order: "asc" }, { number: "asc" }],
+        select: {
+          id: true,
+          number: true,
+          intExt: true,
+          dayPart: true,
+          location: { select: { name: true } },
+        },
+      }),
+      prisma.clapLog.findMany({
+        where: { projectId },
+        orderBy: { createdAt: "desc" },
+        take: 20,
+        select: {
+          id: true,
+          sceneNumber: true,
+          shotNumber: true,
+          take: true,
+          director: true,
+          camera: true,
+          clip: true,
+          good: true,
+          notes: true,
+          createdAt: true,
+        },
+      }),
+      getLastTakeByKey(projectId),
+      prisma.clapLog.count({
+        where: { projectId, createdAt: { gte: todayStart } },
+      }),
+      prisma.clapLog.count({
+        where: { projectId, good: true, createdAt: { gte: todayStart } },
+      }),
+    ]);
 
   const sceneOptions = scenes.map((scene) => ({
     id: scene.id,
@@ -72,7 +83,26 @@ export default async function ClaquetaPage({
         }
       />
 
-      <div className="mt-10">
+      {/* Cómo voy: lo de hoy en una línea. */}
+      <p className="mt-6 font-sans text-[15px] text-muted">
+        {todayTakes === 0 ? (
+          "Hoy aún no se ha marcado ninguna toma."
+        ) : (
+          <>
+            Hoy:{" "}
+            <strong className="font-semibold text-fg">
+              {todayTakes} {todayTakes === 1 ? "toma" : "tomas"}
+            </strong>
+            {" · "}
+            <strong className="font-semibold text-success">
+              {todayGood} {todayGood === 1 ? "buena" : "buenas"}
+            </strong>
+            .
+          </>
+        )}
+      </p>
+
+      <div className="mt-8">
         <ClaquetaBoard
           projectId={projectId}
           projectName={project.name}
@@ -81,6 +111,17 @@ export default async function ClaquetaPage({
           initialLog={initialLog}
         />
       </div>
+
+      <p className="mt-16 border-t border-line pt-5 font-sans text-sm text-muted">
+        Siguiente:{" "}
+        <Link
+          href={`/app/${projectId}/script`}
+          className="font-medium text-fg underline decoration-accent/50 underline-offset-4 transition-colors hover:text-accent hover:decoration-accent"
+        >
+          Parte de script →
+        </Link>{" "}
+        — revisa las tomas del día y rodea las buenas.
+      </p>
     </div>
   );
 }

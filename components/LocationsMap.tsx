@@ -10,32 +10,57 @@ export type MapLocation = {
   latitude: number;
   longitude: number;
   sceneCount: number;
+  // Número que la lista muestra junto al nombre, para encontrarla en el mapa.
+  label?: string;
 };
 
-const MARKER_ICON = L.divIcon({
-  className: "",
-  html: `
-    <div style="position:relative;width:26px;height:26px;">
-      <div style="position:absolute;inset:0;border-radius:9999px;background:var(--accent);opacity:0.25;"></div>
-      <div style="position:absolute;inset:6px;border-radius:9999px;background:var(--accent);border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,0.25);"></div>
-    </div>
-  `,
-  iconSize: [26, 26],
-  iconAnchor: [13, 13],
-  popupAnchor: [0, -13],
-});
+// Chincheta con el número de la lista. La activa (la que se señala en la
+// lista) crece y se rellena con el acento.
+function markerIcon(label: string | undefined, active: boolean) {
+  const size = active ? 34 : 26;
+  return L.divIcon({
+    className: "",
+    html: `
+      <div style="position:relative;width:${size}px;height:${size}px;transition:transform 150ms ease;">
+        <div style="position:absolute;inset:0;border-radius:9999px;background:var(--accent);opacity:${active ? 0.35 : 0.2};"></div>
+        <div style="position:absolute;inset:${active ? 4 : 3}px;border-radius:9999px;display:grid;place-items:center;
+          background:${active ? "var(--accent)" : "var(--bg-raised)"};border:2px solid var(--accent);
+          color:${active ? "var(--bg)" : "var(--fg)"};font:700 ${active ? 13 : 11}px/1 var(--font-jetbrains-mono), monospace;
+          box-shadow:0 2px 6px rgba(0,0,0,0.45);">${label ? escapeHtml(label) : ""}</div>
+      </div>
+    `,
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2],
+    popupAnchor: [0, -size / 2],
+  });
+}
 
-// Mapa claro, a juego con el área de trabajo: las teselas de OpenStreetMap
-// van algo desaturadas para que los marcadores (acento) sean lo que destaca.
-// Las clases van con «!» porque leaflet.css no está en ninguna capa y ganaría
-// a las utilidades de Tailwind. «isolate» encierra los z-index de Leaflet
-// (400–1000) para que no asomen por encima de los diálogos.
+// Mapa oscuro (.vd-dark-map: teselas de OpenStreetMap invertidas al negro)
+// para que encaje con la mesa y los marcadores sean lo que destaca.
+// «isolate» encierra los z-index de Leaflet (400–1000) para que no asomen por
+// encima de los diálogos.
 const MAP_CLASS =
-  "isolate !bg-fg/[0.04] !font-sans [&_.leaflet-tile-pane]:[filter:saturate(0.35)_contrast(0.92)_brightness(1.03)] [&_.leaflet-popup-content-wrapper]:!rounded-lg [&_.leaflet-popup-content-wrapper]:!bg-bg-raised [&_.leaflet-popup-content-wrapper]:!text-fg [&_.leaflet-popup-tip]:!bg-bg-raised [&_.leaflet-control-zoom]:!border-0 [&_.leaflet-control-zoom]:!shadow-md [&_.leaflet-control-zoom_a]:!bg-bg-raised [&_.leaflet-control-zoom_a]:!text-fg [&_.leaflet-control-zoom_a]:!border-line [&_.leaflet-control-attribution]:!bg-bg-raised/80 [&_.leaflet-control-attribution]:!text-muted [&_.leaflet-control-attribution_a]:!text-muted";
+  "vd-dark-map isolate !font-sans [&_.leaflet-popup-content-wrapper]:!rounded-lg [&_.leaflet-control-zoom]:!border-0 [&_.leaflet-control-zoom]:!shadow-md";
 
-export function LocationsMap({ locations, className }: { locations: MapLocation[]; className?: string }) {
+export function LocationsMap({
+  locations,
+  className,
+  activeId,
+  onSelect,
+}: {
+  locations: MapLocation[];
+  className?: string;
+  activeId?: string | null;
+  onSelect?: (id: string) => void;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
+  const markersRef = useRef(new Map<string, L.Marker>());
+  const onSelectRef = useRef(onSelect);
+
+  useEffect(() => {
+    onSelectRef.current = onSelect;
+  }, [onSelect]);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -62,10 +87,13 @@ export function LocationsMap({ locations, className }: { locations: MapLocation[
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
+    const registry = markersRef.current;
 
     const markers = locations.map((location) => {
       const marker = L.marker([location.latitude, location.longitude], {
-        icon: MARKER_ICON,
+        icon: markerIcon(location.label, false),
+        title: location.name,
+        keyboard: true,
       }).addTo(map);
 
       marker.bindPopup(
@@ -76,6 +104,8 @@ export function LocationsMap({ locations, className }: { locations: MapLocation[
           <a href="/app/localizaciones/${location.id}" style="font-family: var(--font-jetbrains-mono), monospace; font-size:11px; text-transform:uppercase; letter-spacing:0.1em; color:var(--accent);">Ver ficha →</a>
         </div>`,
       );
+      marker.on("click", () => onSelectRef.current?.(location.id));
+      registry.set(location.id, marker);
 
       return marker;
     });
@@ -84,13 +114,25 @@ export function LocationsMap({ locations, className }: { locations: MapLocation[
       const bounds = L.latLngBounds(
         locations.map((l) => [l.latitude, l.longitude] as [number, number]),
       );
-      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
+      map.fitBounds(bounds, { padding: [48, 48], maxZoom: 14 });
     }
 
     return () => {
       markers.forEach((marker) => marker.remove());
+      registry.clear();
     };
   }, [locations]);
+
+  // Resalta la chincheta de la localización señalada en la lista.
+  useEffect(() => {
+    for (const location of locations) {
+      const marker = markersRef.current.get(location.id);
+      if (!marker) continue;
+      const active = location.id === activeId;
+      marker.setIcon(markerIcon(location.label, active));
+      marker.setZIndexOffset(active ? 1000 : 0);
+    }
+  }, [activeId, locations]);
 
   return <div ref={containerRef} className={`${MAP_CLASS} w-full ${className ?? "h-[360px]"}`} />;
 }

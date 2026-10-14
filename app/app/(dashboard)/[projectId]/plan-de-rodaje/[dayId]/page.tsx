@@ -23,6 +23,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { SectionTabs } from "@/components/SectionTabs";
 import { DayPlanner, type PlannerScene } from "@/components/DayPlanner";
 import { FormField } from "@/components/FormField";
+import { stripTone } from "@/lib/stripboard";
 
 function toDateInputValue(date: Date): string {
   return date.toISOString().slice(0, 10);
@@ -153,6 +154,9 @@ export default async function ShootingDayDetailPage({
     availabilityWarnings.length > 0 ||
     itemConflicts.length > 0 ||
     vehicleConflicts.length > 0;
+  const missingTimes = summary.sceneAssignments
+    .filter((a) => !a.callTime)
+    .map((a) => a.scene.number);
   const summaryRows = [
     ["Localizaciones", summary.locations.map((l) => l.name)],
     ["Personajes", summary.characters.map((c) => c.name)],
@@ -235,6 +239,26 @@ export default async function ShootingDayDetailPage({
         </form>
       </details>
 
+      {/* Cómo voy: el estado del día en una línea. */}
+      <p className="mt-6 font-sans text-[15px] text-muted">
+        {summary.shootingDay.callSheet ? (
+          <span className="font-semibold text-success">
+            ✓ Hoja de llamada creada
+          </span>
+        ) : (
+          <span className="font-semibold text-fg">
+            Hoja de llamada sin crear
+          </span>
+        )}
+        {" · "}
+        {summary.sceneAssignments.length === 0
+          ? "aún no hay escenas este día"
+          : missingTimes.length === 0
+            ? "todas las escenas tienen hora"
+            : `falta la hora de ${missingTimes.length === 1 ? "la escena" : "las escenas"} ${missingTimes.join(", ")}`}
+        .
+      </p>
+
       {/* Avisos: una línea con barra de color, no un recuadro. */}
       {hasWarnings && (
         <div className="mt-8 space-y-5">
@@ -278,7 +302,99 @@ export default async function ShootingDayDetailPage({
         </div>
       )}
 
-      <form action={saveDayAction} className="mt-12 lg:[&_[role=tabpanel]]:pt-6">
+      {/* El horario del día en papel: lo que se leerá en la hoja de llamada,
+          en el orden en que se rueda. Se edita abajo, en las pestañas. */}
+      <section
+        aria-labelledby="horario"
+        className="paper mt-10 max-w-4xl px-5 py-6 sm:px-8 sm:py-7"
+      >
+        <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-3 border-b-2 border-fg pb-4">
+          <div>
+            <h2 id="horario" className="eyebrow text-accent">
+              Horario del día
+            </h2>
+            <p className="mt-1 font-display text-xl font-black tracking-tight">
+              {summary.sceneAssignments.length === 0
+                ? "Sin escenas todavía"
+                : `${summary.sceneAssignments.length} ${summary.sceneAssignments.length === 1 ? "escena" : "escenas"}${dayShotCount > 0 ? ` · ${dayShotCount} ${dayShotCount === 1 ? "plano" : "planos"}` : ""}`}
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="eyebrow">Llamada general</p>
+            <p className="font-display text-3xl leading-none font-black tabular-nums">
+              {summary.shootingDay.callSheet?.generalCallTime ?? (
+                <span className="text-muted">—</span>
+              )}
+            </p>
+          </div>
+        </div>
+        {summary.sceneAssignments.length === 0 ? (
+          <p className="pt-5 font-sans text-sm text-muted">
+            Marca abajo, en «Escenas y planos», qué se rueda este día y a qué
+            hora; aquí verás el horario tal y como saldrá en la hoja de llamada.
+          </p>
+        ) : (
+          <ol className="divide-y divide-line">
+            {summary.sceneAssignments.map((assignment) => {
+              const scene = assignment.scene;
+              const tone = stripTone(scene.intExt, scene.dayPart);
+              const cast =
+                summary.charactersByAssignment.get(assignment.id) ?? [];
+              return (
+                <li
+                  key={assignment.id}
+                  className="grid grid-cols-[3.75rem_minmax(0,1fr)] items-baseline gap-x-4 gap-y-1 py-3.5 sm:grid-cols-[4.5rem_6rem_minmax(0,1fr)_minmax(0,14rem)]"
+                >
+                  <span className="font-mono text-lg tabular-nums">
+                    {assignment.callTime ?? (
+                      <span className="text-muted">—:—</span>
+                    )}
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <span
+                      aria-hidden
+                      className="h-3 w-3 shrink-0 rounded-sm ring-1 ring-black/25"
+                      style={{ backgroundColor: tone.bg }}
+                    />
+                    <span className="font-display text-lg font-black">
+                      Esc. {scene.number}
+                    </span>
+                  </span>
+                  <span className="col-start-2 min-w-0 sm:col-start-auto">
+                    <span className="font-mono text-[11px] tracking-wider uppercase">
+                      {INT_EXT_LABELS[scene.intExt]} ·{" "}
+                      {DAY_PART_LABELS[scene.dayPart]}
+                    </span>
+                    <span className="block truncate font-sans text-sm">
+                      {[scene.location?.name, scene.description]
+                        .filter(Boolean)
+                        .join(" — ") || (
+                        <span className="text-muted">Sin localización</span>
+                      )}
+                    </span>
+                  </span>
+                  <span className="col-start-2 min-w-0 font-sans text-sm text-muted sm:col-start-auto">
+                    {cast.length > 0
+                      ? cast.map((c) => c.character.name).join(", ")
+                      : "Sin personajes"}
+                    {scene.shots.length > 0 && (
+                      <span className="block font-mono text-[11px]">
+                        {scene.shots.length}{" "}
+                        {scene.shots.length === 1 ? "plano" : "planos"}
+                      </span>
+                    )}
+                  </span>
+                </li>
+              );
+            })}
+          </ol>
+        )}
+      </section>
+
+      <form
+        action={saveDayAction}
+        className="mt-12 lg:[&_[role=tabpanel]]:pt-6"
+      >
         <SectionTabs
           ariaLabel="Plan del día"
           initial={tab}
@@ -452,9 +568,19 @@ export default async function ShootingDayDetailPage({
         </div>
       </form>
 
+      <p className="mt-16 font-sans text-sm text-muted">
+        Siguiente:{" "}
+        <Link
+          href={`/app/${projectId}/call-sheets/${dayId}`}
+          className="font-medium text-fg underline decoration-accent/50 underline-offset-4 transition-colors hover:text-accent hover:decoration-accent"
+        >
+          Hoja de llamada de este día →
+        </Link>
+      </p>
+
       <form
         action={deleteShootingDay.bind(null, projectId, dayId)}
-        className="mt-16 border-t border-line pt-4"
+        className="mt-6 border-t border-line pt-4"
       >
         <DeleteButton
           confirmMessage="¿Eliminar este día de rodaje?"

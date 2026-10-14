@@ -17,6 +17,9 @@ import { TaskCheck } from "@/components/TaskCheck";
 import { getProjectOverview } from "@/lib/project-roadmap";
 import { getProjectsProgress } from "@/lib/projects-progress";
 import { isPro } from "@/lib/plan";
+import { getProjectFacts } from "@/lib/tool-access";
+import { computeStage } from "@/lib/tool-rules";
+import { ProjectStageTrack } from "@/components/ProjectStageTrack";
 import { FREE_ACTIVE_PROJECTS_LIMIT } from "@/lib/limits";
 
 function currency(value: number) {
@@ -248,7 +251,7 @@ export default async function DashboardPage() {
   ];
 
   const heroProject = lastVisitedProject ?? recentProjects[0] ?? null;
-  const [heroOverview, progress] = await Promise.all([
+  const [heroOverview, progress, stages] = await Promise.all([
     heroProject
       ? getProjectOverview(
           heroProject.id,
@@ -256,6 +259,10 @@ export default async function DashboardPage() {
         )
       : Promise.resolve(null),
     getProjectsProgress(recentProjects.map((p) => p.id)),
+    // Solo lectura: la etapa de cada proyecto, para la vía de etapas de su tarjeta.
+    Promise.all(recentProjects.map(async (p) => [p.id, computeStage(await getProjectFacts(p.id))] as const)).then(
+      (rows) => Object.fromEntries(rows) as Record<string, 1 | 2 | 3 | 4>,
+    ),
   ]);
   const heroRequired = heroOverview?.steps.filter((s) => s.required) ?? [];
   const heroDone = heroRequired.filter((s) => s.isDone).length;
@@ -325,23 +332,25 @@ export default async function DashboardPage() {
         </DashboardReveal>
       ) : (
         <>
-          <DashboardReveal className="tile mt-10 overflow-hidden">
-            <div className="grid lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-              {/* Continuar: lo más importante de la pantalla. */}
-              <div className="p-6 sm:p-8">
+          <DashboardReveal className="mt-10">
+            <div className="grid items-start gap-x-10 gap-y-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+              {/* Continuar: lo más importante de la pantalla, y lo único en papel (es el paso actual). */}
+              <div className="paper p-6 sm:p-8">
                 <p className="eyebrow text-accent">Continuar donde lo dejaste</p>
                 <h2 className="mt-2 truncate font-display text-3xl font-black tracking-tight sm:text-4xl">
                   {heroProject.name}
                 </h2>
-                <p className="mt-3 font-sans text-[15px] text-muted">
-                  {heroCurrent ? (
-                    <>
-                      Siguiente paso: <span className="text-fg">{heroCurrent.title}</span>
-                    </>
-                  ) : (
-                    "Listo para rodar: lo esencial está hecho."
-                  )}
-                </p>
+                {heroCurrent ? (
+                  <div className="mt-5 border-l-2 border-accent pl-4">
+                    <p className="eyebrow">Siguiente paso</p>
+                    <p className="mt-1 font-display text-xl font-bold tracking-tight">{heroCurrent.title}</p>
+                    <p className="mt-1 max-w-lg font-sans text-sm leading-relaxed text-muted">
+                      {heroCurrent.instruction} <span className="text-fg">{heroCurrent.detail}.</span>
+                    </p>
+                  </div>
+                ) : (
+                  <p className="mt-3 font-sans text-[15px] text-muted">Listo para rodar: lo esencial está hecho.</p>
+                )}
                 <div className="mt-5 flex max-w-md items-center gap-3">
                   <div className="h-1 flex-1 overflow-hidden rounded-full bg-line" aria-hidden>
                     <div
@@ -353,14 +362,21 @@ export default async function DashboardPage() {
                     {heroDone}/{heroRequired.length} esenciales
                   </span>
                 </div>
-                <Link href={`/app/${heroProject.id}`} className="btn btn-primary mt-6">
-                  Continuar →
-                  <LinkPendingHint />
-                </Link>
+                <div className="mt-6 flex flex-wrap items-center gap-4">
+                  <Link href={heroCurrent?.href ?? `/app/${heroProject.id}`} className="btn btn-primary">
+                    {heroCurrent ? `${heroCurrent.ctaLabel} →` : "Continuar →"}
+                    <LinkPendingHint />
+                  </Link>
+                  {heroCurrent && (
+                    <Link href={`/app/${heroProject.id}`} className="link-action">
+                      Abrir el proyecto
+                    </Link>
+                  )}
+                </div>
               </div>
 
               {/* Próximo rodaje, al lado: la otra cosa que hay que saber al entrar. */}
-              <div className="border-t border-line p-6 sm:p-8 lg:border-t-0 lg:border-l">
+              <div className="border-t border-line pt-6 lg:border-t-0 lg:border-l lg:pt-2 lg:pl-10">
                 <p className="eyebrow">Próximo rodaje</p>
                 {nextShoot ? (
                   <>
@@ -508,7 +524,6 @@ export default async function DashboardPage() {
               const ownerLabel =
                 project.createdBy?.fullName ?? project.createdBy?.email ?? project.organization.name;
               const p = progress[project.id];
-              const pct = p && p.total > 0 ? Math.round((p.done / p.total) * 100) : 0;
               return (
                 <div
                   key={project.id}
@@ -524,15 +539,11 @@ export default async function DashboardPage() {
                         <span className="font-sans text-xs text-muted">· de {ownerLabel}</span>
                       )}
                     </div>
+                    {stages[project.id] && <ProjectStageTrack stage={stages[project.id]} className="mt-5" />}
                     {p && (
-                      <div className="mt-5 flex items-center gap-3">
-                        <div className="h-1 flex-1 overflow-hidden rounded-full bg-line" aria-hidden>
-                          <div className="h-full rounded-full bg-accent" style={{ width: `${pct}%` }} />
-                        </div>
-                        <span className="shrink-0 font-mono text-[10px] text-muted">
-                          {p.done}/{p.total}
-                        </span>
-                      </div>
+                      <p className="mt-3 font-sans text-xs text-muted">
+                        {p.done} de {p.total} pasos esenciales
+                      </p>
                     )}
                   </Link>
                   {isOwnProject && (

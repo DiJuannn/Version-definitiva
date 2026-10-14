@@ -24,7 +24,6 @@ import { isPro as isProPlan } from "@/lib/plan";
 import { DeleteButton } from "@/components/DeleteButton";
 import { ScriptUploadForm } from "@/components/ScriptUploadForm";
 import { ActionButtonForm } from "@/components/ActionButtonForm";
-import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
 import { PageHeader } from "@/components/PageHeader";
 import { FileOpenLink } from "@/components/FileOpenLink";
 import { SubmitButton } from "@/components/SubmitButton";
@@ -34,6 +33,9 @@ import {
   SCRIPT_ANALYSIS_PRO_DAILY_LIMIT,
 } from "@/lib/limits";
 import { SparkleIcon } from "@/components/ToolIcons";
+import { CreateDialog } from "@/components/CreateDialog";
+import { NextTool, SceneSlug } from "@/components/preproduccion/SceneSlug";
+import { STRIP_LEGEND, stripColor } from "@/components/preproduccion/palette";
 
 // El análisis de guion y la revisión de continuidad llaman a Mistral y
 // pueden tardar más de los 10s que Vercel da por defecto a una función —
@@ -50,8 +52,6 @@ export const maxDuration = 60;
 
 const SECTION_TITLE = "font-display text-base font-bold";
 const SECTION_TEXT = "mt-1.5 font-sans text-sm leading-relaxed text-muted";
-const POPOVER =
-  "sheet absolute left-0 z-30 mt-2 w-[min(20rem,calc(100vw-2rem))] p-4 shadow-[0_18px_40px_-16px_color-mix(in_srgb,var(--fg)_35%,transparent)] sm:left-auto sm:right-0";
 
 const DATE_FMT: Intl.DateTimeFormatOptions = { dateStyle: "medium", timeStyle: "short" };
 
@@ -94,6 +94,11 @@ export default async function GuionPage({
         dayPart: true,
         description: true,
         location: { select: { name: true } },
+        characters: {
+          select: { character: { select: { id: true, name: true } } },
+          orderBy: { character: { name: "asc" } },
+        },
+        shots: { select: { durationSec: true } },
         _count: {
           select: { characters: true, shots: true, breakdownElements: true },
         },
@@ -120,6 +125,36 @@ export default async function GuionPage({
   const limitsText = isPro
     ? `Hasta ${SCRIPT_ANALYSIS_PRO_DAILY_LIMIT} análisis al día.`
     : `${SCRIPT_ANALYSIS_FREE_DAILY_LIMIT} análisis al día, ${SCRIPT_ANALYSIS_FREE_LIFETIME_LIMIT} en total con el plan gratuito.`;
+
+  // ---- Resumen de la tira: lo que un director de producción mira primero.
+  const intCount = scenes.filter((s) => s.intExt === "INT").length;
+  const extCount = scenes.filter((s) => s.intExt === "EXT").length;
+  const mixedCount = scenes.length - intCount - extCount;
+  const nightCount = scenes.filter((s) => s.dayPart === "NIGHT").length;
+  const castIds = new Set(
+    scenes.flatMap((s) => s.characters.map((c) => c.character.id)),
+  );
+  const noLocation = scenes.filter((s) => !s.location);
+  const noCast = scenes.filter((s) => s.characters.length === 0);
+  const sceneList = (list: typeof scenes) => {
+    const nums = list.map((s) => s.number);
+    if (nums.length === 1) return `la ${nums[0]}`;
+    if (nums.length <= 5)
+      return `la ${nums.slice(0, -1).join(", ")} y la ${nums[nums.length - 1]}`;
+    return `${nums.slice(0, 4).join(", ")}… (${nums.length})`;
+  };
+
+  // Peso de cada escena para la barra: no guardamos páginas ni octavos, así
+  // que si los planos tienen duración se usa la suma de segundos; si no, lo
+  // que hay que preparar (planos + elementos de desglose + personajes).
+  const timed = scenes.some((s) => s.shots.some((sh) => sh.durationSec));
+  const weightOf = (s: (typeof scenes)[number]) =>
+    timed
+      ? s.shots.reduce((n, sh) => n + (sh.durationSec ?? 0), 0)
+      : s._count.shots * 2 + s._count.breakdownElements + s._count.characters;
+  const maxWeight = Math.max(1, ...scenes.map(weightOf));
+  const fmtSeconds = (sec: number) =>
+    sec >= 60 ? `${Math.floor(sec / 60)}′${String(sec % 60).padStart(2, "0")}″` : `${sec}″`;
 
   // Formulario mínimo para crear una escena: se abre desde un botón y, al
   // crearla, la acción lleva directamente a su ficha para rellenarla.
@@ -206,39 +241,57 @@ export default async function GuionPage({
     ) : null;
 
   const hasPending =
-    pendingAnalyses.length > 0 || pendingContinuityChecks.length > 0;
+    pendingAnalyses.length > 0 ||
+    pendingContinuityChecks.length > 0 ||
+    noLocation.length > 0 ||
+    noCast.length > 0;
 
   return (
     <div className="pb-16">
       <PageHeader
         eyebrow="Preproducción"
         title="Guion"
-        description={
-          scenes.length > 0
-            ? `${plural(scenes.length, "escena", "escenas")}${currentFile ? ` · ${currentFile.fileName}` : ""}. Abre una escena para decir quién sale, qué se necesita y en qué localización se rueda.`
-            : "Las escenas de tu película, en orden. De aquí salen el desglose, la lista de planos y el plan de rodaje."
-        }
+        description="Las escenas de tu película en orden, como tiras de un guion. Abre una para decir dónde se rueda, quién sale y qué se necesita."
         actions={
           scenes.length > 0 ? (
-            <details className="group relative">
-              <summary className="btn btn-primary list-none [&::-webkit-details-marker]:hidden">
-                <span
-                  aria-hidden
-                  className="transition-transform group-open:rotate-45"
-                >
-                  +
-                </span>
-                Nueva escena
-              </summary>
-              <div className={POPOVER}>{newSceneForm}</div>
-            </details>
+            <CreateDialog
+              label="Nueva escena"
+              title="Nueva escena"
+              description="Ponle número; al crearla se abre su ficha para rellenar el resto."
+            >
+              {newSceneForm}
+            </CreateDialog>
           ) : undefined
         }
       />
 
+      {/* ------------------------------------------------ cómo voy */}
+      {scenes.length > 0 && (
+        <dl className="mt-9 flex flex-wrap items-baseline gap-x-8 gap-y-3">
+          {[
+            [scenes.length, scenes.length === 1 ? "escena" : "escenas"],
+            [intCount, "int."],
+            [extCount, "ext."],
+            ...(mixedCount > 0 ? [[mixedCount, "int./ext."] as const] : []),
+            [nightCount, nightCount === 1 ? "noche" : "noches"],
+            [castIds.size, castIds.size === 1 ? "personaje" : "personajes"],
+          ].map(([n, label], i) => (
+            <div
+              key={String(label)}
+              className={`flex items-baseline gap-2 ${i === 1 ? "sm:border-l sm:border-line sm:pl-8" : ""}`}
+            >
+              <dd className="font-display text-2xl leading-none font-black tabular-nums">
+                {n}
+              </dd>
+              <dt className="font-sans text-sm text-muted">{label}</dt>
+            </div>
+          ))}
+        </dl>
+      )}
+
       {/* ------------------------------------------------ pendiente */}
       {hasPending && (
-        <ul className="mt-8 space-y-3" aria-label="Pendiente de revisar">
+        <ul className="mt-7 space-y-3" aria-label="Pendiente de revisar">
           {pendingAnalyses.map((analysis) => (
             <li key={analysis.id}>
               <Link
@@ -287,6 +340,48 @@ export default async function GuionPage({
               </Link>
             </li>
           ))}
+          {noLocation.length > 0 && (
+            <li>
+              <Link
+                href={`/app/${projectId}/guion/${noLocation[0].id}`}
+                className="group flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-l-2 border-warn py-1 pl-4"
+              >
+                <span className="font-sans text-[15px]">
+                  <strong className="font-semibold">
+                    {noLocation.length === scenes.length
+                      ? "Ninguna escena tiene localización."
+                      : `${plural(noLocation.length, "escena", "escenas")} sin localización: ${sceneList(noLocation)}.`}
+                  </strong>{" "}
+                  <span className="text-muted">
+                    Sin ella no se pueden agrupar en el plan de rodaje.
+                  </span>
+                </span>
+                <span className="eyebrow text-accent group-hover:underline">
+                  Abrir la {noLocation[0].number} →
+                </span>
+              </Link>
+            </li>
+          )}
+          {noCast.length > 0 && (
+            <li>
+              <Link
+                href={`/app/${projectId}/guion/${noCast[0].id}`}
+                className="group flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 border-l-2 border-warn py-1 pl-4"
+              >
+                <span className="font-sans text-[15px]">
+                  <strong className="font-semibold">
+                    {`${plural(noCast.length, "escena", "escenas")} sin personajes: ${sceneList(noCast)}.`}
+                  </strong>{" "}
+                  <span className="text-muted">
+                    Márcalos para saber a quién citar cada día.
+                  </span>
+                </span>
+                <span className="eyebrow text-accent group-hover:underline">
+                  Abrir la {noCast[0].number} →
+                </span>
+              </Link>
+            </li>
+          )}
         </ul>
       )}
 
@@ -402,69 +497,107 @@ export default async function GuionPage({
       ) : (
         <div className="mt-10 grid gap-x-14 gap-y-14 lg:grid-cols-[minmax(0,1fr)_19rem]">
           {/* ------------------------------------------------ escenas */}
-          <section aria-label="Escenas">
-            <div className="hidden grid-cols-[3.5rem_minmax(0,1fr)_auto] gap-x-5 px-5 pr-28 pb-2 sm:grid">
-              <span className="eyebrow text-muted">Esc.</span>
-              <span className="eyebrow text-muted">Encabezado</span>
-              <span className="eyebrow text-right text-muted">En la escena</span>
+          <section aria-labelledby="guion-tira">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2 pb-3">
+              <h2 id="guion-tira" className={SECTION_TITLE}>
+                La tira del guion
+              </h2>
+              {/* Leyenda de la franja de color: como en un stripboard. */}
+              <ul className="flex flex-wrap gap-x-4 gap-y-1" aria-label="Color de la franja">
+                {STRIP_LEGEND.map((item) => (
+                  <li
+                    key={item.label}
+                    className="flex items-center gap-1.5 font-sans text-xs text-muted"
+                  >
+                    <span
+                      aria-hidden
+                      className="h-2.5 w-1 rounded-full"
+                      style={{ background: item.color }}
+                    />
+                    {item.label}
+                  </li>
+                ))}
+              </ul>
             </div>
-            <ol className="sheet divide-y divide-line">
+            <ol className="sheet divide-y divide-line overflow-hidden">
               {scenes.map((scene) => {
-                const meta = [
-                  scene._count.characters > 0 &&
-                    plural(scene._count.characters, "personaje", "personajes"),
-                  scene._count.shots > 0 &&
-                    plural(scene._count.shots, "plano", "planos"),
-                  scene._count.breakdownElements > 0 &&
-                    plural(
-                      scene._count.breakdownElements,
-                      "elemento",
-                      "elementos",
-                    ),
-                ].filter(Boolean) as string[];
+                const weight = weightOf(scene);
+                const pct = Math.max(4, Math.round((weight / maxWeight) * 100));
+                const weightLabel = timed
+                  ? weight > 0
+                    ? fmtSeconds(weight)
+                    : "sin duración"
+                  : [
+                      plural(scene._count.shots, "plano", "planos"),
+                      plural(
+                        scene._count.breakdownElements,
+                        "elem.",
+                        "elem.",
+                      ),
+                    ].join(" · ");
                 return (
                   <li key={scene.id} className="group relative">
+                    {/* Franja de color: interior/exterior y día/noche. */}
+                    <span
+                      aria-hidden
+                      className="absolute inset-y-0 left-0 w-1.5"
+                      style={{ background: stripColor(scene.intExt, scene.dayPart) }}
+                    />
                     <Link
                       href={`/app/${projectId}/guion/${scene.id}`}
-                      className="grid grid-cols-[2.75rem_minmax(0,1fr)] items-baseline gap-x-4 px-4 py-4 transition-colors hover:bg-accent/[0.04] focus-visible:bg-accent/[0.06] focus-visible:outline-none sm:grid-cols-[3.5rem_minmax(0,1fr)_auto] sm:gap-x-5 sm:px-5 sm:pr-28"
+                      className="grid grid-cols-[2.75rem_minmax(0,1fr)] gap-x-4 py-5 pr-4 pl-6 transition-colors hover:bg-accent/[0.05] focus-visible:bg-accent/[0.07] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent sm:grid-cols-[3.25rem_minmax(0,1fr)_12rem] sm:gap-x-5 sm:pr-8 sm:pl-7"
                     >
-                      <span className="font-display text-2xl leading-none font-black tabular-nums transition-colors group-hover:text-accent sm:text-3xl">
+                      <span className="font-display text-3xl leading-none font-black tabular-nums transition-colors group-hover:text-accent sm:text-4xl">
                         {scene.number}
                       </span>
                       <span className="min-w-0">
-                        <span className="block truncate font-mono text-[13px] font-medium tracking-wide uppercase">
-                          {INT_EXT_LABELS[scene.intExt]}.{" "}
-                          {scene.location ? (
-                            scene.location.name
-                          ) : (
-                            <span className="text-muted normal-case italic">
-                              sin localización
-                            </span>
-                          )}{" "}
-                          — {DAY_PART_LABELS[scene.dayPart]}
-                        </span>
+                        <SceneSlug
+                          intExt={scene.intExt}
+                          dayPart={scene.dayPart}
+                          location={scene.location?.name}
+                          className="block text-[15px] leading-snug sm:text-base"
+                        />
                         {scene.description && (
-                          <span className="mt-1 block truncate font-sans text-sm text-muted">
+                          <span className="mt-1 block font-sans text-sm leading-relaxed text-muted sm:truncate">
                             {scene.description}
                           </span>
                         )}
-                        {meta.length > 0 && (
-                          <span className="mt-1 block font-mono text-[11px] text-muted sm:hidden">
-                            {meta.join(" · ")}
-                          </span>
-                        )}
+                        <span className="mt-2.5 flex flex-wrap gap-1.5">
+                          {scene.characters.length > 0 ? (
+                            scene.characters.map(({ character }) => (
+                              <span
+                                key={character.id}
+                                className="rounded-full bg-fg/[0.08] px-2.5 py-0.5 font-mono text-[10.5px] tracking-wide text-fg/85 uppercase"
+                              >
+                                {character.name}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="font-sans text-xs text-warn">
+                              Sin personajes
+                            </span>
+                          )}
+                        </span>
                       </span>
-                      <span className="hidden text-right font-mono text-[11px] whitespace-nowrap text-muted sm:block">
-                        {meta.length > 0 ? (
-                          meta.join(" · ")
-                        ) : (
-                          <span className="opacity-60">Por completar</span>
-                        )}
+                      {/* Barra de peso: cuánto hay que preparar (o cuánto dura). */}
+                      <span className="col-span-2 mt-3 flex items-center gap-3 sm:col-span-1 sm:mt-0 sm:flex-col sm:items-stretch sm:gap-1.5 sm:self-center">
+                        <span
+                          aria-hidden
+                          className="h-1.5 flex-1 overflow-hidden rounded-full bg-fg/[0.08] sm:flex-none"
+                        >
+                          <span
+                            className="block h-full rounded-full bg-fg/60"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </span>
+                        <span className="shrink-0 font-mono text-[11px] text-muted tabular-nums sm:text-right">
+                          {weightLabel}
+                        </span>
                       </span>
                     </Link>
                     <form
                       action={deleteScene.bind(null, projectId, scene.id)}
-                      className="absolute right-3 bottom-2 sm:top-1/2 sm:bottom-auto sm:-translate-y-1/2 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:transition-opacity [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:focus-within:opacity-100"
+                      className="absolute top-4 right-3 sm:top-3 sm:right-5 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:transition-opacity [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:focus-within:opacity-100"
                     >
                       <DeleteButton
                         confirmMessage="¿Eliminar esta escena?"
@@ -475,7 +608,12 @@ export default async function GuionPage({
                 );
               })}
             </ol>
-            <div className="mt-4 flex justify-end">
+            <div className="mt-3 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-3">
+            <p className="font-sans text-xs text-muted">
+              {timed
+                ? "La barra es la duración prevista de sus planos."
+                : "La barra es cuánto hay que preparar: planos, elementos del desglose y personajes."}
+            </p>
               <DangerConfirmButton
                 trigger="Eliminar todas las escenas"
                 triggerClassName="link-action hover:text-danger"
@@ -487,7 +625,7 @@ export default async function GuionPage({
           </section>
 
           {/* ------------------------------------------------ herramientas */}
-          <aside className="space-y-10 lg:pt-7">
+          <aside className="space-y-10 lg:pt-10">
             <section aria-labelledby="guion-archivo">
               <h2 id="guion-archivo" className={SECTION_TITLE}>
                 Archivo del guion
@@ -600,6 +738,13 @@ export default async function GuionPage({
             {backupsSection}
           </aside>
         </div>
+      )}
+      {scenes.length > 0 && (
+        <NextTool
+          href={`/app/${projectId}/desglose`}
+          label="Desglose"
+          hint="Todo lo que hay que conseguir para rodar estas escenas."
+        />
       )}
     </div>
   );

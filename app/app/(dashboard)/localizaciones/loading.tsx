@@ -1,6 +1,6 @@
 import { Skeleton } from "@/components/Skeleton";
 
-// Misma forma que la biblioteca: cabecera, cifras, mapa y filas (sin cajas).
+// Misma forma que la biblioteca: cabecera, línea de estado, lista y mapa.
 export default function LocalizacionesLoading() {
   return (
     <div>
@@ -8,22 +8,20 @@ export default function LocalizacionesLoading() {
       <Skeleton className="mt-3 h-8 w-56" />
       <Skeleton className="mt-3 h-3 w-80" />
 
-      <div className="mt-10 flex items-center justify-between">
-        <Skeleton className="h-6 w-48" />
-        <Skeleton className="h-9 w-48 rounded-full" />
-      </div>
-      <Skeleton className="mt-5 h-[360px] w-full rounded-xl" />
-
-      <div className="mt-8 divide-y divide-line border-y border-line">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="flex items-center justify-between gap-4 py-4">
-            <div>
-              <Skeleton className="h-4 w-44" />
-              <Skeleton className="mt-2 h-3 w-64" />
+      <Skeleton className="mt-10 h-6 w-96 max-w-full" />
+      <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
+        <Skeleton className="h-[300px] w-full rounded-xl lg:order-2 lg:h-[560px]" />
+        <div className="sheet divide-y divide-line lg:order-1">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="flex gap-4 px-5 py-4">
+              <Skeleton className="h-7 w-7 rounded-full" />
+              <div>
+                <Skeleton className="h-4 w-44" />
+                <Skeleton className="mt-2 h-3 w-64" />
+              </div>
             </div>
-            <Skeleton className="h-3 w-16" />
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );

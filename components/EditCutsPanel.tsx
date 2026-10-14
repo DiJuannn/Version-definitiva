@@ -22,20 +22,30 @@ export type EditCutView = {
 
 const INPUT = "field w-full";
 
-const STATUS_DOT: Record<string, string> = {
-  FINAL: "bg-success",
-  REVIEW: "bg-warn",
-  DRAFT: "bg-muted",
+// Color del estado: solo para estado (borrador apagado, revisión ámbar, final verde).
+const STATUS_RING: Record<string, string> = {
+  FINAL: "border-success bg-success text-bg",
+  REVIEW: "border-warn text-warn",
+  DRAFT: "border-muted text-muted",
+};
+const STATUS_TEXT: Record<string, string> = {
+  FINAL: "text-success",
+  REVIEW: "text-warn",
+  DRAFT: "text-muted",
 };
 
+// Una versión en la línea de tiempo: el nodo (v1, v2…) en el raíl y, al
+// lado, nombre, fecha, duración, notas y el estado.
 function CutRow({
   projectId,
   cut,
   index,
+  isLast,
 }: {
   projectId: string;
   cut: EditCutView;
   index: number;
+  isLast: boolean;
 }) {
   const [pending, startTransition] = useTransition();
   const action = updateEditCut.bind(null, projectId, cut.id);
@@ -52,24 +62,40 @@ function CutRow({
     .join(" · ");
 
   return (
-    <li className="grid grid-cols-[2rem_1fr] gap-x-4 gap-y-3 py-5 sm:grid-cols-[2.5rem_1fr_auto]">
-      <span className="font-display text-2xl leading-none font-black text-muted tabular-nums">
-        {index + 1}
+    <li className="relative grid grid-cols-[3rem_minmax(0,1fr)] gap-x-5 pb-10 last:pb-0 sm:grid-cols-[3.5rem_minmax(0,1fr)_auto]">
+      {/* Raíl: une cada versión con la siguiente. */}
+      {!isLast && (
+        <span
+          aria-hidden
+          className="absolute top-12 bottom-0 left-6 w-px bg-line sm:left-7"
+        />
+      )}
+      <span
+        className={`relative z-10 flex h-12 w-12 items-center justify-center rounded-full border-2 font-mono text-sm font-bold sm:h-14 sm:w-14 sm:text-base ${STATUS_RING[cut.status] ?? STATUS_RING.DRAFT} ${cut.status === "FINAL" ? "" : "bg-bg"}`}
+      >
+        v{index + 1}
       </span>
-      <div className="min-w-0">
-        <p className="font-display text-lg leading-tight font-bold">
-          {cut.name}
+      <div className="min-w-0 pt-1.5 sm:pt-2.5">
+        <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span className="font-display text-xl leading-tight font-bold">
+            {cut.name}
+          </span>
+          {isLast && (
+            <span className="font-mono text-[10px] tracking-widest text-accent uppercase">
+              Última versión
+            </span>
+          )}
         </p>
         <p className="mt-0.5 font-mono text-[11px] text-muted">
           {meta || "Sin fecha ni duración"}
         </p>
         {cut.notes && (
-          <p className="mt-2 max-w-2xl font-sans text-sm leading-relaxed">
+          <p className="mt-2 max-w-2xl font-sans text-[15px] leading-relaxed">
             {cut.notes}
           </p>
         )}
       </div>
-      <div className="col-start-2 flex items-center gap-3 sm:col-start-auto sm:self-start">
+      <div className="col-start-2 mt-3 flex items-center gap-3 sm:col-start-auto sm:mt-0 sm:self-start sm:pt-2.5">
         <form
           action={(fd) => {
             fd.set("durationLabel", cut.durationLabel ?? "");
@@ -79,10 +105,6 @@ function CutRow({
           }}
           className="flex items-center gap-2"
         >
-          <span
-            aria-hidden
-            className={`h-2 w-2 shrink-0 rounded-full ${STATUS_DOT[cut.status] ?? "bg-muted"}`}
-          />
           <label className="sr-only" htmlFor={`cut-status-${cut.id}`}>
             Estado de {cut.name}
           </label>
@@ -92,7 +114,7 @@ function CutRow({
             defaultValue={cut.status}
             disabled={pending}
             onChange={(e) => e.currentTarget.form?.requestSubmit()}
-            className="field py-1.5 pl-2 font-mono text-[11px] tracking-widest uppercase disabled:opacity-60"
+            className={`field py-1.5 pl-2 font-mono text-[11px] tracking-widest uppercase disabled:opacity-60 ${STATUS_TEXT[cut.status] ?? ""}`}
           >
             {Object.entries(EDIT_CUT_STATUS_LABELS).map(([value, label]) => (
               <option key={value} value={value}>
@@ -132,7 +154,7 @@ export function EditCutsPanel({
     <div>
       <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-4">
         <p className="max-w-2xl font-sans text-[15px] leading-relaxed text-muted">
-          Una línea por cada versión del montaje que enseñas o revisas: cuándo,
+          Cada versión del montaje que enseñas o revisas, en orden: cuándo,
           cuánto dura y qué se dijo al verla. El vídeo se queda donde montes.
         </p>
         {cuts.length > 0 && (
@@ -142,7 +164,7 @@ export function EditCutsPanel({
             aria-expanded={open}
             className="btn btn-primary"
           >
-            {open ? "Cerrar" : "+ Nuevo corte"}
+            {open ? "Cerrar" : "+ Nueva versión"}
           </button>
         )}
       </div>
@@ -153,10 +175,10 @@ export function EditCutsPanel({
             createAction(fd);
             setOpen(cuts.length === 0);
           }}
-          className="sheet mt-6 grid gap-x-5 gap-y-4 p-6 sm:grid-cols-2 sm:p-8 lg:grid-cols-4"
+          className="paper mt-6 grid gap-x-5 gap-y-4 p-6 sm:grid-cols-2 sm:p-8 lg:grid-cols-4"
         >
           <p className="font-display text-lg font-bold sm:col-span-2 lg:col-span-4">
-            {cuts.length === 0 ? "Apunta el primer corte" : "Nuevo corte"}
+            {cuts.length === 0 ? "Apunta la primera versión" : "Nueva versión"}
           </p>
           <FormField label="Nombre" className="lg:col-span-2">
             <input
@@ -189,20 +211,21 @@ export function EditCutsPanel({
               savedLabel="✓ Añadido"
               className="btn btn-secondary"
             >
-              Añadir corte
+              Añadir versión
             </SubmitButton>
           </div>
         </form>
       )}
 
       {cuts.length > 0 && (
-        <ol className="sheet mt-6 divide-y divide-line px-5 sm:px-8">
+        <ol aria-label="Versiones del montaje" className="mt-10 max-w-4xl">
           {cuts.map((cut, index) => (
             <CutRow
               key={cut.id}
               projectId={projectId}
               cut={cut}
               index={index}
+              isLast={index === cuts.length - 1}
             />
           ))}
         </ol>

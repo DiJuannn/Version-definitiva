@@ -109,7 +109,7 @@ export function ProjectSubNav({
                 ▾
               </span>
             </summary>
-            <div className="menu-panel absolute left-0 z-40 mt-2 w-[22rem] max-w-[calc(100vw-2rem)]">
+            <div className="menu-panel absolute left-0 z-40 mt-2 hidden w-[22rem] max-w-[calc(100vw-2rem)] group-open:block">
               <p className="px-3 pt-1.5 pb-2 font-mono text-[10px] tracking-widest text-muted/70 uppercase">{group.label}</p>
               {tools.map((tool) => {
                 const toolActive = isOn(toolHref(tool));

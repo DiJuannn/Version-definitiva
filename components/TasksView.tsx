@@ -83,31 +83,97 @@ function NewTaskForm({
   );
 }
 
-// Lista de tareas compartida por /app/tareas (toda la organización) y
-// /app/[id]/tareas (un proyecto): mismos controles, distinto alcance. Las
-// tareas se agrupan por cuándo hay que hacerlas, que es lo primero que se
-// busca al abrir la lista.
-export async function TasksView({
+// Botón «Nueva tarea» con su diálogo, para ponerlo en las acciones de la
+// cabecera de la página (una sola acción principal arriba a la derecha).
+export async function NewTaskButton({
   organizationId,
   projectId,
-  showCompleted,
-  completedHref,
 }: {
   organizationId: string;
   projectId?: string;
+}) {
+  const projects = projectId
+    ? []
+    : await prisma.project.findMany({ where: { organizationId }, orderBy: { name: "asc" }, select: { id: true, name: true } });
+  return (
+    <CreateDialog
+      label="Nueva tarea"
+      title="Nueva tarea"
+      description="Aparecerá en esta lista y en el Inicio. Los detalles (responsable, notas) se añaden después en su ficha."
+    >
+      <NewTaskForm projectId={projectId} projects={projects} />
+    </CreateDialog>
+  );
+}
+
+// «hoy», «mañana», «en 3 días», «hace 2 días»: lo que se entiende sin contar.
+function relative(date: Date, startOfToday: Date) {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  const diff = Math.round((d.getTime() - startOfToday.getTime()) / DAY);
+  if (diff === 0) return "hoy";
+  if (diff === 1) return "mañana";
+  if (diff === -1) return "ayer";
+  if (diff < 0) return `hace ${-diff} días`;
+  return `en ${diff} días`;
+}
+
+function initials(name: string) {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part.charAt(0))
+    .join("")
+    .toUpperCase();
+}
+
+// Prioridad: barra a la izquierda de la fila y etiqueta. Solo urgente y alta
+// llevan color (son las que cambian el orden del día); media y baja, texto.
+const PRIORITY_STYLE: Record<TaskPriority, { bar: string; text: string }> = {
+  URGENT: { bar: "bg-danger", text: "text-danger" },
+  HIGH: { bar: "bg-warn", text: "text-warn" },
+  MEDIUM: { bar: "", text: "text-muted" },
+  LOW: { bar: "", text: "text-muted/70" },
+};
+
+// Lista de tareas compartida por /app/tareas (toda la organización) y
+// /app/[id]/tareas (un proyecto): mismos controles, distinto alcance. Las
+// tareas se agrupan por cuándo hay que hacerlas, que es lo primero que se
+// busca al abrir la lista; dentro de cada grupo, la prioridad se ve en el
+// borde de la fila.
+export async function TasksView({
+  organizationId,
+  projectId,
+  filterProjectId,
+  showCompleted,
+  completedHref,
+  filter,
+  hideCreate,
+}: {
+  organizationId: string;
+  projectId?: string;
+  // Vista de organización filtrada por un proyecto (sin cambiar de alcance).
+  filterProjectId?: string;
   showCompleted: boolean;
   // Enlace que alterna "ver completadas".
   completedHref: string;
+  // Control de filtro (segmentado) que pinta la página junto a la línea de estado.
+  filter?: React.ReactNode;
+  // La página ya pone «Nueva tarea» en su cabecera.
+  hideCreate?: boolean;
 }) {
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(startOfToday.getTime() + DAY);
   const inAWeek = new Date(startOfToday.getTime() + 7 * DAY);
+  const scopeProjectId = projectId ?? filterProjectId;
 
   const [tasks, projects, templates] = await Promise.all([
     prisma.task.findMany({
       where: {
         organizationId,
-        ...(projectId ? { projectId } : {}),
+        ...(scopeProjectId ? { projectId: scopeProjectId } : {}),
         ...(showCompleted ? {} : { status: { not: "DONE" } }),
       },
       orderBy: [{ status: "asc" }, { dueDate: "asc" }, { createdAt: "desc" }],
@@ -127,54 +193,66 @@ export async function TasksView({
 
   type Row = (typeof tasks)[number];
   const open = tasks.filter((t) => t.status !== "DONE");
-  type Group = { id: string; title: string; tone?: "danger"; rows: Row[] };
+  type Group = { id: string; title: string; hint?: string; dot: string; tone?: "danger"; rows: Row[] };
+  const endOfWeek = new Date(inAWeek.getTime() - DAY);
   const groups: Group[] = ([
     {
       id: "vencidas",
       title: "Vencidas",
+      hint: "ya ha pasado su fecha",
+      dot: "bg-danger",
       tone: "danger" as const,
       rows: open.filter((t) => t.dueDate && t.dueDate < startOfToday),
     },
     {
+      id: "hoy",
+      title: "Hoy",
+      dot: "bg-accent",
+      rows: open.filter((t) => t.dueDate && t.dueDate >= startOfToday && t.dueDate < tomorrow),
+    },
+    {
       id: "semana",
       title: "Esta semana",
-      rows: open.filter((t) => t.dueDate && t.dueDate >= startOfToday && t.dueDate < inAWeek),
+      hint: `hasta el ${endOfWeek.toLocaleDateString("es-ES", { weekday: "long", day: "numeric" })}`,
+      dot: "bg-fg",
+      rows: open.filter((t) => t.dueDate && t.dueDate >= tomorrow && t.dueDate < inAWeek),
     },
-    { id: "despues", title: "Más adelante", rows: open.filter((t) => t.dueDate && t.dueDate >= inAWeek) },
-    { id: "sin-fecha", title: "Sin fecha", rows: open.filter((t) => !t.dueDate) },
-    { id: "hechas", title: "Completadas", rows: tasks.filter((t) => t.status === "DONE") },
+    { id: "despues", title: "Más adelante", dot: "bg-muted", rows: open.filter((t) => t.dueDate && t.dueDate >= inAWeek) },
+    { id: "sin-fecha", title: "Sin fecha", hint: "ponles fecha para que no se olviden", dot: "bg-muted/50", rows: open.filter((t) => !t.dueDate) },
+    { id: "hechas", title: "Completadas", dot: "bg-success", rows: tasks.filter((t) => t.status === "DONE") },
   ] satisfies Group[]).filter((g) => g.rows.length > 0);
 
-  const overdue = groups.find((g) => g.id === "vencidas")?.rows.length ?? 0;
+  const overdueRows = groups.find((g) => g.id === "vencidas")?.rows ?? [];
+  const soon = groups.filter((g) => g.id === "hoy" || g.id === "semana").reduce((n, g) => n + g.rows.length, 0);
+  const undated = groups.find((g) => g.id === "sin-fecha")?.rows.length ?? 0;
   const urgent = open.filter((t) => t.priority === "URGENT").length;
+
+  const summary = [
+    soon > 0 ? `${soon} esta semana` : null,
+    urgent > 0 ? `${urgent} ${urgent === 1 ? "urgente" : "urgentes"}` : null,
+    undated > 0 ? `${undated} sin fecha` : null,
+  ].filter(Boolean);
 
   return (
     <div>
-      {/* Resumen y acciones, en una línea. */}
-      <div className="mt-10 flex flex-wrap items-center justify-between gap-x-8 gap-y-4 border-b border-line pb-4">
-        <p className="flex flex-wrap items-baseline gap-x-6 gap-y-1 font-sans text-sm text-muted">
-          <span>
-            <span className="font-display text-2xl font-black text-fg tabular-nums">{open.length}</span>{" "}
-            {open.length === 1 ? "pendiente" : "pendientes"}
-          </span>
-          {overdue > 0 && (
-            <span>
-              <span className="font-display text-2xl font-black text-danger tabular-nums">{overdue}</span>{" "}
-              {overdue === 1 ? "vencida" : "vencidas"}
-            </span>
-          )}
-          {urgent > 0 && (
-            <span>
-              <span className="font-display text-2xl font-black text-fg tabular-nums">{urgent}</span>{" "}
-              {urgent === 1 ? "urgente" : "urgentes"}
-            </span>
+      {/* Cómo voy: en frases, y lo vencido como aviso que se puede abrir. */}
+      <div className="mt-8 flex flex-wrap items-center justify-between gap-x-8 gap-y-4">
+        <p className="font-sans text-[15px] leading-relaxed text-muted">
+          {open.length === 0 ? (
+            "Nada pendiente."
+          ) : (
+            <>
+              <span className="font-display text-2xl font-black text-fg tabular-nums">{open.length}</span>{" "}
+              {open.length === 1 ? "tarea pendiente" : "tareas pendientes"}
+              {summary.length > 0 && <>: {summary.join(", ")}.</>}
+            </>
           )}
         </p>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
           <Link href={completedHref} className="link-action">
             {showCompleted ? "Ocultar completadas" : "Ver completadas"}
           </Link>
-          {tasks.length > 0 && (
+          {!hideCreate && tasks.length > 0 && (
             <CreateDialog
               label="Nueva tarea"
               title="Nueva tarea"
@@ -185,6 +263,19 @@ export async function TasksView({
           )}
         </div>
       </div>
+      {overdueRows.length > 0 && (
+        <ul className="mt-3 space-y-1.5">
+          {overdueRows.slice(0, 3).map((task) => (
+            <li key={task.id} className="border-l-2 border-danger pl-3 font-sans text-sm text-muted">
+              <Link href={`/app/tareas/${task.id}`} className="text-fg hover:text-accent">
+                {task.title}
+              </Link>{" "}
+              venció {relative(task.dueDate!, startOfToday)}: cámbiale la fecha o márcala como hecha.
+            </li>
+          ))}
+        </ul>
+      )}
+      {filter && <div className="mt-6">{filter}</div>}
 
       {tasks.length === 0 ? (
         <section aria-labelledby="primera-tarea" className="py-10">
@@ -196,72 +287,109 @@ export async function TasksView({
             y se marca como hecha con un toque en su círculo.
           </p>
           <div className="mt-8 max-w-5xl">
-            <NewTaskForm projectId={projectId} projects={projects} inline />
+            <NewTaskForm projectId={scopeProjectId} projects={projects} inline />
           </div>
         </section>
       ) : (
         groups.map((group) => (
-          <section key={group.id} aria-labelledby={`grupo-${group.id}`} className="mt-8">
-            <h2
-              id={`grupo-${group.id}`}
-              className={`eyebrow flex items-center gap-2 ${group.tone === "danger" ? "!text-danger" : ""}`}
-            >
-              {group.title}
-              <span className="tabular-nums opacity-70">{group.rows.length}</span>
+          <section key={group.id} aria-labelledby={`grupo-${group.id}`} className="mt-10">
+            <h2 id={`grupo-${group.id}`} className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <span className="flex items-center gap-2.5">
+                <span aria-hidden className={`h-2 w-2 translate-y-[-2px] rounded-full ${group.dot}`} />
+                <span
+                  className={`font-display text-lg font-black tracking-tight uppercase ${
+                    group.tone === "danger" ? "text-danger" : ""
+                  }`}
+                >
+                  {group.title}
+                </span>
+                <span className="font-mono text-[11px] text-muted tabular-nums">{group.rows.length}</span>
+              </span>
+              {group.hint && <span className="font-sans text-[13px] text-muted">{group.hint}</span>}
             </h2>
-            <ul className="mt-2 divide-y divide-line border-y border-line">
+            <ul className="sheet mt-3 divide-y divide-line overflow-hidden">
               {[...group.rows]
-                .sort((a, b) => (a.dueDate?.getTime() ?? Infinity) - (b.dueDate?.getTime() ?? Infinity))
+                .sort(
+                  (a, b) =>
+                    (a.dueDate?.getTime() ?? Infinity) - (b.dueDate?.getTime() ?? Infinity) ||
+                    Object.keys(PRIORITY_STYLE).indexOf(a.priority) - Object.keys(PRIORITY_STYLE).indexOf(b.priority),
+                )
                 .map((task) => {
                   const done = task.status === "DONE";
                   const late = !done && task.dueDate !== null && task.dueDate < startOfToday;
-                  const meta = [
-                    !projectId ? (task.project?.name ?? "Sin proyecto") : null,
-                    task.assignedTo,
-                    task.category,
-                  ].filter(Boolean);
+                  const style = PRIORITY_STYLE[task.priority];
                   return (
-                    <li key={task.id} className="flex items-center gap-4 py-3.5">
+                    <li key={task.id} className="relative flex items-center gap-4 px-4 py-3.5 sm:px-5">
+                      {!done && style.bar && <span aria-hidden className={`absolute inset-y-0 left-0 w-[3px] ${style.bar}`} />}
                       <TaskCheck taskId={task.id} done={done} title={task.title} />
                       <Link
                         href={`/app/tareas/${task.id}`}
                         className="group flex min-w-0 flex-1 items-center justify-between gap-4"
                       >
-                        <span className="min-w-0">
+                        <span className="min-w-0 flex-1">
                           <span
-                            className={`block truncate font-sans text-[15px] transition-colors group-hover:text-accent ${
+                            className={`block font-sans text-[15px] leading-snug transition-colors group-hover:text-accent ${
                               done ? "text-muted line-through" : ""
                             }`}
                           >
                             {task.title}
                           </span>
-                          {(meta.length > 0 || task.status === "IN_PROGRESS") && (
-                            <span className="mt-0.5 block truncate font-sans text-[13px] text-muted">
-                              {task.status === "IN_PROGRESS" && <span className="text-accent">En marcha · </span>}
-                              {meta.join(" · ")}
-                            </span>
-                          )}
-                        </span>
-                        <span className="flex shrink-0 items-center gap-4 font-mono text-[11px] tracking-wide text-muted uppercase">
-                          {(task.priority === "URGENT" || task.priority === "HIGH") && !done && (
-                            <span
-                              className={`flex items-center gap-1.5 ${
-                                task.priority === "URGENT" ? "text-danger" : "text-warn"
-                              }`}
-                            >
-                              <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current" />
-                              <span className="sr-only sm:not-sr-only">{PRIORITY_LABELS[task.priority]}</span>
-                            </span>
-                          )}
-                          {task.dueDate && (
-                            <span className={`w-14 text-right tabular-nums ${late ? "text-danger" : ""}`}>
-                              {shortDate(task.dueDate)}
-                            </span>
-                          )}
-                          <span aria-hidden className="hidden font-sans text-base text-muted transition-colors group-hover:text-accent sm:inline">
-                            →
+                          <span className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1.5 font-sans text-[13px] text-muted">
+                            {!done && (task.priority === "URGENT" || task.priority === "HIGH") && (
+                              <span className={`font-mono text-[10px] tracking-widest uppercase ${style.text}`}>
+                                {PRIORITY_LABELS[task.priority]}
+                              </span>
+                            )}
+                            {task.status === "IN_PROGRESS" && (
+                              <span className="inline-flex items-center gap-1.5 text-accent">
+                                <span aria-hidden className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent motion-reduce:animate-none" />
+                                En marcha
+                              </span>
+                            )}
+                            {!projectId && (
+                              <span className="rounded-full bg-fg/[0.07] px-2 py-0.5 text-[12px] text-fg/80">
+                                {task.project?.name ?? "Sin proyecto"}
+                              </span>
+                            )}
+                            {task.category && <span>{task.category}</span>}
+                            {task.assignedTo && (
+                              <span className="inline-flex items-center gap-1.5 text-fg/85">
+                                <span
+                                  aria-hidden
+                                  className="grid h-5 w-5 place-items-center rounded-full bg-accent/20 font-mono text-[9px] font-bold text-fg"
+                                >
+                                  {initials(task.assignedTo)}
+                                </span>
+                                {task.assignedTo}
+                              </span>
+                            )}
                           </span>
                         </span>
+                        {task.dueDate && (
+                          // La fecha como una hoja de calendario: mes arriba, día grande.
+                          <span className="flex shrink-0 items-center gap-3">
+                            {!done && (
+                              <span className={`hidden text-right font-sans text-[12px] sm:block ${late ? "text-danger" : "text-muted"}`}>
+                                {relative(task.dueDate, startOfToday)}
+                              </span>
+                            )}
+                            <span
+                              className={`grid w-11 overflow-hidden rounded-md text-center leading-none ${
+                                late ? "bg-danger/15 text-danger" : "bg-fg/[0.06]"
+                              }`}
+                              aria-label={`${shortDate(task.dueDate)}${done ? "" : `, ${relative(task.dueDate, startOfToday)}`}`}
+                            >
+                              <span
+                                className={`py-1 font-mono text-[9px] tracking-widest uppercase ${
+                                  late ? "bg-danger/25" : "bg-fg/[0.07] text-muted"
+                                }`}
+                              >
+                                {task.dueDate.toLocaleDateString("es-ES", { month: "short" }).replace(".", "")}
+                              </span>
+                              <span className="py-1.5 font-display text-lg font-black tabular-nums">{task.dueDate.getDate()}</span>
+                            </span>
+                          </span>
+                        )}
                       </Link>
                     </li>
                   );
@@ -273,7 +401,7 @@ export async function TasksView({
 
       {!projectId && (
         <section aria-labelledby="plantillas" className="mt-20">
-          <div className="flex flex-wrap items-end justify-between gap-4 border-b border-line pb-3">
+          <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <h2 id="plantillas" className="font-display text-2xl font-black tracking-tight uppercase">
                 Plantillas de checklist
@@ -285,9 +413,9 @@ export async function TasksView({
             </div>
           </div>
 
-          <ul className={`divide-y divide-line ${templates.length > 0 ? "border-b border-line" : ""}`}>
+          <ul className="sheet mt-4 divide-y divide-line">
             {templates.map((template) => (
-              <li key={template.id}>
+              <li key={template.id} className="px-4 sm:px-5">
                 <details className="group">
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-4">
                     <span className="flex min-w-0 items-baseline gap-3">
@@ -362,20 +490,18 @@ export async function TasksView({
                 </details>
               </li>
             ))}
+            <li className="px-4 sm:px-5">
+              <form action={createChecklistTemplate} className="flex max-w-lg items-end gap-3 py-4">
+                <label className="min-w-0 flex-1">
+                  <span className="sr-only">Nombre de la plantilla nueva</span>
+                  <input name="name" required placeholder="+ Nueva plantilla (p. ej. «Entrega a festivales»)" className="field-line" />
+                </label>
+                <SubmitButton pendingLabel="Creando…" savedLabel="✓ Creada" className="link-action text-fg">
+                  Crear
+                </SubmitButton>
+              </form>
+            </li>
           </ul>
-
-          <form
-            action={createChecklistTemplate}
-            className="flex max-w-lg items-end gap-3 py-5"
-          >
-            <label className="min-w-0 flex-1">
-              <span className="sr-only">Nombre de la plantilla nueva</span>
-              <input name="name" required placeholder="+ Nueva plantilla (p. ej. «Entrega a festivales»)" className="field-line" />
-            </label>
-            <SubmitButton pendingLabel="Creando…" savedLabel="✓ Creada" className="link-action text-fg">
-              Crear
-            </SubmitButton>
-          </form>
         </section>
       )}
     </div>

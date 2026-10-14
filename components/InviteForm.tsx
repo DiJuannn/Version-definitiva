@@ -13,19 +13,19 @@ export function InviteForm() {
   const [state, formAction] = useActionState(createInvite, undefined);
 
   return (
-    <form action={formAction} className="mt-5 grid gap-x-4 gap-y-3 sm:grid-cols-[minmax(0,1fr)_8rem]">
+    <form action={formAction} className="mt-5 grid gap-x-3 gap-y-4 sm:grid-cols-[minmax(0,1fr)_8rem] lg:grid-cols-1">
       <label className="block">
         <span className="font-mono text-[10px] tracking-[0.18em] text-muted uppercase">Email</span>
-        <input name="email" type="email" placeholder="nombre@ejemplo.com" required className="field-line" />
+        <input name="email" type="email" placeholder="nombre@ejemplo.com" required className="field mt-1.5 w-full" />
       </label>
       <label className="block">
         <span className="font-mono text-[10px] tracking-[0.18em] text-muted uppercase">Entra como</span>
-        <select name="role" defaultValue="MEMBER" className="field-line">
+        <select name="role" defaultValue="MEMBER" className="field mt-1.5 w-full">
           <option value="MEMBER">Miembro</option>
           <option value="ADMIN">Admin</option>
         </select>
       </label>
-      <div className="mt-2 sm:col-span-2">
+      <div className="mt-1 sm:col-span-2 lg:col-span-1">
         <SubmitButton
           pendingLabel="Creando enlace…"
           savedLabel={state && "success" in state ? "✓ Enlace creado" : undefined}
@@ -35,7 +35,7 @@ export function InviteForm() {
         </SubmitButton>
       </div>
       {state && "error" in state && (
-        <p role="alert" className="border-l-2 border-danger pl-3 font-sans text-sm text-danger sm:col-span-2">
+        <p role="alert" className="border-l-2 border-danger pl-3 font-sans text-sm text-danger sm:col-span-2 lg:col-span-1">
           {state.error}
         </p>
       )}

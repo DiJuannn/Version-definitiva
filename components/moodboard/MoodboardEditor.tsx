@@ -19,6 +19,7 @@ import { findFreeSpot } from "@/components/canvas/free-spot";
 import { loadImageSize, prepareImage } from "@/components/canvas/image-utils";
 import { BoardProvider, CardNodeView, type CardNode } from "@/components/moodboard/nodes";
 import { MoodboardAiPanel } from "@/components/moodboard/MoodboardAiPanel";
+import { MOODBOARD_AI_EVENT } from "@/components/moodboard/MoodboardAiButton";
 import { RemoteCursors, type RemoteCursor } from "@/components/project-map/RemoteCursors";
 import { cleanColor, cleanName, colorFor, uniquePeers, type Peer } from "@/components/canvas/presence";
 import { fetchMoodboard, moodboardVersion, saveMoodboard, uploadMoodboardImage } from "@/lib/actions/moodboard";
@@ -31,27 +32,48 @@ import type { MoodboardProposal } from "@/lib/moodboard-ai";
 
 const nodeTypes = { card: CardNodeView };
 
-// Lienzo claro: React Flow toma sus colores de estas variables, que a su vez
-// salen de los tokens de Taller (así no hay grises fijos).
+// El tablero es una mesa de luz: superficie clara (taller-paper) sobre la
+// mesa oscura, porque ahí está el trabajo. React Flow toma sus colores de
+// estas variables, que salen de los tokens del papel.
 const FLOW_THEME = {
   "--xy-background-color": "transparent",
-  "--xy-background-pattern-dots-color": "color-mix(in srgb, var(--fg) 20%, transparent)",
-  "--xy-controls-button-background-color": "var(--bg-raised)",
-  "--xy-controls-button-background-color-hover": "color-mix(in srgb, var(--fg) 6%, var(--bg-raised))",
-  "--xy-controls-button-color": "var(--fg)",
-  "--xy-controls-button-color-hover": "var(--fg)",
-  "--xy-controls-button-border-color": "var(--line)",
-  "--xy-controls-box-shadow":
-    "0 1px 2px color-mix(in srgb, var(--fg) 12%, transparent), 0 8px 20px -12px color-mix(in srgb, var(--fg) 40%, transparent)",
+  "--xy-background-pattern-dots-color": "color-mix(in srgb, var(--fg) 18%, transparent)",
   "--xy-minimap-background-color": "var(--bg-raised)",
-  "--xy-minimap-mask-background-color": "color-mix(in srgb, var(--fg) 7%, transparent)",
-  "--xy-minimap-node-background-color": "color-mix(in srgb, var(--fg) 22%, transparent)",
+  "--xy-minimap-mask-background-color": "color-mix(in srgb, var(--fg) 8%, transparent)",
+  "--xy-minimap-node-background-color": "color-mix(in srgb, var(--fg) 24%, transparent)",
   "--xy-attribution-background-color": "transparent",
 } as React.CSSProperties;
 
-// Sombra de lo que flota sobre la mesa (barra, menús, avisos).
-const FLOAT_SHADOW =
-  "0 1px 2px color-mix(in srgb, var(--fg) 10%, transparent), 0 12px 32px -14px color-mix(in srgb, var(--fg) 40%, transparent)";
+// Los mandos que flotan sobre el tablero (barra, zoom, menús, avisos) son
+// piezas del marco: oscuras (taller-ink), como los menús de arriba. Estas
+// variables se declaran en el propio elemento de los mandos para que
+// var(--bg-raised) etc. se resuelvan con los tokens oscuros.
+const CONTROLS_THEME = {
+  "--xy-controls-button-background-color": "var(--bg-raised)",
+  "--xy-controls-button-background-color-hover": "color-mix(in srgb, var(--fg) 10%, var(--bg-raised))",
+  "--xy-controls-button-color": "var(--fg)",
+  "--xy-controls-button-color-hover": "var(--fg)",
+  "--xy-controls-button-border-color": "color-mix(in srgb, var(--fg) 8%, transparent)",
+  "--xy-controls-box-shadow": "0 10px 28px -12px rgb(0 0 0 / 0.55)",
+} as React.CSSProperties;
+
+// Sombra de lo que flota sobre el tablero claro (barra, menús, avisos).
+const FLOAT_SHADOW = "0 0 0 1px rgb(255 255 255 / 0.06), 0 14px 34px -14px rgb(0 0 0 / 0.6)";
+
+// Cómo se dice un tipo de tarjeta en el recuento de arriba.
+const TYPE_LABELS: { types: MoodboardCard["type"][]; one: string; many: string }[] = [
+  { types: ["image"], one: "imagen", many: "imágenes" },
+  { types: ["reference"], one: "referencia", many: "referencias" },
+  { types: ["palette"], one: "paleta", many: "paletas" },
+  { types: ["note"], one: "nota", many: "notas" },
+  { types: ["scene", "character", "location"], one: "del proyecto", many: "del proyecto" },
+];
+
+// «1, 2, 4 y 6»
+function listEs(items: string[]): string {
+  if (items.length <= 1) return items.join("");
+  return `${items.slice(0, -1).join(", ")} y ${items[items.length - 1]}`;
+}
 
 // Iconos de trazo (24×24) de la barra de herramientas.
 const ICONS = {
@@ -139,6 +161,13 @@ function Board(props: Props) {
   const [aiUsed, setAiUsed] = useState(props.aiUsed);
 
   const atFreeLimit = !isPro && nodes.length >= freeLimit;
+
+  // El botón principal de la cabecera (fuera del editor) abre el panel de IA.
+  useEffect(() => {
+    const open = () => setAiOpen(true);
+    window.addEventListener(MOODBOARD_AI_EVENT, open);
+    return () => window.removeEventListener(MOODBOARD_AI_EVENT, open);
+  }, []);
 
   const markDirty = useCallback(() => {
     setDirty(true);
@@ -559,27 +588,66 @@ function Board(props: Props) {
 
   const ctx = useMemo(() => ({ projectId, lookup, update, remove }), [projectId, lookup, update, remove]);
 
+  // ---- Cómo va el tablero (en directo, a partir de las tarjetas)
+  const cards = nodes.map((n) => n.data.card);
+  const breakdown = TYPE_LABELS.map((t) => {
+    const n = cards.filter((c) => t.types.includes(c.type)).length;
+    return n > 0 ? `${n} ${n === 1 ? t.one : t.many}` : null;
+  }).filter((x): x is string => x !== null);
+
+  // Escenas del guion que ya tienen su tarjeta en el tablero (por id o, si el
+  // id cambió, por número, igual que las tarjetas vivas).
+  const sceneCardBy = new Map<string, string>();
+  for (const n of nodes) {
+    const c = n.data.card;
+    if (c.type !== "scene") continue;
+    const s =
+      lookup.scenes.find((x) => x.id === c.refId) ??
+      lookup.scenes.find((x) => x.number.toLowerCase() === c.label?.toLowerCase());
+    if (s && !sceneCardBy.has(s.id)) sceneCardBy.set(s.id, n.id);
+  }
+  const missingScenes = lookup.scenes.filter((s) => !sceneCardBy.has(s.id));
+
+  // Tarjetas vivas que apuntan a algo que ya no está en el proyecto.
+  const brokenLive = cards.filter((c) => {
+    const label = c.label?.toLowerCase();
+    if (c.type === "scene")
+      return !lookup.scenes.some((s) => s.id === c.refId || s.number.toLowerCase() === label);
+    if (c.type === "character")
+      return !lookup.characters.some((x) => x.id === c.refId || x.name.toLowerCase() === label);
+    if (c.type === "location")
+      return !lookup.locations.some((x) => x.id === c.refId || x.name.toLowerCase() === label);
+    return false;
+  }).length;
+
+  // Toque en un número de escena: si ya está en el tablero, se va a ella; si
+  // no, se pone su tarjeta viva.
+  function showScene(sceneId: string, number: string) {
+    const nodeId = sceneCardBy.get(sceneId);
+    if (nodeId) {
+      setNodes((ns) => ns.map((n) => ({ ...n, selected: n.id === nodeId })));
+      void fitView({ nodes: [{ id: nodeId }], padding: 0.8, maxZoom: 1, duration: 400 });
+      return;
+    }
+    addCard({ type: "scene", w: 240, h: 130, refId: sceneId, label: number });
+  }
+
   const status =
     saveState === "error"
       ? { text: "No se ha guardado", tone: "text-danger", dot: "bg-danger" }
       : saveState === "saving"
-        ? {
-            text: "Guardando…",
-            tone: "text-muted",
-            dot: "bg-muted animate-pulse",
-          }
+        ? { text: "Guardando…", tone: "text-muted", dot: "bg-muted motion-safe:animate-pulse" }
         : dirty
           ? { text: "Cambios sin guardar", tone: "text-muted", dot: "bg-warn" }
           : { text: "Guardado", tone: "text-muted", dot: "bg-success" };
 
+  // Botones de la barra (oscura, del marco).
   const tool =
-    "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-sans text-[13px] font-medium text-fg/80 transition-colors hover:bg-fg/[0.06] hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:outline-none aria-expanded:bg-fg/[0.06] aria-expanded:text-fg disabled:opacity-50";
-  const toolAi =
-    "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 font-sans text-[13px] font-medium text-accent transition-colors hover:bg-accent/10 focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:outline-none";
+    "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 font-sans text-[13px] font-medium text-fg/75 transition-colors hover:bg-fg/[0.08] hover:text-fg focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:outline-none aria-expanded:bg-fg/[0.08] aria-expanded:text-fg disabled:opacity-50";
   const toolLabel = "hidden md:inline";
-  const popover = "absolute top-full left-0 z-20 mt-2 rounded-xl bg-bg-raised";
+  const popover = "menu-panel absolute top-full left-0 z-20 mt-2";
   const popRow =
-    "flex w-full items-start gap-3 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-fg/[0.05] focus-visible:bg-fg/[0.05] focus-visible:outline-none";
+    "flex w-full items-start gap-3 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-fg/[0.06] focus-visible:bg-fg/[0.06] focus-visible:outline-none";
 
   const projectItems =
     projectTab === "scenes"
@@ -589,6 +657,7 @@ function Board(props: Props) {
           sub: s.heading,
           type: "scene" as const,
           label: s.number,
+          onBoard: sceneCardBy.has(s.id),
         }))
       : projectTab === "characters"
         ? lookup.characters.map((c) => ({
@@ -597,6 +666,7 @@ function Board(props: Props) {
             sub: c.actor ?? "Sin actor",
             type: "character" as const,
             label: c.name,
+            onBoard: cards.some((x) => x.type === "character" && x.refId === c.id),
           }))
         : lookup.locations.map((l) => ({
             key: l.id,
@@ -604,57 +674,144 @@ function Board(props: Props) {
             sub: l.address ?? "",
             type: "location" as const,
             label: l.name,
+            onBoard: cards.some((x) => x.type === "location" && x.refId === l.id),
           }));
 
-  // Estado de guardado y quién más está en el tablero (arriba a la derecha;
-  // en móvil, abajo, para no tapar la barra de herramientas).
+  // Lo básico de un moodboard que aún no está en el tablero.
+  const essentials = [
+    { type: "palette", label: "una paleta de color" },
+    { type: "image", label: "imágenes" },
+    { type: "reference", label: "referencias" },
+  ].filter((e) => !cards.some((c) => c.type === e.type));
+
   const others = uniquePeers(peers);
-  const saveStatus = (
-    <div
-      className="flex items-center gap-3 rounded-full bg-bg-raised/90 py-1 pr-3 pl-2 font-sans text-xs backdrop-blur"
-      style={{ boxShadow: FLOAT_SHADOW }}
-    >
-      {others.length > 0 && (
-        <span className="flex -space-x-1.5" aria-label={`${others.length} personas más en el moodboard`}>
-          {others.slice(0, 5).map((p) => (
-            <span
-              key={p.userId}
-              title={`${p.name} está en este moodboard`}
-              className="flex h-6 w-6 items-center justify-center rounded-full font-mono text-[10px] font-bold text-[#17171b] ring-2 ring-bg-raised"
-              style={{ background: p.color }}
-            >
-              {p.name.slice(0, 1).toUpperCase()}
-            </span>
-          ))}
-        </span>
-      )}
-      {!isPro && (
-        <span className={atFreeLimit ? "text-warn" : "text-muted"} title="Tarjetas usadas en el plan gratuito">
-          {nodes.length} de {freeLimit} tarjetas
-        </span>
-      )}
-      <span className={`flex items-center gap-1.5 ${status.tone}`} role="status">
-        <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} aria-hidden />
-        {status.text}
-      </span>
-      {saveState === "error" && (
-        <button type="button" onClick={() => void save()} className="link-action text-accent">
-          Reintentar
-        </button>
-      )}
-    </div>
-  );
+  const sceneCount = lookup.scenes.length;
+  const covered = sceneCount - missingScenes.length;
 
   return (
     <BoardProvider value={ctx}>
-      {/* La mesa de referencias: siempre en claro (taller-paper), sea cual sea
-          el fondo de alrededor; las tarjetas son papeles encima. */}
+      {/* ---- Cómo va: recuento, guardado y quién más está, sobre la mesa. */}
+      <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-3">
+        <p className="font-sans text-sm text-muted">
+          <span className="font-display text-xl font-bold text-fg tabular-nums">{nodes.length}</span>{" "}
+          {nodes.length === 1 ? "tarjeta" : "tarjetas"}
+          {!isPro && <span className={atFreeLimit ? "text-warn" : undefined}> de {freeLimit} en el plan gratuito</span>}
+          {breakdown.length > 0 && <span className="hidden sm:inline"> · {breakdown.join(" · ")}</span>}
+        </p>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 font-sans text-xs">
+          {others.length > 0 && (
+            <span className="flex items-center gap-2 text-muted">
+              <span className="flex -space-x-1.5" aria-hidden>
+                {others.slice(0, 5).map((p) => (
+                  <span
+                    key={p.userId}
+                    title={`${p.name} está en este moodboard`}
+                    className="flex h-6 w-6 items-center justify-center rounded-full font-mono text-[10px] font-bold text-[#17171b] ring-2 ring-bg"
+                    style={{ background: p.color }}
+                  >
+                    {p.name.slice(0, 1).toUpperCase()}
+                  </span>
+                ))}
+              </span>
+              {others.length === 1 ? `${others[0].name} está aquí` : `${others.length} personas más aquí`}
+            </span>
+          )}
+          {!isPro && (
+            <span className={aiLimit - aiUsed > 0 ? "text-muted" : "text-muted/70"}>
+              {Math.max(0, aiLimit - aiUsed) === 1
+                ? "1 sugerencia de IA gratis"
+                : `${Math.max(0, aiLimit - aiUsed)} sugerencias de IA`}
+            </span>
+          )}
+          <span className={`flex items-center gap-1.5 ${status.tone}`} role="status">
+            <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} aria-hidden />
+            {status.text}
+          </span>
+          {saveState === "error" && (
+            <button type="button" onClick={() => void save()} className="link-action text-accent">
+              Reintentar
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Qué escenas del guion ya tienen su tarjeta: se ve de un vistazo y un
+          toque pone la que falta (o lleva a la que ya está). */}
+      {sceneCount > 0 && (
+        <div
+          className={`mt-4 border-l-2 pl-3 ${missingScenes.length > 0 && nodes.length > 0 ? "border-warn" : "border-line"}`}
+        >
+          <p className="font-sans text-[13px] leading-relaxed text-fg">
+            {missingScenes.length === 0 ? (
+              <>Las {sceneCount} escenas del guion tienen su tarjeta en el tablero.</>
+            ) : covered === 0 ? (
+              <>
+                Ninguna escena del guion está aún en el tablero.{" "}
+                <span className="text-muted">Toca un número para traerla, con su encabezado y descripción.</span>
+              </>
+            ) : (
+              <>
+                {covered} de {sceneCount} escenas tienen tarjeta
+                {missingScenes.length <= 8 && (
+                  <>
+                    {" "}
+                    · {missingScenes.length === 1 ? "falta la escena" : "faltan las escenas"}{" "}
+                    {listEs(missingScenes.map((s) => s.number))}
+                  </>
+                )}
+                . <span className="text-muted">Toca un número para traerla o encontrarla.</span>
+              </>
+            )}
+          </p>
+          <ul className="mt-2.5 flex flex-wrap gap-1.5" aria-label="Escenas del guion">
+            {lookup.scenes.map((s) => {
+              const on = sceneCardBy.has(s.id);
+              return (
+                <li key={s.id}>
+                  <button
+                    type="button"
+                    onClick={() => showScene(s.id, s.number)}
+                    title={`${on ? "Ver" : "Añadir al tablero"}: escena ${s.number} · ${s.heading}`}
+                    aria-label={`Escena ${s.number}${on ? ", ya en el tablero: ver" : ": añadir al tablero"}`}
+                    className={`flex h-8 min-w-8 items-center justify-center rounded-md px-2 font-mono text-[11px] font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none ${
+                      on
+                        ? "bg-accent text-bg hover:opacity-90"
+                        : "text-muted ring-1 ring-line ring-inset hover:text-fg hover:ring-accent"
+                    }`}
+                  >
+                    {s.number}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+
+      {nodes.length > 0 && essentials.length > 0 && (
+        <p className="mt-3 border-l-2 border-line pl-3 font-sans text-[13px] text-muted">
+          Aún no hay {listEs(essentials.map((e) => e.label))} en el tablero.
+        </p>
+      )}
+
+      {brokenLive > 0 && (
+        <p className="mt-3 border-l-2 border-warn pl-3 font-sans text-[13px] text-fg">
+          {brokenLive === 1
+            ? "1 tarjeta apunta a algo que ya no existe en el proyecto"
+            : `${brokenLive} tarjetas apuntan a algo que ya no existe en el proyecto`}
+          <span className="text-muted"> · está marcada en ámbar en el tablero; puedes quitarla.</span>
+        </p>
+      )}
+
+      {/* ---- La mesa de luz: el tablero en claro (taller-paper) sobre la mesa
+          oscura, con sombra profunda como una hoja; las tarjetas son papeles y
+          fotos encima. Los mandos que flotan son del marco: oscuros. */}
       <div
         ref={wrapperRef}
-        className="taller-paper relative h-[calc(100dvh-16rem)] min-h-[520px] overflow-hidden rounded-xl"
+        className="taller-paper relative mt-6 h-[calc(100dvh-18rem)] min-h-[520px] overflow-hidden rounded-xl"
         style={{
-          background: "color-mix(in srgb, var(--fg) 4%, var(--bg))",
-          boxShadow: "inset 0 0 0 1px color-mix(in srgb, var(--fg) 8%, transparent)",
+          background: "#e6e4df",
+          boxShadow: "0 0 0 1px rgb(255 255 255 / 0.04), 0 30px 60px -30px rgb(0 0 0 / 0.9)",
         }}
         onPointerMove={onPointerMove}
         onPointerLeave={onPointerLeave}
@@ -681,18 +838,32 @@ function Board(props: Props) {
           proOptions={{ hideAttribution: false }}
           style={FLOW_THEME}
         >
-          <Background gap={22} size={1.2} />
-          <Controls showInteractive={false} className="overflow-hidden rounded-lg" />
-          {nodes.length > 0 && <MiniMap pannable zoomable className="hidden! overflow-hidden rounded-lg sm:block!" />}
+          <Background gap={24} size={1.3} />
+          <Controls
+            showInteractive={false}
+            className="taller-ink overflow-hidden rounded-lg"
+            style={CONTROLS_THEME}
+            aria-label="Zoom del tablero"
+          />
+          {nodes.length > 0 && (
+            <MiniMap
+              pannable
+              zoomable
+              ariaLabel="Mapa del tablero"
+              className="hidden! overflow-hidden rounded-lg shadow-[0_10px_28px_-14px_rgb(0_0_0/0.5)] sm:block!"
+              style={{ width: 168, height: 112 }}
+            />
+          )}
 
           <RemoteCursors cursors={cursors} />
           <Panel position="top-left" className="m-3! max-w-[calc(100%-1.5rem)]">
             <div
-              className="flex flex-wrap items-center gap-0.5 rounded-xl bg-bg-raised p-1"
+              className="taller-ink flex flex-wrap items-center gap-0.5 rounded-xl bg-bg-raised p-1 text-fg"
               style={{ boxShadow: FLOAT_SHADOW }}
               role="toolbar"
               aria-label="Añadir al tablero"
             >
+              <span className="eyebrow hidden px-2.5 lg:inline">Añadir</span>
               <button
                 type="button"
                 className={tool}
@@ -722,10 +893,7 @@ function Board(props: Props) {
                   <span className={toolLabel}>{uploading > 0 ? "Subiendo…" : "Imagen"}</span>
                 </button>
                 {menu === "image" && (
-                  <div
-                    className={`${popover} w-[min(20rem,calc(100vw-3rem))] p-1.5`}
-                    style={{ boxShadow: FLOAT_SHADOW }}
-                  >
+                  <div className={`${popover} w-[min(20rem,calc(100vw-3rem))]`}>
                     <button type="button" className={popRow} onClick={() => fileRef.current?.click()}>
                       <span className="mt-0.5 text-accent">
                         <Icon d={ICONS.upload} />
@@ -792,6 +960,7 @@ function Board(props: Props) {
                 <Icon d={ICONS.reference} />
                 <span className={toolLabel}>Referencia</span>
               </button>
+              <span className="mx-1 h-5 w-px bg-fg/10" aria-hidden />
               <div className="relative">
                 <button
                   type="button"
@@ -805,7 +974,7 @@ function Board(props: Props) {
                   <span className={toolLabel}>Del proyecto</span>
                 </button>
                 {menu === "project" && (
-                  <div className={`${popover} w-[min(20rem,calc(100vw-3rem))]`} style={{ boxShadow: FLOAT_SHADOW }}>
+                  <div className={`${popover} w-[min(21rem,calc(100vw-3rem))] p-0!`}>
                     <p className="px-4 pt-3 font-sans text-xs leading-relaxed text-muted">
                       Tarjetas vivas: si cambias la escena o el personaje, la tarjeta se actualiza sola.
                     </p>
@@ -857,9 +1026,15 @@ function Board(props: Props) {
                                 <span className="block truncate font-sans text-xs text-muted">{item.sub}</span>
                               )}
                             </span>
-                            <span className="ml-auto self-center font-sans text-lg leading-none text-muted" aria-hidden>
-                              +
-                            </span>
+                            {item.onBoard ? (
+                              <span className="ml-auto shrink-0 self-center font-mono text-[10px] tracking-wider text-accent uppercase">
+                                En el tablero
+                              </span>
+                            ) : (
+                              <span className="ml-auto self-center font-sans text-lg leading-none text-muted" aria-hidden>
+                                +
+                              </span>
+                            )}
                           </button>
                         ))
                       )}
@@ -867,21 +1042,6 @@ function Board(props: Props) {
                   </div>
                 )}
               </div>
-              <span className="mx-1 h-5 w-px bg-line" aria-hidden />
-              <button type="button" className={toolAi} title="Referencias con IA" onClick={() => setAiOpen(true)}>
-                <span aria-hidden className="text-[13px]">
-                  ✦
-                </span>
-                <span className={toolLabel}>Referencias con IA</span>
-                {!isPro && (
-                  <span
-                    className="rounded-full bg-accent/12 px-1.5 font-mono text-[10px] leading-4"
-                    title="Sugerencias gratis que te quedan"
-                  >
-                    {Math.max(0, aiLimit - aiUsed)}
-                  </span>
-                )}
-              </button>
               <input
                 ref={fileRef}
                 type="file"
@@ -904,13 +1064,6 @@ function Board(props: Props) {
                 onClick={() => setMenu(null)}
               />
             )}
-          </Panel>
-
-          <Panel position="top-right" className="m-3! hidden sm:block">
-            {saveStatus}
-          </Panel>
-          <Panel position="bottom-center" className="mb-3! sm:hidden">
-            {saveStatus}
           </Panel>
         </ReactFlow>
 
@@ -950,7 +1103,7 @@ function Board(props: Props) {
 
         {(notice || saveError) && (
           <div
-            className="absolute bottom-16 left-1/2 z-20 flex w-max max-w-[92%] -translate-x-1/2 items-center gap-3 rounded-r-lg border-l-2 border-warn bg-bg-raised py-2.5 pr-3 pl-4 font-sans text-[13px] text-fg sm:bottom-4"
+            className="taller-ink absolute bottom-4 left-1/2 z-20 flex w-max max-w-[92%] -translate-x-1/2 items-center gap-3 rounded-r-lg border-l-2 border-warn bg-bg-raised py-2.5 pr-3 pl-4 font-sans text-[13px] text-fg"
             style={{ boxShadow: FLOAT_SHADOW }}
             role="alert"
           >

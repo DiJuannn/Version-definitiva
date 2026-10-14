@@ -1,6 +1,6 @@
 import { getCurrentProfile } from "@/lib/current-user";
 import { PageHeader } from "@/components/PageHeader";
-import { VehiclesFleet } from "@/components/VehiclesFleet";
+import { NewVehicleButton, VehiclesFleet } from "@/components/VehiclesFleet";
 
 export default async function VehiculosPage() {
   const profile = await getCurrentProfile();
@@ -11,9 +11,10 @@ export default async function VehiculosPage() {
       <PageHeader
         eyebrow="Recursos"
         title="Vehículos"
-        description="La flota de la productora. Se apunta una vez y se reserva para cada día de rodaje desde el Plan de rodaje de cualquier proyecto."
+        description="La flota de la productora: qué es cada vehículo, su matrícula y qué días está reservado. Se reserva desde el Plan de rodaje."
+        actions={<NewVehicleButton />}
       />
-      <VehiclesFleet organizationId={profile.organizationId} />
+      <VehiclesFleet organizationId={profile.organizationId} hideCreate />
     </div>
   );
 }

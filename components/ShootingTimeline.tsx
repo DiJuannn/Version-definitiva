@@ -6,6 +6,7 @@ import type { RealtimeChannel } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { assignSceneToDay, assignShotToDay } from "@/lib/actions/shooting-days";
 import { useToast } from "@/components/Toast";
+import { DAY_STRIP, STRIP_LEGEND, stripTone } from "@/lib/stripboard";
 
 export type TimelineShot = {
   id: string;
@@ -19,9 +20,17 @@ export type TimelineShot = {
 export type TimelineScene = {
   id: string;
   number: string;
+  intExt: string;
+  dayPart: string;
   intExtLabel: string;
   dayPartLabel: string;
   locationName: string | null;
+  // Lo que pasa en la escena (encabezado corto de la tira).
+  heading: string | null;
+  characters: string[];
+  // Días en los que la escena consta como asignada (solo para avisar en la
+  // tira cuando la escena tiene día pero sus planos aún no).
+  sceneDayIds: string[];
   // Día de la escena cuando NO tiene planos. Con planos, cada plano lleva su día.
   dayId: string | null;
   shots: TimelineShot[];
@@ -30,10 +39,12 @@ export type TimelineScene = {
 export type TimelineDay = {
   id: string;
   label: string;
+  longLabel: string;
+  callTime: string | null;
   conflicts: { personName: string; reason: string }[];
 };
 
-// Lo que se ve en una columna: una escena entera, o el trozo de escena (sus
+// Lo que se ve en una tira: una escena entera, o el trozo de escena (sus
 // planos) que se rueda ese día.
 type Chunk = {
   key: string;
@@ -80,10 +91,21 @@ function applyMove(
   });
 }
 
-function ChunkCard({
+const plural = (n: number, one: string, many: string) =>
+  `${n} ${n === 1 ? one : many}`;
+
+// Controles dentro de una tira de color: el texto es oscuro sobre fondo claro
+// fijo, así que no usan los tokens de la mesa sino el color de la tira.
+const STRIP_SELECT =
+  "min-w-0 rounded-md border border-black/20 bg-black/[0.06] px-2 py-1 font-sans text-xs text-current outline-none transition-colors hover:border-black/40 focus-visible:border-black/60 focus-visible:ring-2 focus-visible:ring-black/40";
+
+// Una tira del tablero: una escena (o sus planos de ese día) a lo ancho, con
+// el color de INT/EXT y DÍA/NOCHE. Se coge y se suelta en otra jornada.
+function Strip({
   chunk,
   projectId,
   columns,
+  dayNumberById,
   onMove,
   onMoveShot,
   isPressing,
@@ -95,6 +117,7 @@ function ChunkCard({
   chunk: Chunk;
   projectId: string;
   columns: { id: string; label: string }[];
+  dayNumberById: Map<string, number>;
   onMove: (columnId: string) => void;
   onMoveShot: (shotId: string, columnId: string) => void;
   isPressing: boolean;
@@ -105,128 +128,186 @@ function ChunkCard({
 }) {
   const { scene, shots } = chunk;
   const [showShots, setShowShots] = useState(false);
+  const tone = stripTone(scene.intExt, scene.dayPart);
   const totalShots = scene.shots.length;
   const doneShots = shots.filter((s) => s.done).length;
+  const heading = [scene.locationName, scene.heading]
+    .filter(Boolean)
+    .join(" — ");
+  // Escena con día en el plan pero cuyos planos siguen sin repartir.
+  const markedDays =
+    chunk.columnId === UNASSIGNED && totalShots > 0
+      ? scene.sceneDayIds
+          .map((id) => dayNumberById.get(id))
+          .filter((n): n is number => n !== undefined)
+      : [];
+  const stop = (e: React.PointerEvent) => e.stopPropagation();
 
   return (
-    <div
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      onPointerCancel={onPointerUp}
-      style={{ touchAction: isDragging ? "none" : "auto" }}
-      // Las escenas son tarjetas a propósito: son fichas que se cogen y se
-      // sueltan en otro día. Es la única superficie del tablero.
-      className={
-        "sheet cursor-grab p-3.5 transition-[transform,opacity,box-shadow] duration-150 select-none hover:-translate-y-0.5 active:cursor-grabbing " +
-        (isDragging ? "opacity-30" : "") +
-        (isPressing ? " scale-95 ring-2 ring-accent" : "")
-      }
-    >
-      <div className="flex items-baseline justify-between gap-2">
-        <p className="font-display text-base font-bold">
-          Escena {scene.number}
+    <li>
+      <div
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+        style={{
+          touchAction: isDragging ? "none" : "auto",
+          backgroundColor: tone.bg,
+          color: tone.fg,
+        }}
+        className={
+          "group/strip grid cursor-grab grid-cols-[3.25rem_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1.5 rounded-md py-2 pr-2 pl-1 transition-[transform,opacity,box-shadow] duration-150 select-none active:cursor-grabbing motion-reduce:transition-none sm:grid-cols-[1rem_3.5rem_7.5rem_minmax(0,1fr)_5.5rem_minmax(0,11rem)_8.5rem_auto] sm:gap-x-4 sm:py-1.5 sm:pl-2 " +
+          (isDragging
+            ? "opacity-30"
+            : "hover:-translate-y-px hover:shadow-lg") +
+          (isPressing ? " scale-[0.98] ring-2 ring-accent" : "")
+        }
+      >
+        {/* Asa: solo decorativa; arrastra la tira entera. */}
+        <span
+          aria-hidden
+          className="hidden font-mono text-xs leading-none opacity-40 group-hover/strip:opacity-80 sm:block"
+        >
+          ⋮⋮
+        </span>
+        <p className="col-start-1 row-span-3 row-start-1 text-center font-display text-2xl leading-none font-black tabular-nums sm:col-start-auto sm:row-span-1 sm:row-start-auto sm:text-left">
+          <span className="sr-only">Escena </span>
+          {scene.number}
         </p>
+        <p className="col-start-2 row-start-1 min-w-0 truncate font-mono text-[11px] font-semibold tracking-wider uppercase sm:col-start-auto sm:row-start-auto sm:text-[10px]">
+          {scene.intExtLabel} · {scene.dayPartLabel}
+        </p>
+        <p
+          className="col-span-2 col-start-2 row-start-2 min-w-0 truncate font-sans text-sm font-medium sm:col-span-1 sm:col-start-auto sm:row-start-auto"
+          title={heading || undefined}
+        >
+          {heading || <span className="opacity-50">Sin localización</span>}
+          {markedDays.length > 0 && (
+            <span className="ml-2 font-mono text-[10px] font-normal opacity-70">
+              en el día {markedDays.join(" y ")} · planos sin repartir
+            </span>
+          )}
+        </p>
+
+        {/* En el móvil, planos y personajes comparten la segunda línea; en
+            escritorio son columnas propias (sm:contents). */}
+        <div className="col-start-2 row-start-3 flex min-w-0 items-baseline gap-3 sm:contents">
+          {/* Planos: abre la lista para mover planos sueltos. */}
+          <div onPointerDown={stop} className="shrink-0">
+            {totalShots > 0 ? (
+              <button
+                type="button"
+                onClick={() => setShowShots((v) => !v)}
+                aria-expanded={showShots}
+                aria-label={`Planos de la escena ${scene.number}`}
+                className="inline-flex items-center gap-1 rounded font-mono text-[11px] whitespace-nowrap underline decoration-black/25 underline-offset-2 hover:decoration-black/70 focus-visible:outline-2 focus-visible:outline-black/60"
+              >
+                {shots.length === totalShots
+                  ? plural(totalShots, "plano", "planos")
+                  : `${shots.length}/${totalShots} pl.`}
+                {doneShots > 0 ? ` · ${doneShots}✓` : ""}
+                <span aria-hidden>{showShots ? "▴" : "▾"}</span>
+              </button>
+            ) : (
+              <span className="font-mono text-[11px] opacity-50">
+                sin planos
+              </span>
+            )}
+          </div>
+
+          <p
+            className="min-w-0 truncate font-sans text-xs"
+            title={scene.characters.join(", ") || undefined}
+          >
+            {scene.characters.length > 0 ? (
+              <>
+                <span className="sr-only">Personajes: </span>
+                {scene.characters.join(", ")}
+              </>
+            ) : (
+              <span className="opacity-50">Sin personajes</span>
+            )}
+          </p>
+        </div>
+
+        {/* Alternativa al arrastre: sirve con teclado y en táctil sin pulsación larga. */}
+        <div
+          onPointerDown={stop}
+          className="col-start-3 row-start-1 flex items-center sm:col-start-auto sm:row-start-auto"
+        >
+          <label className="sr-only" htmlFor={`move-${chunk.key}`}>
+            Mover {totalShots > 0 ? "los planos de " : ""}la escena{" "}
+            {scene.number} a otro día
+          </label>
+          <select
+            id={`move-${chunk.key}`}
+            value={chunk.columnId}
+            onChange={(e) => onMove(e.target.value)}
+            className={STRIP_SELECT + " w-[7.5rem] sm:w-full"}
+          >
+            {columns.map((column) => (
+              <option key={column.id} value={column.id}>
+                {column.label}
+              </option>
+            ))}
+          </select>
+        </div>
         <Link
           href={`/app/${projectId}/guion/${scene.id}`}
-          onPointerDown={(e) => e.stopPropagation()}
+          onPointerDown={stop}
           aria-label={`Abrir la escena ${scene.number}`}
-          className="link-action min-h-0 shrink-0 !text-[10px] hover:!text-accent"
+          className="col-start-3 row-start-3 justify-self-end rounded px-1 font-mono text-[10px] tracking-widest uppercase opacity-60 hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-black/60 sm:col-start-auto sm:row-start-auto"
         >
           Abrir →
         </Link>
       </div>
-      <p className="mt-0.5 font-sans text-[13px] leading-snug text-muted">
-        {scene.intExtLabel} · {scene.dayPartLabel}
-        {scene.locationName ? ` · ${scene.locationName}` : ""}
-      </p>
 
-      {totalShots > 0 && (
-        <div onPointerDown={(e) => e.stopPropagation()}>
-          <button
-            type="button"
-            onClick={() => setShowShots((v) => !v)}
-            aria-expanded={showShots}
-            className="mt-2 inline-flex items-center gap-1.5 font-mono text-[11px] text-accent hover:underline"
-          >
-            <span>
-              {shots.length === totalShots
-                ? `${totalShots} plano${totalShots === 1 ? "" : "s"}`
-                : `${shots.length} de ${totalShots} planos`}
-              {doneShots > 0
-                ? ` · ${doneShots} rodado${doneShots === 1 ? "" : "s"}`
-                : ""}
-            </span>
-            <span aria-hidden>{showShots ? "▴" : "▾"}</span>
-          </button>
-
-          {showShots && (
-            <ul className="mt-2 divide-y divide-line border-t border-line">
-              {shots.map((shot) => (
-                <li key={shot.id} className="py-2">
-                  <p className="flex items-baseline gap-1.5 font-mono text-[11px]">
-                    <span className="text-accent">{shot.label}</span>
-                    <span className="uppercase">{shot.size ?? ""}</span>
-                    {shot.done && (
-                      <span className="text-success">✓ rodado</span>
-                    )}
-                  </p>
-                  {shot.description && (
-                    <p className="mt-0.5 line-clamp-2 font-sans text-xs text-muted">
-                      {shot.description}
-                    </p>
-                  )}
-                  <label className="sr-only" htmlFor={`shot-move-${shot.id}`}>
-                    Día del plano {shot.label}
-                  </label>
-                  <select
-                    id={`shot-move-${shot.id}`}
-                    value={chunk.columnId}
-                    onChange={(e) => onMoveShot(shot.id, e.target.value)}
-                    className="field mt-1.5 w-full px-2 py-1 text-xs"
-                  >
-                    {columns.map((column) => (
-                      <option key={column.id} value={column.id}>
-                        {column.label}
-                      </option>
-                    ))}
-                  </select>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
-
-      {/* Alternativa al arrastre: sirve con teclado y en táctil sin pulsación larga. */}
-      <div
-        className="mt-3 flex items-center gap-2"
-        onPointerDown={(e) => e.stopPropagation()}
-      >
-        <label
-          className="shrink-0 font-mono text-[10px] tracking-widest text-muted uppercase"
-          htmlFor={`move-${chunk.key}`}
+      {showShots && totalShots > 0 && (
+        <ul
+          className="mt-1 mb-2 ml-4 divide-y divide-line border-l-4 pl-4 sm:ml-8"
+          style={{ borderColor: tone.bg }}
         >
-          <span aria-hidden>Día</span>
-          <span className="sr-only">
-            Mover {totalShots > 0 ? "los planos de " : ""}la escena{" "}
-            {scene.number} a otro día
-          </span>
-        </label>
-        <select
-          id={`move-${chunk.key}`}
-          value={chunk.columnId}
-          onChange={(e) => onMove(e.target.value)}
-          className="field min-w-0 flex-1 px-2 py-1 text-xs"
-        >
-          {columns.map((column) => (
-            <option key={column.id} value={column.id}>
-              {column.label}
-            </option>
+          {shots.map((shot) => (
+            <li
+              key={shot.id}
+              className="grid grid-cols-[3.5rem_minmax(0,1fr)] items-center gap-x-3 gap-y-1.5 py-2 sm:grid-cols-[3.5rem_3rem_minmax(0,1fr)_9rem]"
+            >
+              <span className="font-mono text-xs text-accent">
+                {shot.label}
+              </span>
+              <span className="font-mono text-[11px] uppercase">
+                {shot.size ?? "—"}
+                {shot.done && (
+                  <span className="ml-1.5 text-success normal-case">
+                    ✓ rodado
+                  </span>
+                )}
+              </span>
+              <span className="col-span-2 min-w-0 truncate font-sans text-sm text-muted sm:col-span-1">
+                {shot.description ?? ""}
+              </span>
+              <span className="col-span-2 sm:col-span-1">
+                <label className="sr-only" htmlFor={`shot-move-${shot.id}`}>
+                  Día del plano {shot.label}
+                </label>
+                <select
+                  id={`shot-move-${shot.id}`}
+                  value={chunk.columnId}
+                  onChange={(e) => onMoveShot(shot.id, e.target.value)}
+                  className="field w-full px-2 py-1 text-xs"
+                >
+                  {columns.map((column) => (
+                    <option key={column.id} value={column.id}>
+                      {column.label}
+                    </option>
+                  ))}
+                </select>
+              </span>
+            </li>
           ))}
-        </select>
-      </div>
-    </div>
+        </ul>
+      )}
+    </li>
   );
 }
 
@@ -557,9 +638,14 @@ export function ShootingTimeline({
     ? chunks.find((c) => c.key === dragState.chunkKey)
     : null;
 
-  function renderCard(chunk: Chunk) {
+  const dayNumberById = useMemo(
+    () => new Map(days.map((day, index) => [day.id, index + 1])),
+    [days],
+  );
+
+  function renderStrip(chunk: Chunk) {
     return (
-      <ChunkCard
+      <Strip
         key={chunk.key}
         chunk={chunk}
         isPressing={pressingKey === chunk.key}
@@ -569,6 +655,7 @@ export function ShootingTimeline({
         onPointerUp={(e) => handlePointerUp(e, chunk)}
         projectId={projectId}
         columns={columns}
+        dayNumberById={dayNumberById}
         onMove={(columnId) => commitMove(chunk, columnId)}
         onMoveShot={(shotId, columnId) =>
           commitShotMove(chunk, shotId, columnId)
@@ -577,78 +664,125 @@ export function ShootingTimeline({
     );
   }
 
-  // En los contadores de columna: escenas que se ruedan ese día y, si hay shot list, sus planos.
-  function counter(list: Chunk[]) {
+  // Totales de una jornada: escenas que se ruedan ese día y, si hay shot list, sus planos.
+  function totals(list: Chunk[]) {
     const shotCount = list.reduce((n, c) => n + c.shots.length, 0);
-    const scenesText = `${list.length} ${list.length === 1 ? "escena" : "escenas"}`;
-    return shotCount > 0 ? `${scenesText} · ${shotCount} pl.` : scenesText;
+    const doneCount = list.reduce(
+      (n, c) => n + c.shots.filter((s) => s.done).length,
+      0,
+    );
+    return [
+      plural(list.length, "escena", "escenas"),
+      shotCount > 0 ? plural(shotCount, "plano", "planos") : null,
+      doneCount > 0 ? `${doneCount} rodado${doneCount === 1 ? "" : "s"}` : null,
+    ]
+      .filter(Boolean)
+      .join(" · ");
   }
 
   const unassigned = byColumn.get(UNASSIGNED) ?? [];
 
-  // Columnas sin caja: cada día es un título con una raya debajo y sus fichas
-  // de escena; al arrastrar encima, la columna se tiñe de acento.
-  const columnClass = (id: string) =>
-    "flex w-72 shrink-0 flex-col rounded-xl p-2 transition-colors " +
+  // Cada jornada es una zona donde soltar; al arrastrar encima se tiñe de acento.
+  const zoneClass = (id: string) =>
+    "-mx-2 rounded-lg px-2 pb-2 transition-colors motion-reduce:transition-none " +
     (dragOverId === id ? "bg-accent/10 ring-1 ring-accent/40" : "");
 
   return (
-    <div className="mt-12">
-      {otherViewers.length > 0 && (
-        <p className="mb-4 flex items-center gap-2 font-mono text-[11px] text-muted">
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent" />
-          Viendo ahora: {otherViewers.join(", ")}
-        </p>
-      )}
+    <div className="mt-10">
+      {/* Leyenda de colores: la convención de producción, a la vista. */}
+      <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-3">
+        <ul
+          aria-label="Colores de las tiras"
+          className="flex flex-wrap gap-x-4 gap-y-2"
+        >
+          {STRIP_LEGEND.map((tone) => (
+            <li
+              key={tone.key}
+              className="flex items-center gap-1.5 font-mono text-[10px] tracking-widest text-muted uppercase"
+            >
+              <span
+                aria-hidden
+                className="h-3 w-5 rounded-sm"
+                style={{ backgroundColor: tone.bg }}
+              />
+              {tone.label}
+            </li>
+          ))}
+        </ul>
+        {otherViewers.length > 0 && (
+          <p className="flex items-center gap-2 font-mono text-[11px] text-muted">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent motion-reduce:animate-none" />
+            Viendo ahora: {otherViewers.join(", ")}
+          </p>
+        )}
+      </div>
 
-      <div className="flex gap-4 overflow-x-auto pb-6">
-        <div data-column-id={UNASSIGNED} className={columnClass(UNASSIGNED)}>
-          <div className="mb-3 border-b border-line px-1 pb-3">
-            <p className="eyebrow">Sin día</p>
-            <p className="mt-1 flex items-baseline justify-between gap-2">
-              <span className="font-display text-xl font-black tracking-tight text-muted">
-                Por repartir
-              </span>
-              <span className="font-mono text-[11px] text-muted">
-                {counter(unassigned)}
-              </span>
-            </p>
-          </div>
-          <div className="flex flex-col gap-2.5">
-            {unassigned.map(renderCard)}
-            {unassigned.length === 0 && (
-              <p className="px-1 py-6 font-sans text-sm text-success">
-                ✓ Todas las escenas tienen día.
-              </p>
-            )}
-          </div>
+      {/* Por repartir: arriba, como el montón de tiras que aún no tienen sitio. */}
+      <section
+        data-column-id={UNASSIGNED}
+        aria-labelledby="strip-unassigned"
+        className={"mt-6 " + zoneClass(UNASSIGNED)}
+      >
+        <div className="flex items-baseline justify-between gap-4 border-b border-line py-3">
+          <h2
+            id="strip-unassigned"
+            className="font-display text-lg font-bold tracking-tight"
+          >
+            Por repartir
+          </h2>
+          <p className="font-mono text-[11px] text-muted">
+            {unassigned.length > 0 ? totals(unassigned) : ""}
+          </p>
         </div>
+        {unassigned.length === 0 ? (
+          <p className="py-4 font-sans text-sm text-success">
+            ✓ Todas las escenas tienen día.
+          </p>
+        ) : (
+          <ul className="mt-2 space-y-1">{unassigned.map(renderStrip)}</ul>
+        )}
+      </section>
 
+      <div className="mt-8 space-y-6">
         {days.map((day, index) => {
           const list = byColumn.get(day.id) ?? [];
           return (
-            <div
+            <section
               key={day.id}
               data-column-id={day.id}
-              className={columnClass(day.id)}
+              aria-label={`Día ${index + 1}, ${day.longLabel}`}
+              className={zoneClass(day.id)}
             >
-              <div className="mb-3 border-b-2 border-fg px-1 pb-3">
-                <p className="eyebrow text-accent">Día {index + 1}</p>
-                <p className="mt-1 flex items-baseline justify-between gap-2">
-                  <Link
-                    href={`/app/${projectId}/plan-de-rodaje/${day.id}`}
-                    className="font-display text-xl font-black tracking-tight uppercase transition-colors hover:text-accent"
-                  >
-                    {day.label}
-                  </Link>
-                  <span className="font-mono text-[11px] text-muted">
-                    {counter(list)}
+              {/* La tira de día: negra, con la fecha y los totales de la jornada. */}
+              <Link
+                href={`/app/${projectId}/plan-de-rodaje/${day.id}`}
+                style={{ backgroundColor: DAY_STRIP.bg, color: DAY_STRIP.fg }}
+                className="group flex flex-wrap items-baseline gap-x-4 gap-y-1 rounded-md px-3 py-2.5 ring-1 ring-white/10 transition-shadow hover:ring-accent/60 focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none sm:px-4"
+              >
+                <span className="font-mono text-[11px] tracking-widest text-accent uppercase">
+                  Día {index + 1}
+                </span>
+                <span className="font-display text-base font-black tracking-tight uppercase sm:text-lg">
+                  {day.longLabel}
+                </span>
+                {day.callTime && (
+                  <span className="font-mono text-[11px] opacity-70">
+                    Llamada {day.callTime}
                   </span>
-                </p>
-              </div>
+                )}
+                <span className="ml-auto flex items-baseline gap-3 font-mono text-[11px] opacity-70">
+                  {totals(list)}
+                  <span
+                    aria-hidden
+                    className="transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none"
+                  >
+                    →
+                  </span>
+                </span>
+              </Link>
 
               {day.conflicts.length > 0 && (
-                <div className="mb-3 space-y-1 border-l-2 border-warn pl-3">
+                <div className="mt-2 space-y-1 border-l-2 border-warn pl-3">
                   {day.conflicts.map((c, i) => (
                     <p
                       key={i}
@@ -660,44 +794,55 @@ export function ShootingTimeline({
                 </div>
               )}
 
-              <div className="flex flex-col gap-2.5">
-                {list.map(renderCard)}
-                {list.length === 0 && (
-                  <p className="px-1 py-6 font-sans text-sm text-muted">
-                    Suelta aquí una escena.
-                  </p>
-                )}
-              </div>
-            </div>
+              {list.length === 0 ? (
+                <p className="px-1 pt-3 font-sans text-sm text-muted">
+                  Jornada vacía: suelta aquí una tira o elige este día en su
+                  selector.
+                </p>
+              ) : (
+                <ul className="mt-1 space-y-1">{list.map(renderStrip)}</ul>
+              )}
+            </section>
           );
         })}
       </div>
 
-      {dragState && ghostPos && draggedChunk && (
-        <div
-          className="sheet pointer-events-none fixed z-50 w-64 rotate-1 p-3.5 shadow-2xl ring-2 ring-accent"
-          style={{
-            left: ghostPos.x - dragState.offsetX,
-            top: ghostPos.y - dragState.offsetY,
-          }}
-        >
-          <p className="font-display text-base font-bold">
-            Escena {draggedChunk.scene.number}
-          </p>
-          <p className="mt-0.5 font-sans text-[13px] text-muted">
-            {draggedChunk.scene.intExtLabel} · {draggedChunk.scene.dayPartLabel}
-            {draggedChunk.scene.locationName
-              ? ` · ${draggedChunk.scene.locationName}`
-              : ""}
-          </p>
-          {draggedChunk.shots.length > 0 && (
-            <p className="mt-1 font-mono text-[11px] text-accent">
-              {draggedChunk.shots.length} plano
-              {draggedChunk.shots.length === 1 ? "" : "s"}
-            </p>
-          )}
-        </div>
-      )}
+      {dragState &&
+        ghostPos &&
+        draggedChunk &&
+        (() => {
+          const tone = stripTone(
+            draggedChunk.scene.intExt,
+            draggedChunk.scene.dayPart,
+          );
+          return (
+            <div
+              className="pointer-events-none fixed z-50 flex w-80 rotate-1 items-center gap-3 rounded-md px-3 py-2 shadow-2xl ring-2 ring-accent"
+              style={{
+                left: ghostPos.x - dragState.offsetX,
+                top: ghostPos.y - dragState.offsetY,
+                backgroundColor: tone.bg,
+                color: tone.fg,
+              }}
+            >
+              <span className="font-display text-2xl leading-none font-black">
+                {draggedChunk.scene.number}
+              </span>
+              <span className="min-w-0 truncate font-mono text-[11px] font-semibold uppercase">
+                {draggedChunk.scene.intExtLabel} ·{" "}
+                {draggedChunk.scene.dayPartLabel}
+                {draggedChunk.scene.locationName
+                  ? ` · ${draggedChunk.scene.locationName}`
+                  : ""}
+              </span>
+              {draggedChunk.shots.length > 0 && (
+                <span className="ml-auto font-mono text-[11px]">
+                  {draggedChunk.shots.length} pl.
+                </span>
+              )}
+            </div>
+          );
+        })()}
     </div>
   );
 }

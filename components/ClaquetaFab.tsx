@@ -8,12 +8,16 @@ import { LinkPendingHint } from "@/components/LinkPendingHint";
 // Acceso flotante a la claqueta digital, visible en cualquier pantalla de un
 // proyecto activo (este componente cuelga del layout de [projectId], que no
 // envuelve las páginas generales de la app). Se oculta en la propia pantalla
-// de la claqueta: no tiene sentido un atajo hacia donde ya estás.
+// de la claqueta: no tiene sentido un atajo hacia donde ya estás, y en el
+// moodboard, donde taparía el lienzo.
 export function ClaquetaFab({ projectId }: { projectId: string }) {
   const pathname = usePathname();
   const claquetaHref = `/app/${projectId}/claqueta`;
 
   if (pathname === claquetaHref) return null;
+  // En el moodboard el lienzo ocupa la pantalla y el botón taparía su esquina
+  // (zoom y mapa del tablero): ahí la claqueta queda en el menú del proyecto.
+  if (pathname === `/app/${projectId}/moodboard`) return null;
 
   return (
     <Link
