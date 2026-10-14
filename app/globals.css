@@ -672,3 +672,25 @@ body:has(.sp-light) > div[aria-hidden].fixed {
     animation: none;
   }
 }
+
+/* Campo de una sola línea (sin caja): se escribe sobre una raya, como en
+   un formulario de papel. Para las herramientas rediseñadas de Taller. */
+.field-line {
+  display: block;
+  width: 100%;
+  margin-top: 0.25rem;
+  padding: 0.4rem 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  color: var(--fg);
+  font-size: 0.9375rem;
+  outline: none;
+  transition: border-color 150ms ease;
+}
+.field-line::placeholder {
+  color: color-mix(in srgb, var(--muted) 70%, transparent);
+}
+.field-line:focus {
+  border-bottom-color: var(--accent);
+}

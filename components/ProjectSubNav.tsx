@@ -15,10 +15,12 @@ function closeOnClick(e: MouseEvent<HTMLAnchorElement>) {
   e.currentTarget.closest("details")?.removeAttribute("open");
 }
 
+// Pestañas de texto sobre una línea (como el menú principal), sin cajas: la
+// activa lleva la raya de color debajo.
 const CHIP =
-  "flex min-h-9 items-center gap-1.5 rounded-full border px-3.5 py-1.5 font-mono text-[11px] tracking-widest uppercase transition active:scale-[0.97]";
-const CHIP_IDLE = "border-line text-muted hover:border-accent/60 hover:text-fg";
-const CHIP_ACTIVE = "border-accent/50 bg-accent/10 text-accent";
+  "relative flex min-h-10 items-center gap-1.5 px-0.5 pb-2.5 pt-1 font-mono text-[11px] tracking-widest uppercase transition-colors";
+const CHIP_IDLE = "text-muted hover:text-fg";
+const CHIP_ACTIVE = "text-fg after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:bg-accent";
 
 // Mismas herramientas y mismos grupos que el resto de la app (TOOL_GROUPS):
 // una sola lista, con iconos. El chip de la fase actual dice también qué
@@ -68,7 +70,7 @@ export function ProjectSubNav({
     <nav
       ref={navRef}
       aria-label="Herramientas del proyecto"
-      className="flex flex-wrap items-center gap-2 print:hidden"
+      className="flex flex-wrap items-center gap-x-6 border-b border-line print:hidden"
     >
       <Link
         href={base}
@@ -93,7 +95,7 @@ export function ProjectSubNav({
         return (
           <details key={group.label} name="project-subnav" className="group relative">
             <summary
-              className={`${CHIP} cursor-pointer list-none [&::-webkit-details-marker]:hidden group-open:border-accent/50 group-open:text-accent ${
+              className={`${CHIP} cursor-pointer list-none [&::-webkit-details-marker]:hidden group-open:text-accent ${
                 activeTool ? CHIP_ACTIVE : CHIP_IDLE
               }`}
             >
@@ -137,7 +139,7 @@ export function ProjectSubNav({
         );
       })}
       <ProjectSearch projectId={projectId} />
-      {mode === "simple" && <ToolModeToggle mode={mode} className={`${CHIP} ${CHIP_IDLE} border-dashed`} label="Ver todas" />}
+      {mode === "simple" && <ToolModeToggle mode={mode} className={`${CHIP} ${CHIP_IDLE}`} label="Ver todas" />}
     </nav>
   );
 }

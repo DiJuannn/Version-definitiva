@@ -11,7 +11,7 @@ import { TOOL_GROUPS } from "@/lib/tool-groups";
 type Row = { key: string; group: string; title: string; subtitle?: string | null; href: string };
 
 const CHIP =
-  "flex min-h-9 items-center gap-1.5 rounded-full border px-3.5 py-1.5 font-mono text-[11px] tracking-widest uppercase transition active:scale-[0.97] border-line text-muted hover:border-accent/60 hover:text-fg";
+  "flex min-h-10 items-center gap-1.5 px-0.5 pb-2.5 pt-1 font-mono text-[11px] tracking-widest uppercase transition-colors text-muted hover:text-fg";
 
 // Buscador del proyecto: encuentra herramientas (también por su nombre «del oficio»: «call sheet»),
 // escenas, personajes, sitios, tareas, desglose, partidas y festivales. Se abre con el botón «Buscar»,
