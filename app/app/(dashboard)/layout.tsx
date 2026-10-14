@@ -103,8 +103,8 @@ export default async function DashboardLayout({
           <DashboardNav items={nav} />
         </MainContainer>
       </header>
-      {/* El trabajo va en claro; el negro queda para el marco. */}
-      <main className="taller-paper flex-1 bg-bg px-4 pt-8 pb-28 text-fg sm:px-6 sm:pt-12 sm:pb-24">
+      {/* La mesa de trabajo: oscura y suave; el contenido va en hojas (.sheet). */}
+      <main className="taller-desk flex-1 bg-bg px-4 pt-8 pb-28 text-fg sm:px-6 sm:pt-12 sm:pb-24">
         <MainContainer>{children}</MainContainer>
       </main>
     </div>

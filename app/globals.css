@@ -34,9 +34,11 @@
   --line: #2a2536;
 }
 
-/* Taller en dos tintas: el marco (cabecera, menús, cabecera del proyecto) va
-   en negro y el espacio de trabajo en claro, con la misma paleta que la
-   página del guion para que entrar al editor no sea un salto. */
+/* Taller: mesa y papel. El marco (cabecera, menús, cabecera del proyecto) es
+   negro (.taller-ink); el espacio de trabajo es una mesa oscura más suave
+   (.taller-desk), y lo que se lee o se rellena va en hojas de papel (.sheet),
+   que no son blanco puro para no deslumbrar. Misma idea que el editor de
+   guiones: la página clara sobre la mesa. */
 .taller-ink {
   --bg: #0a0a0a;
   --bg-raised: #120e1c;
@@ -49,25 +51,42 @@
   --danger: #ef6b62;
   color-scheme: dark;
 }
-.taller-paper {
-  --bg: #f5f5f3;
-  --bg-raised: #ffffff;
-  --fg: #17171b;
-  --muted: #6c6c72;
-  --line: #e3e3df;
+.taller-desk {
+  --bg: #141317;
+  --bg-raised: #1f1e23;
+  --fg: #ecebe6;
+  --muted: #9a99a0;
+  --line: #2f2e35;
+  --accent: #b3a4e6;
+  --success: #7cc79a;
+  --warn: #e3b25c;
+  --danger: #ef7b72;
+  color-scheme: dark;
+}
+.taller-paper,
+.taller-desk .sheet {
+  --bg: #e3e1dc;
+  --bg-raised: #f5f4f0;
+  --fg: #1d1c21;
+  --muted: #605f66;
+  --line: #d3d0c9;
   --accent: #5a46a8;
   --success: #2f7d4f;
   --warn: #a8640a;
   --danger: #b4372f;
   color-scheme: light;
+  color: var(--fg);
 }
-body:has(.taller-paper) {
-  background: #f5f5f3;
+body:has(.taller-desk) {
+  background: #141317;
 }
-body:has(.taller-paper) > div[aria-hidden].fixed {
+body:has(.taller-desk) > div[aria-hidden].fixed {
   display: none; /* el grano de película es de la web, no del trabajo */
 }
-.taller-paper ::selection {
+.taller-desk ::selection {
+  background: rgba(179, 164, 230, 0.3);
+}
+.taller-desk .sheet ::selection {
   background: rgba(90, 70, 168, 0.18);
 }
 
@@ -86,14 +105,22 @@ body:has(.taller-paper) > div[aria-hidden].fixed {
 /* Piezas del espacio de trabajo. En @layer components para que cualquier
    utilidad de Tailwind (px-2, w-full…) pueda ajustarlas en el sitio. */
 @layer components {
-  /* Una hoja: la única superficie. Nunca va una hoja dentro de otra; dentro
-     se separa con líneas (divide-y) y espacio, no con más cajas. */
+  /* Hoja de papel: lo que se lee o se rellena (formularios, fichas, tablas,
+     listas de trabajo). Nunca una hoja dentro de otra ni una caja dentro de
+     una hoja: dentro se separa con líneas (divide-y) y espacio. */
   .sheet {
-    background: var(--bg-raised);
+    background: #eceae5;
     border-radius: 0.75rem;
     box-shadow:
-      0 0 0 1px color-mix(in srgb, var(--fg) 6%, transparent),
-      0 1px 2px color-mix(in srgb, var(--fg) 5%, transparent);
+      0 1px 0 rgba(255, 255, 255, 0.5) inset,
+      0 18px 40px -24px rgba(0, 0, 0, 0.8);
+  }
+  /* Losa: superficie de la propia mesa, para navegar o resumir (atajos a
+     herramientas, tarjetas de proyecto, cifras). Tampoco se anidan. */
+  .tile {
+    background: var(--bg-raised);
+    border-radius: 0.75rem;
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--fg) 6%, transparent);
   }
   /* Campo de formulario: blanco, borde fino, foco con anillo de acento. */
   .field {

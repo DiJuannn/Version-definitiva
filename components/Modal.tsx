@@ -67,7 +67,7 @@ export function Modal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[#17171b]/45 p-4 backdrop-blur-[2px]"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-[2px]"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -79,7 +79,7 @@ export function Modal({
         aria-labelledby={titleId}
         aria-describedby={description ? descId : undefined}
         tabIndex={-1}
-        className={`w-full max-w-sm rounded-xl bg-bg-raised p-6 shadow-[0_24px_64px_-16px_rgba(0,0,0,0.35)] outline-none ${
+        className={`sheet w-full max-w-sm p-6 outline-none ${
           tone === "danger" ? "border-t-4 border-danger" : ""
         }`}
       >

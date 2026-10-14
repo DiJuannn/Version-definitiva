@@ -47,7 +47,7 @@ export function ToolCard({
 
   if (variant === "row") {
     const inner = (
-      <div className="sheet flex h-full items-start gap-3.5 p-4 transition duration-300 group-hover:-translate-y-0.5 group-hover:shadow-[0_0_0_1px_var(--accent),0_8px_24px_-12px_rgba(0,0,0,0.18)] group-active:scale-[0.99] max-sm:p-3">
+      <div className="tile flex h-full items-start gap-3.5 p-4 transition duration-300 group-hover:-translate-y-0.5 group-hover:shadow-[0_0_0_1px_var(--accent),0_12px_28px_-14px_rgba(0,0,0,0.7)] group-active:scale-[0.99] max-sm:p-3">
         <div className="h-7 w-7 shrink-0 text-muted transition duration-300 group-hover:-translate-y-0.5 group-hover:text-accent">
           {icon}
         </div>
@@ -94,7 +94,7 @@ export function ToolCard({
   );
 
   const inner = (
-    <div className="sheet relative flex aspect-square flex-col items-center justify-center gap-2.5 overflow-hidden p-4 text-center transition duration-300 group-hover:-translate-y-0.5 group-hover:text-accent group-hover:shadow-[0_0_0_1px_var(--accent),0_8px_24px_-12px_rgba(0,0,0,0.18)] group-focus-visible:text-accent group-active:scale-[0.97]">
+    <div className="tile relative flex aspect-square flex-col items-center justify-center gap-2.5 overflow-hidden p-4 text-center transition duration-300 group-hover:-translate-y-0.5 group-hover:text-accent group-hover:shadow-[0_0_0_1px_var(--accent),0_12px_28px_-14px_rgba(0,0,0,0.7)] group-focus-visible:text-accent group-active:scale-[0.97]">
       {badge && <span className="absolute top-2 right-2">{badgePill}</span>}
       {iconBlock}
       <span className="flex items-center font-display text-sm font-bold">
