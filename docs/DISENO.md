@@ -6,31 +6,30 @@ la usa, pero la excepción se razona en un comentario.
 
 ## Mesa y papel
 
-- **Marco en negro** (`.taller-ink`): la barra de arriba, los menús y la
-  cabecera del proyecto (migas, nombre y pestañas de herramientas).
-- **Mesa** (`.taller-desk`, en el `<main>` del panel): oscura pero más suave
-  que el marco. Encima va lo que sirve para orientarse: títulos, cifras,
-  atajos, navegación, vacíos.
-- **Papel** (`.sheet`): lo que se lee o se rellena va en hojas claras (no blanco
-  puro, para no deslumbrar): formularios, fichas, tablas y listas de trabajo.
-  Es la misma idea que el editor de guiones: la página clara sobre la mesa.
-  Dentro de una hoja los tokens pasan solos a la versión clara.
-- **Losa** (`.tile`): superficie oscura de la mesa para atajos y resúmenes
-  (tarjeta de herramienta, de proyecto). Nunca lleva formularios dentro.
+El negro es la base; el claro aparece solo donde está el trabajo de ese
+momento, para que ninguna pantalla sea un muro blanco ni un pozo negro.
+
+- **Marco** (`.taller-ink`): barra de arriba, menús y cabecera del proyecto.
+- **Mesa** (`.taller-desk`, el `<main>`): oscura y suave. Títulos, cifras,
+  avisos, navegación y vacíos van directamente encima.
+- **Hoja** (`.sheet`): superficie de la mesa un punto más clara, para listas y
+  tablas de consulta (presupuesto, planos, escenas, equipo).
+- **Losa** (`.tile`): superficie oscura para atajos y tarjetas de navegación.
+- **Papel** (`.paper`): claro (no blanco puro). Solo para lo que se rellena o
+  se lee como documento: formularios abiertos, modales, la ficha abierta de un
+  elemento, el paso actual del proyecto, hojas de llamada, contratos. Dentro
+  del papel los tokens pasan solos a la versión clara.
 
 Los colores salen siempre de los tokens (`bg-bg`, `bg-bg-raised`, `text-fg`,
 `text-muted`, `border-line`, `text-accent`, `text-success/warn/danger`), que
 cambian solos entre mesa y papel. Nada de `bg-black`, `text-white`, `bg-white`
-ni colores fijos: se rompen en una de las dos.
-
-Equilibrio: en cada pantalla, la mesa manda y el papel aparece donde está el
-trabajo. Una pantalla toda de papel deslumbra; una sin papel no se lee.
+ni colores fijos: se rompen en uno de los dos.
 
 ## Una sola capa: nada de cuadros sobre cuadros
 
 La regla que más importa.
 
-1. **Nunca una superficie dentro de otra**: ni hoja dentro de hoja, ni losa
+1. **Nunca una superficie dentro de otra**: ni hoja dentro de hoja, ni papel
    dentro de hoja, ni una caja con borde dentro de cualquiera de ellas.
 2. **Dentro de una hoja** se separa con líneas finas (`divide-y divide-line`,
    `border-t border-line`) y con espacio, no con más cajas.
