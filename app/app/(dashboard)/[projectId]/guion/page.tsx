@@ -646,6 +646,8 @@ export default async function GuionPage({
 
           {/* ------------------------------------------------ herramientas */}
           <aside className="space-y-10 lg:pt-10">
+            {/* Con el guion en Guiones, el PDF solo se enseña si ya hay uno. */}
+            {(!scriptPlan || currentFile) && (
             <section aria-labelledby="guion-archivo">
               <h2 id="guion-archivo" className={SECTION_TITLE}>
                 Archivo del guion
@@ -722,6 +724,7 @@ export default async function GuionPage({
                 </>
               )}
             </section>
+            )}
 
             <section
               aria-labelledby="guion-continuidad"
