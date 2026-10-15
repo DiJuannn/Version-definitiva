@@ -1,5 +1,6 @@
 import { getCurrentProfile } from "@/lib/current-user";
 import { PageHeader } from "@/components/PageHeader";
+import { AgendaTabs } from "@/components/AgendaTabs";
 import { ScopeToggle } from "@/components/ScopeToggle";
 import { NewTaskButton, TasksView } from "@/components/TasksView";
 import { listProjectsForProfile } from "@/lib/project-access";
@@ -27,6 +28,7 @@ export default async function TareasPage({
 
   return (
     <div className="pb-16">
+      <AgendaTabs active="tareas" />
       <PageHeader
         eyebrow="Organización"
         title="Tareas"

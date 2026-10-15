@@ -6,6 +6,7 @@ import { DeleteButton } from "@/components/DeleteButton";
 import { ChipOption } from "@/components/ChipOption";
 import { SubmitButton } from "@/components/SubmitButton";
 import { PageHeader } from "@/components/PageHeader";
+import { AgendaTabs } from "@/components/AgendaTabs";
 import { FormField } from "@/components/FormField";
 import { CreateDialog, DialogCancel } from "@/components/CreateDialog";
 import { CalendarEventType } from "@/lib/generated/prisma";
@@ -297,6 +298,7 @@ export default async function CalendarioPage({
 
   return (
     <div className="pb-16">
+      <AgendaTabs active="calendario" />
       <PageHeader
         eyebrow="Organización"
         title="Calendario"

@@ -61,6 +61,8 @@ export type NavItem = {
   label: string;
   icon: IconKey;
   href?: string;
+  // Otras rutas que también cuentan como esta sección (Agenda = calendario y tareas).
+  also?: string[];
   children?: { href: string; label: string; icon: IconKey }[];
 };
 
@@ -92,12 +94,12 @@ function isActive(pathname: string, href: string) {
 }
 
 function itemActive(pathname: string, item: NavItem) {
-  if (item.href) return isActive(pathname, item.href);
+  if (item.href) return isActive(pathname, item.href) || Boolean(item.also?.some((h) => isActive(pathname, h)));
   return Boolean(item.children?.some((child) => isActive(pathname, child.href)));
 }
 
-const TAB =
-  "relative flex items-center gap-1.5 px-3 pt-2.5 pb-3.5 font-mono text-[11px] tracking-widest uppercase transition-colors";
+// Una sola barra: el menú va en la misma fila que el logo, en letra normal.
+const TAB = "relative flex h-14 items-center gap-1.5 px-3 font-sans text-[14px] transition-colors";
 
 function GroupTab({ item, pathname }: { item: NavItem; pathname: string }) {
   const [open, setOpen] = useState(false);
@@ -112,7 +114,6 @@ function GroupTab({ item, pathname }: { item: NavItem; pathname: string }) {
   }
 
   const active = itemActive(pathname, item);
-  const Icon = ICONS[item.icon];
 
   return (
     <div ref={ref} className="relative">
@@ -121,9 +122,8 @@ function GroupTab({ item, pathname }: { item: NavItem; pathname: string }) {
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-haspopup="menu"
-        className={`${TAB} ${active ? "text-fg" : "text-muted hover:text-fg"}`}
+        className={`${TAB} ${active ? "font-semibold text-fg" : "text-muted hover:text-fg"}`}
       >
-        <Icon className="h-3.5 w-3.5" />
         {item.label}
         <span aria-hidden className="text-[9px] opacity-70">
           ▾
@@ -179,7 +179,7 @@ export function DashboardNav({ items }: { items: NavItem[] }) {
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-label="Abrir menú"
-        className="mt-4 flex min-h-10 items-center gap-2 font-mono text-xs tracking-widest text-muted uppercase lg:hidden"
+        className="flex min-h-10 items-center gap-2 font-mono text-xs tracking-widest text-muted uppercase lg:hidden"
       >
         <span className="flex h-4 w-5 flex-col justify-between">
           <span
@@ -194,7 +194,7 @@ export function DashboardNav({ items }: { items: NavItem[] }) {
       </button>
       <nav
         aria-label="Navegación principal"
-        className={`${open ? "flex" : "hidden"} mt-2 flex-col gap-1 lg:hidden`}
+        className={`${open ? "flex" : "hidden"} order-last mt-2 w-full basis-full flex-col gap-1 pb-3 lg:hidden`}
       >
         {items.flatMap((item) => {
           const entries = item.children
@@ -230,19 +230,17 @@ export function DashboardNav({ items }: { items: NavItem[] }) {
       {/* Escritorio (lg+): pestañas con subrayado en la sección actual; el
           margen negativo hace que el subrayado apoye sobre el borde de la
           cabecera. */}
-      <nav aria-label="Navegación principal" className="-mb-px mt-3 hidden gap-1 lg:flex">
+      <nav aria-label="Navegación principal" className="-mb-px hidden gap-1 lg:flex">
         {items.map((item) => {
           if (item.children) return <GroupTab key={item.label} item={item} pathname={pathname} />;
           const active = itemActive(pathname, item);
-          const Icon = ICONS[item.icon];
           return (
             <Link
               key={item.href}
               href={item.href!}
               aria-current={active ? "page" : undefined}
-              className={`${TAB} ${active ? "text-fg" : "text-muted hover:text-fg"}`}
+              className={`${TAB} ${active ? "font-semibold text-fg" : "text-muted hover:text-fg"}`}
             >
-              <Icon className="h-3.5 w-3.5" />
               {item.label}
               {active && <span className="absolute inset-x-3 bottom-0 h-0.5 bg-accent" />}
             </Link>

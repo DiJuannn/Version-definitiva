@@ -24,7 +24,7 @@ export function ProjectPoster({
   const big = size === "lg";
   return (
     <div
-      className="relative aspect-[2/3] overflow-hidden rounded-[4px] shadow-[0_26px_52px_-22px_#000,0_0_0_1px_rgba(255,255,255,0.06)]"
+      className="@container relative aspect-[2/3] overflow-hidden rounded-[4px] shadow-[0_26px_52px_-22px_#000,0_0_0_1px_rgba(255,255,255,0.06)]"
       style={coverUrl ? undefined : { background: "#1d1b24" }}
     >
       {coverUrl && (
@@ -38,7 +38,7 @@ export function ProjectPoster({
         className={`absolute inset-x-0 flex flex-col ${coverUrl ? "bottom-0" : "top-0 bottom-0"} ${big ? "p-5" : "p-3.5"}`}
       >
         <p
-          className={`poster-title break-words ${big ? "text-[64px]" : "text-[40px]"} ${coverUrl ? "text-white" : ""}`}
+          className={`poster-title break-words ${big ? "text-[min(64px,15cqw)]" : "text-[min(40px,15cqw)]"} ${coverUrl ? "text-white" : ""}`}
           style={coverUrl ? undefined : { color: accent }}
         >
           {name}
