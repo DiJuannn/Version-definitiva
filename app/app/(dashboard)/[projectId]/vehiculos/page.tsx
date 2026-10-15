@@ -86,6 +86,7 @@ export default async function ProjectVehiclesPage({
       ) : days.length === 0 ? (
         <EmptyState
           title="Todavía no hay días de rodaje"
+          preview="jornadas"
           description="Los vehículos se reservan para cada día desde Plan de rodaje. Crea primero los días."
           actionLabel="Ir a Plan de rodaje"
           actionHref={`/app/${projectId}/plan-de-rodaje`}

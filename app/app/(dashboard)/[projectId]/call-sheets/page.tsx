@@ -126,6 +126,7 @@ export default async function CallSheetsPage({
       {days.length === 0 ? (
         <EmptyState
           title="Todavía no hay días de rodaje"
+          preview="hoja"
           description="Crea los días en el plan de rodaje y aquí aparecerá la hoja de llamada de cada uno."
           actionLabel="Ir a Plan de rodaje"
           actionHref={`/app/${projectId}/plan-de-rodaje`}

@@ -119,6 +119,7 @@ export default async function MontajePage({
                 selects.scenes.length === 0 ? (
                   <EmptyState
                     title="Todavía no hay tomas marcadas"
+          preview="tomas"
                     description="En cuanto marques tomas buenas con la claqueta (o a mano en el Parte de script), aparecen aquí agrupadas por escena, listas para pasarle a quien monta."
                   />
                 ) : (
@@ -262,6 +263,7 @@ export default async function MontajePage({
               ) : !hasCredits ? (
                 <EmptyState
                   title="Todavía no hay a quién dar crédito"
+          preview="creditos"
                   description="Añade actores en Personajes y equipo técnico en Desglose, y aparecerán aquí ordenados y listos para copiar."
                 />
               ) : (

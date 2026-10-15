@@ -106,6 +106,7 @@ export default async function PlanDeRodajePage({
       {Object.keys(data.scenes).length === 0 ? (
         <EmptyState
           title="Todavía no hay escenas"
+          preview="escenas"
           description="Créalas en Guion (o importa tu guion técnico en Lista de planos) para poder programarlas en jornadas de rodaje."
           actionLabel="Ir a Guion"
           actionHref={`/app/${projectId}/guion`}
@@ -113,6 +114,7 @@ export default async function PlanDeRodajePage({
       ) : data.days.length === 0 ? (
         <EmptyState
           title="Aún no hay jornadas de rodaje"
+          preview="jornadas"
           description="Añade la primera jornada con su fecha (arriba) o deja que el asistente las proponga. Luego reparte los planos en el orden en que se ruedan."
         />
       ) : (

@@ -123,6 +123,7 @@ export default async function ProjectLocationsPage({
       ) : scenes.length === 0 ? (
         <EmptyState
           title="Todavía no hay escenas"
+          preview="escenas"
           description="Las localizaciones se asignan a cada escena desde Guion. Empieza por el guion."
           actionLabel="Ir a Guion"
           actionHref={`/app/${projectId}/guion`}

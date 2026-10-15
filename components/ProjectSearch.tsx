@@ -3,12 +3,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { searchProject } from "@/lib/actions/search";
+import { openScenePeek } from "@/components/ScenePeek";
 import { FESTIVALS } from "@/lib/festivals";
 import { HIT_GROUP_LABELS, hitPath, type SearchHit } from "@/lib/search-hits";
 import { matchTools, wordsMatch } from "@/lib/tool-search";
 import { TOOL_GROUPS } from "@/lib/tool-groups";
 
-type Row = { key: string; group: string; title: string; subtitle?: string | null; href: string };
+// `peek`: una escena se abre en su ficha rápida, sin salir de donde estás.
+type Row = { key: string; group: string; title: string; subtitle?: string | null; href: string; peek?: string };
 
 const CHIP =
   "flex min-h-10 items-center gap-1.5 px-0.5 pb-2.5 pt-1 font-mono text-[11px] tracking-widest uppercase transition-colors text-muted hover:text-fg";
@@ -98,6 +100,7 @@ export function ProjectSearch({ projectId }: { projectId: string }) {
       title: h.title,
       subtitle: h.subtitle,
       href: `${base}/${hitPath(h)}`,
+      peek: h.kind === "scene" ? h.id : undefined,
     }));
     return [...tools, ...content, ...festivals];
   }, [q, found, base]);
@@ -105,7 +108,8 @@ export function ProjectSearch({ projectId }: { projectId: string }) {
 
   function go(row: Row) {
     setOpen(false);
-    router.push(row.href);
+    if (row.peek) openScenePeek(row.peek);
+    else router.push(row.href);
   }
 
   function onInputKey(e: React.KeyboardEvent) {

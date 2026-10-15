@@ -229,6 +229,7 @@ export default async function ShotListPage({
         {scenes.length === 0 ? (
           <EmptyState
             title="Todavía no hay escenas"
+          preview="planos"
             description="El guion técnico se arma con las escenas del guion y sus planos."
             actionLabel="Ir a Guion"
             actionHref={`/app/${projectId}/guion`}
@@ -268,6 +269,7 @@ export default async function ShotListPage({
       {scenes.length === 0 ? (
         <EmptyState
           title="Todavía no hay escenas"
+          preview="planos"
           description="Los planos cuelgan de las escenas. Créalas en Guion, o importa el guion técnico y se crearán junto con sus planos."
           actionLabel="Ir a Guion"
           actionHref={`/app/${projectId}/guion`}

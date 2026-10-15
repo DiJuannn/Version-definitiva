@@ -98,6 +98,7 @@ export default async function StoryboardPage({
       {scenesWithShots.length === 0 ? (
         <EmptyState
           title="Todavía no hay planos"
+          preview="planos"
           description="El storyboard se dibuja plano a plano. Crea al menos un plano en la lista de planos para empezar."
           actionLabel="Ir a la lista de planos"
           actionHref={`/app/${projectId}/shot-list`}

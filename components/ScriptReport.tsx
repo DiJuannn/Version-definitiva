@@ -8,6 +8,7 @@ import {
   updateClapLog,
 } from "@/lib/actions/clapboard";
 import type { ScriptReport as Report, ScriptTake } from "@/lib/script-report";
+import { EmptyPreview } from "@/components/EmptyPreview";
 import { useToast } from "@/components/Toast";
 
 const FIELD = "field px-3 py-2 text-sm";
@@ -239,11 +240,12 @@ export function ScriptReport({
 
       {report.days.length === 0 ? (
         <div className="mt-14 py-10 text-center">
-          <p className="font-display text-lg font-bold">Todavía no hay tomas</p>
+          <p className="poster-sub text-[28px]">Todavía no hay tomas</p>
           <p className="mx-auto mt-2 max-w-md font-sans text-sm text-muted">
             Marca tomas con la claqueta durante el rodaje y aparecerán aquí
             solas, o apúntalas a mano con &ldquo;Apuntar toma a mano&rdquo;.
           </p>
+          <EmptyPreview kind="tomas" />
         </div>
       ) : (
         <>
