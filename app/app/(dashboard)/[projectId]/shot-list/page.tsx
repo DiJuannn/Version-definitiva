@@ -10,6 +10,8 @@ import { ShotBuilder } from "@/components/preproduccion/ShotBuilder";
 import { courierPrime } from "@/lib/screenplay/font";
 import { getScenesText } from "@/lib/scene-text";
 import { PlanosTabs } from "@/components/preproduccion/PlanosTabs";
+import { TechnicalScript } from "@/components/preproduccion/TechnicalScript";
+import { PrintButton } from "@/components/PrintButton";
 import { ShotListUploadForm } from "@/components/ShotListUploadForm";
 import { NextTool, SceneSlug } from "@/components/preproduccion/SceneSlug";
 import {
@@ -36,10 +38,10 @@ export default async function ShotListPage({
   searchParams,
 }: {
   params: Promise<{ projectId: string }>;
-  searchParams: Promise<{ escena?: string }>;
+  searchParams: Promise<{ escena?: string; vista?: string }>;
 }) {
   const { projectId } = await params;
-  const { escena } = await searchParams;
+  const { escena, vista } = await searchParams;
 
   const project = await getProjectForCurrentUser(projectId);
   if (!project) notFound();
@@ -169,6 +171,46 @@ export default async function ShotListPage({
             nextNumber={nextNumber}
           />
         </div>
+      </div>
+    );
+  }
+
+  // El guion técnico: todo el guion seguido, con los planos de cada escena.
+  if (vista === "tecnico") {
+    const texts = await getScenesText(projectId, scenes);
+    return (
+      <div className={`print-doc pb-16 ${courierPrime.variable}`}>
+        <div className="print-hide">
+          <PageHeader
+            eyebrow="Preparar"
+            title="Guion técnico"
+            description="El guion completo, escena a escena, con cómo se rueda cada una al lado. Para leerlo de corrido o imprimirlo."
+            actions={scenes.length > 0 ? <PrintButton label="Imprimir" /> : undefined}
+          />
+          <PlanosTabs projectId={projectId} active="tecnico" />
+        </div>
+        <h1 className="mb-4 hidden font-[family-name:var(--font-courier)] text-xl font-bold uppercase print:block">
+          {project.name} · Guion técnico
+        </h1>
+        {scenes.length === 0 ? (
+          <EmptyState
+            title="Todavía no hay escenas"
+            description="El guion técnico se arma con las escenas del guion y sus planos."
+            actionLabel="Ir a Guion"
+            actionHref={`/app/${projectId}/guion`}
+          />
+        ) : (
+          <>
+            {missing.length > 0 && (
+              <p className="print-hide mt-6 border-l-2 border-warn py-0.5 pl-4 font-sans text-[15px]">
+                <strong className="font-semibold">
+                  {scenesWithShots} de {scenes.length} escenas tienen planos · {missingText}.
+                </strong>
+              </p>
+            )}
+            <TechnicalScript projectId={projectId} scenes={scenes} texts={texts} />
+          </>
+        )}
       </div>
     );
   }

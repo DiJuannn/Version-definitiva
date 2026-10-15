@@ -1080,3 +1080,27 @@ body:has(.sp-light) > div[aria-hidden].fixed {
   border-bottom-color: var(--accent);
 }
 }
+
+/* Páginas que se imprimen tal cual (guion técnico): solo el documento, en
+   papel blanco, sin el marco de la app. */
+@media print {
+  body:has(.print-doc) > div > header,
+  body:has(.print-doc) .skip-link,
+  body:has(.print-doc) .print-hide,
+  body:has(.print-doc) [aria-label="Navegación del proyecto"] {
+    display: none !important;
+  }
+  body:has(.print-doc),
+  body:has(.print-doc) .taller-desk {
+    background: #fff !important;
+    color: #000 !important;
+    padding: 0 !important;
+  }
+  .print-doc .paper {
+    box-shadow: none !important;
+  }
+  .print-doc tr,
+  .print-doc .print-keep {
+    break-inside: avoid;
+  }
+}
