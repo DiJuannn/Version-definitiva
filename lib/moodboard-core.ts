@@ -133,11 +133,16 @@ export async function applyMoodboardOpsCore(projectId: string, ops: unknown, isP
   const safeOps = (ops && typeof ops === "object" ? ops : {}) as CardOps;
 
   // La fila puede no existir aún (primer guardado): se crea de forma segura ante dos a la vez.
-  await prisma.moodboard.upsert({
-    where: { projectId },
-    create: { projectId, data: { v: 1, cards: [] } as unknown as Prisma.InputJsonValue, cardCount: 0 },
-    update: {},
-  });
+  // (upsert no es atómico en Postgres: si la otra persona la creó justo antes, vale igual).
+  await prisma.moodboard
+    .upsert({
+      where: { projectId },
+      create: { projectId, data: { v: 1, cards: [] } as unknown as Prisma.InputJsonValue, cardCount: 0 },
+      update: {},
+    })
+    .catch((e: unknown) => {
+      if ((e as { code?: string })?.code !== "P2002") throw e;
+    });
 
   return prisma.$transaction(
     async (tx) => {

@@ -68,18 +68,26 @@ async function syncCore(screenplayId: string, organizationId: string): Promise<S
 
   // ---------------------------------------------------------- personajes
   const characters = screenplayCharacters(doc);
-  const existing = await prisma.character.findMany({
-    where: { projectId: project.id },
-    select: { id: true, name: true },
-  });
-  const byName = new Map(existing.map((c) => [c.name.trim().toUpperCase(), c.id]));
-  for (const { name, meta, scenes } of characters) {
-    const profile: CharacterProfile = { ...meta, screenplayTitle: screenplay.title, sceneCount: scenes };
-    const id = byName.get(name);
-    const data = { screenplayId: screenplay.id, profile: profile as unknown as Prisma.InputJsonValue };
-    if (id) await prisma.character.update({ where: { id }, data });
-    else await prisma.character.create({ data: { projectId: project.id, name, ...data } });
-  }
+  // Con el candado del proyecto: si dos personas guardan a la vez, el
+  // segundo ve los personajes que creó el primero y no los duplica.
+  await prisma.$transaction(
+    async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`character-sync:${project.id}`}))`;
+      const existing = await tx.character.findMany({
+        where: { projectId: project.id },
+        select: { id: true, name: true },
+      });
+      const byName = new Map(existing.map((c) => [c.name.trim().toUpperCase(), c.id]));
+      for (const { name, meta, scenes } of characters) {
+        const profile: CharacterProfile = { ...meta, screenplayTitle: screenplay.title, sceneCount: scenes };
+        const id = byName.get(name);
+        const data = { screenplayId: screenplay.id, profile: profile as unknown as Prisma.InputJsonValue };
+        if (id) await tx.character.update({ where: { id }, data });
+        else await tx.character.create({ data: { projectId: project.id, name, ...data } });
+      }
+    },
+    { timeout: 30_000, maxWait: 10_000 },
+  );
 
   // ---------------------------------------------------------- moodboard
   // Cada referencia va al Moodboard agrupada como en el guion: una columna por

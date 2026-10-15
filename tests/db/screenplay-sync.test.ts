@@ -57,13 +57,19 @@ describe("guion de Guiones → escenas de producción", () => {
     expect(await prisma.scene.count({ where: { projectId: project.id } })).toBe(3);
   });
 
-  it("dos sincronizaciones a la vez no duplican escenas", async () => {
-    const { org, project } = await makeProject();
-    orgId = org.id;
-    await makeScreenplay(org.id, project.id, SCRIPT);
-    const results = await Promise.all([syncScreenplayScenesCore(project.id, org.id), syncScreenplayScenesCore(project.id, org.id)]);
-    expect(results.every((r) => r.ok)).toBe(true);
-    expect(await prisma.scene.count({ where: { projectId: project.id } })).toBe(3);
+  it("dos sincronizaciones a la vez no fallan ni duplican escenas ni personajes", async () => {
+    // Varias rondas: las carreras no salen siempre a la primera.
+    for (let round = 0; round < 5; round++) {
+      const { org, project } = await makeProject();
+      orgId = org.id;
+      await makeScreenplay(org.id, project.id, SCRIPT);
+      const results = await Promise.all([syncScreenplayScenesCore(project.id, org.id), syncScreenplayScenesCore(project.id, org.id)]);
+      expect(results.every((r) => r.ok)).toBe(true);
+      expect(await prisma.scene.count({ where: { projectId: project.id } })).toBe(3);
+      expect(await prisma.character.count({ where: { projectId: project.id } })).toBe(2);
+      await dropOrganization(org.id);
+      orgId = null;
+    }
   });
 
   it("adopta la escena que ya existía con el mismo número en vez de duplicarla", async () => {
