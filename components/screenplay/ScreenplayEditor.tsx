@@ -341,6 +341,22 @@ export default function ScreenplayEditor({
 
   const [characterOpen, setCharacterOpen] = useState<string | null>(null);
   const [assistantOpen, setAssistantOpen] = useState(false);
+  // Modo foco: la página sola. La lista de escenas se abre como menú y las
+  // notas de la escena como columna, solo cuando se piden (y se recuerda).
+  const [scenesOpen, setScenesOpen] = useState(false);
+  const [notesOpen, setNotesOpenState] = useState(false);
+  useEffect(() => {
+    try {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setNotesOpenState(localStorage.getItem("sp-notes-open") === "1");
+    } catch {}
+  }, []);
+  const setNotesOpen = useCallback((open: boolean) => {
+    setNotesOpenState(open);
+    try {
+      localStorage.setItem("sp-notes-open", open ? "1" : "0");
+    } catch {}
+  }, []);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const openCharacter = useCallback((name: string) => {
     setAssistantOpen(false);
@@ -670,44 +686,75 @@ export default function ScreenplayEditor({
 
       {/* El guion nunca se desmonta: el editor y su conexión siguen vivos en
           los otros pasos (la escaleta mueve y crea escenas a través de él). */}
-      <div className={step === "guion" ? "sp-enter grid gap-6 px-4 pb-24 lg:px-7 xl:grid-cols-[220px_minmax(0,1fr)_300px]" : "hidden"}>
-        <aside className="order-2 pt-6 xl:order-1">
-          <div className="xl:sticky xl:top-24">
-            <p className="sp-label px-2.5">Escenas</p>
-            {scenes.length === 0 ? (
-              <p className="mt-3 px-2.5 text-[13px] leading-relaxed text-muted">
-                Escribe «int.» o «ext.» al principio de una línea para empezar una escena.
-              </p>
-            ) : (
-              <ol className="mt-2 max-h-[calc(100vh-8rem)] overflow-y-auto">
-                {scenes.map((s) => (
-                  <li key={s.sid}>
-                    <button
-                      type="button"
-                      onClick={() => goToScene(s.sid)}
-                      aria-current={s.sid === current.sid}
-                      className={`flex w-full gap-2 rounded-md px-2.5 py-1.5 text-left text-[12.5px] leading-snug transition-colors ${
-                        s.sid === current.sid ? "bg-white text-fg shadow-[0_1px_0_var(--line)]" : "text-muted hover:text-fg"
-                      }`}
-                    >
-                      <span className="w-4 shrink-0 text-right font-[family-name:var(--font-courier)] font-bold text-[var(--accent)]">{s.number}</span>
-                      <span className="line-clamp-2 flex-1 font-[family-name:var(--font-courier)]">{s.heading}</span>
-                      {doubtScenes.has(s.sid) && (
-                        <span title="Tiene dudas de la revisión" className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--ai)]" />
-                      )}
-                      {sceneRefs.get(s.sid) ? (
-                        <span title={`${sceneRefs.get(s.sid)} referencias`} className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent)]" />
-                      ) : null}
-                    </button>
-                  </li>
-                ))}
-              </ol>
-            )}
-          </div>
-        </aside>
-
-        <div className="order-1 min-w-0 xl:order-2">
+      <div
+        className={
+          step === "guion"
+            ? `sp-enter grid gap-6 px-4 pb-24 lg:px-7 ${notesOpen ? "xl:grid-cols-[minmax(0,1fr)_320px]" : ""}`
+            : "hidden"
+        }
+      >
+        <div className="min-w-0">
           <div className="sticky top-16 z-20 flex flex-wrap items-center gap-3 border-b border-[var(--line)] bg-[#f5f5f3]/95 py-2 backdrop-blur">
+            {/* Escenas: un menú, no una columna fija. */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setScenesOpen((v) => !v)}
+                aria-expanded={scenesOpen}
+                className="flex items-center gap-2 rounded-md border border-[var(--line)] bg-white px-2.5 py-1 text-[13px] hover:border-[var(--accent)]"
+              >
+                {scenes.length === 0 ? (
+                  "Sin escenas"
+                ) : (
+                  <>
+                    <span className="font-semibold">
+                      Escena {scenes.find((s) => s.sid === current.sid)?.number ?? "—"}
+                    </span>
+                    <span className="text-muted">de {scenes.length}</span>
+                    {doubtScenes.size > 0 && (
+                      <span title={`${doubtScenes.size} escenas con dudas`} className="h-1.5 w-1.5 rounded-full bg-[var(--ai)]" />
+                    )}
+                  </>
+                )}
+                <span aria-hidden className="text-[10px] text-muted">▾</span>
+              </button>
+              {scenesOpen && (
+                <div className="absolute left-0 z-40 mt-1.5 w-[22rem] max-w-[calc(100vw-2rem)] rounded-xl bg-white p-1.5 shadow-[0_0_0_1px_var(--line),0_18px_40px_-16px_rgba(0,0,0,0.35)]">
+                  {scenes.length === 0 ? (
+                    <p className="p-3 text-[13px] leading-relaxed text-muted">
+                      Escribe «int.» o «ext.» al principio de una línea para empezar una escena.
+                    </p>
+                  ) : (
+                    <ol className="max-h-[60vh] overflow-y-auto">
+                      {scenes.map((s) => (
+                        <li key={s.sid}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              goToScene(s.sid);
+                              setScenesOpen(false);
+                            }}
+                            aria-current={s.sid === current.sid}
+                            className={`flex w-full gap-2 rounded-lg px-2.5 py-1.5 text-left text-[12.5px] leading-snug transition-colors ${
+                              s.sid === current.sid ? "bg-[var(--accent)]/10 text-fg" : "text-muted hover:bg-black/[0.04] hover:text-fg"
+                            }`}
+                          >
+                            <span className="w-5 shrink-0 text-right font-[family-name:var(--font-courier)] font-bold text-[var(--accent)]">{s.number}</span>
+                            <span className="line-clamp-2 flex-1 font-[family-name:var(--font-courier)]">{s.heading}</span>
+                            {doubtScenes.has(s.sid) && (
+                              <span title="Tiene dudas de la revisión" className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--ai)]" />
+                            )}
+                            {sceneRefs.get(s.sid) ? (
+                              <span title={`${sceneRefs.get(s.sid)} referencias`} className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent)]" />
+                            ) : null}
+                          </button>
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                </div>
+              )}
+            </div>
             <label className="sr-only" htmlFor="sp-block-type">
               Tipo de línea
             </label>
@@ -725,7 +772,7 @@ export default function ScreenplayEditor({
               ))}
             </select>
             {current.type && (
-              <span className="text-[12.5px] text-muted">
+              <span className="hidden text-[12.5px] text-muted md:inline">
                 <kbd className="sp-kbd">Tab</kbd> {BLOCK_LABELS[TAB_NEXT[current.type]]}
                 <span className="mx-2 text-[var(--line)]">|</span>
                 <kbd className="sp-kbd">Enter</kbd> {BLOCK_LABELS[ENTER_NEXT[current.type]]}
@@ -734,19 +781,31 @@ export default function ScreenplayEditor({
             <span className="ml-auto text-[12.5px] text-muted">
               <span className="font-semibold text-fg">{pageCount}</span> {pageCount === 1 ? "página" : "páginas"} · ≈{pageCount} min
             </span>
+            <button
+              type="button"
+              onClick={() => setNotesOpen(!notesOpen)}
+              aria-pressed={notesOpen}
+              className={`rounded-md border px-2.5 py-1 text-[13px] transition-colors ${
+                notesOpen ? "border-[var(--accent)] bg-[var(--accent)]/10 text-fg" : "border-[var(--line)] bg-white text-muted hover:text-fg"
+              }`}
+            >
+              Notas de escena
+            </button>
           </div>
-          <div className="sp-desk">
+          <div className="sp-desk" onMouseDown={() => scenesOpen && setScenesOpen(false)}>
             <div className="sp-paper">
               <EditorContent editor={editor} />
             </div>
           </div>
         </div>
 
-        <aside className="order-3 pt-6">
-          <div className="xl:sticky xl:top-24 xl:max-h-[calc(100vh-7rem)] xl:overflow-y-auto xl:pr-1">
-            <ScenePanel />
-          </div>
-        </aside>
+        {notesOpen && (
+          <aside className="pt-6">
+            <div className="xl:sticky xl:top-24 xl:max-h-[calc(100vh-7rem)] xl:overflow-y-auto xl:pr-1">
+              <ScenePanel />
+            </div>
+          </aside>
+        )}
       </div>
 
       {characterOpen && <CharacterDrawer name={characterOpen} onClose={() => setCharacterOpen(null)} />}
