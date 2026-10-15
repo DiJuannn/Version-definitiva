@@ -11,6 +11,7 @@ import {
 import { BREAKDOWN_CATEGORY_LABELS } from "@/lib/labels";
 import { BreakdownCategory } from "@/lib/generated/prisma";
 import { PageHeader } from "@/components/PageHeader";
+import { SceneToolSwitch } from "@/components/preproduccion/SceneToolSwitch";
 import { SubmitButton } from "@/components/SubmitButton";
 import { BreakdownCategorySelect } from "@/components/BreakdownCategorySelect";
 import { CreateDialog, DialogCancel } from "@/components/CreateDialog";
@@ -234,6 +235,9 @@ export default async function DesglosePage({
                 )}
               </span>
             </div>
+            <div className="mb-5">
+              <SceneToolSwitch projectId={projectId} sceneId={scene.id} active="desglose" />
+            </div>
             <BreakdownScene
               key={scene.id}
               projectId={projectId}
@@ -245,7 +249,11 @@ export default async function DesglosePage({
             />
           </section>
         </div>
-        <NextTool href={`/app/${projectId}/shot-list`} label="Planos" hint="Cómo se rueda cada escena, plano a plano." />
+        <NextTool
+          href={`/app/${projectId}/shot-list?escena=${scene.id}`}
+          label={`Planos de la escena ${scene.number}`}
+          hint="Con lo que hace falta ya marcado, decide cómo se rueda."
+        />
       </div>
     );
   }

@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { SceneSlug } from "@/components/preproduccion/SceneSlug";
-import { SHOT_SIZE_NAMES, ShotFrame, shotSizeKind } from "@/components/preproduccion/ShotFrame";
-import type { SceneText } from "@/lib/scene-text";
+import { ShotFrame, shotSizeKind } from "@/components/preproduccion/ShotFrame";
 import type { DayPart, IntExt } from "@/lib/generated/prisma";
 
 type Shot = {
@@ -14,132 +13,180 @@ type Shot = {
   durationSec: number | null;
   description: string | null;
   audio: string | null;
+  notes: string | null;
   done: boolean;
+  storyboard: { imageUrl: string | null }[];
 };
 
-type Scene = {
+export type TechnicalScene = {
   id: string;
   number: string;
   intExt: IntExt;
   dayPart: DayPart;
   location: { name: string } | null;
+  summary: string | null;
+  characters: string[];
   shots: Shot[];
 };
 
-// El guion técnico: el guion entero, escena a escena, con el texto a la
-// izquierda (como se escribió) y a la derecha cómo se rueda, plano a plano.
-// Se lee de corrido y se imprime tal cual.
-export function TechnicalScript({
-  projectId,
-  scenes,
-  texts,
-}: {
-  projectId: string;
-  scenes: Scene[];
-  texts: Map<string, SceneText>;
-}) {
+// Segundos → 0:07, 1:24…
+const clock = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+
+// El audio de un plano: si empieza por «NOMBRE:» es diálogo y el nombre va
+// en versalitas, como en el guion.
+function AudioCell({ text }: { text: string }) {
   return (
-    <div className="mt-8 space-y-6">
-      {scenes.map((scene) => {
-        const text = texts.get(scene.id);
+    <>
+      {text.split("\n").map((line, i) => {
+        const m = /^([A-ZÁÉÍÓÚÑÜ][A-ZÁÉÍÓÚÑÜ .'-]{1,30}):\s*(.*)$/.exec(line);
         return (
-          <article
-            key={scene.id}
-            id={`tec-${scene.id}`}
-            className="paper grid scroll-mt-32 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] print:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]"
-          >
-            <div className="print-keep col-span-full flex flex-wrap items-baseline gap-x-4 gap-y-1 border-b border-line px-6 py-3.5">
-              <span className="font-[family-name:var(--font-courier)] text-[15px] font-bold">{scene.number}.</span>
-              <SceneSlug intExt={scene.intExt} dayPart={scene.dayPart} location={scene.location?.name} className="text-[14.5px]" />
-              <span className="ml-auto font-sans text-[12.5px] text-muted">
-                {scene.shots.length === 0 ? (
-                  <Link href={`/app/${projectId}/shot-list?escena=${scene.id}`} className="font-semibold text-warn hover:underline print-hide">
-                    Sin planos · planificar →
-                  </Link>
-                ) : (
-                  `${scene.shots.length} plano${scene.shots.length === 1 ? "" : "s"}`
-                )}
-              </span>
-            </div>
-
-            {/* El texto de la escena, en Courier como en el guion. */}
-            <div className="border-line px-6 py-5 font-[family-name:var(--font-courier)] text-[13px] leading-[1.55] lg:border-r print:border-r">
-              {text && text.blocks.length > 0 ? (
-                text.blocks.map((b, i) => (
-                  <p
-                    key={i}
-                    className={`whitespace-pre-wrap ${
-                      b.type === "character"
-                        ? "mt-3 ml-[30%] uppercase"
-                        : b.type === "dialogue"
-                          ? "mx-[12%]"
-                          : b.type === "parenthetical"
-                            ? "ml-[22%]"
-                            : b.type === "transition"
-                              ? "mt-3 text-right uppercase"
-                              : "mt-3 first:mt-0"
-                    }`}
-                  >
-                    {b.text}
-                  </p>
-                ))
-              ) : (
-                <p className="font-sans text-sm text-muted">Esta escena no tiene texto todavía.</p>
-              )}
-            </div>
-
-            {/* Cómo se rueda. */}
-            <div className="border-t border-line lg:border-t-0 print:border-t-0">
-              {scene.shots.length === 0 ? (
-                <p className="px-6 py-5 font-sans text-sm text-muted">Todavía no hay planos para esta escena.</p>
-              ) : (
-                <table className="w-full border-collapse font-sans text-[13px]">
-                  <thead className="sr-only">
-                    <tr>
-                      <th>Plano</th>
-                      <th>Encuadre</th>
-                      <th>Descripción</th>
-                      <th>Cámara</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-line">
-                    {scene.shots.map((sh) => {
-                      const kind = shotSizeKind(sh.shotSize);
-                      const camera = [sh.angle, sh.movement, sh.lens].filter(Boolean).join(" · ");
-                      return (
-                        <tr key={sh.id} className="align-top">
-                          <td className="w-14 py-3 pl-6 font-mono text-[12.5px] font-semibold tabular-nums">
-                            <Link href={`/app/${projectId}/shot-list/${sh.id}`} className="hover:text-accent">
-                              {scene.number}.{sh.number}
-                            </Link>
-                            {sh.done && <span className="mt-1 block text-[10px] font-normal text-success">✓ rodado</span>}
-                          </td>
-                          <td className="w-20 py-3 pr-3">
-                            <ShotFrame size={sh.shotSize} className="h-9 w-16" />
-                          </td>
-                          <td className="py-3 pr-6">
-                            <p className="font-semibold">
-                              {kind ? SHOT_SIZE_NAMES[kind] : (sh.shotSize ?? "Sin tamaño")}
-                              {sh.durationSec ? <span className="ml-2 font-normal text-muted">{sh.durationSec}″</span> : null}
-                            </p>
-                            {sh.description && <p className="mt-0.5 leading-snug text-fg/80">{sh.description}</p>}
-                            {(camera || sh.audio) && (
-                              <p className="mt-1 text-[12px] text-muted">
-                                {camera}
-                                {sh.audio ? `${camera ? " · " : ""}Sonido: ${sh.audio}` : ""}
-                              </p>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </article>
+          <p key={i} className={i ? "mt-1" : ""}>
+            {m ? (
+              <>
+                <b className="font-[family-name:var(--font-courier)] text-[11.5px] font-bold">{m[1]}</b>{" "}
+                <span className="font-[family-name:var(--font-courier)] text-[12px]">{m[2]}</span>
+              </>
+            ) : (
+              line
+            )}
+          </p>
         );
       })}
-    </div>
+    </>
+  );
+}
+
+// El guion técnico tal como se usa en un rodaje: una tabla plano a plano,
+// agrupada por escenas. Cada fila dice qué se ve (imagen), con qué encuadre,
+// cómo está la cámara, qué se oye (diálogo, efectos, música) y cuánto dura,
+// con el tiempo acumulado de la película.
+export function TechnicalScript({ projectId, scenes }: { projectId: string; scenes: TechnicalScene[] }) {
+  let elapsed = 0;
+  const total = scenes.reduce((n, s) => n + s.shots.reduce((m, sh) => m + (sh.durationSec ?? 0), 0), 0);
+  const shotCount = scenes.reduce((n, s) => n + s.shots.length, 0);
+  const withoutTime = scenes.reduce((n, s) => n + s.shots.filter((sh) => !sh.durationSec).length, 0);
+
+  const th = "px-3 py-2.5 text-left font-mono text-[10px] font-normal tracking-[0.14em] text-muted uppercase";
+
+  return (
+    <>
+      <dl className="mt-8 flex flex-wrap gap-x-10 gap-y-2 font-sans text-sm">
+        <div className="flex items-baseline gap-2">
+          <dd className="font-display text-2xl font-black tabular-nums">{scenes.length}</dd>
+          <dt className="text-muted">escenas</dt>
+        </div>
+        <div className="flex items-baseline gap-2">
+          <dd className="font-display text-2xl font-black tabular-nums">{shotCount}</dd>
+          <dt className="text-muted">planos</dt>
+        </div>
+        <div className="flex items-baseline gap-2">
+          <dd className="font-display text-2xl font-black tabular-nums">{clock(total)}</dd>
+          <dt className="text-muted">
+            de duración{withoutTime > 0 && ` (faltan ${withoutTime} plano${withoutTime === 1 ? "" : "s"} por cronometrar)`}
+          </dt>
+        </div>
+      </dl>
+
+      <div className="paper mt-6 overflow-x-auto print:overflow-visible">
+        <table className="w-full min-w-[980px] border-collapse font-sans text-[13px] print:min-w-0 print:text-[10.5px]">
+          <thead className="border-b-2 border-fg/70">
+            <tr>
+              <th className={`${th} w-14 pl-5`}>Plano</th>
+              <th className={`${th} w-24`}>Encuadre</th>
+              <th className={th}>Imagen</th>
+              <th className={`${th} w-36`}>Cámara</th>
+              <th className={`${th} w-[26%]`}>Audio</th>
+              <th className={`${th} w-14 text-right`}>Dur.</th>
+              <th className={`${th} w-16 pr-5 text-right`}>Acum.</th>
+            </tr>
+          </thead>
+          {scenes.map((scene) => {
+            const sceneTime = scene.shots.reduce((m, sh) => m + (sh.durationSec ?? 0), 0);
+            return (
+              <tbody key={scene.id} id={`tec-${scene.id}`} className="scroll-mt-32 break-inside-avoid-page">
+                {/* La escena, como cabecera de su bloque de planos. */}
+                <tr className="border-b border-line bg-fg/[0.045]">
+                  <td colSpan={7} className="px-5 pt-4 pb-3">
+                    <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                      <span className="font-[family-name:var(--font-courier)] text-[14px] font-bold">{scene.number}.</span>
+                      <SceneSlug intExt={scene.intExt} dayPart={scene.dayPart} location={scene.location?.name} className="text-[14px]" />
+                      <span className="ml-auto font-mono text-[11px] text-muted tabular-nums">
+                        {scene.shots.length} plano{scene.shots.length === 1 ? "" : "s"}
+                        {sceneTime > 0 && ` · ${clock(sceneTime)}`}
+                      </span>
+                    </p>
+                    {(scene.summary || scene.characters.length > 0) && (
+                      <p className="mt-1 line-clamp-2 max-w-4xl text-[12.5px] leading-snug text-muted">
+                        {scene.summary}
+                        {scene.characters.length > 0 && (
+                          <span className="text-fg/70">
+                            {scene.summary ? " · " : ""}
+                            {scene.characters.join(", ")}
+                          </span>
+                        )}
+                      </p>
+                    )}
+                  </td>
+                </tr>
+                {scene.shots.length === 0 ? (
+                  <tr className="border-b border-line">
+                    <td colSpan={7} className="px-5 py-4 text-muted">
+                      Sin planos todavía.{" "}
+                      <Link href={`/app/${projectId}/shot-list?escena=${scene.id}`} className="font-semibold text-accent hover:underline print:hidden">
+                        Planificar la escena {scene.number} →
+                      </Link>
+                    </td>
+                  </tr>
+                ) : (
+                  scene.shots.map((sh) => {
+                    elapsed += sh.durationSec ?? 0;
+                    const kind = shotSizeKind(sh.shotSize);
+                    const frame = sh.storyboard[0]?.imageUrl;
+                    return (
+                      <tr key={sh.id} className="border-b border-line align-top break-inside-avoid">
+                        <td className="py-3 pl-5 font-mono text-[12.5px] font-semibold tabular-nums">
+                          <Link href={`/app/${projectId}/shot-list/${sh.id}`} className="hover:text-accent">
+                            {scene.number}.{sh.number}
+                          </Link>
+                          {sh.done && <span className="mt-1 block text-[10px] font-normal text-success">✓ rodado</span>}
+                        </td>
+                        <td className="px-3 py-3">
+                          {frame ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={frame} alt={`Viñeta del plano ${scene.number}.${sh.number}`} className="aspect-video w-[68px] rounded-[2px] object-cover" />
+                          ) : (
+                            <ShotFrame size={sh.shotSize} className="h-[38px] w-[68px]" />
+                          )}
+                          <span className="mt-1 block font-mono text-[11px] font-semibold">{kind ?? sh.shotSize ?? "—"}</span>
+                        </td>
+                        <td className="px-3 py-3 leading-snug">
+                          {sh.description ?? <span className="text-muted">Sin descripción</span>}
+                          {sh.notes && <span className="mt-1 block text-[12px] text-muted">{sh.notes}</span>}
+                        </td>
+                        <td className="px-3 py-3 text-[12.5px] leading-snug">
+                          {[sh.angle, sh.movement, sh.lens].filter(Boolean).map((t, i) => (
+                            <span key={i} className="block">
+                              {t}
+                            </span>
+                          ))}
+                          {!sh.angle && !sh.movement && !sh.lens && <span className="text-muted">—</span>}
+                        </td>
+                        <td className="px-3 py-3 leading-snug">
+                          {sh.audio ? <AudioCell text={sh.audio} /> : <span className="text-muted">—</span>}
+                        </td>
+                        <td className="px-3 py-3 text-right font-mono text-[12px] tabular-nums">
+                          {sh.durationSec ? clock(sh.durationSec) : <span className="text-muted">—</span>}
+                        </td>
+                        <td className="py-3 pr-5 text-right font-mono text-[12px] text-muted tabular-nums">{clock(elapsed)}</td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            );
+          })}
+        </table>
+      </div>
+    </>
   );
 }

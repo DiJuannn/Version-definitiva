@@ -125,6 +125,9 @@ export type GuidedShotInput = {
   angle: string | null;
   movement: string | null;
   description: string | null;
+  // Qué se oye (diálogo, efectos, música) y cuánto dura, para el guion técnico.
+  audio?: string | null;
+  durationSec?: number | null;
   // Quién sale; si no se dice, todo el reparto de la escena.
   characterIds?: string[];
 };
@@ -163,6 +166,8 @@ export async function createGuidedShotsCore(
           angle: clean(s.angle),
           movement: clean(s.movement),
           description: clean(s.description),
+          audio: s.audio?.trim().slice(0, 2000) || null,
+          durationSec: s.durationSec && s.durationSec > 0 ? Math.min(Math.round(s.durationSec), 3600) : null,
           characters: cast.length ? { create: cast.map((characterId) => ({ characterId })) } : undefined,
         },
       });

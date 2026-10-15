@@ -313,10 +313,10 @@ export default async function DashboardPage() {
         <section aria-labelledby="escritorio" className="mt-16">
           <div className="flex items-baseline gap-4">
             <h2 id="escritorio" className="poster-sub text-[32px]">
-              En el escritorio
+              Tus guiones
             </h2>
             <Link href="/app/guiones" className="eyebrow ml-auto hover:text-fg">
-              Guiones →
+              Todos los guiones →
             </Link>
           </div>
           <ul className="mt-6 grid grid-cols-2 gap-6 sm:grid-cols-4 lg:grid-cols-6">

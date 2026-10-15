@@ -6,11 +6,12 @@ import { analyzeShotList } from "@/lib/actions/shot-list-import";
 import { EmptyState } from "@/components/EmptyState";
 import { PdfLink } from "@/components/PdfLink";
 import { PageHeader } from "@/components/PageHeader";
+import { SceneToolSwitch } from "@/components/preproduccion/SceneToolSwitch";
 import { ShotBuilder } from "@/components/preproduccion/ShotBuilder";
 import { courierPrime } from "@/lib/screenplay/font";
 import { getScenesText } from "@/lib/scene-text";
 import { PlanosTabs } from "@/components/preproduccion/PlanosTabs";
-import { TechnicalScript } from "@/components/preproduccion/TechnicalScript";
+import { TechnicalScript, type TechnicalScene } from "@/components/preproduccion/TechnicalScript";
 import { PrintButton } from "@/components/PrintButton";
 import { ShotListUploadForm } from "@/components/ShotListUploadForm";
 import { NextTool, SceneSlug } from "@/components/preproduccion/SceneSlug";
@@ -82,6 +83,13 @@ export default async function ShotListPage({
     const text = texts.get(planning.id);
     const nextNumber =
       Math.max(0, ...planning.shots.map((sh) => Number.parseInt(sh.number, 10)).filter(Number.isFinite)) + 1;
+    // Las réplicas de la escena (personaje + diálogo) para el audio de cada plano.
+    const dialogueLines: { character: string; text: string }[] = [];
+    let speaker = "";
+    for (const b of text?.blocks ?? []) {
+      if (b.type === "character") speaker = b.text.replace(/\s*\(.*\)\s*$/, "").trim().toUpperCase();
+      else if (b.type === "dialogue" && speaker) dialogueLines.push({ character: speaker, text: b.text.replace(/\s+/g, " ").trim() });
+    }
     const prev = scenes[index - 1];
     const next = scenes[index + 1];
     const href = (id: string) => `/app/${projectId}/shot-list?escena=${id}`;
@@ -116,7 +124,10 @@ export default async function ShotListPage({
             </>
           }
         />
-        <div className="mt-8 grid gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
+        <div className="mt-6">
+          <SceneToolSwitch projectId={projectId} sceneId={planning.id} active="planos" />
+        </div>
+        <div className="mt-6 grid gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
           <div className="space-y-8 lg:sticky lg:top-28 lg:self-start">
             <section aria-labelledby="pl-texto">
               <h2 id="pl-texto" className="eyebrow">La escena</h2>
@@ -169,6 +180,7 @@ export default async function ShotListPage({
             place={planning.location?.name ?? null}
             characters={planning.characters.map((c) => c.character)}
             nextNumber={nextNumber}
+            lines={dialogueLines}
           />
         </div>
       </div>
@@ -177,14 +189,30 @@ export default async function ShotListPage({
 
   // El guion técnico: todo el guion seguido, con los planos de cada escena.
   if (vista === "tecnico") {
-    const texts = await getScenesText(projectId, scenes);
+    const frames = await prisma.storyboardFrame.findMany({
+      where: { shot: { scene: { projectId } } },
+      orderBy: { order: "asc" },
+      select: { shotId: true, imageUrl: true },
+    });
+    const firstFrame = new Map<string, { imageUrl: string | null }[]>();
+    for (const f of frames) if (f.imageUrl && !firstFrame.has(f.shotId)) firstFrame.set(f.shotId, [{ imageUrl: f.imageUrl }]);
+    const technical: TechnicalScene[] = scenes.map((s) => ({
+      id: s.id,
+      number: s.number,
+      intExt: s.intExt,
+      dayPart: s.dayPart,
+      location: s.location,
+      summary: s.description,
+      characters: s.characters.map((c) => c.character.name),
+      shots: s.shots.map((sh) => ({ ...sh, storyboard: firstFrame.get(sh.id) ?? [] })),
+    }));
     return (
       <div className={`print-doc pb-16 ${courierPrime.variable}`}>
         <div className="print-hide">
           <PageHeader
             eyebrow="Preparar"
             title="Guion técnico"
-            description="El guion completo, escena a escena, con cómo se rueda cada una al lado. Para leerlo de corrido o imprimirlo."
+            description="La película plano a plano: qué se ve, con qué encuadre y cámara, qué se oye y cuánto dura. Es el documento que lleva dirección al rodaje."
             actions={scenes.length > 0 ? <PrintButton label="Imprimir" /> : undefined}
           />
           <PlanosTabs projectId={projectId} active="tecnico" />
@@ -208,7 +236,7 @@ export default async function ShotListPage({
                 </strong>
               </p>
             )}
-            <TechnicalScript projectId={projectId} scenes={scenes} texts={texts} />
+            <TechnicalScript projectId={projectId} scenes={technical} />
           </>
         )}
       </div>

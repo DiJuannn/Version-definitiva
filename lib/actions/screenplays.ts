@@ -131,9 +131,13 @@ export async function linkScreenplayProject(id: string, projectId: string | null
   revalidatePath(`/app/guiones/${id}`);
   if (!projectId) return { ok: true, characters: 0, cards: 0 };
   const res = await syncScreenplayToProjectCore(id, profile.organizationId);
-  // Al vincular, las escenas del guion pasan también a producción.
-  if (res.ok) await syncScreenplayScenesCore(projectId, profile.organizationId);
+  // Al vincular, las escenas del guion pasan también a producción. Si eso
+  // falla se dice (los personajes ya están), para que no parezca vinculado del todo.
+  const scenes = res.ok ? await syncScreenplayScenesCore(projectId, profile.organizationId) : null;
   revalidateProjectScript(projectId);
+  if (res.ok && scenes && !scenes.ok) {
+    return { ...res, warning: `Las escenas no se han podido pasar a producción (${scenes.error}). Prueba con «Sincronizar escenas» en Guion.` };
+  }
   return res;
 }
 

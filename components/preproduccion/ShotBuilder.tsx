@@ -6,7 +6,17 @@ import { createGuidedShots } from "@/lib/actions/shots";
 import { AngleIcon, MovementIcon, SHOT_SIZE_NAMES, ShotFrame, type ShotSizeKind } from "@/components/preproduccion/ShotFrame";
 
 type Character = { id: string; name: string };
-type Draft = { shotSize: ShotSizeKind; angle: string; movement: string; description: string; characterIds: string[] };
+type Draft = {
+  shotSize: ShotSizeKind;
+  angle: string;
+  movement: string;
+  description: string;
+  characterIds: string[];
+  audio?: string;
+  durationSec?: number | null;
+};
+// Una réplica de la escena, para llevarla al audio del plano.
+export type DialogueLine = { character: string; text: string };
 
 // Qué cuenta cada tamaño: la guía de planos, en una línea.
 const SIZE_GUIDE: Record<ShotSizeKind, string> = {
@@ -50,6 +60,7 @@ export function ShotBuilder({
   place,
   characters,
   nextNumber,
+  lines = [],
 }: {
   projectId: string;
   sceneId: string;
@@ -57,11 +68,12 @@ export function ShotBuilder({
   place: string | null;
   characters: Character[];
   nextNumber: number;
+  lines?: DialogueLine[];
 }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const allIds = characters.map((c) => c.id);
-  const [draft, setDraft] = useState<Draft>({ shotSize: "PM", angle: "Normal", movement: "Fijo", description: "", characterIds: allIds });
+  const [draft, setDraft] = useState<Draft>({ shotSize: "PM", angle: "Normal", movement: "Fijo", description: "", characterIds: allIds, audio: "", durationSec: null });
   const [batch, setBatch] = useState<Draft[]>([]);
   const [done, setDone] = useState<string | null>(null);
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setDraft((d) => ({ ...d, [k]: v }));
@@ -72,7 +84,7 @@ export function ShotBuilder({
       const n = await createGuidedShots(projectId, sceneId, shots);
       setDone(n ? `✓ ${label}` : "No se ha podido añadir. Inténtalo otra vez.");
       setBatch([]);
-      setDraft((d) => ({ ...d, description: "" }));
+      setDraft((d) => ({ ...d, description: "", audio: "", durationSec: null }));
       router.refresh();
     });
 
@@ -279,6 +291,65 @@ export function ShotBuilder({
             className="field mt-1.5 w-full"
           />
         </label>
+
+        <div className="mt-6 grid gap-4 sm:grid-cols-[minmax(0,1fr)_7rem]">
+          <label className="block">
+            <span className="eyebrow">Qué se oye</span>
+            <textarea
+              value={draft.audio ?? ""}
+              onChange={(e) => set("audio", e.target.value)}
+              rows={2}
+              placeholder="Diálogo, efectos, música… (AUREL: ¿Empezamos?)"
+              className="field mt-1.5 w-full"
+            />
+          </label>
+          <label className="block">
+            <span className="eyebrow">Duración</span>
+            <span className="mt-1.5 flex items-center gap-1.5">
+              <input
+                type="number"
+                min={1}
+                max={3600}
+                inputMode="numeric"
+                value={draft.durationSec ?? ""}
+                onChange={(e) => set("durationSec", e.target.value ? Number(e.target.value) : null)}
+                className="field w-full"
+                placeholder="—"
+              />
+              <span className="font-sans text-sm text-muted">s</span>
+            </span>
+          </label>
+        </div>
+        {lines.length > 0 && (
+          <div className="mt-3">
+            <p className="font-sans text-[12.5px] text-muted">Toca una réplica de la escena para llevarla al audio de este plano:</p>
+            <div className="mt-2 flex max-h-40 flex-wrap gap-1.5 overflow-y-auto">
+              {lines.map((l, i) => {
+                const line = `${l.character}: ${l.text}`;
+                const on = (draft.audio ?? "").split("\n").includes(line);
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() =>
+                      set(
+                        "audio",
+                        on
+                          ? (draft.audio ?? "").split("\n").filter((x) => x !== line).join("\n")
+                          : [draft.audio?.trim(), line].filter(Boolean).join("\n"),
+                      )
+                    }
+                    className={`${chip(on)} max-w-full text-left`}
+                  >
+                    <b className="shrink-0 font-semibold">{l.character}</b>
+                    <span className="truncate">{l.text}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <div className="mt-4 flex flex-wrap items-center gap-4">
           <button type="button" className="btn btn-primary" disabled={pending} onClick={() => send([draft], `Plano ${sceneNumber}.${nextNumber} añadido`)}>
