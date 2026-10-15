@@ -135,7 +135,7 @@ export default async function DesglosePage({
   return (
     <div className="pb-16">
       <PageHeader
-        eyebrow="Preproducción"
+        eyebrow="Preparar"
         title="Desglose"
         description="Qué pide cada escena para poder rodarla, por categorías y con su color. Lo que sale en cada escena se marca en su ficha, en Guion."
         actions={

@@ -247,7 +247,7 @@ export default async function DocumentosPage({
   return (
     <div className="pb-16">
       <PageHeader
-        eyebrow="Gestión"
+        eyebrow="Entregar"
         title="Biblioteca de archivos"
         description="Los papeles del proyecto en un sitio, y cuáles te faltan antes de rodar."
         actions={

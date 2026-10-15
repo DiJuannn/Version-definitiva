@@ -3,10 +3,9 @@ import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { NextStep } from "@/components/NextStep";
-import { StageStepper } from "@/components/StageStepper";
 import { StageFocus } from "@/components/StageFocus";
 import { ProjectWelcome } from "@/components/ProjectWelcome";
-import { ProjectTools } from "@/components/ProjectTools";
+import { PhaseBoard } from "@/components/PhaseBoard";
 import { ProjectSummaryCard } from "@/components/ProjectSummaryCard";
 import { ProjectShareButton } from "@/components/ProjectShareButton";
 import { ProjectHeaderCard } from "@/components/ProjectHeaderCard";
@@ -125,20 +124,17 @@ export default async function ProjectTallerPage({
         />
       )}
 
-      {/* La bienvenida ya explica las cuatro etapas; con ella delante, el recorrido sobraría. */}
       {showWelcome ? (
         <ProjectWelcome projectId={project.id} />
       ) : (
-        <div className="mt-10">
-          <StageStepper stage={stage} className="" />
-          {stage === 1 && facts.scenes === 0 && (
-            <p className="mt-4">
-              <Link href={`/app/${project.id}?ayuda=1`} className="link-action !px-0 hover:!text-accent">
-                ¿Cómo funciona? →
-              </Link>
-            </p>
-          )}
-        </div>
+        stage === 1 &&
+        facts.scenes === 0 && (
+          <p className="mt-6">
+            <Link href={`/app/${project.id}?ayuda=1`} className="link-action !px-0 hover:!text-accent">
+              ¿Cómo funciona? →
+            </Link>
+          </p>
+        )
       )}
 
       {stage >= 3 ? (
@@ -158,7 +154,7 @@ export default async function ProjectTallerPage({
         />
       )}
 
-      <ProjectTools projectId={project.id} mode={mode} access={access} toolStats={toolStats} />
+      <PhaseBoard projectId={project.id} stage={stage} access={access} mode={mode} toolStats={toolStats} />
 
       <div
         className={`mt-16 grid gap-x-16 gap-y-12 border-t border-line pt-10 ${

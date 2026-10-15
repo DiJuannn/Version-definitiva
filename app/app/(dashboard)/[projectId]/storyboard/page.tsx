@@ -8,6 +8,7 @@ import { DeleteButton } from "@/components/DeleteButton";
 import { EmptyState } from "@/components/EmptyState";
 import { PrintButton } from "@/components/PrintButton";
 import { PageHeader } from "@/components/PageHeader";
+import { PlanosTabs } from "@/components/preproduccion/PlanosTabs";
 import { SubmitButton } from "@/components/SubmitButton";
 import { NextTool, SceneSlug } from "@/components/preproduccion/SceneSlug";
 import { ShotFrame } from "@/components/preproduccion/ShotFrame";
@@ -85,11 +86,12 @@ export default async function StoryboardPage({
   return (
     <div className="pb-16">
       <PageHeader
-        eyebrow="Preproducción"
+        eyebrow="Preparar"
         title="Storyboard"
         description="La película dibujada antes de rodarla: una viñeta por plano, escena a escena. Sube un dibujo o una foto de referencia y escribe qué pasa."
         actions={scenesWithShots.length > 0 ? <PrintButton /> : undefined}
       />
+      <PlanosTabs projectId={projectId} active="storyboard" />
 
       {scenesWithShots.length === 0 ? (
         <EmptyState

@@ -32,7 +32,7 @@ export default async function MoodboardPage({
   return (
     <div>
       <PageHeader
-        eyebrow="Preproducción"
+        eyebrow="Escribir"
         title="Moodboard"
         description="Un tablero para decidir cómo se ve y cómo suena la película: fotos, paletas, referencias y notas, junto a las escenas del guion."
         actions={<MoodboardAiButton />}

@@ -56,7 +56,7 @@ export default async function MontajePage({
   return (
     <div>
       <PageHeader
-        eyebrow="Entrega"
+        eyebrow="Entregar"
         title="Montaje"
         description="Del rodaje a la entrega: las tomas buenas para quien monta, cada versión del montaje y lo que falta para entregar."
       />

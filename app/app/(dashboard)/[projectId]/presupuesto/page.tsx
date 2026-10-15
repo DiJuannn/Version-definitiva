@@ -183,7 +183,7 @@ export default async function PresupuestoPage({
   return (
     <div className="pb-16">
       <PageHeader
-        eyebrow="Producción"
+        eyebrow="Preparar"
         title="Presupuesto"
         description="Cuánto cuesta el rodaje y cuánto llevas gastado, partida a partida."
         actions={

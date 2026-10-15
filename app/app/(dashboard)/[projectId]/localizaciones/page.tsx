@@ -96,7 +96,7 @@ export default async function ProjectLocationsPage({
   return (
     <div className="pb-16">
       <PageHeader
-        eyebrow="Gestión"
+        eyebrow="Preparar"
         title="Localizaciones"
         description={
           library

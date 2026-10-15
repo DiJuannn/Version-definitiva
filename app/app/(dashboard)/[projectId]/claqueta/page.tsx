@@ -106,7 +106,7 @@ export default async function ClaquetaPage({
   return (
     <div>
       <PageHeader
-        eyebrow="Producción"
+        eyebrow="Rodar"
         title="Claqueta digital"
         description={
           scenes.length > 0

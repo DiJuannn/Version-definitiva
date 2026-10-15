@@ -103,7 +103,7 @@ export default async function EquipoPage({
   return (
     <div className="pb-16">
       <PageHeader
-        eyebrow="Preproducción"
+        eyebrow="Preparar"
         title="Equipo técnico"
         description="Quién hace qué en el rodaje, por departamentos, y cómo localizar a cada persona."
         actions={

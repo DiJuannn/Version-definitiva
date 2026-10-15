@@ -224,7 +224,7 @@ export default async function PersonajesPage({
   return (
     <div className="pb-16">
       <PageHeader
-        eyebrow="Preproducción"
+        eyebrow="Escribir"
         title="Personajes"
         description="Quién sale en la película, en qué escenas y qué actor lo interpreta."
         actions={newCharacter}

@@ -7,6 +7,7 @@ import { analyzeShotList } from "@/lib/actions/shot-list-import";
 import { EmptyState } from "@/components/EmptyState";
 import { PdfLink } from "@/components/PdfLink";
 import { PageHeader } from "@/components/PageHeader";
+import { PlanosTabs } from "@/components/preproduccion/PlanosTabs";
 import { SubmitButton } from "@/components/SubmitButton";
 import { ShotListUploadForm } from "@/components/ShotListUploadForm";
 import { NextTool, SceneSlug } from "@/components/preproduccion/SceneSlug";
@@ -67,7 +68,7 @@ export default async function ShotListPage({
   return (
     <div className="pb-16">
       <PageHeader
-        eyebrow="Preproducción"
+        eyebrow="Preparar"
         title="Lista de planos"
         description="Cómo se va a rodar cada escena, plano a plano: encuadre, ángulo y movimiento. ¿Ya tienes el guion técnico? Impórtalo y la IA propone los planos."
         actions={
@@ -77,6 +78,7 @@ export default async function ShotListPage({
           </>
         }
       />
+      <PlanosTabs projectId={projectId} active="lista" />
 
       {scenes.length === 0 ? (
         <EmptyState

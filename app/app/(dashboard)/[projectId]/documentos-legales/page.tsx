@@ -113,7 +113,7 @@ export default async function DocumentosLegalesPage({
   return (
     <div className="pb-16">
       <PageHeader
-        eyebrow="Gestión"
+        eyebrow="Entregar"
         title="Plantillas de documentos"
         description="Permisos, contratos y cesiones ya escritos con los datos del proyecto: rellenas cuatro huecos y sale el PDF para firmar."
       />

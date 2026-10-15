@@ -62,7 +62,7 @@ export default async function ProjectVehiclesPage({
   return (
     <div className="pb-16">
       <PageHeader
-        eyebrow="Gestión"
+        eyebrow="Rodar"
         title="Vehículos"
         description={
           fleet

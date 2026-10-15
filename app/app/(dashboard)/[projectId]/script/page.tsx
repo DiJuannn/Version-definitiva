@@ -23,7 +23,7 @@ export default async function ScriptPage({
   return (
     <div>
       <PageHeader
-        eyebrow="Producción"
+        eyebrow="Rodar"
         title="Parte de script"
         description="Una hoja por día de rodaje con cada toma, su hora y su nota, y la buena rodeada como en el parte de la script. Se rellena solo con la claqueta."
         actions={

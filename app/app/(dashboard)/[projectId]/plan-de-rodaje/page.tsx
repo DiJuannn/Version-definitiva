@@ -67,7 +67,7 @@ export default async function PlanDeRodajePage({
   return (
     <div>
       <PageHeader
-        eyebrow="Producción"
+        eyebrow="Rodar"
         title="Plan de rodaje"
         description={
           data.days.length > 0 ? (

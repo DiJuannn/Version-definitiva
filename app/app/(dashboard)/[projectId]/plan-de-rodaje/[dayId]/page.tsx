@@ -131,7 +131,7 @@ export default async function ShootingDayDetailPage({
       <PageHeader
         backHref={`/app/${projectId}/plan-de-rodaje`}
         backLabel="← Plan de rodaje"
-        eyebrow="Producción"
+        eyebrow="Rodar"
         title={`${summary.shootingDay.date.toLocaleDateString("es-ES", { weekday: "long", day: "2-digit", month: "long", year: "numeric", })}`}
         actions={
           summary.shootingDay.callSheet ? (

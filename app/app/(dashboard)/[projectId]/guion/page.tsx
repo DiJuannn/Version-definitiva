@@ -265,7 +265,7 @@ export default async function GuionPage({
   return (
     <div className="pb-16">
       <PageHeader
-        eyebrow="Preproducción"
+        eyebrow="Escribir"
         title="Guion"
         description="Las escenas de tu película en orden, sacadas del guion. Abre una para decir dónde se rueda, quién sale y qué se necesita."
         actions={
