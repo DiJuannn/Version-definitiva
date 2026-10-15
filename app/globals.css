@@ -2,6 +2,12 @@
 @import "leaflet/dist/leaflet.css";
 
 :root {
+  /* Fases del proyecto con el código de color del rodaje: Escribir (papel),
+     Preparar (amarillo), Rodar (rojo de grabación), Entregar (verde). */
+  --phase-1: #e9e6dc;
+  --phase-2: #e8cf5e;
+  --phase-3: #ef5a4f;
+  --phase-4: #5fbf86;
   --bg: #0a0a0a;
   --bg-raised: #131313;
   --fg: #f2f0ea;
@@ -200,6 +206,69 @@ body:has(.taller-desk) > div[aria-hidden].fixed {
   .menu-item[data-active="true"] {
     background: color-mix(in srgb, var(--accent) 16%, transparent);
     color: var(--fg);
+  }
+  /* Título de cartel: Archivo condensada y negrísima, como un cartel de
+     cine. Solo para nombres de proyecto y cifras protagonistas. */
+  .poster-title {
+    font-family: var(--font-archivo), sans-serif;
+    font-weight: 900;
+    font-stretch: 62%;
+    line-height: 0.84;
+    letter-spacing: -0.005em;
+    text-transform: uppercase;
+  }
+  .poster-sub {
+    font-family: var(--font-archivo), sans-serif;
+    font-weight: 800;
+    font-stretch: 72%;
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+  }
+  /* Tira de película: el avance de un proyecto. Perforaciones arriba y
+     abajo; cada fotograma encendido lleva el color de su fase. */
+  .film-strip {
+    position: relative;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: 3px;
+    border-radius: 3px;
+    background: #050506;
+    padding: 11px 5px;
+  }
+  .film-strip::before,
+  .film-strip::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 8px;
+    background-image: radial-gradient(ellipse 3px 2.2px at center, #2b2a31 98%, transparent 100%);
+    background-size: 10px 8px;
+    background-repeat: repeat-x;
+  }
+  .film-strip::before {
+    top: 1px;
+  }
+  .film-strip::after {
+    bottom: 1px;
+  }
+  .film-strip > i {
+    height: 20px;
+    border-radius: 2px;
+    background: #1d1c22;
+  }
+  .film-strip.film-strip-sm {
+    padding: 8px 4px;
+    gap: 2px;
+  }
+  .film-strip.film-strip-sm::before,
+  .film-strip.film-strip-sm::after {
+    height: 6px;
+    background-size: 8px 6px;
+  }
+  .film-strip.film-strip-sm > i {
+    height: 12px;
   }
   /* Etiqueta pequeña de sección (PREPRODUCCIÓN, ACTORES…). */
   .eyebrow {

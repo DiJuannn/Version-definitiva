@@ -5,9 +5,6 @@ import { TOOL_GROUPS, type ToolDefinition } from "@/lib/tool-groups";
 // fase debajo, siempre a la vista) y la portada. TOOL_GROUPS sigue siendo la
 // lista completa (búsqueda, selector de herramientas, app móvil); aquí solo
 // se decide el orden y qué va junto.
-//
-// Storyboard no tiene sitio propio: es la otra vista de la lista de planos
-// (pestañas Lista / Storyboard dentro de la herramienta).
 
 export type PhaseId = 1 | 2 | 3 | 4;
 
@@ -39,7 +36,8 @@ export const PHASES: Phase[] = [
     hint: "Qué hace falta, cómo se rueda, con quién, dónde y cuánto cuesta.",
     tools: [
       pick("desglose"),
-      pick("shot-list", { label: "Planos", description: "Cómo se rueda cada escena, plano a plano, y su storyboard." }),
+      pick("shot-list", { label: "Planos", description: "Cómo se rueda cada escena, plano a plano, y el guion técnico." }),
+      pick("storyboard"),
       pick("equipo"),
       pick("localizaciones"),
       pick("presupuesto"),
@@ -49,7 +47,13 @@ export const PHASES: Phase[] = [
     id: 3,
     label: "Rodar",
     hint: "Las jornadas, a quién se cita y cada toma.",
-    tools: [pick("plan-de-rodaje"), pick("call-sheets"), pick("claqueta"), pick("script"), pick("vehiculos")],
+    tools: [
+      pick("plan-de-rodaje"),
+      pick("call-sheets"),
+      pick("claqueta"),
+      pick("script"),
+      pick("vehiculos", { label: "Material y vehículos" }),
+    ],
   },
   {
     id: 4,
@@ -64,8 +68,8 @@ export const PHASES: Phase[] = [
   },
 ];
 
-// Rutas que pertenecen a una herramienta de otra (storyboard → planos).
-const ALIASES: Record<string, string> = { storyboard: "shot-list" };
+// Rutas que pertenecen a una herramienta de otra.
+const ALIASES: Record<string, string> = {};
 
 // En qué fase está una ruta del proyecto (/app/<id>/<segmento>/...), o null
 // si no es de ninguna (portada, resumen, tareas).

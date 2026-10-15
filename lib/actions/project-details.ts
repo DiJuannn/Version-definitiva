@@ -49,3 +49,29 @@ export async function updateProjectDetails(projectId: string, formData: FormData
 
   revalidatePath(`/app/${projectId}`);
 }
+
+const MAX_COVER_BYTES = 8 * 1024 * 1024;
+
+// Imagen del cartel del proyecto (Inicio y portada). Solo la organización
+// dueña del proyecto la cambia.
+export async function uploadProjectCover(projectId: string, formData: FormData): Promise<{ error?: string }> {
+  const profile = await getCurrentProfile();
+  const project = await getProjectForCurrentUser(projectId);
+  if (!profile || !project || project.organizationId !== profile.organizationId) return { error: "No puedes cambiar este proyecto." };
+  const file = formData.get("file");
+  if (formData.get("remove") === "1") {
+    await prisma.project.update({ where: { id: projectId }, data: { coverUrl: null } });
+  } else {
+    if (!(file instanceof File) || file.size === 0) return { error: "Elige una imagen." };
+    if (!file.type.startsWith("image/")) return { error: "Tiene que ser una imagen (JPG, PNG o WebP)." };
+    if (file.size > MAX_COVER_BYTES) return { error: "La imagen pesa más de 8 MB." };
+    const { uploadProjectFile } = await import("@/lib/storage");
+    const uploaded = await uploadProjectFile(`covers/${projectId}`, file);
+    if (!uploaded) return { error: "No se pudo subir la imagen. Inténtalo otra vez." };
+    await prisma.project.update({ where: { id: projectId }, data: { coverUrl: uploaded.url } });
+  }
+  revalidatePath(`/app/${projectId}`);
+  revalidatePath("/app");
+  revalidatePath("/app/proyectos");
+  return {};
+}

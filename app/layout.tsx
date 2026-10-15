@@ -6,6 +6,8 @@ import { MotionProvider } from "@/components/MotionProvider";
 const archivo = Archivo({
   variable: "--font-archivo",
   subsets: ["latin"],
+  // Ancho variable: la letra condensada de cartel (títulos de proyecto).
+  axes: ["wdth"],
 });
 
 const jetbrainsMono = JetBrains_Mono({
