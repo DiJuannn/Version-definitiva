@@ -19,7 +19,8 @@ export function CoverUpload({ projectId, hasCover }: { projectId: string; hasCov
     });
 
   return (
-    <div className="absolute top-2.5 right-2.5 flex flex-col items-end gap-1.5">
+    // Sin imagen, el título del cartel va arriba: el botón, abajo.
+    <div className={`absolute right-2.5 flex flex-col items-end gap-1.5 ${hasCover ? "top-2.5" : "bottom-2.5"}`}>
       <div className="flex gap-1.5">
         <button
           type="button"

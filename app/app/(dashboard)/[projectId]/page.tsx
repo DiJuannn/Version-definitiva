@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { ProjectWelcome } from "@/components/ProjectWelcome";
+import { FirstSteps } from "@/components/FirstSteps";
+import { getFirstSteps } from "@/lib/first-steps";
 import { ProjectSummaryCard } from "@/components/ProjectSummaryCard";
 import { ProjectShareButton } from "@/components/ProjectShareButton";
 import { ActivityFeed } from "@/components/ActivityFeed";
@@ -43,7 +45,7 @@ export default async function ProjectTallerPage({
   const isOwnerOrg = project.organizationId === profile.organizationId;
   const budgetTarget = project.budgetTarget !== null ? Number(project.budgetTarget) : null;
 
-  const [ownerLabel, shares, origin, activityLogs, overview, facts, mode, progress, screenplay, cast, crew, extra] = await Promise.all([
+  const [ownerLabel, shares, origin, activityLogs, overview, facts, mode, progress, screenplay, cast, crew, extra, firstSteps] = await Promise.all([
     isOwnerOrg ? null : getProjectOwnerLabel(project),
     isOwnerOrg
       ? prisma.projectShare.findMany({
@@ -82,6 +84,7 @@ export default async function ProjectTallerPage({
       prisma.vehicleReservation.count({ where: { shootingDay: { projectId } } }),
       prisma.task.count({ where: { projectId, status: { not: "DONE" } } }),
     ]),
+    getFirstSteps(projectId),
   ]);
   const [sceneCount, shotCount, locationCount, itemCount, vehicleCount, taskCount] = extra;
   const access = computeAccess(facts);
@@ -230,6 +233,8 @@ export default async function ProjectTallerPage({
           <ProjectWelcome projectId={projectId} />
         </div>
       )}
+
+      <FirstSteps projectId={projectId} steps={firstSteps} />
 
       {/* ------------------------------------------------ el camino */}
       <div className="mt-12">
