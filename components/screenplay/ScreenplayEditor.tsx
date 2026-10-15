@@ -37,7 +37,7 @@ import Link from "next/link";
 import { AjoloteLogo } from "@/components/AjoloteLogo";
 import { newSceneId } from "@/lib/screenplay/blocks";
 import { suggestReferencesAction } from "@/lib/actions/screenplay-ai";
-import { syncScreenplayToProject } from "@/lib/actions/screenplays";
+import { autoSyncScreenplayScenes, syncScreenplayToProject } from "@/lib/actions/screenplays";
 import {
   STEPS,
   WorkspaceProvider,
@@ -608,6 +608,46 @@ export default function ScreenplayEditor({
     };
   }, [flushSave, linkedProject, maps, screenplayId]);
 
+  // Las escenas pasan solas al proyecto vinculado: cuando cambia algo que le
+  // importa a producción (encabezado, orden, quién sale, de qué va), tras una
+  // pausa al escribir. Al abrir no se sincroniza: solo los cambios de aquí.
+  const [prodSync, setProdSync] = useState<"idle" | "syncing" | "ok" | "error">("idle");
+  const sceneSig = useMemo(
+    () =>
+      scenes
+        .filter((sc) => sc.heading)
+        .map((sc) => `${sc.sid}|${sc.heading}|${sc.present.join(",")}|${sc.firstAction.slice(0, 280)}`)
+        .join("\n"),
+    [scenes],
+  );
+  const syncedSig = useRef<string | null>(null);
+  useEffect(() => {
+    if (!linkedProject || !editor) return;
+    if (syncedSig.current === null) {
+      syncedSig.current = sceneSig;
+      return;
+    }
+    if (sceneSig === syncedSig.current) return;
+    const t = setTimeout(async () => {
+      setProdSync("syncing");
+      await flushSave();
+      const res = await autoSyncScreenplayScenes(screenplayId).catch(() => null);
+      if (res?.ok) {
+        syncedSig.current = sceneSig;
+        setProdSync("ok");
+        setSyncNote(
+          res.gone
+            ? `${res.gone === 1 ? "La escena" : "Las escenas"} ${res.goneNumbers?.join(", ")} de producción ya no ${res.gone === 1 ? "está" : "están"} en el guion. No se borra${res.gone === 1 ? "" : "n"} sola${res.gone === 1 ? "" : "s"} (puede${res.gone === 1 ? "" : "n"} tener planos o días): revísala${res.gone === 1 ? "" : "s"} en el proyecto.`
+            : null,
+        );
+      } else {
+        setProdSync("error");
+        setSyncNote(res && !res.ok ? `No se han podido pasar las escenas al proyecto: ${res.error}` : "No se han podido pasar las escenas al proyecto. Se reintentará con el próximo cambio.");
+      }
+    }, 6000);
+    return () => clearTimeout(t);
+  }, [editor, flushSave, linkedProject, sceneSig, screenplayId]);
+
   const workspace: Workspace = {
     screenplayId,
     ydoc,
@@ -716,6 +756,11 @@ export default function ScreenplayEditor({
             <span className={`hidden items-center gap-1.5 lg:flex ${status.tone}`} role="status" aria-live="polite">
               <span className="h-1.5 w-1.5 rounded-full bg-current" />
               {status.label}
+              {linkedProject && prodSync !== "idle" && (
+                <span className={prodSync === "error" ? "text-warn" : "text-muted"} title={`Proyecto vinculado: ${linkedProject.name}`}>
+                  · {prodSync === "syncing" ? "pasando al proyecto…" : prodSync === "ok" ? "proyecto al día" : "proyecto sin actualizar"}
+                </span>
+              )}
             </span>
             <details className="relative">
               <summary className="sp-btn cursor-pointer list-none" aria-label="Exportar">

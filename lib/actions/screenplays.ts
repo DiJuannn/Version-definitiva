@@ -268,3 +268,19 @@ export async function uploadScreenplayImage(id: string, formData: FormData): Pro
   if (!uploaded) return { error: "No se pudo subir la imagen. Inténtalo de nuevo." };
   return { url: uploaded.url };
 }
+
+// Desde el editor, mientras se escribe: las escenas del guion pasan solas al
+// proyecto vinculado (sin borrar nada de producción). Solo quien es de la
+// organización del guion.
+export async function autoSyncScreenplayScenes(id: string): Promise<SceneSyncResult> {
+  const profile = await getCurrentProfile();
+  if (!profile) return { ok: false, error: "Tu sesión ha caducado." };
+  const screenplay = await prisma.screenplay.findFirst({
+    where: { id, organizationId: profile.organizationId },
+    select: { projectId: true },
+  });
+  if (!screenplay?.projectId) return { ok: false, error: "Este guion no está vinculado a ningún proyecto." };
+  const res = await syncScreenplayScenesCore(screenplay.projectId, profile.organizationId);
+  if (res.ok && (res.added || res.updated)) revalidateProjectScript(screenplay.projectId);
+  return res;
+}
