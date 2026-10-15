@@ -59,9 +59,9 @@ export async function createScreenplay(
   if ("error" in result) return result;
 
   revalidatePath("/app/guiones");
-  // Por dónde empieza: la idea, la escaleta o directamente el guion.
+  // Por dónde empieza: la idea o directamente el guion.
   const start = String(formData.get("start") ?? "");
-  const step = fountain || imported ? "guion" : start === "idea" || start === "escaleta" ? start : "guion";
+  const step = fountain || imported ? "guion" : start === "idea" ? "idea" : "guion";
   redirect(`/app/guiones/${result.id}?paso=${step}`);
 }
 

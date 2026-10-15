@@ -154,11 +154,18 @@ export function formatEighths(eighths: number): string {
   return rest ? `${pages} ${rest}/8` : `${pages}`;
 }
 
-export function scenesFromBlocks(blocks: ScreenplayBlock[], size: PageSize = "A4"): SceneInfo[] {
+// `untitled`: cuenta también las escenas aún sin encabezado (las que nacen de
+// una idea suelta) si ya tienen algo escrito. Solo para escribir: producción
+// necesita el encabezado.
+export function scenesFromBlocks(blocks: ScreenplayBlock[], size: PageSize = "A4", { untitled = false } = {}): SceneInfo[] {
   const scenes: SceneInfo[] = [];
+  const hasBody = (i: number) => {
+    for (let k = i + 1; k < blocks.length && blocks[k].type !== "sceneHeading"; k++) if (blocks[k].text.trim()) return true;
+    return false;
+  };
   const headings = blocks
     .map((b, i) => ({ b, i }))
-    .filter(({ b }) => b.type === "sceneHeading" && b.text.trim() && b.id);
+    .filter(({ b, i }) => b.type === "sceneHeading" && b.id && (b.text.trim() || (untitled && hasBody(i))));
   if (!headings.length) return scenes;
 
   // Dónde empieza cada bloque en el guion impreso (página y línea), para
@@ -280,3 +287,102 @@ export function safeUrl(v: unknown): string | undefined {
     return undefined;
   }
 }
+
+// ------------------------------------------------------------------ ideas sueltas
+
+// Lo que se tiene antes de saber el orden: una imagen, una frase, un momento,
+// un personaje, un final. Viven en el documento (mapa "loose") y se convierten
+// en escenas cuando se quiera.
+export const LOOSE_KINDS = {
+  imagen: { label: "Imagen", tone: "#3c6fb0", bg: "#e6f0fb" },
+  dialogo: { label: "Diálogo", tone: "#a2457a", bg: "#f6e8f0" },
+  momento: { label: "Momento", tone: "#8c6d0e", bg: "#fbf2d5" },
+  personaje: { label: "Personaje", tone: "#6b54b8", bg: "#efeaf9" },
+  final: { label: "Final", tone: "#2d7a4c", bg: "#e5f4ea" },
+  otro: { label: "Idea", tone: "#6d695f", bg: "#eeece6" },
+} as const;
+
+export type LooseKind = keyof typeof LOOSE_KINDS;
+
+export type LooseIdea = {
+  id: string;
+  text: string;
+  kind: LooseKind;
+  at: number;
+  by?: string;
+  sid?: string; // escena en la que ya se usó
+};
+
+export function isLooseKind(v: unknown): v is LooseKind {
+  return typeof v === "string" && v in LOOSE_KINDS;
+}
+
+// Una primera suposición de qué es, para no obligar a elegir (se cambia con un toque).
+export function guessLooseKind(text: string): LooseKind {
+  const t = text.trim();
+  const low = t.toLowerCase();
+  if (/^[—–-]\s?|^[«"“]/.test(t)) return "dialogo";
+  if (/^[A-ZÁÉÍÓÚÑ]{2,}[A-ZÁÉÍÓÚÑ ]*(,|\s\(|:)/.test(t)) return "personaje";
+  if (/\b(al final|acaba|termina|último plano|final)\b/.test(low)) return "final";
+  if (/\b(plano|imagen|se ve|vemos|primer plano|silueta|reflejo)\b/.test(low)) return "imagen";
+  if (/^(un|una|el|la|los|las)\s/i.test(t) && t.split(/\s+/).length <= 14 && !/\b(descubre|decide|encuentra|llega|huye|mata|besa|dice)\b/.test(low))
+    return "imagen";
+  return "momento";
+}
+
+// ------------------------------------------------------------------ estructura en tres actos
+
+// Los momentos que sostienen una estructura en tres actos, con dónde suelen
+// caer (proporción de la duración). Son orientativos: sirven para situarse,
+// no para obligar.
+export const BEATS = [
+  { key: "inciting", label: "Detonante", at: 0.12, hint: "Lo que rompe la normalidad y pone la historia en marcha." },
+  { key: "turn1", label: "Primer giro", at: 0.25, hint: "El protagonista se mete (o le meten) en el conflicto. Cierra el Acto I." },
+  { key: "midpoint", label: "Punto medio", at: 0.5, hint: "Algo cambia el sentido de la búsqueda: una revelación, una falsa victoria." },
+  { key: "turn2", label: "Segundo giro", at: 0.75, hint: "El peor momento, o la pista que lleva al final. Cierra el Acto II." },
+  { key: "climax", label: "Clímax", at: 0.9, hint: "El enfrentamiento decisivo: se resuelve lo que estaba en juego." },
+] as const;
+
+export type BeatKey = (typeof BEATS)[number]["key"];
+
+export function isBeatKey(v: unknown): v is BeatKey {
+  return BEATS.some((b) => b.key === v);
+}
+
+// Cuatro maneras clásicas de abrir, y qué tipo de idea suelta encaja con cada una.
+export const OPENINGS = [
+  {
+    key: "imagen",
+    label: "Con una imagen que lo resume todo",
+    hint: "Un plano que el espectador entenderá del todo al final.",
+    example: "Como la bola de nieve de «Ciudadano Kane».",
+    kinds: ["imagen"] as LooseKind[],
+    question: "¿Qué imagen resume tu película?",
+  },
+  {
+    key: "personaje",
+    label: "Con el protagonista haciendo lo que le define",
+    hint: "En un minuto sabemos quién es por lo que hace, no por lo que dice.",
+    example: "Como Indiana Jones en el templo, al principio de «En busca del arca perdida».",
+    kinds: ["personaje"] as LooseKind[],
+    question: "¿Qué hace tu protagonista que lo define sin palabras?",
+  },
+  {
+    key: "accion",
+    label: "En mitad de algo",
+    hint: "Entramos con la acción ya empezada; lo de antes se entiende después.",
+    example: "Como el atraco del arranque de «El caballero oscuro».",
+    kinds: ["momento", "dialogo"] as LooseKind[],
+    question: "¿Qué está pasando ya cuando entramos?",
+  },
+  {
+    key: "final",
+    label: "Por el final",
+    hint: "Enseñas cómo acaba y la película cuenta cómo se llegó ahí.",
+    example: "Como el cadáver en la piscina de «El crepúsculo de los dioses».",
+    kinds: ["final"] as LooseKind[],
+    question: "¿Cómo acaba tu historia?",
+  },
+] as const;
+
+export type OpeningKey = (typeof OPENINGS)[number]["key"];

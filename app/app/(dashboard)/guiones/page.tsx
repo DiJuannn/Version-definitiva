@@ -14,10 +14,9 @@ const dateFmt = new Intl.DateTimeFormat("es-ES", {
 });
 
 // En qué punto está cada guion, deducido de lo que ya hay escrito: sin
-// escenas es una idea; con escenas pero sin páginas, una escaleta; con
-// páginas, un guion; y vinculado a un proyecto, ya en producción. Es el
-// mismo camino que los pasos del editor (Idea → Escaleta → Guion).
-const STAGES = ["Idea", "Escaleta", "Guion", "En producción"] as const;
+// escenas es una idea; con escenas pero sin páginas, las primeras escenas;
+// con páginas, un guion; y vinculado a un proyecto, ya en producción.
+const STAGES = ["Idea", "Primeras escenas", "Guion", "En producción"] as const;
 
 function stageOf(s: { pageCount: number; sceneCount: number; wordCount: number; project: unknown }): number {
   if (s.project) return 3;

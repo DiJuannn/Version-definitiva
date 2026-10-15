@@ -75,9 +75,8 @@ export function NewScreenplayForm({
           <legend className="mb-1 font-mono text-[10px] tracking-widest text-muted uppercase">¿Por dónde empiezas?</legend>
           {(
             [
-              ["guion", "Directo al guion", "Ya tengo la historia en la cabeza."],
+              ["guion", "Directo al guion", "Con lo que tengas, aunque sean ideas sueltas."],
               ["idea", "Por la idea", "Idea, tesis, logline, personajes…"],
-              ["escaleta", "Por la escaleta", "Ordenar la historia escena a escena."],
             ] as const
           ).map(([value, label, hint], i) => (
             <label key={value} className="flex cursor-pointer items-start gap-3 border border-line px-3 py-2.5 has-[:checked]:border-accent">

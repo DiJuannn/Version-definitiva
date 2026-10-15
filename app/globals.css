@@ -1042,7 +1042,7 @@ body:has(.sp-light) > div[aria-hidden].fixed {
   }
 }
 .sp-enter {
-  animation: sp-enter 380ms ease-out both;
+  animation: sp-enter 380ms ease-out backwards;
 }
 @media (prefers-reduced-motion: reduce) {
   .sp-cover,
@@ -1114,4 +1114,42 @@ body:has(.sp-light) > div[aria-hidden].fixed {
     transform: none;
     opacity: 1;
   }
+}
+
+/* Comienzo de un acto dentro de la página (solo en pantalla). */
+.sp-actbreak {
+  position: relative;
+  margin: calc(var(--u) / 2.4) calc(var(--u) * -1) calc(var(--u) / 4) calc(var(--u) * -1.5);
+  border-top: 2px solid #a08fd0;
+  user-select: none;
+}
+.sp-actbreak::after {
+  content: attr(data-label);
+  position: absolute;
+  top: -0.8em;
+  left: calc(var(--u) * 1.5);
+  padding: 0 10px;
+  background: #fbfaf6;
+  color: #5a46a8;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.sp-actbreak + .sp-block {
+  margin-top: 0;
+}
+@media (max-width: 640px) {
+  .sp-actbreak {
+    margin-left: -30px;
+    margin-right: -12px;
+  }
+  .sp-actbreak::after {
+    left: 30px;
+  }
+}
+/* Guion vacío: la ayuda para empezar va justo debajo del primer encabezado. */
+.sp-paper-empty .sp-doc {
+  min-height: 0;
 }

@@ -21,7 +21,7 @@ import {
 // Paso 1 · Idea: lo que hay antes del guion, en un solo documento guiado.
 // Todo es opcional; los personajes y las escenas se rellenan solos al escribir.
 export function IdeaStep({ title, subtitle }: { title: string; subtitle: string }) {
-  const { screenplayId, maps, characters, scenes, setStep, openCharacter, linkedProject, userName } = useWorkspace();
+  const { screenplayId, maps, characters, scenes, setStep, openRail, openCharacter, linkedProject, userName } = useWorkspace();
   const dev = useYMap<string>(maps.dev);
   const fichas = useYMap<CharacterMeta>(maps.characters);
   const refs = useYMap<Reference>(maps.refs);
@@ -171,15 +171,29 @@ export function IdeaStep({ title, subtitle }: { title: string; subtitle: string 
             {scenes.length ? (
               <>
                 Ya tienes {scenes.length} {scenes.length === 1 ? "escena" : "escenas"}.{" "}
-                <button type="button" onClick={() => setStep("escaleta")} className="font-medium text-[var(--accent)] hover:underline">
-                  Ver la escaleta →
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStep("guion");
+                    openRail("estructura");
+                  }}
+                  className="font-medium text-[var(--accent)] hover:underline"
+                >
+                  Ver la estructura →
                 </button>
               </>
             ) : (
               <>
-                Cuando lo tengas claro, ordena la historia escena a escena en la{" "}
-                <button type="button" onClick={() => setStep("escaleta")} className="font-medium text-[var(--accent)] hover:underline">
-                  escaleta →
+                ¿Tienes cosas sueltas y no sabes por dónde empezar? Apúntalas en{" "}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStep("guion");
+                    openRail("ideas");
+                  }}
+                  className="font-medium text-[var(--accent)] hover:underline"
+                >
+                  Ideas sueltas →
                 </button>
               </>
             )}

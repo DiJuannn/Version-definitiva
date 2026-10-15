@@ -5,6 +5,7 @@
 import * as Y from "yjs";
 import type {
   CharacterMeta,
+  LooseIdea,
   Questions,
   Reference,
   SceneMeta,
@@ -20,6 +21,8 @@ export type StoryMaps = {
   characters: Y.Map<CharacterMeta>; // NOMBRE → ficha
   refs: Y.Map<Reference>; // id → referencia
   ai: Y.Map<unknown>; // "reading", "suggestions", "questions"
+  loose: Y.Map<LooseIdea>; // id → idea suelta
+  beats: Y.Map<string>; // momento clave (BeatKey) → sid de la escena
 };
 
 export function storyMaps(doc: Y.Doc): StoryMaps {
@@ -31,6 +34,8 @@ export function storyMaps(doc: Y.Doc): StoryMaps {
     characters: doc.getMap<CharacterMeta>("characters"),
     refs: doc.getMap<Reference>("refs"),
     ai: doc.getMap<unknown>("ai"),
+    loose: doc.getMap<LooseIdea>("loose"),
+    beats: doc.getMap<string>("beats"),
   };
 }
 

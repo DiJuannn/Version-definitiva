@@ -27,6 +27,7 @@ import {
   ScreenplayBehaviour,
   ensureSceneIdsTr,
   screenplayNodes,
+  setActBreaks,
   setPageBreaks,
 } from "@/lib/screenplay/editor-extensions";
 import { characterNames, scenesFromBlocks, type Reference, type Review } from "@/lib/screenplay/story";
@@ -37,10 +38,19 @@ import { AjoloteLogo } from "@/components/AjoloteLogo";
 import { newSceneId } from "@/lib/screenplay/blocks";
 import { suggestReferencesAction } from "@/lib/actions/screenplay-ai";
 import { syncScreenplayToProject } from "@/lib/actions/screenplays";
-import { STEPS, WorkspaceProvider, isStep, pushSuggestions, type Step, type Workspace } from "@/components/screenplay/workspace";
+import {
+  STEPS,
+  WorkspaceProvider,
+  isStep,
+  pushSuggestions,
+  type RailTab,
+  type Step,
+  type Workspace,
+} from "@/components/screenplay/workspace";
 import { ScenePanel } from "@/components/screenplay/ScenePanel";
 import { IdeaStep } from "@/components/screenplay/IdeaStep";
-import { OutlineStep } from "@/components/screenplay/OutlineStep";
+import { StoryRail } from "@/components/screenplay/StoryRail";
+import { OpeningsPanel, StartHelp } from "@/components/screenplay/StartHelp";
 import { CharacterDrawer } from "@/components/screenplay/CharacterDrawer";
 import { AssistantDrawer } from "@/components/screenplay/AssistantDrawer";
 import { SettingsDialog, type SettingsProps } from "@/components/screenplay/SettingsDialog";
@@ -275,7 +285,8 @@ export default function ScreenplayEditor({
       let sid: string | null = null;
       for (let i = $from.index(0); i >= 0; i--) {
         const n = e.state.doc.child(i);
-        if (n.type.name === "sceneHeading" && n.textContent.trim()) {
+        // También las escenas aún sin encabezado (las de una idea suelta).
+        if (n.type.name === "sceneHeading" && (n.textContent.trim() || n.attrs.sid)) {
           sid = (n.attrs.sid as string | null) ?? null;
           break;
         }
@@ -312,7 +323,8 @@ export default function ScreenplayEditor({
     };
   }, [editor]);
 
-  const scenes = useMemo(() => scenesFromBlocks(blocks), [blocks]);
+  const scenes = useMemo(() => scenesFromBlocks(blocks, "A4", { untitled: true }), [blocks]);
+  const isEmpty = editor !== null && !blocks.some((b) => b.text.trim());
   const characters = useMemo(() => characterNames(blocks), [blocks]);
   const maps = useMemo(() => storyMaps(ydoc), [ydoc]);
   const refs = useYMap<Reference>(maps.refs);
@@ -328,9 +340,49 @@ export default function ScreenplayEditor({
     return m;
   }, [refs]);
 
+  // Las rayas de los actos en la página.
+  const acts = useYMap<string>(maps.acts);
+  const structureMap = useYMap<unknown>(maps.structure);
+  useEffect(() => {
+    if (!editor) return;
+    const labels: Record<string, string> = { ...acts };
+    const first = scenes[0]?.sid;
+    const three = structureMap.template !== "five" && structureMap.template !== "free";
+    if (first && !labels[first] && Object.keys(acts).length && three) labels[first] = "Acto I";
+    setActBreaks(editor, labels);
+  }, [acts, editor, scenes, structureMap.template]);
+
   // ------------------------------------------------------------ pasos
 
   const [step, setStepState] = useState<Step>(isStep(initialStep) ? initialStep : "guion");
+
+  // Columna de la historia junto a la página (Estructura / Ideas sueltas).
+  // Abierta por defecto; se recuerda si se cierra.
+  const [railOpen, setRailOpenState] = useState(true);
+  const [railTab, setRailTab] = useState<RailTab>("estructura");
+  useEffect(() => {
+    try {
+      // En pantallas estrechas el panel tapa la página: empieza cerrado.
+      const narrow = window.innerWidth < 1280;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if ((narrow || localStorage.getItem("sp-rail") === "0") && initialStep !== "escaleta") setRailOpenState(false);
+    } catch {}
+  }, [initialStep]);
+  const setRailOpen = useCallback((open: boolean) => {
+    setRailOpenState(open);
+    try {
+      localStorage.setItem("sp-rail", open ? "1" : "0");
+    } catch {}
+  }, []);
+  const openRail = useCallback(
+    (tab: RailTab) => {
+      setRailTab(tab);
+      setRailOpen(true);
+    },
+    [setRailOpen],
+  );
+  const [openingsOpen, setOpeningsOpen] = useState(false);
+  const openOpenings = useCallback(() => setOpeningsOpen(true), []);
   const setStep = useCallback((s: Step) => {
     setStepState(s);
     const url = new URL(window.location.href);
@@ -422,26 +474,51 @@ export default function ScreenplayEditor({
     [editor],
   );
 
-  // Escena nueva desde la escaleta: encabezado + una acción vacía, delante de
-  // `beforeSid` (o al final del guion).
+  // Escena nueva: encabezado, la idea de la que sale (como nota) y una acción
+  // vacía, delante de `beforeSid` (o al final del guion). Devuelve su sid.
   const addScene = useCallback(
-    (heading: string, synopsis: string, beforeSid: string | null) => {
-      if (!editor) return;
+    (heading: string, synopsis: string, beforeSid: string | null, note?: string): string | null => {
+      if (!editor) return null;
       const { schema, doc } = editor.state;
       const sid = newSceneId();
       const before = beforeSid ? scenePos(beforeSid) : null;
       const target = before ?? doc.content.size;
+      const text = heading.trim().toUpperCase();
       const nodes = [
-        schema.nodes.sceneHeading.create({ sid }, schema.text(heading.toUpperCase())),
+        schema.nodes.sceneHeading.create({ sid }, text ? schema.text(text) : null),
+        ...(note?.trim() ? [schema.nodes.note.create(null, schema.text(note.trim()))] : []),
         schema.nodes.action.create(),
       ];
-      // Si el guion es solo un encabezado vacío (recién creado), se reutiliza.
-      const only = doc.childCount === 1 && doc.firstChild?.type.name === "sceneHeading" && !doc.firstChild.textContent.trim();
-      const tr = only ? editor.state.tr.replaceWith(0, doc.content.size, nodes) : editor.state.tr.insert(target, nodes);
+      // Si el guion está vacío (recién creado), se sustituye entero.
+      const empty = !docBlocks(doc).some((b) => b.text.trim());
+      const tr = empty ? editor.state.tr.replaceWith(0, doc.content.size, nodes) : editor.state.tr.insert(target, nodes);
       editor.view.dispatch(tr);
       if (synopsis) maps.scenes.set(sid, { synopsis });
+      return sid;
     },
     [editor, maps, scenePos],
+  );
+
+  // Una nota al final de la escena en la que está el cursor.
+  const insertNote = useCallback(
+    (text: string): boolean => {
+      if (!editor || !current.sid || !text.trim()) return false;
+      const start = scenePos(current.sid);
+      if (start === null) return false;
+      const { doc, schema } = editor.state;
+      let end = doc.content.size;
+      let seen = false;
+      doc.forEach((n, offset) => {
+        if (offset <= start) return;
+        if (!seen && n.type.name === "sceneHeading") {
+          end = offset;
+          seen = true;
+        }
+      });
+      editor.view.dispatch(editor.state.tr.insert(end, schema.nodes.note.create(null, schema.text(text.trim()))));
+      return true;
+    },
+    [current.sid, editor, scenePos],
   );
 
   // La IA lee lo guardado: antes de llamarla se guarda lo pendiente.
@@ -489,7 +566,7 @@ export default function ScreenplayEditor({
     currentSidRef.current = current.sid;
     if (!autoRefs || !prev || prev === current.sid || !editedScenes.current.has(prev)) return;
     editedScenes.current.delete(prev);
-    const scene = scenesFromBlocks(docBlocks(editor?.state.doc ?? null)).find((s) => s.sid === prev);
+    const scene = scenesFromBlocks(docBlocks(editor?.state.doc ?? null), "A4", { untitled: true }).find((s) => s.sid === prev);
     if (!scene) return;
     const words = blocks
       .slice(scene.start, scene.end)
@@ -545,6 +622,10 @@ export default function ScreenplayEditor({
     goToScene,
     moveScene,
     addScene,
+    insertNote,
+    pageCount,
+    openRail,
+    openOpenings,
     flushSave,
     setStep,
     openCharacter,
@@ -678,23 +759,48 @@ export default function ScreenplayEditor({
           <IdeaStep title={title} subtitle={subtitle} />
         </div>
       )}
-      {step === "escaleta" && (
-        <div key="escaleta" className="sp-enter">
-          <OutlineStep />
-        </div>
-      )}
 
       {/* El guion nunca se desmonta: el editor y su conexión siguen vivos en
-          los otros pasos (la escaleta mueve y crea escenas a través de él). */}
+          la Idea (desde allí también se crean escenas). */}
       <div
         className={
           step === "guion"
-            ? `sp-enter grid gap-6 px-4 pb-24 lg:px-7 ${notesOpen ? "xl:grid-cols-[minmax(0,1fr)_320px]" : ""}`
+            ? `sp-enter grid gap-6 px-4 pb-24 lg:px-7 ${
+                railOpen && notesOpen
+                  ? "xl:grid-cols-[300px_minmax(0,1fr)_320px]"
+                  : railOpen
+                    ? "xl:grid-cols-[300px_minmax(0,1fr)]"
+                    : notesOpen
+                      ? "xl:grid-cols-[minmax(0,1fr)_320px]"
+                      : ""
+              }`
             : "hidden"
         }
       >
+        {railOpen && (
+          <button type="button" aria-label="Cerrar el panel" onClick={() => setRailOpenState(false)} className="fixed inset-x-0 top-16 bottom-0 z-30 bg-black/30 xl:hidden" />
+        )}
+        {railOpen && (
+          <aside
+            aria-label="La historia"
+            className="fixed top-16 bottom-0 left-0 z-40 w-[min(320px,88vw)] bg-[#f5f5f3] shadow-[20px_0_40px_-20px_rgba(0,0,0,0.3)] xl:sticky xl:z-10 xl:h-[calc(100vh-4rem)] xl:w-auto xl:shadow-none"
+          >
+            <div className="h-full border-r border-[var(--line)] xl:-ml-7 xl:pl-3">
+              <StoryRail tab={railTab} onTab={setRailTab} onClose={() => setRailOpen(false)} />
+            </div>
+          </aside>
+        )}
         <div className="min-w-0">
           <div className="sticky top-16 z-20 flex flex-wrap items-center gap-3 border-b border-[var(--line)] bg-[#f5f5f3]/95 py-2 backdrop-blur">
+            {!railOpen && (
+              <button
+                type="button"
+                onClick={() => setRailOpen(true)}
+                className="rounded-md border border-[var(--line)] bg-white px-2.5 py-1 text-[13px] hover:border-[var(--accent)]"
+              >
+                Estructura e ideas
+              </button>
+            )}
             {/* Escenas: un menú, no una columna fija. */}
             <div className="relative">
               <button
@@ -740,7 +846,7 @@ export default function ScreenplayEditor({
                             }`}
                           >
                             <span className="w-5 shrink-0 text-right font-[family-name:var(--font-courier)] font-bold text-[var(--accent)]">{s.number}</span>
-                            <span className="line-clamp-2 flex-1 font-[family-name:var(--font-courier)]">{s.heading}</span>
+                            <span className="line-clamp-2 flex-1 font-[family-name:var(--font-courier)]">{s.heading || "Sin encabezado"}</span>
                             {doubtScenes.has(s.sid) && (
                               <span title="Tiene dudas de la revisión" className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--ai)]" />
                             )}
@@ -793,8 +899,9 @@ export default function ScreenplayEditor({
             </button>
           </div>
           <div className="sp-desk" onMouseDown={() => scenesOpen && setScenesOpen(false)}>
-            <div className="sp-paper">
+            <div className={`sp-paper ${isEmpty ? "sp-paper-empty" : ""}`}>
               <EditorContent editor={editor} />
+              {isEmpty && <StartHelp onWrite={() => editor?.chain().focus("start").run()} />}
             </div>
           </div>
         </div>
@@ -808,6 +915,7 @@ export default function ScreenplayEditor({
         )}
       </div>
 
+      {openingsOpen && <OpeningsPanel onClose={() => setOpeningsOpen(false)} />}
       {characterOpen && <CharacterDrawer name={characterOpen} onClose={() => setCharacterOpen(null)} />}
       {assistantOpen && <AssistantDrawer onClose={() => setAssistantOpen(false)} />}
       <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} settings={settings} />
