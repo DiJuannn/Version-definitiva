@@ -8,6 +8,7 @@ import { computeDayTimeline, dayWarnings } from "@/lib/schedule-plan";
 import { ScheduleAssistant } from "@/components/ScheduleAssistant";
 import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
+import { TOOL_GUIDES } from "@/lib/tool-guides";
 import { SubmitButton } from "@/components/SubmitButton";
 import { ScheduleEditor } from "@/components/schedule/ScheduleEditor";
 import { ScheduleCalendar, ScheduleCoverage } from "@/components/schedule/ScheduleOverview";
@@ -67,6 +68,7 @@ export default async function PlanDeRodajePage({
   return (
     <div>
       <PageHeader
+        guide={TOOL_GUIDES["plan-de-rodaje"]}
         eyebrow="Rodar"
         title="Plan de rodaje"
         description={

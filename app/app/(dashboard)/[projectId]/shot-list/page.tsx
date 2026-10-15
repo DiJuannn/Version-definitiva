@@ -6,6 +6,7 @@ import { analyzeShotList } from "@/lib/actions/shot-list-import";
 import { EmptyState } from "@/components/EmptyState";
 import { PdfLink } from "@/components/PdfLink";
 import { PageHeader } from "@/components/PageHeader";
+import { TOOL_GUIDES } from "@/lib/tool-guides";
 import { SceneToolSwitch } from "@/components/preproduccion/SceneToolSwitch";
 import { ShotBuilder } from "@/components/preproduccion/ShotBuilder";
 import { courierPrime } from "@/lib/screenplay/font";
@@ -15,6 +16,9 @@ import { TechnicalScript, type TechnicalScene } from "@/components/preproduccion
 import { PrintButton } from "@/components/PrintButton";
 import { ShotListUploadForm } from "@/components/ShotListUploadForm";
 import { NextTool, SceneSlug } from "@/components/preproduccion/SceneSlug";
+import { SceneChip } from "@/components/ScenePeek";
+import { SceneProgress } from "@/components/SceneProgress";
+import { getSceneStatuses, EMPTY_STATUS } from "@/lib/scene-status";
 import {
   AngleIcon,
   MovementIcon,
@@ -59,6 +63,7 @@ export default async function ShotListPage({
       },
     },
   });
+  const statuses = await getSceneStatuses(projectId);
   const shotCount = scenes.reduce((n, s) => n + s.shots.length, 0);
   const scenesWithShots = scenes.filter((s) => s.shots.length > 0).length;
   const missing = scenes.filter((s) => s.shots.length === 0);
@@ -212,6 +217,7 @@ export default async function ShotListPage({
           <PageHeader
             eyebrow="Preparar"
             title="Guion técnico"
+            guide={TOOL_GUIDES["tecnico"]}
             description="La película plano a plano: qué se ve, con qué encuadre y cámara, qué se oye y cuánto dura. Es el documento que lleva dirección al rodaje."
             actions={scenes.length > 0 ? <PrintButton label="Imprimir" /> : undefined}
           />
@@ -248,6 +254,7 @@ export default async function ShotListPage({
       <PageHeader
         eyebrow="Preparar"
         title="Lista de planos"
+        guide={TOOL_GUIDES["planos"]}
         description="Cómo se va a rodar cada escena, plano a plano: encuadre, ángulo y movimiento. ¿Ya tienes el guion técnico? Impórtalo y la IA propone los planos."
         actions={
           <>
@@ -309,7 +316,10 @@ export default async function ShotListPage({
                 <section key={scene.id} aria-labelledby={`esc-${scene.id}-t`} id={`esc-${scene.id}`} className="scroll-mt-32">
                   <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-1 pb-3">
                     <h2 id={`esc-${scene.id}-t`} className="flex min-w-0 items-baseline gap-4">
-                      <span className="font-display text-3xl leading-none font-black tabular-nums">{scene.number}</span>
+                      <SceneChip sceneId={scene.id} number={scene.number} className="self-center">
+                        <span className="font-display text-3xl leading-none font-black tabular-nums">{scene.number}</span>
+                        <SceneProgress status={statuses.get(scene.id) ?? EMPTY_STATUS} size={18} />
+                      </SceneChip>
                       <SceneSlug
                         intExt={scene.intExt}
                         dayPart={scene.dayPart}

@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ProjectSearch } from "@/components/ProjectSearch";
 import { PHASES, phaseOfSegment, toolOfSegment, type PhaseId } from "@/lib/project-phases";
 import { isUnlocked, type ToolAccess, type ToolMode } from "@/lib/tool-rules";
 
 const TOP =
-  "relative flex min-h-10 items-center gap-2 pb-2.5 pt-1 font-mono text-[11px] tracking-widest uppercase transition-colors";
+  "relative flex min-h-10 shrink-0 items-center gap-2 whitespace-nowrap pb-2.5 pt-1 font-mono text-[11px] tracking-widest uppercase transition-colors";
 const UNDERLINE = "after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:bg-accent";
 
 // Menú del proyecto en dos alturas, sin desplegables: arriba las cuatro fases
@@ -19,11 +19,16 @@ export function ProjectPhaseNav({
   stage,
   access,
   mode,
+  lead,
+  trailing,
 }: {
   projectId: string;
   stage: PhaseId;
   access: Record<string, ToolAccess>;
   mode: ToolMode;
+  // Antes de las fases (el nombre del proyecto) y al final (quién está dentro).
+  lead?: ReactNode;
+  trailing?: ReactNode;
 }) {
   const pathname = usePathname();
   const base = `/app/${projectId}`;
@@ -38,6 +43,13 @@ export function ProjectPhaseNav({
     if (routePhase) setShown(routePhase);
   }
   const phase = PHASES.find((p) => p.id === shown) ?? PHASES[0];
+  // En móvil la fila se desplaza: que la fase elegida quede a la vista.
+  const selectedRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    const el = selectedRef.current;
+    const row = el?.closest("[data-phase-row]");
+    if (el && row && row.scrollWidth > row.clientWidth) row.scrollLeft = el.offsetLeft - 16;
+  }, [shown]);
   const onCover = !segment;
 
   const side = (href: string, label: string) => {
@@ -55,8 +67,10 @@ export function ProjectPhaseNav({
 
   return (
     <nav aria-label="Proyecto" className="print:hidden">
-      <div className="flex flex-wrap items-center justify-between gap-x-8">
-        <div className="flex flex-wrap items-center gap-x-6" role="tablist" aria-label="Fases del proyecto">
+      <div data-phase-row className="-mx-4 flex items-center justify-between gap-x-8 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden">
+        <div className="flex shrink-0 items-center gap-x-5 sm:gap-x-6" role="tablist" aria-label="Fases del proyecto">
+          {lead}
+          {lead && <span aria-hidden className="h-4 w-px bg-line" />}
           <Link
             href={base}
             aria-current={onCover ? "page" : undefined}
@@ -71,6 +85,7 @@ export function ProjectPhaseNav({
             return (
               <button
                 key={p.id}
+                ref={selected ? selectedRef : undefined}
                 type="button"
                 role="tab"
                 aria-selected={selected}
@@ -79,18 +94,18 @@ export function ProjectPhaseNav({
               >
                 <span
                   className={`grid h-[18px] w-[18px] place-items-center rounded-full text-[10px] tracking-normal ${
-                    p.id < stage
-                      ? "bg-accent/25 text-accent"
-                      : p.id === stage
-                        ? "bg-accent text-bg"
-                        : "border border-line text-muted"
+                    p.id <= stage ? "text-[#111]" : "border border-line text-muted"
                   }`}
+                  style={p.id <= stage ? { background: `var(--phase-${p.id})`, opacity: p.id < stage ? 0.75 : 1 } : undefined}
                 >
                   {p.id < stage ? "✓" : p.id}
                 </span>
                 {p.label}
                 {p.id === stage && (
-                  <span className="rounded-full bg-accent/15 px-1.5 py-px text-[9px] tracking-wider text-accent normal-case">
+                  <span
+                    className="rounded-full px-1.5 py-px text-[9px] tracking-wider normal-case"
+                    style={{ color: `var(--phase-${p.id})`, background: `color-mix(in srgb, var(--phase-${p.id}) 16%, transparent)` }}
+                  >
                     ahora
                   </span>
                 )}
@@ -98,10 +113,11 @@ export function ProjectPhaseNav({
             );
           })}
         </div>
-        <div className="flex items-center gap-x-6">
+        <div className="flex shrink-0 items-center gap-x-6">
           {side(`${base}/resumen`, "Resumen")}
           {side(`${base}/tareas`, "Tareas")}
           <ProjectSearch projectId={projectId} />
+          {trailing}
         </div>
       </div>
 
@@ -118,7 +134,9 @@ export function ProjectPhaseNav({
             const locked = mode === "simple" && !isUnlocked(access, tool.href) && !on;
             const inner = (
               <>
-                <span className={`h-4 w-4 shrink-0 ${on ? "text-accent" : ""}`}>{tool.icon}</span>
+                <span className="h-4 w-4 shrink-0" style={on ? { color: `var(--phase-${phase.id})` } : undefined}>
+                  {tool.icon}
+                </span>
                 {tool.label}
                 {tool.pro && (
                   <span className="rounded-full bg-accent/15 px-1.5 py-px font-mono text-[9px] tracking-widest text-accent uppercase">
@@ -142,7 +160,8 @@ export function ProjectPhaseNav({
                 key={tool.href}
                 href={href}
                 aria-current={on ? "page" : undefined}
-                className={`${cls} ${on ? `font-semibold text-fg ${UNDERLINE}` : "text-muted hover:text-fg"}`}
+                className={`${cls} ${on ? "font-semibold text-fg after:absolute after:inset-x-3 after:-bottom-px after:h-0.5 after:bg-[var(--tool-line)]" : "text-muted hover:text-fg"}`}
+                style={on ? ({ "--tool-line": `var(--phase-${phase.id})` } as React.CSSProperties) : undefined}
               >
                 {inner}
               </Link>

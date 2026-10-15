@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { getScriptReport } from "@/lib/script-report";
 import { PageHeader } from "@/components/PageHeader";
+import { TOOL_GUIDES } from "@/lib/tool-guides";
 import { ScriptReport } from "@/components/ScriptReport";
 import Link from "next/link";
 
@@ -23,6 +24,7 @@ export default async function ScriptPage({
   return (
     <div>
       <PageHeader
+        guide={TOOL_GUIDES["script"]}
         eyebrow="Rodar"
         title="Parte de script"
         description="Una hoja por día de rodaje con cada toma, su hora y su nota, y la buena rodeada como en el parte de la script. Se rellena solo con la claqueta."

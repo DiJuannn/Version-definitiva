@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
+import { TOOL_GUIDES } from "@/lib/tool-guides";
 import { ScopeToggle } from "@/components/ScopeToggle";
 import { VehiclesFleet } from "@/components/VehiclesFleet";
 import { NextTool, StatusLine } from "@/components/gestion/ToolStatus";
@@ -62,6 +63,7 @@ export default async function ProjectVehiclesPage({
   return (
     <div className="pb-16">
       <PageHeader
+        guide={TOOL_GUIDES["vehiculos"]}
         eyebrow="Rodar"
         title="Vehículos"
         description={

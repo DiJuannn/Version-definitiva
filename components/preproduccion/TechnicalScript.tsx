@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SceneSlug } from "@/components/preproduccion/SceneSlug";
 import { ShotFrame, shotSizeKind } from "@/components/preproduccion/ShotFrame";
+import { SceneChip } from "@/components/ScenePeek";
 import type { DayPart, IntExt } from "@/lib/generated/prisma";
 
 type Shot = {
@@ -108,7 +109,9 @@ export function TechnicalScript({ projectId, scenes }: { projectId: string; scen
                 <tr className="border-b border-line bg-fg/[0.045]">
                   <td colSpan={7} className="px-5 pt-4 pb-3">
                     <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                      <span className="font-[family-name:var(--font-courier)] text-[14px] font-bold">{scene.number}.</span>
+                      <SceneChip sceneId={scene.id} number={scene.number} intExt={scene.intExt} dayPart={scene.dayPart}>
+                        <span className="font-[family-name:var(--font-courier)] text-[14px] font-bold">{scene.number}.</span>
+                      </SceneChip>
                       <SceneSlug intExt={scene.intExt} dayPart={scene.dayPart} location={scene.location?.name} className="text-[14px]" />
                       <span className="ml-auto font-mono text-[11px] text-muted tabular-nums">
                         {scene.shots.length} plano{scene.shots.length === 1 ? "" : "s"}

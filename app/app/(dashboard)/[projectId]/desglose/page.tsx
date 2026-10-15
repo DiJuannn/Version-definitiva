@@ -11,6 +11,7 @@ import {
 import { BREAKDOWN_CATEGORY_LABELS } from "@/lib/labels";
 import { BreakdownCategory } from "@/lib/generated/prisma";
 import { PageHeader } from "@/components/PageHeader";
+import { TOOL_GUIDES } from "@/lib/tool-guides";
 import { SceneToolSwitch } from "@/components/preproduccion/SceneToolSwitch";
 import { SubmitButton } from "@/components/SubmitButton";
 import { BreakdownCategorySelect } from "@/components/BreakdownCategorySelect";
@@ -19,6 +20,9 @@ import { NextTool, SceneSlug } from "@/components/preproduccion/SceneSlug";
 import { BREAKDOWN_COLUMNS, CATEGORY_COLOR, stripColor, type BreakdownColumn } from "@/components/preproduccion/palette";
 import { BreakdownScene } from "@/components/preproduccion/BreakdownScene";
 import { courierPrime } from "@/lib/screenplay/font";
+import { SceneChip } from "@/components/ScenePeek";
+import { SceneProgress } from "@/components/SceneProgress";
+import { getSceneStatuses, EMPTY_STATUS } from "@/lib/scene-status";
 import { getScenesText } from "@/lib/scene-text";
 
 // El desglose como se hace en producción: una matriz ESCENAS × CATEGORÍAS,
@@ -168,7 +172,7 @@ export default async function DesglosePage({
   if (view === "escena") {
     const index = Math.max(0, scenes.findIndex((s) => s.id === sp.escena));
     const scene = scenes[index];
-    const texts = await getScenesText(projectId, [scene]);
+    const [texts, statuses] = await Promise.all([getScenesText(projectId, [scene]), getSceneStatuses(projectId)]);
     const linked = scene.breakdownElements.map((b) => b.breakdownElement);
     const linkedIds = new Set(linked.map((e) => e.id));
     const others = elements.filter((e) => !linkedIds.has(e.id)).map((e) => ({ id: e.id, name: e.name, category: e.category }));
@@ -179,6 +183,7 @@ export default async function DesglosePage({
     return (
       <div className={`pb-16 ${courierPrime.variable}`}>
         <PageHeader
+          guide={TOOL_GUIDES["desglose"]}
           eyebrow="Preparar"
           title="Desglose"
           description="Lee cada escena y marca lo que hace falta para rodarla: selecciona la palabra y elige si es atrezzo, vestuario, un vehículo… Al final tienes la lista de todo lo que hay que conseguir."
@@ -189,7 +194,7 @@ export default async function DesglosePage({
           <span className="text-muted">escenas con algo marcado · {elements.length} cosas que conseguir en total.</span>
         </p>
 
-        <div className="mt-6 grid gap-8 lg:grid-cols-[13rem_minmax(0,1fr)]">
+        <div className="mt-6 grid grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-[13rem_minmax(0,1fr)]">
           {/* Escenas: dónde estás y cuáles faltan. */}
           <nav aria-label="Escenas" className="lg:sticky lg:top-28 lg:self-start">
             <ol className="flex gap-1 overflow-x-auto pb-2 lg:block lg:space-y-0.5 lg:overflow-visible lg:pb-0">
@@ -208,7 +213,8 @@ export default async function DesglosePage({
                     >
                       <span className="w-5 font-display font-black text-fg">{s.number}</span>
                       <span className="hidden min-w-0 flex-1 truncate lg:block">{s.location?.name ?? "Sin localización"}</span>
-                      <span className={`font-mono text-[11px] ${count ? "text-success" : "text-muted/60"}`}>{count ? `${count} ✓` : "—"}</span>
+                      <span className={`font-mono text-[11px] ${count ? "text-fg/80" : "text-muted/60"}`}>{count || "—"}</span>
+                      <SceneProgress status={statuses.get(s.id) ?? EMPTY_STATUS} size={14} />
                     </Link>
                   </li>
                 );
@@ -219,7 +225,9 @@ export default async function DesglosePage({
           <section aria-labelledby="escena-titulo" className="min-w-0">
             <div className="mb-4 flex flex-wrap items-baseline justify-between gap-3">
               <h2 id="escena-titulo" className="flex items-baseline gap-3 text-lg">
-                <span className="font-display text-3xl font-black">{scene.number}</span>
+                <SceneChip sceneId={scene.id} number={scene.number}>
+                  <span className="font-display text-3xl font-black">{scene.number}</span>
+                </SceneChip>
                 <SceneSlug intExt={scene.intExt} dayPart={scene.dayPart} location={scene.location?.name} />
               </h2>
               <span className="flex items-center gap-4 font-sans text-sm">
@@ -261,6 +269,7 @@ export default async function DesglosePage({
   return (
     <div className="pb-16">
       <PageHeader
+          guide={TOOL_GUIDES["desglose"]}
         eyebrow="Preparar"
         title="Desglose"
         description="Todo lo que hay que conseguir para el rodaje, por categorías y con su color, y en qué escenas sale cada cosa."

@@ -6,6 +6,7 @@ import { isProjectOwnerPro } from "@/lib/project-plan";
 import { deleteDocument, uploadDocument } from "@/lib/actions/documents";
 import { DeleteButton } from "@/components/DeleteButton";
 import { PageHeader } from "@/components/PageHeader";
+import { TOOL_GUIDES } from "@/lib/tool-guides";
 import { FileOpenLink } from "@/components/FileOpenLink";
 import { SubmitButton } from "@/components/SubmitButton";
 import { FormField } from "@/components/FormField";
@@ -247,6 +248,7 @@ export default async function DocumentosPage({
   return (
     <div className="pb-16">
       <PageHeader
+        guide={TOOL_GUIDES["documentos"]}
         eyebrow="Entregar"
         title="Biblioteca de archivos"
         description="Los papeles del proyecto en un sitio, y cuáles te faltan antes de rodar."

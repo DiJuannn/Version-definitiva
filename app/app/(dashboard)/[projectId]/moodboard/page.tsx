@@ -4,6 +4,7 @@ import { isProjectOwnerPro } from "@/lib/project-plan";
 import { getMoodboard } from "@/lib/moodboard-core";
 import { getMoodboardLookup } from "@/lib/moodboard-lookup";
 import { PageHeader } from "@/components/PageHeader";
+import { TOOL_GUIDES } from "@/lib/tool-guides";
 import { MoodboardLoader } from "@/components/moodboard/MoodboardLoader";
 import { MoodboardAiButton } from "@/components/moodboard/MoodboardAiButton";
 import Link from "next/link";
@@ -32,6 +33,7 @@ export default async function MoodboardPage({
   return (
     <div>
       <PageHeader
+        guide={TOOL_GUIDES["moodboard"]}
         eyebrow="Escribir"
         title="Moodboard"
         description="Un tablero para decidir cómo se ve y cómo suena la película: fotos, paletas, referencias y notas, junto a las escenas del guion."

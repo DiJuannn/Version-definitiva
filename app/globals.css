@@ -1104,3 +1104,14 @@ body:has(.sp-light) > div[aria-hidden].fixed {
     break-inside: avoid;
   }
 }
+
+@keyframes peek-in {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}

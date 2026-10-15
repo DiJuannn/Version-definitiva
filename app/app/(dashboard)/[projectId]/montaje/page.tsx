@@ -11,6 +11,7 @@ import {
 import { DELIVERY_CATEGORY } from "@/lib/delivery-checklist";
 import { EDIT_CUT_STATUS_LABELS } from "@/lib/labels";
 import { PageHeader } from "@/components/PageHeader";
+import { TOOL_GUIDES } from "@/lib/tool-guides";
 import { SectionTabs } from "@/components/SectionTabs";
 import { EmptyState } from "@/components/EmptyState";
 import { CopyTextButton } from "@/components/CopyTextButton";
@@ -56,6 +57,7 @@ export default async function MontajePage({
   return (
     <div>
       <PageHeader
+        guide={TOOL_GUIDES["montaje"]}
         eyebrow="Entregar"
         title="Montaje"
         description="Del rodaje a la entrega: las tomas buenas para quien monta, cada versión del montaje y lo que falta para entregar."

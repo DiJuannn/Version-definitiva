@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { PageHeader } from "@/components/PageHeader";
+import { TOOL_GUIDES } from "@/lib/tool-guides";
 import { ClaquetaBoard } from "@/components/ClaquetaBoard";
 import { getLastTakeByKey } from "@/lib/clapboard-core";
 import { getShootingDaySummary } from "@/lib/shooting-day-summary";
@@ -106,6 +107,7 @@ export default async function ClaquetaPage({
   return (
     <div>
       <PageHeader
+        guide={TOOL_GUIDES["claqueta"]}
         eyebrow="Rodar"
         title="Claqueta digital"
         description={

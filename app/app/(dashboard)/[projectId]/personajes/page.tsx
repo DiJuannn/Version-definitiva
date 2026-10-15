@@ -12,8 +12,9 @@ import { CreateDialog, DialogCancel } from "@/components/CreateDialog";
 import { DeleteButton } from "@/components/DeleteButton";
 import { FormField } from "@/components/FormField";
 import { PageHeader } from "@/components/PageHeader";
+import { TOOL_GUIDES } from "@/lib/tool-guides";
 import { SubmitButton } from "@/components/SubmitButton";
-import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
+import { SceneChip } from "@/components/ScenePeek";
 import type { CharacterProfile } from "@/lib/screenplay-taller";
 
 // Personajes como la tabla de reparto de un director de producción: cada
@@ -224,6 +225,7 @@ export default async function PersonajesPage({
   return (
     <div className="pb-16">
       <PageHeader
+        guide={TOOL_GUIDES["personajes"]}
         eyebrow="Escribir"
         title="Personajes"
         description="Quién sale en la película, en qué escenas y qué actor lo interpreta."
@@ -569,16 +571,19 @@ export default async function PersonajesPage({
                           {scenesIn.length > 0 ? (
                             <p className="mt-2.5 flex flex-wrap gap-1" aria-label={`Escenas: ${scenesIn.map((s) => s.number).join(", ")}`}>
                               {scenesIn.map((s) => (
-                                <span
+                                <SceneChip
                                   key={s.id}
-                                  title={`Escena ${s.number} · ${INT_EXT_LABELS[s.intExt]} ${DAY_PART_LABELS[s.dayPart]}${s.location ? ` · ${s.location.name}` : ""}${s.shootingDayScenes.length ? "" : " · sin jornada"}`}
-                                  className={`grid h-6 min-w-7 place-items-center rounded px-1.5 font-mono text-[11px] font-semibold text-[#0a0a0a] tabular-nums ${
-                                    s.shootingDayScenes.length ? "" : "opacity-45"
-                                  }`}
-                                  style={{ background: sceneStripColor(s.intExt, s.dayPart) }}
+                                  sceneId={s.id}
+                                  number={s.number}
+                                  className={s.shootingDayScenes.length ? "" : "opacity-45"}
                                 >
-                                  {s.number}
-                                </span>
+                                  <span
+                                    className="grid h-6 min-w-7 place-items-center rounded px-1.5 font-mono text-[11px] font-semibold text-[#0a0a0a] tabular-nums"
+                                    style={{ background: sceneStripColor(s.intExt, s.dayPart) }}
+                                  >
+                                    {s.number}
+                                  </span>
+                                </SceneChip>
                               ))}
                             </p>
                           ) : (

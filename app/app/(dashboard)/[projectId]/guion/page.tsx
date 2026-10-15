@@ -25,6 +25,7 @@ import { DeleteButton } from "@/components/DeleteButton";
 import { ScriptUploadForm } from "@/components/ScriptUploadForm";
 import { ActionButtonForm } from "@/components/ActionButtonForm";
 import { PageHeader } from "@/components/PageHeader";
+import { TOOL_GUIDES } from "@/lib/tool-guides";
 import { FileOpenLink } from "@/components/FileOpenLink";
 import { SubmitButton } from "@/components/SubmitButton";
 import {
@@ -37,6 +38,9 @@ import { CreateDialog } from "@/components/CreateDialog";
 import { NextTool, SceneSlug } from "@/components/preproduccion/SceneSlug";
 import { STRIP_LEGEND, stripColor } from "@/components/preproduccion/palette";
 import { ScriptSource } from "@/components/preproduccion/ScriptSource";
+import { SceneChip } from "@/components/ScenePeek";
+import { SceneProgress } from "@/components/SceneProgress";
+import { getSceneStatuses, EMPTY_STATUS } from "@/lib/scene-status";
 import { planScreenplayScenes } from "@/lib/screenplay-scenes";
 
 // El análisis de guion y la revisión de continuidad llaman a Mistral y
@@ -69,6 +73,7 @@ export default async function GuionPage({
   const { projectId } = await params;
 
   const project = await getProjectForCurrentUser(projectId);
+  const statuses = await getSceneStatuses(projectId);
   if (!project) notFound();
 
   const profile = await getCurrentProfile();
@@ -265,6 +270,7 @@ export default async function GuionPage({
   return (
     <div className="pb-16">
       <PageHeader
+        guide={TOOL_GUIDES["guion"]}
         eyebrow="Escribir"
         title="Guion"
         description="Las escenas de tu película en orden, sacadas del guion. Abre una para decir dónde se rueda, quién sale y qué se necesita."
@@ -569,6 +575,14 @@ export default async function GuionPage({
                       className="absolute inset-y-0 left-0 w-1.5"
                       style={{ background: stripColor(scene.intExt, scene.dayPart) }}
                     />
+                    <SceneChip
+                      sceneId={scene.id}
+                      number={scene.number}
+                      className="absolute top-4 right-3 z-10 rounded-full border border-line bg-bg/80 px-2.5 py-1 font-sans text-[12px] text-muted opacity-0 group-hover:opacity-100 focus-visible:opacity-100 sm:right-5"
+                    >
+                      <SceneProgress status={statuses.get(scene.id) ?? EMPTY_STATUS} size={14} />
+                      Vista rápida
+                    </SceneChip>
                     <Link
                       href={`/app/${projectId}/guion/${scene.id}`}
                       className="grid grid-cols-[2.75rem_minmax(0,1fr)] gap-x-4 py-5 pr-4 pl-6 transition-colors hover:bg-accent/[0.05] focus-visible:bg-accent/[0.07] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-accent sm:grid-cols-[3.25rem_minmax(0,1fr)_12rem] sm:gap-x-5 sm:pr-8 sm:pl-7"

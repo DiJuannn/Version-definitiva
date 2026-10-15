@@ -151,7 +151,7 @@ export function BreakdownScene({
   const suggestions = [...found.values()];
 
   return (
-    <div className={`grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem] ${pending ? "opacity-70" : ""}`}>
+    <div className={`grid grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-[minmax(0,1fr)_20rem] ${pending ? "opacity-70" : ""}`}>
       {/* La escena en papel, como el guion: se selecciona lo que hace falta. */}
       <div ref={boxRef} className="relative" onMouseUp={onMouseUp}>
         <div className="paper px-6 py-8 font-[family-name:var(--font-courier)] text-[15px] leading-[1.55] text-fg sm:px-12">

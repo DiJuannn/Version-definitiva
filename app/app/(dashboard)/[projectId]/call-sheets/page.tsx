@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
+import { TOOL_GUIDES } from "@/lib/tool-guides";
 import { ActionButtonForm } from "@/components/ActionButtonForm";
 import { generateAllCallSheets } from "@/lib/actions/call-sheets";
 
@@ -69,6 +70,7 @@ export default async function CallSheetsPage({
   return (
     <div>
       <PageHeader
+        guide={TOOL_GUIDES["call-sheets"]}
         eyebrow="Rodar"
         title="Hojas de llamada"
         description="La hoja que recibe el equipo la víspera: a qué hora, dónde y qué se rueda. Hay una por jornada del plan de rodaje y se rellena sola."

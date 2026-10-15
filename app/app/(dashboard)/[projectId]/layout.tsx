@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { ProjectPhaseNav } from "@/components/ProjectPhaseNav";
 import { ProjectBreadcrumb } from "@/components/ProjectBreadcrumb";
 import { ClaquetaFab } from "@/components/ClaquetaFab";
+import { ScenePeek } from "@/components/ScenePeek";
 import { ProjectPresence } from "@/components/ProjectPresence";
 import { getCurrentProfile } from "@/lib/current-user";
 import { getProjectForProfile, listProjectsForProfile } from "@/lib/project-access";
@@ -33,24 +34,27 @@ export default async function ProjectLayout({
     <div>
       {/* Cabecera del proyecto en negro, a todo el ancho, pegada a la barra
           de arriba: es parte del marco. Debajo empieza la herramienta. */}
-      <div className="taller-ink -mt-8 mx-[calc(50%-50vw)] bg-bg px-[calc(50vw-50%)] pt-6 text-fg print:hidden sm:-mt-12">
-        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
-          {project && (
-            <ProjectBreadcrumb
-              projectId={projectId}
-              projectName={project.name}
-              projects={projects.map((p) => ({ id: p.id, name: p.name }))}
-            />
-          )}
-          {profile && (
-            <ProjectPresence projectId={projectId} userId={profile.id} userLabel={profile.fullName ?? profile.email} />
-          )}
-        </div>
-        <div className="mt-3">
-          <ProjectPhaseNav projectId={projectId} stage={stage} access={access} mode={mode} />
-        </div>
+      <div className="taller-ink -mt-8 mx-[calc(50%-50vw)] bg-bg px-[calc(50vw-50%)] pt-3 text-fg print:hidden sm:-mt-12">
+        <ProjectPhaseNav
+          projectId={projectId}
+          stage={stage}
+          access={access}
+          mode={mode}
+          lead={
+            project && (
+              <ProjectBreadcrumb
+                compact
+                projectId={projectId}
+                projectName={project.name}
+                projects={projects.map((p) => ({ id: p.id, name: p.name }))}
+              />
+            )
+          }
+          trailing={profile && <ProjectPresence projectId={projectId} userId={profile.id} userLabel={profile.fullName ?? profile.email} />}
+        />
       </div>
       <div className="mt-8 sm:mt-10">{children}</div>
+      {project && <ScenePeek projectId={projectId} />}
       {(mode === "full" || access.claqueta?.unlocked !== false) && <ClaquetaFab projectId={projectId} />}
     </div>
   );
