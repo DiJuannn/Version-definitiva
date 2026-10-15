@@ -7,6 +7,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { estimateShotMinutes, formatDuration, formatHHMM, type PlanBlock, type PlanShot, type TimedBlock, type TimedShot } from "@/lib/schedule-plan";
 import { SceneTag, sceneStripColor } from "@/components/SceneTag";
 import { PeopleStack } from "@/components/PersonInitials";
+import { SceneChip } from "@/components/ScenePeek";
 import type { EditorApi } from "@/components/schedule/ScheduleEditor";
 
 const id = (kind: string, value: string) => `${kind}:${value}`;
@@ -398,7 +399,11 @@ export function BlockView({ api, block, index, total, letter }: { api: EditorApi
           <div className="flex flex-wrap items-center gap-2 px-2.5 py-2">
             {handle}
             <span className="text-sm font-bold">
-              Bloque {letter} · Escena <span className="font-mono">{block.scene.number}</span> entera
+              Bloque {letter} · Escena{" "}
+              <SceneChip sceneId={block.scene.id} number={block.scene.number}>
+                <span className="font-mono underline decoration-line decoration-dotted underline-offset-4">{block.scene.number}</span>
+              </SceneChip>{" "}
+              entera
             </span>
             <SceneTag intExt={block.scene.intExt} dayPart={block.scene.dayPart} />
             {scene?.location && <span className="text-sm text-fg/85">{scene.location}</span>}

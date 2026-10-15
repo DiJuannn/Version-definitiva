@@ -5,6 +5,7 @@ import { useDraggable, useDroppable } from "@dnd-kit/core";
 import type { PoolShot } from "@/lib/schedule-data";
 import { SceneTag, sceneStripColor } from "@/components/SceneTag";
 import { RowMenu, ShotCard } from "@/components/schedule/BlockView";
+import { SceneChip } from "@/components/ScenePeek";
 import type { EditorApi } from "@/components/schedule/ScheduleEditor";
 
 type Filter = "all" | "here" | "retake";
@@ -192,7 +193,9 @@ export function SchedulePool({
             <div key={sceneId} className="border-l-4 pl-2" style={{ borderLeftColor: scene ? sceneStripColor(scene.intExt, scene.dayPart) : undefined }}>
               {scene && (
                 <div className="flex flex-wrap items-center gap-1.5 px-0.5 pb-1">
-                  <span className="font-mono text-sm font-semibold">{scene.number}</span>
+                  <SceneChip sceneId={sceneId} number={scene.number}>
+                    <span className="font-mono text-sm font-semibold underline decoration-line decoration-dotted underline-offset-4">{scene.number}</span>
+                  </SceneChip>
                   <SceneTag intExt={scene.intExt} dayPart={scene.dayPart} />
                   <span className="truncate text-[13px] font-semibold">{scene.location}</span>
                   {suggested && <span className="text-xs text-accent">★ mismo sitio</span>}

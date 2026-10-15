@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ScheduleData } from "@/lib/schedule-data";
 import { computeDayTimeline, dayWarnings, formatHHMM, type PlanBlock } from "@/lib/schedule-plan";
+import { SceneChip } from "@/components/ScenePeek";
 import { SceneTag, sceneStripColor } from "@/components/SceneTag";
 
 // Color de cada jornada en la vista de cobertura (se repite tras seis).
@@ -143,7 +144,9 @@ export function ScheduleCoverage({ projectId, data }: { projectId: string; data:
               <tr key={row.sceneId} className="border-t border-line/70">
                 <td className="border-l-4 px-3 py-2.5" style={{ borderLeftColor: sceneStripColor(scene.intExt, scene.dayPart) }}>
                   <span className="flex flex-wrap items-center gap-2">
-                    <span className="font-mono font-semibold">{scene.number}</span>
+                    <SceneChip sceneId={row.sceneId} number={scene.number}>
+                      <span className="font-mono font-semibold underline decoration-line decoration-dotted underline-offset-4">{scene.number}</span>
+                    </SceneChip>
                     <SceneTag intExt={scene.intExt} dayPart={scene.dayPart} />
                     <span className="text-fg/85">{scene.location}</span>
                   </span>

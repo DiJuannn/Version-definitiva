@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { formatHHMM, type DayTimeline, type PlanWarning } from "@/lib/schedule-plan";
 import { PersonInitials } from "@/components/PersonInitials";
+import { SceneChip } from "@/components/ScenePeek";
 import type { EditorApi } from "@/components/schedule/ScheduleEditor";
 
 // Columna derecha de la jornada: avisos, a quién citar y a qué hora (sale
@@ -93,14 +94,16 @@ export function ScheduleSide({
           <h2 className="text-sm font-bold">Escenas de esta jornada</h2>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {scenes.map((s) => (
-              <span
+              <SceneChip
                 key={s.id}
-                className={`inline-flex h-6 items-center rounded-full px-2.5 text-xs ${
+                sceneId={s.id}
+                number={s.number}
+                className={`h-6 rounded-full px-2.5 text-xs ${
                   s.total === 0 || s.here === s.total ? "bg-accent/15 text-fg" : "bg-warn/15 text-warn"
                 }`}
               >
                 Esc. {s.number} · {s.total === 0 ? "entera" : s.here === s.total ? "completa" : `${s.here} de ${s.total} planos`}
-              </span>
+              </SceneChip>
             ))}
           </div>
         </section>
