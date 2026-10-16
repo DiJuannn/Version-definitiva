@@ -48,9 +48,9 @@ const isNight = (p: DayPart) => p === "NIGHT" || p === "DUSK";
 const sameShot = (t: LiveTake, sceneId: string, number: string) =>
   t.sceneId === sceneId && (t.shotNumber ?? "").trim().toLowerCase() === number.trim().toLowerCase();
 
-function Clock({ label, value, meta, tone }: { label: string; value: string; meta?: string; tone: "plan" | "real" }) {
+function Clock({ label, value, meta, tone, caption }: { label: string; value: string; meta?: string; tone: "plan" | "real"; caption?: string }) {
   return (
-    <div className="min-w-[9.5rem] rounded-[var(--r-md)] border border-line bg-ink-0 px-4 pt-2.5 pb-3">
+    <div className="min-w-[12.5rem] rounded-[var(--r-md)] border border-line bg-ink-0 px-4 pt-2.5 pb-3">
       <p className="flex items-center justify-between gap-3 font-mono text-[10.5px] tracking-[0.14em] text-muted uppercase">
         <span className="flex items-center gap-1.5">
           {tone === "real" && <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-rec" />}
@@ -61,6 +61,7 @@ function Clock({ label, value, meta, tone }: { label: string; value: string; met
       <p className={`seg seg-display mt-1.5 text-[38px] leading-none ${tone === "real" ? "text-fg" : "text-muted"}`} data-ghost="88:88">
         {value}
       </p>
+      {caption && <p className="mt-1.5 font-sans text-[11.5px] whitespace-nowrap leading-snug text-muted">{caption}</p>}
     </div>
   );
 }
@@ -97,6 +98,9 @@ export function LiveDay({ data }: { data: LiveDayData }) {
     next: data.next ? { timeline: { characterWindows: new Map(Object.entries(data.next.windows)) } } : null,
   });
 
+  const currentShot = forecast.current?.kind === "shot" ? timeline.blocks.flatMap((b) => b.shots).find((s) => s.id === forecast.current?.id) : null;
+  const currentScene = forecast.current?.kind === "scene" ? timeline.blocks.find((b) => b.id === forecast.current?.id)?.scene : null;
+  const currentLabel = currentShot ? `plano ${currentShot.sceneNumber}.${currentShot.number}` : currentScene ? `escena ${currentScene.number}` : null;
   const workBlocks = timeline.blocks.filter((b) => b.shots.length > 0 || b.scene);
   const currentBlockId = forecast.current?.blockId ?? workBlocks[0]?.id ?? null;
   const blockId = picked.block ?? currentBlockId;
@@ -156,8 +160,15 @@ export function LiveDay({ data }: { data: LiveDayData }) {
         <div className="flex flex-wrap items-end gap-3">
           {forecast.started ? (
             <>
-              <Clock label="Plan" meta="lo rodado" value={formatHHMM(forecast.planMark)} tone="plan" />
-              <Clock label="Real" meta="en set" value={nowLabel} tone="real" />
+              <div className="flex flex-wrap items-stretch gap-3">
+              <Clock
+                label="Según el plan"
+                value={formatHHMM(forecast.planMark)}
+                tone="plan"
+                caption={currentLabel ? `cuando tocaba empezar el ${currentLabel}` : "cuando tocaba acabar"}
+              />
+              <Clock label="Hora real" value={nowLabel} tone="real" caption="ahora mismo" />
+              </div>
               <DelayBadge forecast={forecast} />
             </>
           ) : (
@@ -183,6 +194,21 @@ export function LiveDay({ data }: { data: LiveDayData }) {
           </Link>
         </div>
       </header>
+
+      {forecast.started && !forecast.finished && (
+        <p className="mt-5 max-w-3xl font-sans text-[15px] leading-relaxed text-fg/85">
+          El plan esperaba empezar el {currentLabel ?? "siguiente paso"} a las <b className="text-fg">{formatHHMM(forecast.planMark)}</b> y son las{" "}
+          <b className="text-fg">{nowLabel}</b>
+          {Math.round(forecast.delay) > 0
+            ? `: vais ${formatDuration(Math.round(forecast.delay))} tarde.`
+            : Math.round(forecast.delay) < 0
+              ? `: vais ${formatDuration(-Math.round(forecast.delay))} adelantados.`
+              : ": vais a tiempo."}{" "}
+          <span className="text-muted">
+            La hora del plan avanza cada vez que un plano queda rodado (al marcar su toma buena); la real avanza con el reloj.
+          </span>
+        </p>
+      )}
 
       {/* Las horas del día en una fila */}
       <dl className="mt-7 flex flex-wrap border-y border-line font-mono text-[12px] tracking-[0.08em] uppercase">
@@ -252,7 +278,7 @@ function DelayBadge({ forecast }: { forecast: LiveForecast }) {
       <p className={`rounded-[var(--r-sm)] border px-2.5 py-1 font-mono text-[14px] font-semibold ${tone}`}>
         {d > 0 ? `+${formatDuration(d)}` : d < 0 ? `−${formatDuration(-d)}` : "a tiempo"}
       </p>
-      <p className="mt-1 font-mono text-[10.5px] tracking-[0.1em] text-muted uppercase">{d > 0 ? "de retraso" : d < 0 ? "adelantados" : "con el plan"}</p>
+      <p className="mt-1 font-mono text-[10.5px] tracking-[0.1em] text-muted uppercase">{d > 0 ? "de retraso" : d < 0 ? "de adelanto" : "con el plan"}</p>
     </div>
   );
 }
@@ -501,14 +527,13 @@ function BlockPanel({
                       <span className="line-clamp-2">{s.description ?? "—"}</span>
                     </td>
                     <td className="py-2.5 pr-3 font-mono text-[12px] text-muted">{extra?.lens ?? "—"}</td>
-                    <td className="py-2.5 font-mono text-[12px] whitespace-nowrap text-muted">
+                    <td className="py-2.5 pr-4 font-mono text-[12px] whitespace-nowrap text-muted">
                       {formatHHMM(s.start)} · {s.minutes} min
                     </td>
                     <td className="py-2.5 font-mono text-[12px] whitespace-nowrap">
                       {takes.length > 0 ? (
                         <>
-                          T{takes[takes.length - 1].take}
-                          {takes.some((t) => t.good) && <span className="text-success"> · buena</span>}
+                          {takes.length} {takes.length === 1 ? "toma" : "tomas"}
                         </>
                       ) : (
                         <span className="text-muted">—</span>

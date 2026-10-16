@@ -1323,3 +1323,9 @@ body:has(.sp-light) > div[aria-hidden].fixed {
 @media (prefers-reduced-motion: reduce) {
   .clap-stick { animation: none; }
 }
+
+/* Dentro de un proyecto, su cabecera ([data-project-bar]) lleva el logo, el
+   Menú y la cuenta: la de la organización sobra (dos barras, no tres). */
+body:has([data-project-bar]) .app-header {
+  display: none;
+}

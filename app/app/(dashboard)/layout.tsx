@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { AjoloteLogo } from "@/components/AjoloteLogo";
-import { DashboardNav, type NavItem } from "@/components/DashboardNav";
+import { DashboardNav } from "@/components/DashboardNav";
+import { APP_NAV, accountLinks as linksFor } from "@/lib/app-nav";
 import { AccountMenu } from "@/components/AccountMenu";
 import { MainContainer } from "@/components/MainContainer";
 import { signOut } from "@/lib/actions/auth";
@@ -13,37 +14,13 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-// Lo que se usa para trabajar. La cuenta (organización, plan, editor web,
-// salir) va en el avatar.
-const NAV: NavItem[] = [
-  { href: "/app", label: "Inicio", icon: "home" },
-  { href: "/app/proyectos", label: "Proyectos", icon: "projects" },
-  { href: "/app/guiones", label: "Guiones", icon: "pen" },
-  { href: "/app/calendario", label: "Agenda", icon: "calendar", also: ["/app/tareas"] },
-  {
-    label: "Recursos",
-    icon: "people",
-    children: [
-      { href: "/app/equipo", label: "Equipo", icon: "people" },
-      { href: "/app/localizaciones", label: "Localizaciones", icon: "location" },
-      { href: "/app/inventario", label: "Material", icon: "box" },
-      { href: "/app/vehiculos", label: "Vehículos", icon: "vehicle" },
-    ],
-  },
-];
-
 export default async function DashboardLayout({
   children,
 }: {
   children: ReactNode;
 }) {
   const profile = await getCurrentProfile();
-  const admin = profile?.role === "ADMIN";
-  const platformOwner = Boolean(admin && profile?.organization.isPlatformOwner);
-  const accountLinks = [
-    ...(admin ? [{ href: "/app/organizacion", label: "Organización y plan" }] : []),
-    ...(platformOwner ? [{ href: "/admin", label: "Editor web" }] : []),
-  ];
+  const accountLinks = linksFor(profile);
 
   return (
     <div className="flex min-h-screen flex-col bg-bg text-fg">
@@ -51,7 +28,9 @@ export default async function DashboardLayout({
           toda la organización, no de un proyecto — sin esto quedan fuera de
           la vista en cuanto haces scroll dentro de un proyecto, y el único
           camino de vuelta es recargar o usar "atrás" del navegador. */}
-      <header className="taller-ink sticky top-0 z-30 border-b border-line bg-bg/95 px-4 backdrop-blur-md print:hidden sm:px-6">
+      {/* Dentro de un proyecto se oculta: la cabecera del proyecto lleva el
+          logo, el Menú con estas secciones y la cuenta (ver .app-header). */}
+      <header className="app-header taller-ink sticky top-0 z-30 border-b border-line bg-bg/95 px-4 backdrop-blur-md print:hidden sm:px-6">
         <MainContainer>
           <div className="flex min-h-14 flex-wrap items-center gap-x-4 sm:gap-x-8">
             <Link href="/app" className="flex min-w-0 items-center gap-2.5">
@@ -63,7 +42,7 @@ export default async function DashboardLayout({
                 Taller
               </span>
             </Link>
-            <DashboardNav items={NAV} />
+            <DashboardNav items={APP_NAV} />
             <div className="ml-auto flex shrink-0 items-center gap-3 sm:gap-4">
               {profile && (
                 <Link

@@ -250,3 +250,67 @@ export function DashboardNav({ items }: { items: NavItem[] }) {
     </>
   );
 }
+
+// Dentro de un proyecto: las secciones de la organización en un solo botón
+// «Menú» (un desplegable), para que la cabecera del proyecto sea una barra.
+export function AppMenu({ items }: { items: NavItem[] }) {
+  const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  const [prevPathname, setPrevPathname] = useState(pathname);
+  const ref = useRef<HTMLDivElement>(null);
+  const close = useCallback(() => setOpen(false), []);
+  useClickOutside(ref, open, close);
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname);
+    setOpen(false);
+  }
+
+  return (
+    <div ref={ref} className="relative shrink-0">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        className="flex min-h-10 items-center gap-2 font-sans text-[14px] text-muted transition-colors hover:text-fg"
+      >
+        <span aria-hidden className="flex h-3 w-4 flex-col justify-between">
+          <span className="h-px w-full bg-current" />
+          <span className="h-px w-full bg-current" />
+          <span className="h-px w-full bg-current" />
+        </span>
+        <span className="hidden sm:inline">Menú</span>
+      </button>
+      {open && (
+        <div role="menu" className="menu-panel absolute left-0 z-50 mt-1 w-64">
+          {items.map((item) =>
+            item.children ? (
+              <div key={item.label} className="mt-1 border-t border-line pt-1">
+                <p className="px-3 pt-1.5 pb-1 font-mono text-[10px] tracking-[0.16em] text-muted uppercase">{item.label}</p>
+                {item.children.map((child) => {
+                  const Icon = ICONS[child.icon];
+                  return (
+                    <Link key={child.href} href={child.href} role="menuitem" data-active={isActive(pathname, child.href)} className="menu-item font-sans text-[14px]">
+                      <Icon className="h-4 w-4 shrink-0" />
+                      {child.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            ) : (
+              (() => {
+                const Icon = ICONS[item.icon];
+                return (
+                  <Link key={item.href} href={item.href!} role="menuitem" data-active={item.href === "/app/proyectos" ? false : itemActive(pathname, item)} className="menu-item font-sans text-[14px]">
+                    <Icon className="h-4 w-4 shrink-0" />
+                    {item.label}
+                  </Link>
+                );
+              })()
+            ),
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
