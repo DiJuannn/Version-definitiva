@@ -19,18 +19,34 @@ import {
   type Suggestion,
 } from "@/lib/screenplay/story";
 
-// Dos pasos: la Idea (lo que hay antes del guion) y el Guion (la página, con
-// la estructura y las ideas sueltas al lado). Ninguno es obligatorio.
-export type Step = "idea" | "guion";
+// Pasos del guion. Quien sabe lo que hace ve dos: la Idea (lo que hay antes
+// del guion) y el Guion (la página, con la estructura y las ideas sueltas al
+// lado). En el camino guiado («Nunca he escrito un guion — guíame») son
+// tres: Empezar (5 preguntas), Esqueleto (la historia en una frase y una
+// tarjeta por escena) y Escribir (la misma página del Guion). Ninguno es
+// obligatorio: se puede saltar a cualquiera.
+export type Step = "empezar" | "esqueleto" | "idea" | "guion";
 
-export const STEPS: { id: Step; label: string }[] = [
-  { id: "idea", label: "Idea" },
-  { id: "guion", label: "Guion" },
+export type StepInfo = { id: Step; label: string; hint: string };
+
+export const STEPS: StepInfo[] = [
+  { id: "idea", label: "Idea", hint: "Lo que hay antes del guion: idea, personajes, referencias" },
+  { id: "guion", label: "Guion", hint: "La página" },
 ];
+
+export const GUIDED_STEPS: StepInfo[] = [
+  { id: "empezar", label: "Empezar", hint: "5 preguntas sobre tu historia" },
+  { id: "esqueleto", label: "Esqueleto", hint: "Tu historia en una frase y una tarjeta por escena" },
+  { id: "guion", label: "Escribir", hint: "La página, escena a escena" },
+];
+
+export function stepsFor(guided: boolean): StepInfo[] {
+  return guided ? GUIDED_STEPS : STEPS;
+}
 
 // «escaleta» era el paso intermedio: los enlaces viejos abren el Guion.
 export function isStep(v: unknown): v is Step {
-  return v === "idea" || v === "guion";
+  return v === "idea" || v === "guion" || v === "empezar" || v === "esqueleto";
 }
 
 export type RailTab = "estructura" | "ideas";

@@ -30,7 +30,7 @@ import { newSceneId } from "@/lib/screenplay/blocks";
 import { suggestReferencesAction } from "@/lib/actions/screenplay-ai";
 import { autoSyncScreenplayScenes, syncScreenplayToProject } from "@/lib/actions/screenplays";
 import {
-  STEPS,
+  stepsFor, // gv2:guiado — Empezar · Esqueleto · Escribir en el camino guiado
   WorkspaceProvider,
   isStep,
   pushSuggestions,
@@ -46,6 +46,9 @@ import { Radiography } from "@/components/screenplay/Radiography";
 import { getScreenplayProduction, type ScreenplayProduction } from "@/lib/actions/screenplay-production";
 import { OpeningsPanel, StartHelp } from "@/components/screenplay/StartHelp";
 import { CharacterDrawer } from "@/components/screenplay/CharacterDrawer";
+import { GuidedLayer } from "@/components/screenplay/guided/GuidedLayer"; // gv2:guiado
+import { GuidedSteps } from "@/components/screenplay/guided/GuidedSteps"; // gv2:guiado
+import { useGuidedMode } from "@/components/screenplay/guided/use-guided"; // gv2:guiado
 import { AssistantDrawer } from "@/components/screenplay/AssistantDrawer";
 import { SettingsDialog, type SettingsProps } from "@/components/screenplay/SettingsDialog";
 // gv2:ayudas
@@ -382,6 +385,7 @@ export default function ScreenplayEditor({
   const isEmpty = editor !== null && !blocks.some((b) => b.text.trim());
   const characters = useMemo(() => characterNames(blocks), [blocks]);
   const maps = useMemo(() => storyMaps(ydoc), [ydoc]);
+  const guidedMode = useGuidedMode(maps, screenplayId); // gv2:guiado
   const refs = useYMap<Reference>(maps.refs);
   const ai = useYMap<unknown>(maps.ai);
   const pendingCount = Array.isArray(ai.suggestions) ? ai.suggestions.length : 0;
@@ -780,7 +784,8 @@ export default function ScreenplayEditor({
           ? "proyecto al día"
           : "proyecto sin actualizar"
       : null;
-  const stepIndex = STEPS.findIndex((s) => s.id === step);
+  const steps = stepsFor(guidedMode.on); // gv2:guiado
+  const stepIndex = steps.findIndex((s) => s.id === step);
   const exports = useMemo(() => exportItems(screenplayId, length.printedPages), [length.printedPages, screenplayId]);
   // P8: en el móvil, la barra cabe en una fila (escena · tipo de línea · ···).
   const narrow = useMediaQuery("(max-width: 767px)");
@@ -819,7 +824,7 @@ export default function ScreenplayEditor({
           </div>
 
           <nav aria-label="Pasos del guion" className="mx-auto flex items-center gap-1">
-            {STEPS.map((s, i) => (
+            {steps.map((s, i) => (
               <span key={s.id} className="flex items-center gap-1">
                 {i > 0 && <span aria-hidden className="hidden h-px w-6 bg-[var(--line)] sm:block" />}
                 <button
@@ -895,6 +900,10 @@ export default function ScreenplayEditor({
         </div>
       )}
 
+      {/* gv2:guiado — pasos Empezar y Esqueleto del camino guiado */}
+      <GuidedSteps step={step} format={settings.format} title={title} />
+      {/* /gv2:guiado */}
+
       {/* El guion nunca se desmonta: el editor y su conexión siguen vivos en
           la Idea (desde allí también se crean escenas). */}
       <div
@@ -946,13 +955,17 @@ export default function ScreenplayEditor({
           {/* gv2:ayudas — NextStep («¿Y ahora qué?»): tarjeta junto al papel. Su montaje va aquí. */}
           <HelpDock onOpenSettings={openSettings} />
           {/* /gv2:ayudas */}
+          {/* gv2:guiado — «Tu borrador», cabeceras de escena del esqueleto y «Donde lo dejaste» */}
+          <GuidedLayer format={settings.format} />
+          {/* /gv2:guiado */}
           <div className="sp-desk">
             <div className={`sp-paper relative ${isEmpty ? "sp-paper-empty" : ""}`}>
               <EditorContent editor={editor} />
               {/* gv2:ayudas — LineGuide (guía de la línea, al margen del papel, con coordsAtPos): va aquí. */}
               <LineGuide />
               {/* /gv2:ayudas */}
-              {isEmpty && <StartHelp onWrite={() => editor?.chain().focus("start").run()} />}
+              {/* gv2:guiado — se pliega y se vuelve a abrir; ya no desaparece al primer carácter */}
+              <StartHelp empty={isEmpty} />
             </div>
           </div>
           <p id="sp-editor-help" className="sr-only">

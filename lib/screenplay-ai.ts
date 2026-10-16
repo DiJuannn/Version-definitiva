@@ -228,6 +228,10 @@ async function callJson(name: string, system: string, user: string, schema: obje
   return JSON.parse(text) as Record<string, unknown>;
 }
 
+// gv2:guiado — el arranque guiado (lib/screenplay-guided-ai.ts) usa la misma
+// llamada al proveedor y la misma regla de no escribir guion.
+export { callJson as callScreenplayJson, GUARDRAIL as SCREENPLAY_GUARDRAIL };
+
 const str = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slice(0, max) : "");
 const strList = (v: unknown, max: number, count: number) =>
   (Array.isArray(v) ? v : []).map((x) => str(x, max)).filter(Boolean).slice(0, count);
