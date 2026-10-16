@@ -46,6 +46,7 @@ function paletteActions(base: string, ctx: PaletteContext | null): Row[] {
   rows.push(
     { key: "a-tec", group: "Acciones", title: "Imprimir el guion técnico", subtitle: "Planos, encuadre, audio y duración", href: `${base}/shot-list?vista=tecnico` },
     { key: "a-cons", group: "Acciones", title: "Ver lo que hay que conseguir", subtitle: "Todo lo desglosado, por categorías", href: `${base}/desglose?vista=lista` },
+    { key: "a-live", group: "Acciones", title: "Día de rodaje en directo", subtitle: "Plan frente al reloj, tomas y qué se cae del día", href: `${base}/plan-de-rodaje/directo` },
     { key: "a-claq", group: "Acciones", title: "Abrir la claqueta", subtitle: "Para apuntar tomas en el rodaje", href: `${base}/claqueta` },
     { key: "a-task", group: "Acciones", title: "Ver las tareas del proyecto", subtitle: "Lo pendiente, por fecha", href: `${base}/tareas` },
   );

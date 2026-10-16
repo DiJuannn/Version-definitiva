@@ -82,6 +82,13 @@ export default async function PlanDeRodajePage({
             </>
           ) : undefined
         }
+        actions={
+          data.days.length > 0 ? (
+            <Link href={`/app/${projectId}/plan-de-rodaje/directo${day ? `?dia=${day.id}` : ""}`} className="btn btn-primary">
+              Día de rodaje en directo
+            </Link>
+          ) : undefined
+        }
       />
 
       <form action={createAction} className="mt-5 flex flex-wrap items-end gap-2 print:hidden">
