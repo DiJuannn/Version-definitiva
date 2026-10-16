@@ -1,5 +1,8 @@
 import type { ReactNode } from "react";
-import { ProjectPhaseNav } from "@/components/ProjectPhaseNav";
+import { ProjectSidebar, ProjectNavButton } from "@/components/ProjectSidebar";
+import { ProjectSearch } from "@/components/ProjectSearch";
+import { ProjectMain } from "@/components/MainContainer";
+import { getProjectReadiness } from "@/lib/project-readiness";
 import { ProjectBreadcrumb } from "@/components/ProjectBreadcrumb";
 import { ClaquetaFab } from "@/components/ClaquetaFab";
 import { ScenePeek } from "@/components/ScenePeek";
@@ -30,14 +33,16 @@ export default async function ProjectLayout({
   const profile = await getCurrentProfile();
   // Todo a la vez (antes eran dos rondas seguidas): si el proyecto no es
   // accesible, los datos de las herramientas simplemente no se usan.
-  const [project, projects, factsIfAny, modeIfAny] = profile
+  const [project, projects, factsIfAny, modeIfAny, readinessIfAny] = profile
     ? await Promise.all([
         getProjectForCurrentUser(projectId),
         listProjectsForProfile(profile),
         getProjectFacts(projectId),
         getToolMode(profile.organizationId),
+        getProjectReadiness(projectId),
       ])
-    : [null, [], null, "full" as const];
+    : [null, [], null, "full" as const, null];
+  const readiness = project ? readinessIfAny : null;
   // Qué herramientas se enseñan: las que ya sirven en este proyecto (o todas en modo completo).
   const facts = project ? factsIfAny : null;
   const mode = project ? modeIfAny : ("full" as const);
@@ -46,36 +51,50 @@ export default async function ProjectLayout({
 
   return (
     <PhaseScope stage={stage}>
-      {/* La cabecera del proyecto sustituye a la de la organización (que se
-          oculta, ver .app-header): una barra con todo y debajo las herramientas. */}
-      <ProjectPhaseNav
-        projectId={projectId}
-        stage={stage}
-        access={access}
-        mode={mode}
-        start={
-          <>
-            <Link href="/app" title="Inicio" className="flex shrink-0 items-center">
-              <AjoloteLogo className="h-6 w-auto text-fg" />
-            </Link>
-            <AppMenu items={APP_NAV} />
-            <span aria-hidden className="h-4 w-px shrink-0 bg-line" />
-          </>
-        }
-        lead={
-          project && (
-            <ProjectBreadcrumb
-              compact
+      {/* El marco del proyecto sustituye a la cabecera de la organización
+          (que se oculta, ver .app-header): una barra arriba y el menú lateral
+          con todas las herramientas. Los márgenes negativos anulan el relleno
+          de <main> para que vaya de borde a borde. */}
+      <div className="-mx-4 -mt-8 sm:-mx-6 sm:-mt-12">
+        <header
+          data-project-bar
+          className="taller-ink sticky top-0 z-40 flex h-14 items-center gap-3 border-b border-line bg-bg/95 px-4 text-fg backdrop-blur-md sm:gap-4 sm:px-5 print:hidden"
+        >
+          <Link href="/app" title="Inicio" className="flex shrink-0 items-center">
+            <AjoloteLogo className="h-6 w-auto text-fg" />
+          </Link>
+          <AppMenu items={APP_NAV} />
+          <span aria-hidden className="h-4 w-px shrink-0 bg-line" />
+          {project && (
+            <ProjectBreadcrumb compact projectId={projectId} projectName={project.name} projects={projects.map((p) => ({ id: p.id, name: p.name }))} />
+          )}
+          <ProjectNavButton />
+          <div className="ml-auto flex shrink-0 items-center gap-3 sm:gap-5">
+            <ProjectSearch projectId={projectId} />
+            {profile && <ProjectPresence projectId={projectId} userId={profile.id} userLabel={profile.fullName ?? profile.email} />}
+            {profile && <AccountMenu name={profile.fullName ?? ""} email={profile.email} links={accountLinks(profile)} signOutAction={signOut} />}
+          </div>
+        </header>
+        <div className="lg:grid lg:grid-cols-[264px_minmax(0,1fr)]">
+          {readiness && (
+            <ProjectSidebar
               projectId={projectId}
-              projectName={project.name}
-              projects={projects.map((p) => ({ id: p.id, name: p.name }))}
+              access={access}
+              mode={mode}
+              data={{
+                chain: readiness.chain,
+                now: readiness.now,
+                resources: readiness.resources,
+                todayDayId: readiness.todayDayId,
+                overdueTasks: readiness.overdueTasks,
+              }}
             />
-          )
-        }
-        trailing={profile && <ProjectPresence projectId={projectId} userId={profile.id} userLabel={profile.fullName ?? profile.email} />}
-        end={profile && <AccountMenu name={profile.fullName ?? ""} email={profile.email} links={accountLinks(profile)} signOutAction={signOut} />}
-      />
-      <div className="mt-8 sm:mt-10">{children}</div>
+          )}
+          <div className="min-w-0 px-4 pt-8 sm:px-8 sm:pt-10">
+            <ProjectMain>{children}</ProjectMain>
+          </div>
+        </div>
+      </div>
       {project && <ScenePeek projectId={projectId} />}
       {(mode === "full" || access.claqueta?.unlocked !== false) && <ClaquetaFab projectId={projectId} />}
     </PhaseScope>
