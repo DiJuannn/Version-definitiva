@@ -245,7 +245,7 @@ export default async function DashboardPage() {
             <li key={i} className="min-h-28 border-b border-line py-3.5 pr-3 lg:border-r lg:border-b-0 lg:pl-3.5 lg:first:pl-0 lg:last:border-r-0">
               <p className={`poster-title text-[30px] ${i === 0 ? "text-accent" : ""}`}>
                 {date.getDate()}
-                <span className="ml-1.5 font-mono text-[9.5px] font-normal tracking-[0.14em] text-muted">
+                <span className="ml-1.5 font-mono text-[10px] font-normal tracking-[0.14em] text-muted">
                   {date.toLocaleDateString("es-ES", { weekday: "short", timeZone: "Europe/Madrid" }).replace(".", "").toUpperCase()}
                   {i === 0 ? " · HOY" : ""}
                 </span>
@@ -328,11 +328,11 @@ export default async function DashboardPage() {
                       {s.title}
                     </span>
                     {s.author && (
-                      <span className="mt-[14%] line-clamp-2 font-[family-name:var(--font-courier)] text-[9.5px] text-[#4a4842]">
+                      <span className="mt-[14%] line-clamp-2 font-[family-name:var(--font-courier)] text-[10px] text-[#4a4842]">
                         escrito por {s.author}
                       </span>
                     )}
-                    <span className="mt-auto text-left font-[family-name:var(--font-courier)] text-[9px] text-[#8f897c]">
+                    <span className="mt-auto text-left font-[family-name:var(--font-courier)] text-[10px] text-[#8f897c]">
                       {s.pageCount} págs. · {s.sceneCount} escenas
                     </span>
                   </span>

@@ -509,7 +509,7 @@ export default async function CalendarioPage({
                     <div className={`pt-0.5 text-center ${isToday ? "text-accent" : ""}`}>
                       <p className="font-mono text-[10px] tracking-widest text-muted uppercase">{weekdayShort(day)}</p>
                       <p className="font-display text-2xl leading-none font-black tabular-nums">{day.getDate()}</p>
-                      {isToday && <p className="mt-1 font-mono text-[9px] tracking-widest uppercase">Hoy</p>}
+                      {isToday && <p className="mt-1 font-mono text-[10px] tracking-widest uppercase">Hoy</p>}
                     </div>
                     <ul className="min-w-0 space-y-2">
                       {entries.map((entry) =>

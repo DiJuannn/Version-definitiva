@@ -356,7 +356,7 @@ export async function TasksView({
                               <span className="inline-flex items-center gap-1.5 text-fg/85">
                                 <span
                                   aria-hidden
-                                  className="grid h-5 w-5 place-items-center rounded-full bg-accent/20 font-mono text-[9px] font-bold text-fg"
+                                  className="grid h-5 w-5 place-items-center rounded-full bg-accent/20 font-mono text-[10px] font-bold text-fg"
                                 >
                                   {initials(task.assignedTo)}
                                 </span>
@@ -380,7 +380,7 @@ export async function TasksView({
                               aria-label={`${shortDate(task.dueDate)}${done ? "" : `, ${relative(task.dueDate, startOfToday)}`}`}
                             >
                               <span
-                                className={`py-1 font-mono text-[9px] tracking-widest uppercase ${
+                                className={`py-1 font-mono text-[10px] tracking-widest uppercase ${
                                   late ? "bg-danger/25" : "bg-fg/[0.07] text-muted"
                                 }`}
                               >

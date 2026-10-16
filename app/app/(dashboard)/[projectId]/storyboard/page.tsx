@@ -244,7 +244,7 @@ export default async function StoryboardPage({
                             )}
                             <form
                               action={deleteStoryboardFrame.bind(null, projectId, frame.id)}
-                              className="absolute top-2 right-2 print:hidden [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:transition-opacity [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:focus-within:opacity-100"
+                              className="absolute top-2 right-2 print:hidden [@media(hover:hover)]:opacity-0 pointer-coarse:opacity-100 [@media(hover:hover)]:transition-opacity [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:focus-within:opacity-100"
                             >
                               <DeleteButton
                                 confirmMessage="¿Eliminar esta viñeta del storyboard?"

@@ -13,7 +13,7 @@ export function HelpTip({ text }: { text: string }) {
         onBlur={() => setOpen(false)}
         aria-label="Ayuda"
         aria-expanded={open}
-        className="flex h-4 w-4 items-center justify-center rounded-full border border-muted font-mono text-[9px] text-muted transition-colors hover:border-accent hover:text-accent"
+        className="flex h-4 w-4 items-center justify-center rounded-full border border-muted font-mono text-[10px] text-muted transition-colors hover:border-accent hover:text-accent"
       >
         ?
       </button>

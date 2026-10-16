@@ -470,7 +470,7 @@ function KindTag({ kind, onChange }: { kind: LooseKind; onChange?: (k: LooseKind
   const k = LOOSE_KINDS[kind];
   const tag = (
     <span
-      className="inline-block rounded-full px-2 py-px font-[family-name:var(--font-courier)] text-[9.5px] tracking-[0.14em] uppercase"
+      className="inline-block rounded-full px-2 py-px font-[family-name:var(--font-courier)] text-[10px] tracking-[0.14em] uppercase"
       style={{ color: k.tone, background: k.bg }}
     >
       {k.label}
@@ -566,7 +566,7 @@ export function LooseIdeasPanel() {
                 type="button"
                 onClick={() => maps.loose.delete(l.id)}
                 aria-label="Borrar la idea"
-                className="ml-auto text-[13px] text-muted opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 hover:text-danger"
+                className="ml-auto text-[13px] text-muted opacity-0 pointer-coarse:opacity-100 group-focus-within:opacity-100 group-hover:opacity-100 hover:text-danger"
               >
                 ×
               </button>

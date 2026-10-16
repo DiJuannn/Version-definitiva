@@ -73,7 +73,7 @@ export function ProjectBreadcrumb({
             {projectName}
           </span>
           {others.length > 0 && (
-            <span aria-hidden className="text-[9px] text-muted">
+            <span aria-hidden className="text-[10px] text-muted">
               ▾
             </span>
           )}

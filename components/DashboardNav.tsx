@@ -125,7 +125,7 @@ function GroupTab({ item, pathname }: { item: NavItem; pathname: string }) {
         className={`${TAB} ${active ? "font-semibold text-fg" : "text-muted hover:text-fg"}`}
       >
         {item.label}
-        <span aria-hidden className="text-[9px] opacity-70">
+        <span aria-hidden className="text-[10px] opacity-70">
           ▾
         </span>
         {active && <span className="absolute inset-x-3 bottom-0 h-0.5 bg-accent" />}

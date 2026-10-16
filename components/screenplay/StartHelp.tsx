@@ -136,7 +136,7 @@ export function OpeningsPanel({ onClose }: { onClose: () => void }) {
                   <div className="mt-2.5 flex items-center gap-2 rounded-lg bg-[#f6f4ee] px-2.5 py-2 text-[13px]">
                     {idea && (
                       <span
-                        className="shrink-0 rounded-full px-2 py-px font-[family-name:var(--font-courier)] text-[9.5px] tracking-[0.14em] uppercase"
+                        className="shrink-0 rounded-full px-2 py-px font-[family-name:var(--font-courier)] text-[10px] tracking-[0.14em] uppercase"
                         style={{ color: LOOSE_KINDS[idea.kind].tone, background: LOOSE_KINDS[idea.kind].bg }}
                       >
                         {LOOSE_KINDS[idea.kind].label}

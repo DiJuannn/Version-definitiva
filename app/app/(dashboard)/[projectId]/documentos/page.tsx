@@ -48,7 +48,7 @@ function FileIcon({ name }: { name: string }) {
         <path d="M2 4a3 3 0 0 1 3-3h18l11 11v28a3 3 0 0 1-3 3H5a3 3 0 0 1-3-3V4Z" fill="currentColor" fillOpacity="0.1" stroke="currentColor" strokeOpacity="0.55" strokeWidth="1.5" />
         <path d="M23 1v8a3 3 0 0 0 3 3h8" stroke="currentColor" strokeOpacity="0.55" strokeWidth="1.5" />
       </svg>
-      <span className="absolute inset-x-0 bottom-2 text-center font-mono text-[9px] font-semibold tracking-wider">{label}</span>
+      <span className="absolute inset-x-0 bottom-2 text-center font-mono text-[10px] font-semibold tracking-wider">{label}</span>
     </span>
   );
 }

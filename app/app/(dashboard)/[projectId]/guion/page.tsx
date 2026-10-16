@@ -578,7 +578,7 @@ export default async function GuionPage({
                     <SceneChip
                       sceneId={scene.id}
                       number={scene.number}
-                      className="absolute top-4 right-3 z-10 rounded-full border border-line bg-bg/80 px-2.5 py-1 font-sans text-[12px] text-muted opacity-0 group-hover:opacity-100 focus-visible:opacity-100 sm:right-5"
+                      className="absolute top-4 right-3 z-10 rounded-full border border-line bg-bg/80 px-2.5 py-1 font-sans text-[12px] text-muted opacity-0 pointer-coarse:opacity-100 group-hover:opacity-100 focus-visible:opacity-100 sm:right-5"
                     >
                       <SceneProgress status={statuses.get(scene.id) ?? EMPTY_STATUS} size={14} />
                       Vista rápida
@@ -637,7 +637,7 @@ export default async function GuionPage({
                     </Link>
                     <form
                       action={deleteScene.bind(null, projectId, scene.id)}
-                      className="absolute top-4 right-3 sm:top-3 sm:right-5 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:transition-opacity [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:focus-within:opacity-100"
+                      className="absolute top-4 right-3 sm:top-3 sm:right-5 [@media(hover:hover)]:opacity-0 pointer-coarse:opacity-100 [@media(hover:hover)]:transition-opacity [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:focus-within:opacity-100"
                     >
                       <DeleteButton
                         confirmMessage="¿Eliminar esta escena?"

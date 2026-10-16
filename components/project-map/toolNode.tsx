@@ -8,7 +8,7 @@ import { useMap } from "@/components/project-map/mapContext";
 
 export type ToolNode = Node<{ key: MapToolKey }, "tool">;
 
-const LABEL = "font-mono text-[9px] tracking-widest uppercase";
+const LABEL = "font-mono text-[10px] tracking-widest uppercase";
 
 function StatusMark({ status }: { status: MapToolCard["status"] }) {
   if (status === "ok") return <span className="font-mono text-xs text-success" title="Completo">✓</span>;

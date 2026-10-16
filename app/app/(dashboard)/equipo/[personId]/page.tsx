@@ -236,7 +236,7 @@ export default async function PersonDetailPage({
                           busy ? "bg-danger/15 text-danger" : "bg-success/15 text-success"
                         }`}
                       >
-                        <span className="py-0.5 font-mono text-[9px] tracking-widest uppercase">
+                        <span className="py-0.5 font-mono text-[10px] tracking-widest uppercase">
                           {entry.date.toLocaleDateString("es-ES", { month: "short" }).replace(".", "")}
                         </span>
                         <span className="pb-1 font-display text-base font-black tabular-nums">{entry.date.getDate()}</span>

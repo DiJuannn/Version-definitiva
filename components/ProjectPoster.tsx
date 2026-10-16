@@ -44,13 +44,13 @@ export function ProjectPoster({
           {name}
         </p>
         {caption && (
-          <p className={`mt-2 font-mono text-[9.5px] tracking-[0.14em] uppercase ${coverUrl ? "text-white/70" : "mt-auto text-muted"}`}>
+          <p className={`mt-2 font-mono text-[10px] tracking-[0.14em] uppercase ${coverUrl ? "text-white/70" : "mt-auto text-muted"}`}>
             {caption}
           </p>
         )}
         {billing && (
           <p
-            className={`mt-3 text-center text-[8.5px] leading-[1.25] tracking-[0.06em] uppercase [font-stretch:62%] ${
+            className={`mt-3 text-center text-[10px] leading-[1.25] tracking-[0.06em] uppercase [font-stretch:62%] ${
               coverUrl ? "text-white/70" : "mt-auto text-muted"
             }`}
           >

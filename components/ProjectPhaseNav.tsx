@@ -103,7 +103,7 @@ export function ProjectPhaseNav({
                 {p.label}
                 {p.id === stage && (
                   <span
-                    className="rounded-full px-1.5 py-px text-[9px] tracking-wider normal-case"
+                    className="rounded-full px-1.5 py-px text-[10px] tracking-wider normal-case"
                     style={{ color: `var(--phase-${p.id})`, background: `color-mix(in srgb, var(--phase-${p.id}) 16%, transparent)` }}
                   >
                     ahora
@@ -139,7 +139,7 @@ export function ProjectPhaseNav({
                 </span>
                 {tool.label}
                 {tool.pro && (
-                  <span className="rounded-full bg-accent/15 px-1.5 py-px font-mono text-[9px] tracking-widest text-accent uppercase">
+                  <span className="rounded-full bg-accent/15 px-1.5 py-px font-mono text-[10px] tracking-widest text-accent uppercase">
                     Pro
                   </span>
                 )}

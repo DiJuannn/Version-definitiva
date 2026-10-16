@@ -91,7 +91,7 @@ export function MapBoardTabs({
           {boards.map((b) => (
             <Link key={b.id} href={`${base}&pizarra=${b.id}`} aria-current={b.id === activeId ? "page" : undefined} className={tab(b.id === activeId)}>
               {b.name}
-              {b.shared && <span className="ml-1.5 text-[9px] text-success" title="Compartida con un enlace">●</span>}
+              {b.shared && <span className="ml-1.5 text-[10px] text-success" title="Compartida con un enlace">●</span>}
             </Link>
           ))}
           <button

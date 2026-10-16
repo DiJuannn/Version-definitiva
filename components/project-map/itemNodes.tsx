@@ -28,13 +28,13 @@ function useItems(): ItemContext {
 }
 
 const FIELD = "nodrag nowheel w-full bg-transparent outline-none placeholder:opacity-50 focus:bg-fg/5";
-const LABEL = "font-mono text-[9px] tracking-widest uppercase";
+const LABEL = "font-mono text-[10px] tracking-widest uppercase";
 
 // Cuatro puntos de unión (arriba, derecha, abajo, izquierda). Se ven al pasar el
 // ratón o al seleccionar la tarjeta; arrastrar desde uno crea una flecha.
 export function Handles({ selected }: { selected: boolean }) {
   const cls = `h-2.5! w-2.5! border-accent! bg-bg! transition-opacity ${
-    selected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+    selected ? "opacity-100" : "opacity-0 pointer-coarse:opacity-100 group-hover:opacity-100"
   }`;
   return (
     <>

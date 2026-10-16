@@ -219,7 +219,7 @@ export function BreakdownScene({
                           type="button"
                           onClick={() => toggle(el, false)}
                           aria-label={`Quitar ${el.name} de esta escena`}
-                          className="text-muted opacity-0 transition-opacity group-hover:opacity-100 hover:text-danger focus-visible:opacity-100"
+                          className="text-muted opacity-0 pointer-coarse:opacity-100 transition-opacity group-hover:opacity-100 hover:text-danger focus-visible:opacity-100"
                         >
                           ×
                         </button>

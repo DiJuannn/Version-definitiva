@@ -488,7 +488,7 @@ export default async function ProjectSummaryPage({
                         {WEEKDAYS.map((label) => (
                           <div
                             key={label}
-                            className="border-r border-b border-line bg-bg px-1 py-1 font-mono text-[9px] tracking-widest text-muted uppercase"
+                            className="border-r border-b border-line bg-bg px-1 py-1 font-mono text-[10px] tracking-widest text-muted uppercase"
                           >
                             {label}
                           </div>
@@ -504,7 +504,7 @@ export default async function ProjectSummaryPage({
                                   {day.getDate()}
                                 </p>
                                 {shootingDay && (
-                                  <p className="mt-0.5 truncate font-mono text-[9px] text-fg">
+                                  <p className="mt-0.5 truncate font-mono text-[10px] text-fg">
                                     {shootingDay.shots.length > 0
                                       ? `${shootingDay.shots.length} pl.`
                                       : `${shootingDay.scenes.length} esc.`}
