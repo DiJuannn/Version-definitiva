@@ -50,7 +50,7 @@ import {
 import { ScenePanel } from "@/components/screenplay/ScenePanel";
 import { IdeaStep } from "@/components/screenplay/IdeaStep";
 import { StoryRail } from "@/components/screenplay/StoryRail";
-import { StoryStrip } from "@/components/screenplay/StoryStrip";
+import { StoryBar } from "@/components/screenplay/StoryBar"; // gv2:tira
 import { Radiography } from "@/components/screenplay/Radiography";
 import { getScreenplayProduction, type ScreenplayProduction } from "@/lib/actions/screenplay-production";
 import { OpeningsPanel, StartHelp } from "@/components/screenplay/StartHelp";
@@ -978,13 +978,15 @@ export default function ScreenplayEditor({
               <span className="font-semibold text-fg">{pageCount}</span> {pageCount === 1 ? "página" : "páginas"} · ≈{pageCount} min
             </span>
           </div>
-          <StoryStrip production={production} />
           <div className="sp-desk" onMouseDown={() => scenesOpen && setScenesOpen(false)}>
             <div className={`sp-paper ${isEmpty ? "sp-paper-empty" : ""}`}>
               <EditorContent editor={editor} />
               {isEmpty && <StartHelp onWrite={() => editor?.chain().focus("start").run()} />}
             </div>
           </div>
+          {/* gv2:tira — «Tu historia», acoplada abajo de la columna del guion */}
+          <StoryBar production={production} format={settings.format} />
+          {/* /gv2:tira */}
         </div>
 
         {sideOpen && (
