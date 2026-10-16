@@ -42,32 +42,18 @@ const beatOf = (key: string) => BEATS.find((b) => b.key === key);
 
 // Columna junto a la página: la Estructura (actos, momentos clave y escenas,
 // que se arrastran para reordenar el guion) y las Ideas sueltas.
-export function StoryRail({ tab, onTab, onClose }: { tab: RailTab; onTab: (t: RailTab) => void; onClose: () => void }) {
+export function StoryRail({ tab, onClose }: { tab: RailTab; onClose: () => void }) {
   const { maps } = useWorkspace();
   const loose = useYMap<LooseIdea>(maps.loose);
   const pending = Object.values(loose).filter((l) => l && !l.sid).length;
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center gap-1 border-b border-[var(--line)] px-3 pt-2">
-        {(
-          [
-            ["estructura", "Estructura"],
-            ["ideas", `Ideas sueltas${pending ? ` · ${pending}` : ""}`],
-          ] as const
-        ).map(([id, label]) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => onTab(id)}
-            aria-pressed={tab === id}
-            className={`-mb-px border-b-2 px-2.5 pb-2 text-[13px] transition-colors ${
-              tab === id ? "border-[var(--accent)] font-semibold text-fg" : "border-transparent text-muted hover:text-fg"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-        <button type="button" onClick={onClose} aria-label="Cerrar el panel" title="Cerrar el panel" className="ml-auto pb-2 text-[15px] text-muted hover:text-fg">
+      {/* Qué panel se ve lo eligen los botones de la barra; aquí solo su nombre y cerrar. */}
+      <div className="flex items-center gap-2 border-b border-[var(--line)] px-4 py-2.5">
+        <p className="text-[13px] font-semibold">
+          {tab === "estructura" ? "Estructura" : `Ideas sueltas${pending ? ` · ${pending}` : ""}`}
+        </p>
+        <button type="button" onClick={onClose} aria-label="Cerrar el panel" title="Cerrar el panel" className="ml-auto text-[15px] text-muted hover:text-fg">
           ×
         </button>
       </div>

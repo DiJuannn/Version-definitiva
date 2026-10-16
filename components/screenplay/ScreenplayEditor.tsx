@@ -356,31 +356,57 @@ export default function ScreenplayEditor({
 
   const [step, setStepState] = useState<Step>(isStep(initialStep) ? initialStep : "guion");
 
-  // Columna de la historia junto a la página (Estructura / Ideas sueltas).
-  // Abierta por defecto; se recuerda si se cierra.
-  const [railOpen, setRailOpenState] = useState(true);
-  const [railTab, setRailTab] = useState<RailTab>("estructura");
+  // Junto a la página, un solo panel a la vez (o ninguno): Estructura, Ideas
+  // sueltas o Notas de la escena. Por defecto, solo la página. Se recuerda
+  // cómo se dejó, y Ctrl/⌘ + «.» lo muestra u oculta.
+  type Panel = RailTab | "notas";
+  const [panel, setPanelState] = useState<Panel | null>(initialStep === "escaleta" ? "estructura" : null);
+  const lastPanel = useRef<Panel>("estructura");
   useEffect(() => {
     try {
-      // En pantallas estrechas el panel tapa la página: empieza cerrado.
-      const narrow = window.innerWidth < 1280;
+      const saved = localStorage.getItem("sp-panel");
+      const valid = saved === "estructura" || saved === "ideas" || saved === "notas";
+      if (valid) lastPanel.current = saved;
+      // En pantallas estrechas el panel tapa la página: no se reabre solo.
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      if ((narrow || localStorage.getItem("sp-rail") === "0") && initialStep !== "escaleta") setRailOpenState(false);
+      if (valid && window.innerWidth >= 1280 && initialStep !== "escaleta") setPanelState(saved);
     } catch {}
   }, [initialStep]);
-  const setRailOpen = useCallback((open: boolean) => {
-    setRailOpenState(open);
+  const setPanel = useCallback((next: Panel | null) => {
+    setPanelState(next);
+    if (next) lastPanel.current = next;
     try {
-      localStorage.setItem("sp-rail", open ? "1" : "0");
+      localStorage.setItem("sp-panel", next ?? "");
     } catch {}
   }, []);
-  const openRail = useCallback(
-    (tab: RailTab) => {
-      setRailTab(tab);
-      setRailOpen(true);
-    },
-    [setRailOpen],
-  );
+  const togglePanel = useCallback((which: Panel) => setPanelState((cur) => {
+    const next = cur === which ? null : which;
+    if (next) lastPanel.current = next;
+    try {
+      localStorage.setItem("sp-panel", next ?? "");
+    } catch {}
+    return next;
+  }), []);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "." && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setPanelState((cur) => {
+          const next = cur ? null : lastPanel.current;
+          try {
+            localStorage.setItem("sp-panel", next ?? "");
+          } catch {}
+          return next;
+        });
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+  const railOpen = panel === "estructura" || panel === "ideas";
+  const railTab: RailTab = panel === "ideas" ? "ideas" : "estructura";
+  const notesOpen = panel === "notas";
+  const openRail = useCallback((tab: RailTab) => setPanel(tab), [setPanel]);
   const [openingsOpen, setOpeningsOpen] = useState(false);
   const openOpenings = useCallback(() => setOpeningsOpen(true), []);
   const setStep = useCallback((s: Step) => {
@@ -396,19 +422,6 @@ export default function ScreenplayEditor({
   // Modo foco: la página sola. La lista de escenas se abre como menú y las
   // notas de la escena como columna, solo cuando se piden (y se recuerda).
   const [scenesOpen, setScenesOpen] = useState(false);
-  const [notesOpen, setNotesOpenState] = useState(false);
-  useEffect(() => {
-    try {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setNotesOpenState(localStorage.getItem("sp-notes-open") === "1");
-    } catch {}
-  }, []);
-  const setNotesOpen = useCallback((open: boolean) => {
-    setNotesOpenState(open);
-    try {
-      localStorage.setItem("sp-notes-open", open ? "1" : "0");
-    } catch {}
-  }, []);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const openCharacter = useCallback((name: string) => {
     setAssistantOpen(false);
@@ -811,19 +824,13 @@ export default function ScreenplayEditor({
         className={
           step === "guion"
             ? `sp-enter grid gap-6 px-4 pb-24 lg:px-7 ${
-                railOpen && notesOpen
-                  ? "xl:grid-cols-[300px_minmax(0,1fr)_320px]"
-                  : railOpen
-                    ? "xl:grid-cols-[300px_minmax(0,1fr)]"
-                    : notesOpen
-                      ? "xl:grid-cols-[minmax(0,1fr)_320px]"
-                      : ""
+                railOpen ? "xl:grid-cols-[300px_minmax(0,1fr)]" : notesOpen ? "xl:grid-cols-[minmax(0,1fr)_320px]" : ""
               }`
             : "hidden"
         }
       >
         {railOpen && (
-          <button type="button" aria-label="Cerrar el panel" onClick={() => setRailOpenState(false)} className="fixed inset-x-0 top-16 bottom-0 z-30 bg-black/30 xl:hidden" />
+          <button type="button" aria-label="Cerrar el panel" onClick={() => setPanel(null)} className="fixed inset-x-0 top-16 bottom-0 z-30 bg-black/30 xl:hidden" />
         )}
         {railOpen && (
           <aside
@@ -831,21 +838,39 @@ export default function ScreenplayEditor({
             className="fixed top-16 bottom-0 left-0 z-40 w-[min(320px,88vw)] bg-[#f5f5f3] shadow-[20px_0_40px_-20px_rgba(0,0,0,0.3)] xl:sticky xl:z-10 xl:h-[calc(100vh-4rem)] xl:w-auto xl:shadow-none"
           >
             <div className="h-full border-r border-[var(--line)] xl:-ml-7 xl:pl-3">
-              <StoryRail tab={railTab} onTab={setRailTab} onClose={() => setRailOpen(false)} />
+              <StoryRail tab={railTab} onClose={() => setPanel(null)} />
             </div>
           </aside>
         )}
         <div className="min-w-0">
           <div className="sticky top-16 z-20 flex flex-wrap items-center gap-3 border-b border-[var(--line)] bg-[#f5f5f3]/95 py-2 backdrop-blur">
-            {!railOpen && (
-              <button
-                type="button"
-                onClick={() => setRailOpen(true)}
-                className="rounded-md border border-[var(--line)] bg-white px-2.5 py-1 text-[13px] hover:border-[var(--accent)]"
-              >
-                Estructura e ideas
-              </button>
-            )}
+            {/* Qué se ve junto a la página: uno a la vez, o solo la página. */}
+            <div
+              role="group"
+              aria-label="Paneles junto a la página"
+              title={`Mostrar u ocultar el panel: ${mod} + .`}
+              className="inline-flex overflow-hidden rounded-md border border-[var(--line)] bg-white text-[13px]"
+            >
+              {(
+                [
+                  ["estructura", "Estructura"],
+                  ["ideas", "Ideas sueltas"],
+                  ["notas", "Notas"],
+                ] as const
+              ).map(([id, label], i) => (
+                <button
+                  key={id}
+                  type="button"
+                  aria-pressed={panel === id}
+                  onClick={() => togglePanel(id)}
+                  className={`px-2.5 py-1 transition-colors ${i ? "border-l border-[var(--line)]" : ""} ${
+                    panel === id ? "bg-[#1c1b19] text-white" : "text-muted hover:text-fg"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
             {/* Escenas: un menú, no una columna fija. */}
             <div className="relative">
               <button
@@ -932,16 +957,6 @@ export default function ScreenplayEditor({
             <span className="ml-auto text-[12.5px] text-muted">
               <span className="font-semibold text-fg">{pageCount}</span> {pageCount === 1 ? "página" : "páginas"} · ≈{pageCount} min
             </span>
-            <button
-              type="button"
-              onClick={() => setNotesOpen(!notesOpen)}
-              aria-pressed={notesOpen}
-              className={`rounded-md border px-2.5 py-1 text-[13px] transition-colors ${
-                notesOpen ? "border-[var(--accent)] bg-[var(--accent)]/10 text-fg" : "border-[var(--line)] bg-white text-muted hover:text-fg"
-              }`}
-            >
-              Notas de escena
-            </button>
           </div>
           <div className="sp-desk" onMouseDown={() => scenesOpen && setScenesOpen(false)}>
             <div className={`sp-paper ${isEmpty ? "sp-paper-empty" : ""}`}>
