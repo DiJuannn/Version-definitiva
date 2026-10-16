@@ -39,7 +39,7 @@ import { newSceneId } from "@/lib/screenplay/blocks";
 import { suggestReferencesAction } from "@/lib/actions/screenplay-ai";
 import { autoSyncScreenplayScenes, syncScreenplayToProject } from "@/lib/actions/screenplays";
 import {
-  STEPS,
+  stepsFor, // gv2:guiado — Empezar · Esqueleto · Escribir en el camino guiado
   WorkspaceProvider,
   isStep,
   pushSuggestions,
@@ -55,6 +55,9 @@ import { Radiography } from "@/components/screenplay/Radiography";
 import { getScreenplayProduction, type ScreenplayProduction } from "@/lib/actions/screenplay-production";
 import { OpeningsPanel, StartHelp } from "@/components/screenplay/StartHelp";
 import { CharacterDrawer } from "@/components/screenplay/CharacterDrawer";
+import { GuidedLayer } from "@/components/screenplay/guided/GuidedLayer"; // gv2:guiado
+import { GuidedSteps } from "@/components/screenplay/guided/GuidedSteps"; // gv2:guiado
+import { useGuidedMode } from "@/components/screenplay/guided/use-guided"; // gv2:guiado
 import { AssistantDrawer } from "@/components/screenplay/AssistantDrawer";
 import { SettingsDialog, type SettingsProps } from "@/components/screenplay/SettingsDialog";
 import {
@@ -330,6 +333,7 @@ export default function ScreenplayEditor({
   const isEmpty = editor !== null && !blocks.some((b) => b.text.trim());
   const characters = useMemo(() => characterNames(blocks), [blocks]);
   const maps = useMemo(() => storyMaps(ydoc), [ydoc]);
+  const guidedMode = useGuidedMode(maps, screenplayId); // gv2:guiado
   const refs = useYMap<Reference>(maps.refs);
   const ai = useYMap<unknown>(maps.ai);
   const pendingCount = Array.isArray(ai.suggestions) ? ai.suggestions.length : 0;
@@ -725,7 +729,8 @@ export default function ScreenplayEditor({
           : saveState === "dirty"
             ? { label: "Sin guardar", tone: "text-muted" }
             : { label: "Guardado", tone: "text-muted" };
-  const stepIndex = STEPS.findIndex((s) => s.id === step);
+  const steps = stepsFor(guidedMode.on); // gv2:guiado
+  const stepIndex = steps.findIndex((s) => s.id === step);
   const exportTo = (href: string) => window.dispatchEvent(new CustomEvent("screenplay:export", { detail: href }));
 
   return (
@@ -748,7 +753,7 @@ export default function ScreenplayEditor({
           </button>
 
           <nav aria-label="Pasos del guion" className="mx-auto flex items-center gap-1">
-            {STEPS.map((s, i) => (
+            {steps.map((s, i) => (
               <span key={s.id} className="flex items-center gap-1">
                 {i > 0 && <span aria-hidden className="hidden h-px w-6 bg-[var(--line)] sm:block" />}
                 <button
@@ -836,6 +841,10 @@ export default function ScreenplayEditor({
           <IdeaStep title={title} subtitle={subtitle} />
         </div>
       )}
+
+      {/* gv2:guiado — pasos Empezar y Esqueleto del camino guiado */}
+      <GuidedSteps step={step} format={settings.format} title={title} />
+      {/* /gv2:guiado */}
 
       {/* El guion nunca se desmonta: el editor y su conexión siguen vivos en
           la Idea (desde allí también se crean escenas). */}
@@ -978,11 +987,15 @@ export default function ScreenplayEditor({
               <span className="font-semibold text-fg">{pageCount}</span> {pageCount === 1 ? "página" : "páginas"} · ≈{pageCount} min
             </span>
           </div>
+          {/* gv2:guiado — «Tu borrador», cabeceras de escena del esqueleto y «Donde lo dejaste» */}
+          <GuidedLayer format={settings.format} />
+          {/* /gv2:guiado */}
           <StoryStrip production={production} />
           <div className="sp-desk" onMouseDown={() => scenesOpen && setScenesOpen(false)}>
             <div className={`sp-paper ${isEmpty ? "sp-paper-empty" : ""}`}>
               <EditorContent editor={editor} />
-              {isEmpty && <StartHelp onWrite={() => editor?.chain().focus("start").run()} />}
+              {/* gv2:guiado — se pliega y se vuelve a abrir; ya no desaparece al primer carácter */}
+              <StartHelp empty={isEmpty} />
             </div>
           </div>
         </div>

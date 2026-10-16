@@ -3,14 +3,14 @@
 import { useState } from "react";
 import { Modal } from "@/components/Modal";
 import { NewScreenplayForm } from "@/components/screenplay/NewScreenplayForm";
-import { createScreenplay } from "@/lib/actions/screenplays";
+import { createScreenplayStart } from "@/lib/actions/screenplay-guided";
 import { COVER_SHADOW } from "@/components/screenplay/cover-shadow";
 
 function NewScreenplayModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
     <Modal open={open} onClose={onClose} title="Nuevo guion" size="md">
       <div className="mt-5">
-        <NewScreenplayForm action={createScreenplay} />
+        <NewScreenplayForm action={createScreenplayStart} />
       </div>
     </Modal>
   );
@@ -45,7 +45,7 @@ export function NewScreenplayTile({ empty }: { empty: boolean }) {
               Nuevo guion
             </span>
             <span className="mt-1.5 block px-6 font-sans text-[12px] leading-snug text-[#6f6a5f]">
-              {empty ? "La página en blanco es el primer paso" : "En blanco, o importa un PDF o Fountain"}
+              {empty ? "¿Primera vez? Te guiamos paso a paso" : "Guiado, en blanco o importado"}
             </span>
           </span>
         </span>
