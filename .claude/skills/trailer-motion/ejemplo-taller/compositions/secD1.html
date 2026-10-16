@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="UTF-8" /><title>secD1 · Biblia visual</title></head>
+<body>
+<template id="secD1-template">
+<style>
+  @font-face { font-family: "Archivo"; src: url("assets/fonts/archivo.woff2") format("woff2"); font-weight: 100 900; font-stretch: 62% 125%; }
+  @font-face { font-family: "JB Mono"; src: url("assets/fonts/jbmono.woff2") format("woff2"); font-weight: 100 800; }
+
+  #secD1-root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; background: #151519; font-family: "Archivo", sans-serif; color: #151519; }
+  #secD1-lens { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; }
+  .secD1-plane { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; }
+
+  /* ---------- mesa ---------- */
+  #secD1-desk { position: absolute; left: -3200px; top: -1400px; width: 3000px; height: 4000px; background: #151519; }
+  #secD1-frame { position: absolute; left: -262px; top: -1400px; width: 40px; height: 4000px; background: #2e2e35; box-shadow: inset -2px 0 0 #4a4a54; }
+  #secD1-opal { position: absolute; left: -222px; top: -1400px; width: 4200px; height: 4000px; background: #f6f3ea; }
+  .secD1-tube { position: absolute; left: -222px; width: 4200px; height: 150px; background: #fbf9f3; filter: blur(46px); display: block; }
+
+  /* ---------- rótulos ---------- */
+  .secD1-kick { position: absolute; font-family: "JB Mono", monospace; font-weight: 500; font-size: 20px; letter-spacing: 0.2em; text-transform: uppercase; white-space: nowrap; color: #5c5a54; }
+  .secD1-kick i { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 14px; vertical-align: 1px; }
+  #secD1-title { position: absolute; left: 112px; top: 108px; font-weight: 850; font-stretch: 118%; font-size: 104px; line-height: 0.9; letter-spacing: -0.03em; white-space: nowrap; color: #151519; transform-origin: 0 100%; }
+
+  /* ---------- diapositivas y polaroids ---------- */
+  .secD1-ph { position: absolute; display: block; }
+  .secD1-ph svg { position: absolute; display: block; }
+  .secD1-slide { width: 270px; height: 270px; border-radius: 16px; background: #ece8dc;
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.5), 0 2px 0 rgba(60, 52, 38, 0.25), 0 26px 40px -20px rgba(60, 52, 38, 0.5); }
+  .secD1-slide .secD1-win { position: absolute; left: 35px; top: 66px; width: 200px; height: 134px; background: #151519; box-shadow: 0 0 0 3px #d6cfbd; overflow: hidden; }
+  .secD1-slide .secD1-win svg { left: 0; top: 0; }
+  .secD1-slide b { position: absolute; left: 22px; top: 22px; font-family: "JB Mono", monospace; font-weight: 600; font-size: 14px; letter-spacing: 0.16em; color: #5c5a54; white-space: nowrap; }
+  .secD1-slide em { position: absolute; right: 22px; bottom: 22px; font-family: "JB Mono", monospace; font-style: normal; font-weight: 600; font-size: 14px; letter-spacing: 0.14em; color: #5c5a54; white-space: nowrap; }
+  .secD1-slide u { position: absolute; left: 24px; bottom: 26px; width: 12px; height: 12px; border-radius: 50%; background: #f0503f; display: block; }
+  .secD1-pol { width: 250px; height: 300px; background: #fbf9f3;
+    box-shadow: 0 2px 0 rgba(60, 52, 38, 0.22), 0 26px 40px -20px rgba(60, 52, 38, 0.5); }
+  .secD1-pol .secD1-img { position: absolute; left: 18px; top: 18px; width: 214px; height: 214px; overflow: hidden; background: #151519; }
+  .secD1-pol .secD1-img svg { left: 0; top: 0; }
+  .secD1-pol b { position: absolute; left: 20px; top: 252px; font-family: "JB Mono", monospace; font-weight: 500; font-size: 15px; letter-spacing: 0.14em; text-transform: uppercase; color: #5c5a54; white-space: nowrap; }
+  .secD1-tape { position: absolute; display: block; width: 96px; height: 30px; background: rgba(236, 232, 220, 0.82); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4); }
+
+  /* ---------- paleta ---------- */
+  #secD1-pal { position: absolute; left: 130px; top: 730px; width: 1540px; height: 190px; border-radius: 14px; background: #151519; box-shadow: 0 2px 0 rgba(0, 0, 0, 0.25), 0 30px 50px -24px rgba(60, 52, 38, 0.6); }
+  .secD1-plab { position: absolute; left: 24px; top: 16px; font-family: "JB Mono", monospace; font-weight: 500; font-size: 15px; letter-spacing: 0.18em; text-transform: uppercase; white-space: nowrap; color: #9a978f; }
+  .secD1-pcnt { position: absolute; right: 24px; top: 14px; font-family: "JB Mono", monospace; font-weight: 600; font-size: 17px; letter-spacing: 0.14em; white-space: nowrap; color: #f1eee6; }
+  .secD1-slot { position: absolute; width: 190px; height: 96px; border-radius: 10px; border: 2px dashed #2e2e35; display: block; }
+  .secD1-chip { position: absolute; width: 190px; height: 96px; border-radius: 8px; display: block; opacity: 0; transform-origin: 50% 100%; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.18); }
+  .secD1-hex { position: absolute; width: 190px; font-family: "JB Mono", monospace; font-weight: 600; font-size: 15px; letter-spacing: 0.14em; white-space: nowrap; color: #9a978f; opacity: 0; display: block; }
+  #secD1-film { position: absolute; left: 1200px; top: 10px; width: 960px; height: 132px; background: #151519; transform: rotate(-9deg); transform-origin: 0 0; box-shadow: 0 2px 0 rgba(60, 52, 38, 0.3), 0 24px 30px -18px rgba(60, 52, 38, 0.5); }
+  .secD1-perf { position: absolute; left: 0; right: 0; height: 12px; display: block;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='12'%3E%3Crect x='8' y='0' width='14' height='12' rx='2' fill='%23f6f3ea'/%3E%3C/svg%3E"); background-repeat: repeat-x; }
+  .secD1-fr { position: absolute; top: 30px; width: 160px; height: 72px; border-radius: 3px; display: block; opacity: 0.92; }
+  #secD1-loop { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: visible; }
+  .secD1-ring { position: absolute; width: 56px; height: 56px; margin: -28px 0 0 -28px; border-radius: 50%; border: 5px solid #151519; display: block; opacity: 0; }
+  .secD1-splash { position: absolute; width: 180px; height: 40px; margin: -20px 0 0 -90px; border-radius: 50%; border: 3px solid #151519; display: block; opacity: 0; }
+
+  /* ---------- cuentagotas ---------- */
+  #secD1-drop { position: absolute; left: -45px; top: -420px; width: 90px; height: 424px; display: block; transform-origin: 45px 420px; opacity: 0; }
+  #secD1-drop svg { display: block; width: 90px; height: 424px; overflow: visible; }
+
+  /* ---------- primer término ---------- */
+  .secD1-cross { position: absolute; width: 44px; height: 44px; display: block; }
+  .secD1-cross::before, .secD1-cross::after { content: ""; position: absolute; background: #4a4a54; }
+  .secD1-cross::before { left: 21px; top: 0; width: 2px; height: 44px; }
+  .secD1-cross::after { top: 21px; left: 0; height: 2px; width: 44px; }
+  .secD1-cross b { position: absolute; inset: 11px; border: 2px solid #4a4a54; border-radius: 50%; display: block; }
+  .secD1-ruler { position: absolute; height: 28px; display: block;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='28'%3E%3Cpath d='M1 0v16M11 0v7M21 0v11M31 0v7' stroke='%23151519' stroke-width='2' opacity='.45'/%3E%3C/svg%3E"); background-repeat: repeat-x; }
+  .secD1-tc { position: absolute; font-family: "JB Mono", monospace; font-weight: 500; font-size: 18px; letter-spacing: 0.16em; white-space: nowrap; color: #5c5a54; }
+</style>
+
+<div id="secD1-root" data-composition-id="secD1" data-width="1920" data-height="1080" data-duration="3.5">
+  <svg width="0" height="0" style="position: absolute">
+    <filter id="secD1-camblur" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB"><feGaussianBlur id="secD1-cbx" stdDeviation="0 0" /></filter>
+  </svg>
+  <div id="secD1-lens">
+    <div id="secD1-world" class="secD1-plane" data-layout-allow-overflow>
+      <div id="secD1-desk"></div>
+      <div id="secD1-frame"></div>
+      <div id="secD1-opal"></div>
+      <i class="secD1-tube" id="secD1-tube0" style="top: 230px"></i>
+      <i class="secD1-tube" id="secD1-tube1" style="top: 720px"></i>
+
+      <div class="secD1-kick" id="secD1-kick" style="left: 120px; top: 76px"><i style="background: #f0c94a"></i>05 · Luz · Color · Referencias</div>
+      <div id="secD1-title">Biblia visual.</div>
+
+      <!-- tira de película decorativa (arriba a la derecha) -->
+      <div id="secD1-film">
+        <i class="secD1-perf" style="top: 8px"></i><i class="secD1-perf" style="bottom: 8px"></i>
+        <i class="secD1-fr" style="left: 40px; background: #f0884a"></i><i class="secD1-fr" style="left: 220px; background: #24305e"></i><i class="secD1-fr" style="left: 400px; background: #e0402f"></i><i class="secD1-fr" style="left: 580px; background: #7f9a3e"></i><i class="secD1-fr" style="left: 760px; background: #9fb8bf"></i>
+      </div>
+
+      <!-- la paleta (pantalla oscura sobre la mesa) con sus huecos -->
+      <div id="secD1-pal" data-layout-ignore>
+        <div class="secD1-plab" id="secD1-plab">Paleta · El último verano</div>
+        <div class="secD1-pcnt" id="secD1-pcnt">0 / 5</div>
+        <i class="secD1-slot" style="left: 45px; top: 50px"></i>
+        <i class="secD1-slot" style="left: 365px; top: 50px"></i>
+        <i class="secD1-slot" style="left: 685px; top: 50px"></i>
+        <i class="secD1-slot" style="left: 1005px; top: 50px"></i>
+        <i class="secD1-slot" style="left: 1325px; top: 50px"></i>
+      </div>
+
+      <!-- moodboard: 35 mm y polaroids (formas planas) -->
+      <div id="secD1-board" data-layout-ignore>
+        <div class="secD1-ph secD1-slide" id="secD1-ph0" style="left: 135px; top: 317px">
+          <b>VD · 01</b>
+          <div class="secD1-win">
+            <svg width="200" height="134" viewBox="0 0 200 134">
+              <rect width="200" height="134" fill="#f0884a" />
+              <rect width="200" height="26" fill="#f4a56c" />
+              <circle cx="128" cy="86" r="30" fill="#ffd36e" />
+              <rect y="86" width="200" height="48" fill="#2f6f8a" />
+              <rect x="102" y="92" width="52" height="4" fill="#ffd36e" />
+              <rect x="110" y="101" width="36" height="4" fill="#ffd36e" />
+              <rect x="119" y="110" width="18" height="3" fill="#ffd36e" />
+              <path d="M0 116 Q70 106 200 121 L200 134 L0 134 Z" fill="#e9c99a" />
+              <rect x="40" y="96" width="3" height="26" fill="#151519" />
+              <path d="M20 101 Q41 80 62 101 Z" fill="#e0402f" />
+              <path d="M58 44 q6 -6 12 0 q6 -6 12 0" stroke="#7a3b22" fill="none" stroke-width="2.6" stroke-linecap="round" />
+              <path d="M84 30 q4 -4 8 0 q4 -4 8 0" stroke="#7a3b22" fill="none" stroke-width="2.2" stroke-linecap="round" />
+            </svg>
+          </div>
+          <u></u><em>Atardecer</em>
+        </div>
+        <div class="secD1-ph secD1-pol" id="secD1-ph1" style="left: 465px; top: 288px">
+          <div class="secD1-img">
+            <svg width="214" height="214" viewBox="0 0 214 214">
+              <rect width="214" height="214" fill="#24305e" />
+              <rect width="214" height="34" fill="#121a36" />
+              <circle cx="176" cy="20" r="12" fill="#f1eee6" />
+              <circle cx="182" cy="16" r="11" fill="#121a36" />
+              <rect x="14" y="58" width="30" height="40" fill="#1b2448" />
+              <rect x="170" y="58" width="30" height="40" fill="#1b2448" />
+              <rect x="14" y="150" width="30" height="40" fill="#1b2448" />
+              <rect x="170" y="150" width="30" height="40" fill="#f6d27a" opacity="0.55" />
+              <rect x="62" y="58" width="92" height="114" fill="#f6d27a" />
+              <path d="M110 58 L154 58 L154 172 L138 172 Q126 120 110 58 Z" fill="#e9a94a" />
+              <rect x="106" y="58" width="5" height="114" fill="#24305e" />
+              <rect x="62" y="112" width="92" height="5" fill="#24305e" />
+              <rect x="56" y="172" width="104" height="8" fill="#151a33" />
+              <path d="M74 112 L74 96 Q80 84 88 96 L88 112 Z" fill="#24305e" opacity="0.9" />
+            </svg>
+          </div>
+          <b>Noche · 02</b>
+          <i class="secD1-tape" style="left: 77px; top: -14px; transform: rotate(-4deg)"></i>
+        </div>
+        <div class="secD1-ph secD1-pol" id="secD1-ph2" style="left: 785px; top: 312px">
+          <div class="secD1-img">
+            <svg width="214" height="214" viewBox="0 0 214 214">
+              <rect width="214" height="214" fill="#d8d2c4" />
+              <path d="M0 40 L40 40 L40 20 L78 20 L78 52 L120 52 L120 30 L150 30 L150 46 L214 46 L214 150 L0 150 Z" fill="#c3bcae" />
+              <rect y="150" width="214" height="64" fill="#a9a396" />
+              <rect x="176" y="40" width="4" height="112" fill="#4a4a54" />
+              <rect x="166" y="36" width="24" height="8" fill="#4a4a54" />
+              <rect x="97" y="150" width="7" height="38" fill="#151519" />
+              <rect x="111" y="150" width="7" height="38" fill="#151519" />
+              <path d="M84 90 L131 90 L141 160 L74 160 Z" fill="#e0402f" />
+              <path d="M96 90 L107 104 L119 90 Z" fill="#b8301f" />
+              <circle cx="107.5" cy="76" r="15" fill="#2a1d1a" />
+              <ellipse cx="107" cy="196" rx="36" ry="5" fill="#e0402f" opacity="0.45" />
+            </svg>
+          </div>
+          <b>Abrigo · 03</b>
+          <i class="secD1-tape" style="left: 70px; top: -14px; transform: rotate(3deg)"></i>
+        </div>
+        <div class="secD1-ph secD1-slide" id="secD1-ph3" style="left: 1095px; top: 309px">
+          <b>VD · 04</b>
+          <div class="secD1-win">
+            <svg width="200" height="134" viewBox="0 0 200 134">
+              <rect width="200" height="134" fill="#e08a3c" />
+              <g fill="#7a4a2a"><circle cx="96" cy="18" r="9" /><circle cx="126" cy="18" r="9" /><circle cx="156" cy="18" r="9" /><circle cx="186" cy="18" r="9" />
+                <circle cx="111" cy="44" r="9" /><circle cx="141" cy="44" r="9" /><circle cx="171" cy="44" r="9" /></g>
+              <g fill="#f0c94a"><circle cx="96" cy="18" r="4" /><circle cx="126" cy="18" r="4" /><circle cx="156" cy="18" r="4" /><circle cx="186" cy="18" r="4" />
+                <circle cx="111" cy="44" r="4" /><circle cx="141" cy="44" r="4" /><circle cx="171" cy="44" r="4" /></g>
+              <rect x="80" y="84" width="120" height="10" fill="#c9a227" />
+              <rect x="80" y="94" width="120" height="40" fill="#7a4a2a" />
+              <rect x="96" y="102" width="40" height="24" rx="3" fill="#8f5b36" />
+              <rect x="146" y="102" width="40" height="24" rx="3" fill="#8f5b36" />
+              <rect x="18" y="18" width="52" height="116" rx="12" fill="#7f9a3e" />
+              <rect x="18" y="60" width="52" height="4" fill="#5d7229" />
+              <rect x="58" y="30" width="5" height="22" rx="2" fill="#5d7229" />
+              <rect x="58" y="72" width="5" height="28" rx="2" fill="#5d7229" />
+              <rect x="150" y="0" width="2" height="54" fill="#151519" />
+              <path d="M134 66 Q151 46 168 66 Z" fill="#f0c94a" />
+            </svg>
+          </div>
+          <u style="background: #7f9a3e"></u><em>Cocina 70</em>
+        </div>
+        <div class="secD1-ph secD1-pol" id="secD1-ph4" style="left: 1425px; top: 306px">
+          <div class="secD1-img">
+            <svg width="214" height="214" viewBox="0 0 214 214">
+              <rect width="214" height="214" fill="#d7e2e2" />
+              <path d="M138 70 L0 30 L0 120 Z" fill="#f6e7a8" opacity="0.7" />
+              <rect y="96" width="214" height="40" fill="#b9cdd1" />
+              <rect y="132" width="214" height="82" fill="#9fb8bf" />
+              <path d="M10 160 h40 M80 176 h52 M150 158 h44 M30 194 h48 M120 200 h60" stroke="#b9cdd1" stroke-width="4" stroke-linecap="round" />
+              <path d="M112 140 L120 66 L156 66 L164 140 Z" fill="#f1eee6" />
+              <path d="M115.5 108 L160.5 108 L162.5 124 L113.5 124 Z" fill="#e0402f" />
+              <path d="M118 84 L158 84 L159.6 96 L116.6 96 Z" fill="#e0402f" />
+              <rect x="122" y="50" width="32" height="16" fill="#151519" />
+              <rect x="128" y="53" width="20" height="10" fill="#f6d27a" />
+              <path d="M120 50 L138 36 L156 50 Z" fill="#151519" />
+              <path d="M84 150 Q110 128 140 136 Q176 126 200 150 L200 160 L84 160 Z" fill="#4a5a60" />
+              <rect y="118" width="214" height="16" fill="#d7e2e2" opacity="0.7" />
+            </svg>
+          </div>
+          <b>Faro · 05</b>
+          <i class="secD1-tape" style="left: 80px; top: -14px; transform: rotate(-2deg)"></i>
+        </div>
+      </div>
+
+      <!-- muestreo + fichas de color -->
+      <div id="secD1-fx" data-layout-ignore>
+        <i class="secD1-ring" id="secD1-ring0"></i><i class="secD1-ring" id="secD1-ring1"></i><i class="secD1-ring" id="secD1-ring2"></i><i class="secD1-ring" id="secD1-ring3"></i><i class="secD1-ring" id="secD1-ring4"></i>
+        <i class="secD1-splash" id="secD1-spl0" style="left: 270px; top: 876px"></i><i class="secD1-splash" id="secD1-spl1" style="left: 590px; top: 876px"></i><i class="secD1-splash" id="secD1-spl2" style="left: 910px; top: 876px"></i><i class="secD1-splash" id="secD1-spl3" style="left: 1230px; top: 876px"></i><i class="secD1-splash" id="secD1-spl4" style="left: 1550px; top: 876px"></i>
+        <div class="secD1-chip" id="secD1-chip0" style="left: 175px; top: 780px; background: #f0884a"></div>
+        <div class="secD1-chip" id="secD1-chip1" style="left: 495px; top: 780px; background: #24305e; box-shadow: inset 0 0 0 2px #3a4677"></div>
+        <div class="secD1-chip" id="secD1-chip2" style="left: 815px; top: 780px; background: #e0402f"></div>
+        <div class="secD1-chip" id="secD1-chip3" style="left: 1135px; top: 780px; background: #7f9a3e"></div>
+        <div class="secD1-chip" id="secD1-chip4" style="left: 1455px; top: 780px; background: #9fb8bf"></div>
+        <span class="secD1-hex" id="secD1-hx0" style="left: 177px; top: 886px">#F0884A</span>
+        <span class="secD1-hex" id="secD1-hx1" style="left: 497px; top: 886px">#24305E</span>
+        <span class="secD1-hex" id="secD1-hx2" style="left: 817px; top: 886px">#E0402F</span>
+        <span class="secD1-hex" id="secD1-hx3" style="left: 1137px; top: 886px">#7F9A3E</span>
+        <span class="secD1-hex" id="secD1-hx4" style="left: 1457px; top: 886px">#9FB8BF</span>
+      </div>
+      <!-- rotulador rojo: la elegida -->
+      <svg id="secD1-loop" viewBox="0 0 1920 1080" style="left: -20px" data-layout-ignore>
+        <path id="secD1-loopP" d="M948 248 C1080 250 1128 352 1122 470 C1116 600 1040 668 930 668 C812 668 742 590 740 462 C738 344 812 262 930 256 C1000 252 1046 270 1070 292" fill="none" stroke="#f0503f" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" opacity="0.92" />
+        <path id="secD1-loopA" d="M1150 250 L1092 296 M1092 296 L1100 262 M1092 296 L1124 300" fill="none" stroke="#f0503f" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" opacity="0.92" />
+      </svg>
+
+      <!-- cuentagotas (punta en 45,420) -->
+      <div id="secD1-drop">
+        <svg viewBox="0 0 90 424">
+          <defs><clipPath id="secD1-glass"><path d="M30 132 L60 132 L60 360 L49 404 L41 404 L30 360 Z" /></clipPath></defs>
+          <g clip-path="url(#secD1-glass)">
+            <rect x="0" y="132" width="90" height="292" fill="#f6f3ea" opacity="0.55" />
+            <rect id="secD1-liq" x="0" y="250" width="90" height="174" fill="#f0884a" />
+          </g>
+          <path d="M30 132 L60 132 L60 360 L49 404 L41 404 L30 360 Z" fill="none" stroke="#151519" stroke-width="3.5" stroke-linejoin="round" />
+          <rect x="35" y="146" width="5" height="190" rx="2.5" fill="#fbf9f3" opacity="0.8" />
+          <rect x="22" y="114" width="46" height="20" rx="4" fill="#4a4a54" />
+          <g id="secD1-bulb"><path d="M24 116 C10 116 8 84 12 58 C16 26 28 8 45 8 C62 8 74 26 78 58 C82 84 80 116 66 116 Z" fill="#151519" /><path d="M58 26 C66 36 68 56 68 78" stroke="#2e2e35" stroke-width="6" fill="none" stroke-linecap="round" /></g>
+        </svg>
+      </div>
+
+      <!-- ===== AJOLOTE v2 · rig SVG (ids con prefijo axD1-) =====
+     Pegar dentro del root de la composición. #axD1 se coloca con GSAP x/y = punto entre los pies.
+     Requiere poses.js (window.AxRig). Generado por build/gen.js -->
+<style>
+  #axD1 { position: absolute; left: -220px; top: -380px; width: 440px; height: 420px; z-index: 30; pointer-events: none; }
+  #axD1-svg { display: block; width: 100%; height: 100%; overflow: visible; }
+  #axD1-trail { position: absolute; left: 0; top: 0; width: 1px; height: 1px; z-index: 29; pointer-events: none; }
+  .axD1-bub { position: absolute; display: block; left: -10px; top: -10px; width: 20px; height: 20px; border-radius: 50%;
+    border: 2.5px solid rgba(236, 232, 220, 0.6); background: rgba(236, 232, 220, 0.07); opacity: 0; }
+</style>
+<div id="axD1-trail"><i class="axD1-bub"></i><i class="axD1-bub"></i><i class="axD1-bub"></i><i class="axD1-bub"></i><i class="axD1-bub"></i><i class="axD1-bub"></i><i class="axD1-bub"></i><i class="axD1-bub"></i><i class="axD1-bub"></i><i class="axD1-bub"></i><i class="axD1-bub"></i><i class="axD1-bub"></i><i class="axD1-bub"></i><i class="axD1-bub"></i><i class="axD1-bub"></i><i class="axD1-bub"></i></div>
+<div id="axD1">
+<svg id="axD1-svg" viewBox="-220 -380 440 420" xmlns="http://www.w3.org/2000/svg" aria-label="Ajolote">
+  <defs>
+    <filter id="axD1-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.4"/></filter>
+    <filter id="axD1-blur" x="-50%" y="-200%" width="200%" height="500%"><feGaussianBlur stdDeviation="5"/></filter>
+    <clipPath id="axD1-clip" clipPathUnits="userSpaceOnUse"><rect id="axD1-clipRect" x="-3000" y="-3000" width="6000" height="6000"/></clipPath>
+    <clipPath id="axD1-headClip"><path d="M0 -314 C82 -314 134 -276 134 -214 C134 -152 78 -124 0 -124 C-78 -124 -134 -152 -134 -214 C-134 -276 -82 -314 0 -314 Z"/></clipPath>
+    <clipPath id="axD1-bodyClip"><path d="M0 -152 C50 -152 76 -108 74 -62 C72 -20 46 -2 0 -2 C-46 -2 -72 -20 -74 -62 C-76 -108 -50 -152 0 -152 Z"/></clipPath>
+    <clipPath id="axD1-mouthClip"><use href="#axD1-mouth"/></clipPath>
+  </defs>
+  <g id="axD1-shadow"><ellipse cx="0" cy="4" rx="96" ry="12" fill="#000" opacity="0.38" filter="url(#axD1-blur)"/></g>
+  <g id="axD1-all" clip-path="url(#axD1-clip)">
+  <g id="axD1-hop"><g id="axD1-tilt">
+    <g id="axD1-flip"><g id="axD1-squash"><g id="axD1-breath">
+      <path id="axD1-tail" d="M28.4 -57.5 C29.9 -57.1 34.6 -56 37.7 -55.5 C40.9 -55.1 44.1 -54.7 47.3 -54.8 C50.5 -54.8 53.7 -55.2 56.9 -55.9 C60 -56.6 63 -57.6 66 -58.8 C68.9 -60 71.8 -61.5 74.5 -63.1 C77.3 -64.7 80 -66.5 82.6 -68.3 C85.2 -70.2 87.7 -72.2 90.3 -74.3 C92.8 -76.4 95.3 -78.7 97.7 -80.9 C100.2 -83.2 102.7 -85.6 105.1 -88 C107.5 -90.4 110 -92.8 112.4 -95.3 C114.8 -97.8 117.2 -100.4 119.5 -103 C121.8 -105.5 124 -108.2 126.2 -110.9 C128.3 -113.6 130.3 -116.3 132.2 -119.2 C134 -122.1 135.8 -125 137.2 -128.1 C138.7 -131.2 140 -134.5 140.9 -137.8 C141.8 -141.2 142.5 -144.7 142.8 -148.3 C143.1 -152 143 -155.7 142.5 -159.4 C142 -163.2 139.4 -170.5 140 -170.7 C140.6 -170.8 144.5 -164 146.2 -160.3 C147.9 -156.7 149.2 -152.7 150.1 -148.7 C151 -144.8 151.6 -140.6 151.7 -136.5 C151.9 -132.3 151.7 -128.1 151.1 -124 C150.5 -119.9 149.6 -115.8 148.4 -111.8 C147.2 -107.8 145.7 -103.9 144.1 -100.1 C142.4 -96.3 140.5 -92.7 138.4 -89.1 C136.4 -85.5 134.2 -82 131.9 -78.6 C129.5 -75.2 127.1 -71.9 124.4 -68.7 C121.8 -65.5 119.1 -62.3 116.2 -59.3 C113.3 -56.2 110.3 -53.2 107.1 -50.4 C103.8 -47.6 100.4 -44.9 96.9 -42.4 C93.3 -39.9 89.6 -37.5 85.7 -35.4 C81.8 -33.3 77.7 -31.4 73.5 -29.7 C69.3 -28.1 64.9 -26.8 60.6 -25.7 C56.2 -24.7 51.7 -23.9 47.2 -23.4 C42.7 -22.9 38.1 -22.7 33.6 -22.8 C29 -22.9 22.2 -23.7 20 -23.9 Z" fill="#f5b8c6" stroke="#d0708a" stroke-width="4" stroke-linejoin="round"/>
+      <path id="axD1-tailStripe" d="M47.3 -45.3 C49.1 -45.5 54.5 -45.9 58 -46.6 C61.5 -47.3 65 -48.3 68.4 -49.5 C71.8 -50.7 75.1 -52.2 78.3 -53.8 C81.5 -55.5 84.6 -57.3 87.6 -59.3 C90.6 -61.3 93.5 -63.4 96.3 -65.7 C99.2 -68 101.9 -70.4 104.6 -72.9 C107.3 -75.4 109.9 -78 112.5 -80.6 C115 -83.3 117.5 -86 119.9 -88.8 C122.3 -91.7 124.7 -94.5 126.9 -97.5 C129.1 -100.5 131.3 -103.5 133.2 -106.6 C135.1 -109.8 137 -113 138.5 -116.3 C140.1 -119.6 141.5 -123 142.6 -126.5 C143.7 -130 144.5 -133.7 145 -137.3 C145.4 -141 145.3 -146.6 145.4 -148.5" fill="none" stroke="#e98ca3" stroke-width="5" stroke-linecap="round"/>
+      <path d="M0 -152 C50 -152 76 -108 74 -62 C72 -20 46 -2 0 -2 C-46 -2 -72 -20 -74 -62 C-76 -108 -50 -152 0 -152 Z" fill="#f7c1cc" stroke="#d0708a" stroke-width="4.5"/>
+      <g clip-path="url(#axD1-bodyClip)">
+        <ellipse cx="0" cy="-50" rx="47" ry="41" fill="#fde3e8"/>
+        <ellipse cx="0" cy="-134" rx="78" ry="26" fill="#eea3b5" opacity="0.6"/>
+        <path d="M-30 -60 Q0 -54 30 -60 M-26 -38 Q0 -32 26 -38" fill="none" stroke="#eea3b5" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+      </g>
+      <g><ellipse cx="-36" cy="-6" rx="22" ry="11.5" fill="#f7c1cc" stroke="#d0708a" stroke-width="4"/><path d="M-44 -9 L-44 -2 M-34 -9 L-34 -1" stroke="#d0708a" stroke-width="2.4" stroke-linecap="round" opacity="0.7"/></g>
+      <g><ellipse cx="36" cy="-6" rx="22" ry="11.5" fill="#f7c1cc" stroke="#d0708a" stroke-width="4"/><path d="M44 -9 L44 -2 M34 -9 L34 -1" stroke="#d0708a" stroke-width="2.4" stroke-linecap="round" opacity="0.7"/></g>
+      <g id="axD1-headY"><g id="axD1-head"><g id="axD1-headBob"><g id="axD1-headBobR">
+        <g><g transform="translate(-104 -262) rotate(-146)"><g id="axD1-gL1"><g id="axD1-gL1w"><path d="M0 -5.8 Q4.9 -14.9 19.4 -15.2 Q17.4 -9.8 18.8 -8 Q23.7 -14.8 38.2 -15.1 Q36.2 -9.3 37.6 -7.3 Q42.5 -10.4 57 -10.6 Q55 -5.9 56.4 -4.3 Q61.3 -5.2 75.8 -5.4 Q73.8 -2.3 75.2 -1.2 L80 0 L75.2 1.2 Q73.8 2.3 75.8 5.4 Q61.3 5.2 56.4 4.3 Q55 5.9 57 10.6 Q42.5 10.4 37.6 7.3 Q36.2 9.3 38.2 15.1 Q23.7 14.8 18.8 8 Q17.4 9.8 19.4 15.2 Q4.9 14.9 0 5.8 Z" fill="#ff6a45" stroke="#d9452f" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 -2.8 Q36 -9.3 68.8 0 Q36 9.3 4 2.8 Z" fill="#ff8a5e" opacity="0.75"/><path d="M6 0 Q40 -1.5 72 0 M21.6 0 L32 -7.2 M21.6 0 L32 7.2 M40.4 0 L50.8 -6.2 M40.4 0 L50.8 6.2 M59.2 0 L69.6 -3.3 M59.2 0 L69.6 3.3" fill="none" stroke="#b8331f" stroke-width="1.7" stroke-linecap="round" opacity="0.55"/></g></g></g><g transform="translate(-121 -224) rotate(-177)"><g id="axD1-gL2"><g id="axD1-gL2w"><path d="M0 -6.2 Q5.2 -15.9 21 -16.3 Q19 -10.5 20.7 -8.5 Q25.9 -15.7 41.6 -16.1 Q39.6 -9.9 41.4 -7.8 Q46.6 -11.1 62.3 -11.3 Q60.3 -6.3 62 -4.6 Q67.3 -5.6 83 -5.7 Q81 -2.4 82.7 -1.3 L88 0 L82.7 1.3 Q81 2.4 83 5.7 Q67.3 5.6 62 4.6 Q60.3 6.3 62.3 11.3 Q46.6 11.1 41.4 7.8 Q39.6 9.9 41.6 16.1 Q25.9 15.7 20.7 8.5 Q19 10.5 21 16.3 Q5.2 15.9 0 6.2 Z" fill="#ff6a45" stroke="#d9452f" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 -3 Q39.6 -9.9 75.7 0 Q39.6 9.9 4 3 Z" fill="#ff8a5e" opacity="0.75"/><path d="M6 0 Q44 -1.5 79.2 0 M23.8 0 L35.2 -7.7 M23.8 0 L35.2 7.7 M44.5 0 L55.8 -6.6 M44.5 0 L55.8 6.6 M65.1 0 L76.5 -3.5 M65.1 0 L76.5 3.5" fill="none" stroke="#b8331f" stroke-width="1.7" stroke-linecap="round" opacity="0.55"/></g></g></g><g transform="translate(-113 -186) rotate(152)"><g id="axD1-gL3"><g id="axD1-gL3w"><path d="M0 -5.4 Q4.7 -13.9 18.6 -14.2 Q16.6 -9.1 17.9 -7.5 Q22.5 -13.8 36.5 -14.1 Q34.5 -8.6 35.7 -6.8 Q40.4 -9.7 54.4 -9.9 Q52.4 -5.5 53.6 -4 Q58.2 -4.9 72.2 -5 Q70.2 -2.1 71.4 -1.1 L76 0 L71.4 1.1 Q70.2 2.1 72.2 5 Q58.2 4.9 53.6 4 Q52.4 5.5 54.4 9.9 Q40.4 9.7 35.7 6.8 Q34.5 8.6 36.5 14.1 Q22.5 13.8 17.9 7.5 Q16.6 9.1 18.6 14.2 Q4.7 13.9 0 5.4 Z" fill="#ff6a45" stroke="#d9452f" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 -2.6 Q34.2 -8.7 65.4 0 Q34.2 8.7 4 2.6 Z" fill="#ff8a5e" opacity="0.75"/><path d="M6 0 Q38 -1.5 68.4 0 M20.5 0 L30.4 -6.7 M20.5 0 L30.4 6.7 M38.4 0 L48.2 -5.8 M38.4 0 L48.2 5.8 M56.3 0 L66.1 -3.1 M56.3 0 L66.1 3.1" fill="none" stroke="#b8331f" stroke-width="1.7" stroke-linecap="round" opacity="0.55"/></g></g></g></g>
+        <g transform="scale(-1 1)"><g transform="translate(-104 -262) rotate(-146)"><g id="axD1-gR1"><g id="axD1-gR1w"><path d="M0 -5.8 Q4.9 -14.9 19.4 -15.2 Q17.4 -9.8 18.8 -8 Q23.7 -14.8 38.2 -15.1 Q36.2 -9.3 37.6 -7.3 Q42.5 -10.4 57 -10.6 Q55 -5.9 56.4 -4.3 Q61.3 -5.2 75.8 -5.4 Q73.8 -2.3 75.2 -1.2 L80 0 L75.2 1.2 Q73.8 2.3 75.8 5.4 Q61.3 5.2 56.4 4.3 Q55 5.9 57 10.6 Q42.5 10.4 37.6 7.3 Q36.2 9.3 38.2 15.1 Q23.7 14.8 18.8 8 Q17.4 9.8 19.4 15.2 Q4.9 14.9 0 5.8 Z" fill="#ff6a45" stroke="#d9452f" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 -2.8 Q36 -9.3 68.8 0 Q36 9.3 4 2.8 Z" fill="#ff8a5e" opacity="0.75"/><path d="M6 0 Q40 -1.5 72 0 M21.6 0 L32 -7.2 M21.6 0 L32 7.2 M40.4 0 L50.8 -6.2 M40.4 0 L50.8 6.2 M59.2 0 L69.6 -3.3 M59.2 0 L69.6 3.3" fill="none" stroke="#b8331f" stroke-width="1.7" stroke-linecap="round" opacity="0.55"/></g></g></g><g transform="translate(-121 -224) rotate(-177)"><g id="axD1-gR2"><g id="axD1-gR2w"><path d="M0 -6.2 Q5.2 -15.9 21 -16.3 Q19 -10.5 20.7 -8.5 Q25.9 -15.7 41.6 -16.1 Q39.6 -9.9 41.4 -7.8 Q46.6 -11.1 62.3 -11.3 Q60.3 -6.3 62 -4.6 Q67.3 -5.6 83 -5.7 Q81 -2.4 82.7 -1.3 L88 0 L82.7 1.3 Q81 2.4 83 5.7 Q67.3 5.6 62 4.6 Q60.3 6.3 62.3 11.3 Q46.6 11.1 41.4 7.8 Q39.6 9.9 41.6 16.1 Q25.9 15.7 20.7 8.5 Q19 10.5 21 16.3 Q5.2 15.9 0 6.2 Z" fill="#ff6a45" stroke="#d9452f" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 -3 Q39.6 -9.9 75.7 0 Q39.6 9.9 4 3 Z" fill="#ff8a5e" opacity="0.75"/><path d="M6 0 Q44 -1.5 79.2 0 M23.8 0 L35.2 -7.7 M23.8 0 L35.2 7.7 M44.5 0 L55.8 -6.6 M44.5 0 L55.8 6.6 M65.1 0 L76.5 -3.5 M65.1 0 L76.5 3.5" fill="none" stroke="#b8331f" stroke-width="1.7" stroke-linecap="round" opacity="0.55"/></g></g></g><g transform="translate(-113 -186) rotate(152)"><g id="axD1-gR3"><g id="axD1-gR3w"><path d="M0 -5.4 Q4.7 -13.9 18.6 -14.2 Q16.6 -9.1 17.9 -7.5 Q22.5 -13.8 36.5 -14.1 Q34.5 -8.6 35.7 -6.8 Q40.4 -9.7 54.4 -9.9 Q52.4 -5.5 53.6 -4 Q58.2 -4.9 72.2 -5 Q70.2 -2.1 71.4 -1.1 L76 0 L71.4 1.1 Q70.2 2.1 72.2 5 Q58.2 4.9 53.6 4 Q52.4 5.5 54.4 9.9 Q40.4 9.7 35.7 6.8 Q34.5 8.6 36.5 14.1 Q22.5 13.8 17.9 7.5 Q16.6 9.1 18.6 14.2 Q4.7 13.9 0 5.4 Z" fill="#ff6a45" stroke="#d9452f" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 -2.6 Q34.2 -8.7 65.4 0 Q34.2 8.7 4 2.6 Z" fill="#ff8a5e" opacity="0.75"/><path d="M6 0 Q38 -1.5 68.4 0 M20.5 0 L30.4 -6.7 M20.5 0 L30.4 6.7 M38.4 0 L48.2 -5.8 M38.4 0 L48.2 5.8 M56.3 0 L66.1 -3.1 M56.3 0 L66.1 3.1" fill="none" stroke="#b8331f" stroke-width="1.7" stroke-linecap="round" opacity="0.55"/></g></g></g></g>
+        <path d="M0 -314 C82 -314 134 -276 134 -214 C134 -152 78 -124 0 -124 C-78 -124 -134 -152 -134 -214 C-134 -276 -82 -314 0 -314 Z" fill="#f7c1cc" stroke="#d0708a" stroke-width="4.5"/>
+        <g clip-path="url(#axD1-headClip)">
+          <ellipse cx="0" cy="-116" rx="150" ry="36" fill="#eea3b5" opacity="0.55"/>
+          <path d="M-78 -270 C-66 -292 -30 -302 0 -298 C-26 -292 -56 -282 -70 -262 C-74 -258 -80 -262 -78 -270 Z" fill="#fde3e8" opacity="0.9"/>
+          <circle cx="22" cy="-294" r="5" fill="#fde3e8" opacity="0.85"/>
+        </g>
+        <g id="axD1-face">
+          <g transform="translate(-84 -176)"><ellipse id="axD1-cheekL" rx="17" ry="10" fill="#ff8aa3" opacity="0.55" filter="url(#axD1-soft)"/></g>
+          <g transform="translate(84 -176)"><ellipse id="axD1-cheekR" rx="17" ry="10" fill="#ff8aa3" opacity="0.55" filter="url(#axD1-soft)"/></g>
+          <g transform="translate(-48 -208)"><g id="axD1-eyeL"><g id="axD1-openL"><g id="axD1-blinkL"><g id="axD1-lookL"><ellipse rx="11" ry="13" fill="#2a1520"/><g id="axD1-hlL"><circle cx="3.8" cy="-5" r="4.2" fill="#fff"/><circle cx="-3.6" cy="4.6" r="1.9" fill="#fff" opacity="0.85"/></g></g></g></g><path id="axD1-happyL" opacity="0" d="M-11 4 Q0 -11 11 4" fill="none" stroke="#2a1520" stroke-width="5" stroke-linecap="round"/><path id="axD1-sqzL" opacity="0" d="M-8 -8 L6 0 L-8 8" fill="none" stroke="#2a1520" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path id="axD1-winkL" opacity="0" d="M-11 -1 Q0 7 11 -1" fill="none" stroke="#2a1520" stroke-width="5" stroke-linecap="round"/></g></g><g transform="translate(48 -208)"><g id="axD1-eyeR"><g id="axD1-openR"><g id="axD1-blinkR"><g id="axD1-lookR"><ellipse rx="11" ry="13" fill="#2a1520"/><g id="axD1-hlR"><circle cx="3.8" cy="-5" r="4.2" fill="#fff"/><circle cx="-3.6" cy="4.6" r="1.9" fill="#fff" opacity="0.85"/></g></g></g></g><path id="axD1-happyR" opacity="0" d="M-11 4 Q0 -11 11 4" fill="none" stroke="#2a1520" stroke-width="5" stroke-linecap="round"/><path id="axD1-sqzR" opacity="0" d="M8 -8 L-6 0 L8 8" fill="none" stroke="#2a1520" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path id="axD1-winkR" opacity="0" d="M-11 -1 Q0 7 11 -1" fill="none" stroke="#2a1520" stroke-width="5" stroke-linecap="round"/></g></g>
+          <g transform="translate(-48 -238)"><g id="axD1-browL"><path id="axD1-browLr" d="M-9 2 Q-1 -3 9 0" fill="none" stroke="#c05f7b" stroke-width="4.2" stroke-linecap="round" opacity="0.8"/></g></g><g transform="translate(48 -238) scale(-1 1)"><g id="axD1-browR"><path id="axD1-browRr" d="M-9 2 Q-1 -3 9 0" fill="none" stroke="#c05f7b" stroke-width="4.2" stroke-linecap="round" opacity="0.8"/></g></g>
+          <path id="axD1-mouth" d="M-17 -170 C-11 -162 11 -162 17 -170 C11 -151 -11 -151 -17 -170 Z" fill="#7a1f37" stroke="#7a1f37" stroke-width="2" stroke-linejoin="round"/>
+          <ellipse cx="0" cy="-138" rx="13" ry="9" fill="#ff7f99" clip-path="url(#axD1-mouthClip)"/>
+        </g>
+      </g></g></g></g>
+      <g transform="translate(0 -72) scale(1.15)"><g id="axD1-clapY"><g id="axD1-clap" opacity="0">
+        <rect x="-60" y="-26" width="120" height="68" rx="7" fill="#1b1b20" stroke="#0b0b0d" stroke-width="3"/>
+        <rect x="-60" y="-26" width="120" height="14" rx="3" fill="#ece8dc"/>
+        <path d="M-54 -26 L-42 -26 L-48 -12 L-60 -12 Z M-30 -26 L-18 -26 L-24 -12 L-36 -12 Z M-6 -26 L6 -26 L0 -12 L-12 -12 Z M18 -26 L30 -26 L24 -12 L12 -12 Z M42 -26 L54 -26 L48 -12 L36 -12 Z" fill="#1b1b20"/>
+        <line x1="-52" y1="12" x2="52" y2="12" stroke="#4a4a54" stroke-width="1.5"/>
+        <line x1="0" y1="-6" x2="0" y2="36" stroke="#4a4a54" stroke-width="1.5"/>
+        <text x="-26" y="6" text-anchor="middle" font-family="JB Mono, monospace" font-size="9" fill="#9a978f">ESCENA</text>
+        <text x="26" y="6" text-anchor="middle" font-family="JB Mono, monospace" font-size="9" fill="#9a978f">TOMA</text>
+        <text x="-26" y="31" text-anchor="middle" font-family="Archivo, sans-serif" font-weight="800" font-size="17" fill="#f0c94a">1</text>
+        <text x="26" y="31" text-anchor="middle" font-family="Archivo, sans-serif" font-weight="800" font-size="17" fill="#ece8dc">1</text>
+        <g transform="translate(-60 -28)"><g id="axD1-clapStick">
+          <rect x="0" y="-14" width="120" height="14" rx="3" fill="#ece8dc" stroke="#0b0b0d" stroke-width="2"/>
+          <path d="M-6 -14 L6 -14 L12 0 L0 0 Z M18 -14 L30 -14 L36 0 L24 0 Z M42 -14 L54 -14 L60 0 L48 0 Z M66 -14 L78 -14 L84 0 L72 0 Z M90 -14 L102 -14 L108 0 L96 0 Z" fill="#1b1b20"/>
+          <circle cx="5" cy="-1" r="3" fill="#4a4a54"/>
+        </g></g>
+      </g></g></g>
+      <g transform="translate(-66 -106) scale(-1 1) rotate(-9)"><g id="axD1-armL"><g id="axD1-armLw"><g id="axD1-armLs"><g id="axD1-fingerL" opacity="0"><path d="M2 44 L3 68" stroke="#d0708a" stroke-width="13" stroke-linecap="round"/><path d="M2 44 L3 68" stroke="#f7c1cc" stroke-width="7.5" stroke-linecap="round"/></g><path d="M-11 -4 C-12 10 -11 22 -10 31 C-15 37 -15 45 -10 48 C-8 50 -4 50 -3 47 C-2 52 3 54 5 50 C7 53 12 51 12 47 C16 46 18 40 14 34 C12 24 12 10 11 -4 C11 -10 -11 -10 -11 -4 Z" fill="#f7c1cc" stroke="#d0708a" stroke-width="4" stroke-linejoin="round"/><path d="M-3 47 C-3 44 -2 42 -1 41 M5 50 C5 46 5 44 5 42" fill="none" stroke="#d0708a" stroke-width="2.2" stroke-linecap="round" opacity="0.75"/></g></g></g></g>
+      <g transform="translate(66 -106) rotate(-9)"><g id="axD1-armR"><g id="axD1-armRw"><g id="axD1-armRs"><g id="axD1-fingerR" opacity="0"><path d="M2 44 L3 68" stroke="#d0708a" stroke-width="13" stroke-linecap="round"/><path d="M2 44 L3 68" stroke="#f7c1cc" stroke-width="7.5" stroke-linecap="round"/></g><path d="M-11 -4 C-12 10 -11 22 -10 31 C-15 37 -15 45 -10 48 C-8 50 -4 50 -3 47 C-2 52 3 54 5 50 C7 53 12 51 12 47 C16 46 18 40 14 34 C12 24 12 10 11 -4 C11 -10 -11 -10 -11 -4 Z" fill="#f7c1cc" stroke="#d0708a" stroke-width="4" stroke-linejoin="round"/><path d="M-3 47 C-3 44 -2 42 -1 41 M5 50 C5 46 5 44 5 42" fill="none" stroke="#d0708a" stroke-width="2.2" stroke-linecap="round" opacity="0.75"/></g></g></g></g>
+    </g></g></g>
+    <g id="axD1-fx">
+      <g transform="translate(128 -340) scale(1.5)"><g id="axD1-fxBangY"><g id="axD1-fxBang" opacity="0"><path d="M-7 -34 L7 -34 L4 2 L-4 2 Z" fill="#f0c94a" stroke="#0b0b0d" stroke-width="3" stroke-linejoin="round"/><circle cx="0" cy="13" r="6" fill="#f0c94a" stroke="#0b0b0d" stroke-width="3"/></g></g></g>
+      <g transform="translate(98 -256)"><g id="axD1-fxSpark" opacity="0"><path d="M0 -16 Q2 -2 16 0 Q2 2 0 16 Q-2 2 -16 0 Q-2 -2 0 -16 Z" fill="#fff4c4"/></g></g>
+      <g transform="translate(118 -306)"><circle id="axD1-th1" r="6" fill="#ece8dc" opacity="0"/></g>
+      <g transform="translate(142 -334)"><circle id="axD1-th2" r="9" fill="#ece8dc" opacity="0"/></g>
+      <g transform="translate(174 -366)"><circle id="axD1-th3" r="13" fill="#ece8dc" opacity="0"/></g>
+      <g transform="translate(0 -60)"><g id="axD1-fxImpact" opacity="0" stroke="#f0c94a" stroke-width="5" stroke-linecap="round" fill="none">
+        <path d="M-84 -40 L-102 -54"/><path d="M-90 -6 L-112 -6"/><path d="M-84 26 L-102 40"/>
+        <path d="M84 -40 L102 -54"/><path d="M90 -6 L112 -6"/><path d="M84 26 L102 40"/>
+      </g></g>
+      <g transform="translate(0 -324) scale(1 0.36)"><g id="axD1-fxStars" opacity="0">
+        <path transform="translate(80 0)" d="M0 -13 L3.2 -4.4 L12.4 -4 L5.2 1.7 L7.6 10.5 L0 5.5 L-7.6 10.5 L-5.2 1.7 L-12.4 -4 L-3.2 -4.4 Z" fill="#f0c94a"/>
+        <path transform="translate(-40 69)" d="M0 -11 L2.6 -3.6 L10.5 -3.4 L4.3 1.4 L6.5 8.9 L0 4.5 L-6.5 8.9 L-4.3 1.4 L-10.5 -3.4 L-2.6 -3.6 Z" fill="#ece8dc"/>
+        <path transform="translate(-40 -69)" d="M0 -12 L2.9 -4 L11.4 -3.7 L4.8 1.5 L7.1 9.7 L0 5 L-7.1 9.7 L-4.8 1.5 L-11.4 -3.7 L-2.9 -4 Z" fill="#f0c94a"/>
+      </g></g>
+      <g transform="translate(118 -262)"><g id="axD1-fxSweatY"><path id="axD1-fxSweat" opacity="0" d="M0 -12 C6 -2 9 3 9 7 C9 12 5 15 0 15 C-5 15 -9 12 -9 7 C-9 3 -6 -2 0 -12 Z" fill="#9cc2ff" stroke="#5b86c9" stroke-width="2"/></g></g>
+      <g transform="translate(0 -10) scale(1.1 0.7)"><g id="axD1-fxImpact2" opacity="0" stroke="#f0c94a" stroke-width="5" stroke-linecap="round" fill="none">
+        <path d="M-84 -40 L-102 -54"/><path d="M-90 -6 L-112 -6"/><path d="M-84 26 L-102 40"/>
+        <path d="M84 -40 L102 -54"/><path d="M90 -6 L112 -6"/><path d="M84 26 L102 40"/>
+      </g></g>
+    </g>
+  </g></g>
+  </g>
+</svg>
+</div>
+
+    </div>
+    <div id="secD1-fore" class="secD1-plane" data-layout-allow-overflow>
+      <i class="secD1-ruler" style="left: -200px; top: 18px; width: 2600px"></i>
+      <i class="secD1-cross" style="left: 1820px; top: 70px"><b></b></i>
+      <i class="secD1-cross" style="left: 58px; top: 990px"><b></b></i>
+      <div class="secD1-tc" id="secD1-tc" style="left: 120px; top: 1030px">VD-02 ▸ PREPARAR · 00:00:36:15</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  const DUR = 3.5, T0 = 36.5, FPS = 30, FD = 1.25;
+  const C = window.CUES;
+  const $ = (s) => document.querySelector(s);
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const lerp = (a, b, e) => a + (b - a) * e;
+
+  /* ---------- curvas propias vd.* ---------- */
+  if (!window.__vdEases) {
+    const bez = (x1, y1, x2, y2) => {
+      const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
+      const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+      const sx = (t) => ((ax * t + bx) * t + cx) * t, sy = (t) => ((ay * t + by) * t + cy) * t;
+      const dx = (t) => (3 * ax * t + 2 * bx) * t + cx;
+      return (p) => {
+        if (p <= 0) return 0; if (p >= 1) return 1;
+        let t = p;
+        for (let i = 0; i < 6; i++) { const e = sx(t) - p, d = dx(t); if (Math.abs(e) < 1e-6 || Math.abs(d) < 1e-6) break; t -= e / d; }
+        if (t < 0 || t > 1) { let lo = 0, hi = 1; t = p; for (let i = 0; i < 30; i++) { sx(t) < p ? (lo = t) : (hi = t); t = (lo + hi) / 2; } }
+        return sy(t);
+      };
+    };
+    const spring = (z = 0.42, w = 13) => (p) => (p >= 1 ? 1 : 1 - Math.exp(-z * w * p) * Math.cos(w * Math.sqrt(1 - z * z) * p));
+    const E = {
+      "vd.land": bez(0.16, 1, 0.3, 1), "vd.settle": bez(0, 0.65, 0.51, 0.99), "vd.glide": bez(0.7, 0, 0.2, 1),
+      "vd.push": bez(0.33, 0, 0.67, 1), "vd.whip": bez(0.86, 0, 0.12, 1), "vd.dive": bez(0.55, 0, 0.95, 0.55),
+      "vd.exit": bez(0.7, 0, 0.84, 0), "vd.spring": spring(),
+      "vd.fold": (p) => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2),
+    };
+    Object.keys(E).forEach((k) => gsap.registerEase(k, E[k]));
+    window.__vdEases = true;
+  }
+
+  const tl = gsap.timeline({ paused: true });
+
+  /* ---------- CÁMARA: función pura de t (llega con latigazo desde la izquierda) ---------- */
+  const K = [
+    { t: 0.0, x: -170, y: 556, s: 1.0, r: 0.9 },
+    { t: 0.38, x: 1052, y: 536, s: 1.0, r: -0.35, ease: "power3.out" },
+    { t: 0.86, x: 960, y: 540, s: 1.0, r: 0, ease: "vd.land" },
+    { t: 3.5, x: 990, y: 560, s: 1.05, r: 0.18, ease: "vd.push" },
+  ];
+  function cam(t) {
+    if (t >= K[K.length - 1].t) return Object.assign({}, K[K.length - 1]);
+    let i = 1;
+    for (let k = 1; k < K.length; k++) if (t < K[k].t) { i = k; break; }
+    const a = K[i - 1], b = K[i];
+    const p = clamp((t - a.t) / (b.t - a.t || 1), 0, 1);
+    const e = gsap.parseEase(b.ease || "none")(p);
+    return { x: lerp(a.x, b.x, e), y: lerp(a.y, b.y, e), s: Math.exp(lerp(Math.log(a.s), Math.log(b.s), e)), r: lerp(a.r, b.r, e) };
+  }
+  const pulse = (dt) => (dt < 0 ? 0 : dt < 0.066 ? dt / 0.066 : Math.exp(-(dt - 0.066) * 9));
+  const LANDT = [1.5, 1.75, 2.0, 2.25, 2.5];
+  const camAt = (t) => {
+    const c = cam(t);
+    let k = 0;
+    LANDT.forEach((lt, i) => (k += (i === 4 ? 0.016 : 0.006) * pulse(t - lt)));
+    c.s *= 1 + k;
+    return c;
+  };
+  const hand = (t) => ({
+    x: 2.0 * Math.sin(2 * Math.PI * 0.31 * t + 1.3) + 0.9 * Math.sin(2 * Math.PI * 0.77 * t + 0.4),
+    y: 1.5 * Math.sin(2 * Math.PI * 0.23 * t + 2.1) + 0.8 * Math.sin(2 * Math.PI * 0.91 * t + 5.2),
+    r: 0.08 * Math.sin(2 * Math.PI * 0.17 * t + 0.7),
+  });
+  const world = $("#secD1-world"), forePl = $("#secD1-fore"), lens = $("#secD1-lens"), cbx = $("#secD1-cbx");
+  function applyCamera(t) {
+    const c = camAt(t), n = hand(t);
+    [[world, 1], [forePl, FD]].forEach(([el, d]) => {
+      const s = 1 + (c.s - 1) * d;
+      el.style.transform = `translate(${(960 + n.x).toFixed(2)}px, ${(540 + n.y).toFixed(2)}px) rotate(${(c.r * d + n.r).toFixed(3)}deg) scale(${s.toFixed(4)}) translate(${(-c.x * d + 960 * (d - 1)).toFixed(2)}px, ${(-c.y * d + 540 * (d - 1)).toFixed(2)}px)`;
+    });
+    const h = 0.5 / FPS, c0 = camAt(Math.max(0, t - h)), c1 = camAt(Math.min(DUR, t + h));
+    const vx = Math.abs(c1.x - c0.x) * c.s, vy = Math.abs(c1.y - c0.y) * c.s;
+    const pan = Math.abs(Math.log(c1.s / c0.s)) < 0.006;
+    const bx = pan ? Math.min(28, vx * 0.35) : 0, by = pan ? Math.min(28, vy * 0.35) : 0;
+    if (bx + by > 0.8) { cbx.setAttribute("stdDeviation", `${bx.toFixed(2)} ${by.toFixed(2)}`); lens.style.filter = "url(#secD1-camblur)"; }
+    else lens.style.filter = "none";
+  }
+
+  /* ---------- 1 · el latigazo aterriza y el montón se abre en abanico ---------- */
+  // coordenadas de autor: centro de cada foto, giro final y punto de muestreo (relativo al centro)
+  const PH = [
+    { cx: 270, cy: 452, w: 270, h: 270, r: -6, smp: [-60, -18] },
+    { cx: 590, cy: 438, w: 250, h: 300, r: 4, smp: [-62, 20] },
+    { cx: 910, cy: 462, w: 250, h: 300, r: -3, smp: [0, 2] },
+    { cx: 1230, cy: 444, w: 270, h: 270, r: 5, smp: [-74, 0] },
+    { cx: 1550, cy: 456, w: 250, h: 300, r: -4, smp: [-48, 50] },
+  ];
+  const SC = 1.16;
+  const COLS = ["#f0884a", "#24305e", "#e0402f", "#7f9a3e", "#9fb8bf"];
+  const STACK_R = [-11, 7, -2, 10, -6];
+  PH.forEach((p, i) => {
+    const sx = 910 - p.cx + (i - 2) * 16, sy = 460 - p.cy - (i - 2) * 7;
+    const d = 0.14 + Math.abs(i - 2) * 0.045;
+    tl.fromTo("#secD1-ph" + i, { x: sx, y: sy, rotation: STACK_R[i], scale: 1.04, transformOrigin: "50% 50%" },
+      { x: 0, y: 0, rotation: p.r, scale: SC, transformOrigin: "50% 50%", duration: 0.62, ease: "vd.land" }, d);
+  });
+
+  // rótulos: llegan con la cámara
+  tl.fromTo("#secD1-kick", { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.4, ease: "vd.land" }, 0.34);
+  tl.fromTo("#secD1-title", { fontStretch: "62%", y: 34, opacity: 0 }, { fontStretch: "118%", y: 0, opacity: 1, duration: 0.55, ease: "expo.out" }, 0.46);
+  tl.fromTo("#secD1-plab", { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.5, ease: "vd.land" }, 1.36);
+
+  /* ---------- 2 · el cuentagotas toma un color de cada foto; la ficha cae en su hueco (corcheas) ---------- */
+  const rot = (x, y, a) => { const r = (a * Math.PI) / 180, c = Math.cos(r), s = Math.sin(r); return [x * c - y * s, x * s + y * c]; };
+  const SMP = PH.map((p) => { const v = rot(p.smp[0] * SC, p.smp[1] * SC, p.r); return [p.cx + v[0], p.cy + v[1]]; });
+    const TOUCH = LANDT.map((lt) => lt - 0.3);
+  const DR = "#secD1-drop";
+  // entra desde arriba en el golpe de 1,0
+  tl.set(DR, { scale: 0.96, transformOrigin: "45px 420px" }, 0);
+  tl.set(DR, { opacity: 1 }, TOUCH[0] - 0.3);
+  tl.fromTo(DR, { x: SMP[0][0] - 240, y: SMP[0][1] - 640, rotation: -44 }, { x: SMP[0][0], y: SMP[0][1], rotation: -26, duration: 0.3, ease: "vd.land" }, TOUCH[0] - 0.3);
+  for (let i = 0; i < 5; i++) {
+    const tt = TOUCH[i], [px, py] = SMP[i];
+    // toque: aprieta la pera y el cristal se llena del color
+    tl.set("#secD1-liq", { attr: { fill: COLS[i] } }, tt - 0.01);
+    tl.fromTo("#secD1-liq", { scaleY: 0, svgOrigin: "45 424" }, { scaleY: 1, svgOrigin: "45 424", duration: 0.07, ease: "power2.out", immediateRender: false }, tt);
+    tl.to("#secD1-bulb", { scaleX: 0.8, scaleY: 1.06, svgOrigin: "45 116", duration: 0.05, ease: "power2.out" }, tt);
+    tl.to("#secD1-bulb", { scaleX: 1, scaleY: 1, svgOrigin: "45 116", duration: 0.16, ease: "elastic.out(1,0.5)" }, tt + 0.05);
+    tl.to("#secD1-ph" + i, { scale: SC * 0.975, duration: 0.04, ease: "power2.out" }, tt);
+    tl.to("#secD1-ph" + i, { scale: SC, duration: 0.18, ease: "power2.out" }, tt + 0.04);
+    tl.set("#secD1-ring" + i, { left: px, top: py, borderColor: COLS[i] }, 0);
+    tl.fromTo("#secD1-ring" + i, { scale: 0.3, opacity: 1 }, { scale: 1.5, opacity: 0, duration: 0.3, ease: "power2.out", immediateRender: false }, tt);
+    // suelta la gota: cae (gravedad) y aterriza como ficha en el golpe
+    const rel = tt + 0.08, lt = LANDT[i], ch = "#secD1-chip" + i;
+    tl.to("#secD1-liq", { scaleY: 0.12, svgOrigin: "45 424", duration: 0.06, ease: "power2.in" }, rel);
+    tl.set(ch, { borderRadius: "95px" }, 0);
+    tl.set(ch, { opacity: 1 }, rel);
+    tl.fromTo(ch, { y: py - 852, x: px - PH[i].cx, scaleX: 0.15, scaleY: 0.3 },
+      { y: 0, x: 0, scaleX: 0.42, scaleY: 0.66, duration: lt - rel, ease: "power2.in", immediateRender: false }, rel);
+    tl.to(ch, { keyframes: [{ scaleX: 1.14, scaleY: 0.82, borderRadius: "8px", duration: 0.05, ease: "power2.out" }, { scaleX: 0.97, scaleY: 1.04, duration: 0.08, ease: "power2.inOut" }, { scaleX: 1, scaleY: 1, duration: 0.18, ease: "vd.land" }] }, lt);
+    tl.fromTo("#secD1-hx" + i, { opacity: 0, y: -10 }, { opacity: 1, y: 0, duration: 0.22, ease: "vd.land" }, lt + 0.06);
+    tl.set("#secD1-spl" + i, { borderColor: COLS[i] }, 0);
+    tl.fromTo("#secD1-spl" + i, { scale: 0.4, opacity: 0.9 }, { scale: 1.25, opacity: 0, duration: 0.32, ease: "power2.out", immediateRender: false }, lt);
+    // salta a la foto siguiente (arco corto)
+    if (i < 4) {
+      const [nx, ny] = SMP[i + 1], d = TOUCH[i + 1] - (tt + 0.1);
+      tl.to(DR, { x: nx, duration: d, ease: "power2.inOut" }, tt + 0.1);
+      tl.to(DR, { y: Math.min(py, ny) - 70, duration: d * 0.45, ease: "power2.out" }, tt + 0.1);
+      tl.to(DR, { y: ny, duration: d * 0.55, ease: "power2.in" }, tt + 0.1 + d * 0.45);
+      tl.to(DR, { rotation: -34, duration: d * 0.45, ease: "power2.out" }, tt + 0.1);
+      tl.to(DR, { rotation: -26, duration: d * 0.55, ease: "power2.in" }, tt + 0.1 + d * 0.45);
+    }
+  }
+    // se va: arriba a la derecha, sin terminar (sale de cuadro)
+  tl.to(DR, { x: 2150, y: -260, rotation: -12, duration: 0.5, ease: "vd.exit" }, TOUCH[4] + 0.16);
+
+  // remate: el rotulador rojo rodea la referencia elegida (abrigo rojo) en el golpe de 2,75
+  const loopP = $("#secD1-loopP"), loopA = $("#secD1-loopA");
+  const LL = 1480, LA = 160;
+  tl.fromTo(loopP, { attr: { "stroke-dasharray": LL, "stroke-dashoffset": LL } }, { attr: { "stroke-dasharray": LL, "stroke-dashoffset": 0 }, duration: 0.38, ease: "power2.inOut" }, 2.72);
+  tl.fromTo(loopA, { attr: { "stroke-dasharray": LA, "stroke-dashoffset": LA } }, { attr: { "stroke-dasharray": LA, "stroke-dashoffset": 0 }, duration: 0.16, ease: "power2.out" }, 3.08);
+  tl.to("#secD1-ph2", { rotation: -1, duration: 0.3, ease: "vd.land" }, 2.74);
+
+  /* =====================================================================
+     AJOLOTE (rig axD1): al natural sobre el opal
+     ===================================================================== */
+  const ax = AxRig(tl, { prefix: "axD1", seed: 41 });
+  const R = (id) => "#axD1-" + id;
+  const raw = (id, v, t) => tl.to(R(id), Object.assign({ svgOrigin: "0 0" }, v), t);
+  const FEET = { x: 1784, y: 1012 }, AXS = 0.72;
+  ax.init(0, { x: FEET.x, y: FEET.y, s: AXS });
+  // inercia del latigazo: se inclina y las branquias siguen
+  raw("tilt", { rotation: 7, duration: 0.2, ease: "power2.out" }, 0.04);
+  raw("tilt", { rotation: 0, duration: 0.7, ease: "vd.spring" }, 0.3);
+  ax.gillFlick(0.3, 18, 0.8);
+  ax.look(0.36, -4, -2, 0.2);
+  ax.brows(0.4, "up");
+  // llama al cuentagotas señalando las fotos
+  ax.point(0.78, { dir: "left", hold: 0.32 });
+  // la mirada sigue al cuentagotas, foto a foto
+  [[1.16, -5, -3], [1.44, -5, -1], [1.69, -4, -2], [1.94, -4, -1], [2.19, -3, -2], [2.44, -2, 2]].forEach(([t, x, y]) => ax.look(t, x, y, 0.12));
+  [1.5, 1.75, 2.0, 2.25].forEach((t) => ax.gillFlick(t + 0.02, 7, 0.45));
+  // la paleta completa: alegría (ojos ^ ^, rubor, saltito)
+  ax.eyes(2.56, "happy"); ax.blush(2.56, 1.45); ax.brows(2.56, "up");
+  ax.hopTo(2.56, { x: FEET.x, y: FEET.y, s: AXS, d: 0.34, arc: 52, lean: -1 });
+  ax.eyes(3.12, "open"); ax.blush(3.12, 1.1); ax.brows(3.12, "neutral");
+  ax.look(3.14, 0, 0, 0.18);
+
+  const lip = (key) => {
+    const v = C.vo[key], a = Math.round(v.t * FPS), b = Math.round((v.t + v.d) * FPS);
+    ax.lipsync(C.env.lv.slice(a + 1, b), FPS, (a + 1) / FPS - T0);
+  };
+  lip("L10");
+  ax.mouth(3.28, "grin", 0.12);
+
+  ax.base(0, DUR);
+  ax.blinks(0, 2.4);
+
+  /* ---------- CONDUCTOR ÚNICO: cámara + timecode + tubos ---------- */
+  const pcnt = $("#secD1-pcnt"); let lastN = -1;
+  const tc = $("#secD1-tc"), tubes = [$("#secD1-tube0"), $("#secD1-tube1")];
+  const tcode = (tg) => { const f = Math.floor(tg * 30 + 1e-6), ss = Math.floor(f / 30), ff = f % 30; return `00:00:${String(ss).padStart(2, "0")}:${String(ff).padStart(2, "0")}`; };
+  function render(t) {
+    applyCamera(t);
+    tc.textContent = "VD-02 ▸ PREPARAR · " + tcode(T0 + t);
+    let n = 0; LANDT.forEach((lt) => { if (t >= lt) n++; });
+    if (n !== lastN) { pcnt.textContent = n + " / 5"; pcnt.style.color = n === 5 ? "#f0c94a" : "#f1eee6"; lastN = n; }
+    tubes[0].style.transform = `translateY(${(14 * Math.sin(2 * Math.PI * t / 8 + 0.6)).toFixed(2)}px)`;
+    tubes[1].style.transform = `translateY(${(-12 * Math.sin(2 * Math.PI * t / 8 + 1.9)).toFixed(2)}px)`;
+  }
+  const drv = { t: 0 };
+  tl.fromTo(drv, { t: 0 }, { t: DUR, duration: DUR, ease: "none", onUpdate: () => render(drv.t) }, 0);
+  render(0);
+
+  window.__timelines["secD1"] = tl;
+})();
+</script>
+</template>
+</body>
+</html>

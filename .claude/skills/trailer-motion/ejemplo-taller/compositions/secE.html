@@ -1,0 +1,970 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="UTF-8" /><title>secE · ¡Acción! → logo → stinger</title></head>
+<body>
+<template id="secE-template">
+<style>
+  @font-face { font-family: "Archivo"; src: url("assets/fonts/archivo.woff2") format("woff2"); font-weight: 100 900; font-stretch: 62% 125%; }
+  @font-face { font-family: "JB Mono"; src: url("assets/fonts/jbmono.woff2") format("woff2"); font-weight: 100 800; }
+  @font-face { font-family: "Courier Prime"; src: url("assets/fonts/courier-400.woff2") format("woff2"); font-weight: 400; }
+  @font-face { font-family: "Courier Prime"; src: url("assets/fonts/courier-700.woff2") format("woff2"); font-weight: 700; }
+
+  #secE-root { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; background: #0b0b0d; font-family: "Archivo", system-ui, sans-serif; color: #151519; }
+  #secE-root .secE-scene { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; visibility: hidden; }
+  #secE-root .secE-plane { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; visibility: hidden; }
+  #secE-root .secE-abs { position: absolute; display: block; }
+  #secE-root .secE-mono { font-family: "JB Mono", ui-monospace, monospace; font-weight: 500; letter-spacing: 0.14em; text-transform: uppercase; white-space: nowrap; }
+  #secE-root .secE-flood { position: absolute; left: -200px; top: -200px; width: 2320px; height: 1480px; }
+  #secE-root .secE-gel { position: absolute; mix-blend-mode: multiply; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.28); overflow: hidden; }
+  #secE-root .secE-spec { position: absolute; top: -60px; bottom: -60px; left: 18%; width: 9%; background: rgba(255, 255, 255, 0.16); transform: skewX(-18deg); display: block; }
+
+  /* ================= E1 · claqueta gigante ================= */
+  #secE-red { background: #f0503f; }
+  #secE-slam { position: absolute; left: 0; top: 64px; width: 1920px; height: 240px; text-align: center; white-space: nowrap; }
+  #secE-slam span { display: inline-block; font-weight: 900; font-stretch: 125%; font-size: 236px; line-height: 0.86; letter-spacing: -0.035em; color: #151519; }
+  #secE-slateR { position: absolute; left: 470px; top: 330px; width: 900px; height: 720px; transform: rotate(-4deg); transform-origin: 0 250px; }
+  #secE-slateK { position: absolute; left: 0; top: 0; width: 900px; height: 720px; }
+  #secE-body { position: absolute; left: 0; top: 250px; width: 900px; height: 470px; background: #151519; border-radius: 6px 6px 16px 16px; box-shadow: 0 3px 0 #6a1d15, 0 48px 70px -30px #8e2a20; overflow: hidden; }
+  #secE-plate { position: absolute; left: 0; top: 0; width: 900px; height: 74px; background: #151519; border-bottom: 3px solid #0b0b0d; }
+  #secE-plate svg { position: absolute; left: 0; top: 0; }
+  #secE-root .secE-stick { position: absolute; left: 0; top: 170px; width: 912px; height: 82px; transform-origin: 0 82px; border-radius: 7px 7px 2px 2px; background: #151519; box-shadow: 0 2px 0 #0b0b0d; overflow: hidden; }
+  #secE-root .secE-stick svg { position: absolute; left: 0; top: 0; }
+  #secE-root .secE-ghost { opacity: 0; box-shadow: none; }
+  #secE-hinge { position: absolute; left: -6px; top: 232px; width: 36px; height: 36px; border-radius: 50%; background: #2e2e35; box-shadow: inset 0 0 0 7px #4a4a54; }
+  #secE-root .secE-sl { position: absolute; font-family: "JB Mono", monospace; font-weight: 500; font-size: 22px; letter-spacing: 0.16em; text-transform: uppercase; color: #9a978f; white-space: nowrap; }
+  #secE-root .secE-sv { position: absolute; font-weight: 900; font-stretch: 125%; font-size: 120px; line-height: 1; color: #f1eee6; white-space: nowrap; }
+  #secE-prod { position: absolute; left: 48px; top: 140px; font-weight: 800; font-stretch: 112%; font-size: 62px; line-height: 1; letter-spacing: -0.02em; color: #f1eee6; white-space: nowrap; }
+  #secE-root .secE-vl { position: absolute; top: 236px; width: 3px; height: 200px; background: #2e2e35; display: block; }
+  #secE-hl { position: absolute; left: 48px; top: 228px; width: 804px; height: 3px; background: #2e2e35; display: block; }
+  #secE-dig2 { opacity: 0; }
+
+  #secE-fore1 { mix-blend-mode: multiply; }
+  #secE-gelY { mix-blend-mode: normal; left: -260px; top: 790px; width: 980px; height: 520px; background: #f0c94a; transform: rotate(-6deg); }
+  #secE-root .secE-perfs { position: absolute; top: 0; height: 1080px; width: 64px; background-color: #0b0b0d;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='54'%3E%3Crect x='18' y='12' width='28' height='30' rx='5' fill='%23f6f3ea' opacity='.9'/%3E%3C/svg%3E");
+    background-repeat: repeat-y; background-size: 64px 54px; }
+  #secE-edge { position: absolute; left: 76px; top: 110px; font-family: "JB Mono", monospace; font-size: 16px; letter-spacing: 0.3em; color: #151519; writing-mode: vertical-rl; white-space: nowrap; }
+  #secE-edgeR { position: absolute; right: 76px; top: 640px; font-family: "JB Mono", monospace; font-size: 16px; letter-spacing: 0.3em; color: #151519; writing-mode: vertical-rl; white-space: nowrap; }
+  #secE-jor { position: absolute; left: 560px; top: 30px; font-family: "JB Mono", monospace; font-weight: 500; font-size: 22px; letter-spacing: 0.14em; text-transform: uppercase; color: #151519; white-space: nowrap; }
+  #secE-rec { position: absolute; left: 140px; top: 30px; font-family: "JB Mono", monospace; font-weight: 600; font-size: 22px; letter-spacing: 0.14em; color: #151519; white-space: nowrap; }
+  #secE-recdot { display: inline-block; width: 16px; height: 16px; border-radius: 50%; background: #151519; margin-right: 12px; vertical-align: 0; }
+
+  /* ================= transiciones ================= */
+  #secE-stripes { position: absolute; left: 0; top: 0; width: 4200px; height: 1080px; visibility: hidden; clip-path: polygon(624px 0, 4200px 0, 3576px 1080px, 0 1080px);
+    background-color: #151519;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='1080'%3E%3Cpath d='M0 1080 L623.5 0 L803.5 0 L180 1080 Z' fill='%23f1eee6'/%3E%3Cpath d='M-360 1080 L263.5 0 L443.5 0 L-180 1080 Z' fill='%23f1eee6'/%3E%3C/svg%3E");
+    background-size: 360px 1080px; }
+
+  /* ================= montaje (corcheas) ================= */
+  #secE-root .secE-card { position: absolute; background: #151519; border-radius: 18px; color: #f1eee6; }
+  #secE-root .secE-big { position: absolute; font-weight: 900; font-stretch: 125%; line-height: 0.8; white-space: nowrap; }
+  #secE-root .secE-cond { position: absolute; font-weight: 700; font-stretch: 62%; text-transform: uppercase; line-height: 1; letter-spacing: 0.01em; white-space: nowrap; }
+  #secE-root .secE-pill { position: absolute; height: 64px; border-radius: 32px; padding: 0 30px; font-family: "JB Mono", monospace; font-weight: 600; font-size: 26px; letter-spacing: 0.1em; line-height: 64px; text-transform: uppercase; white-space: nowrap; }
+  #secE-root .secE-in { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 960px 540px; }
+  #secE-root .secE-row { position: absolute; left: 48px; width: 1104px; height: 104px; border-top: 2px solid #1d1d22; }
+  #secE-root .secE-row b { position: absolute; left: 0; top: 30px; font-family: "JB Mono", monospace; font-weight: 600; font-size: 34px; color: #9a978f; letter-spacing: 0.06em; }
+  #secE-root .secE-row span { position: absolute; left: 130px; top: 26px; font-weight: 600; font-size: 40px; color: #f1eee6; white-space: nowrap; }
+  #secE-root .secE-row i { position: absolute; right: 0; top: 22px; height: 60px; width: 210px; border-radius: 30px; background: #4fc47f; color: #151519; font-style: normal; font-family: "JB Mono", monospace; font-weight: 600; font-size: 24px; letter-spacing: 0.1em; line-height: 60px; text-align: center; }
+
+  /* ================= rebobinado + logo (sala oscura) ================= */
+  #secE-dark { background: #0b0b0d; }
+  #secE-rwlens { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; }
+  #secE-strip { position: absolute; left: 0; top: 0; width: 10px; height: 10px; transform-origin: 0 0; }
+  #secE-film { position: absolute; left: -80px; top: -200px; width: 4040px; height: 400px; background-color: #1d1d22; transform-origin: 50% 50%; }
+  #secE-root .secE-prow { position: absolute; left: 0; width: 4040px; height: 44px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='44'%3E%3Crect x='16' y='11' width='24' height='22' rx='4' fill='%23f6f3ea' opacity='.85'/%3E%3C/svg%3E");
+    background-repeat: repeat-x; background-size: 56px 44px; }
+  #secE-root .secE-fr { position: absolute; top: -146px; width: 520px; height: 292px; overflow: hidden; border-radius: 4px; transform-origin: 50% 50%; }
+  #secE-root .secE-fgel { position: absolute; left: 0; top: 0; width: 520px; height: 292px; opacity: 0; display: block; }
+  #secE-root .secE-fl { position: absolute; left: 18px; top: 16px; font-family: "JB Mono", monospace; font-weight: 600; font-size: 13px; letter-spacing: 0.16em; text-transform: uppercase; white-space: nowrap; }
+  #secE-root .secE-ec { position: absolute; top: 362px; font-family: "JB Mono", monospace; font-weight: 500; font-size: 14px; letter-spacing: 0.24em; color: #f0c94a; white-space: nowrap; }
+  #secE-root .secE-cb { position: absolute; width: 50px; height: 12px; border-radius: 4px; display: block; }
+  #secE-root .secE-ln { position: absolute; height: 7px; border-radius: 2px; background: #9b968a; display: block; }
+  #secE-root .secE-cor { position: absolute; width: 46px; height: 46px; border-color: #f6f3ea; border-style: solid; border-width: 0; display: block; }
+  #secE-root .secE-pan { position: absolute; width: 104px; height: 64px; background: #ece8dc; border-radius: 3px; }
+  #secE-root .secE-slide { position: absolute; width: 124px; height: 124px; background: #ece8dc; border-radius: 8px; box-shadow: 0 2px 0 rgba(60, 52, 38, 0.3), 0 14px 18px -10px rgba(60, 52, 38, 0.4); }
+  #secE-root .secE-slide i { position: absolute; left: 22px; top: 30px; width: 80px; height: 58px; border-radius: 3px; display: block; }
+  #secE-root .secE-blk { position: absolute; height: 36px; border-radius: 6px; display: block; }
+
+  #secE-hud { position: absolute; left: 120px; top: 92px; font-family: "JB Mono", monospace; font-weight: 600; font-size: 26px; letter-spacing: 0.14em; color: #f1eee6; white-space: nowrap; }
+  #secE-hud b { color: #f0503f; font-weight: 700; }
+  #secE-hud2 { position: absolute; right: 120px; top: 92px; font-family: "JB Mono", monospace; font-weight: 500; font-size: 26px; letter-spacing: 0.1em; color: #9a978f; white-space: nowrap; }
+
+  #secE-logo { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 960px 540px; visibility: hidden; }
+  #secE-wmask { position: absolute; left: 0; top: 236px; width: 1920px; height: 242px; overflow: hidden; }
+  #secE-word { position: absolute; left: 0; top: 30px; width: 1920px; text-align: center; font-weight: 850; font-stretch: 118%; font-size: 146px; line-height: 1; letter-spacing: -0.03em; color: #f1eee6; white-space: nowrap; }
+  #secE-root .secE-seg { position: absolute; top: 478px; height: 22px; transform-origin: 0 50%; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3); overflow: hidden; }
+  #secE-root .secE-seg .secE-spec { top: -10px; bottom: -10px; }
+  #secE-root .secE-sgl { position: absolute; top: 520px; font-family: "JB Mono", monospace; font-weight: 500; font-size: 17px; letter-spacing: 0.2em; text-transform: uppercase; white-space: nowrap; }
+  #secE-tallerM { position: absolute; top: 444px; height: 92px; overflow: hidden; }
+  #secE-taller { position: absolute; left: 0; top: 0; font-weight: 700; font-stretch: 62%; font-size: 104px; line-height: 0.9; letter-spacing: 0.04em; text-transform: uppercase; color: #f1eee6; white-space: nowrap; }
+  #secE-tag { position: absolute; left: 0; top: 640px; width: 1920px; text-align: center; font-weight: 500; font-stretch: 100%; font-size: 50px; line-height: 1.1; color: #f1eee6; white-space: nowrap; }
+  #secE-tag span { display: inline-block; }
+  #secE-tag .secE-t2 { color: #9a978f; }
+  #secE-cta { position: absolute; left: 652px; top: 770px; width: 616px; height: 92px; border-radius: 46px; background: #f6f3ea; color: #151519; font-weight: 700; font-stretch: 100%; font-size: 36px; line-height: 92px; text-align: center; white-space: nowrap; box-shadow: 0 3px 0 rgba(0, 0, 0, 0.4); }
+  #secE-arrow { display: inline-block; margin-left: 14px; }
+  #secE-root .secE-crop { position: absolute; width: 44px; height: 44px; opacity: 0.5; }
+  #secE-root .secE-crop i { position: absolute; background: #4a4a54; display: block; }
+  #secE-ping { position: absolute; width: 60px; height: 60px; border-radius: 50%; border: 4px solid #4fc47f; opacity: 0; }
+
+  /* ================= ajolote ================= */
+  #secE-axcam { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; visibility: hidden; }
+  #secE-axcam #axE-svg { filter: url(#secE-sticker); }
+  #secE-blk { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; background: #0b0b0d; visibility: hidden; }
+</style>
+
+<div id="secE-root" data-composition-id="secE" data-width="1920" data-height="1080" data-duration="14.5">
+  <svg width="0" height="0" style="position: absolute">
+    <defs>
+      <filter id="secE-sticker" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB"><feMorphology in="SourceAlpha" operator="dilate" radius="6" result="d" /><feFlood flood-color="#f6f3ea" /><feComposite in2="d" operator="in" result="o" /><feOffset in="d" dy="6" result="sd" /><feFlood flood-color="#5e1a12" flood-opacity=".32" /><feComposite in2="sd" operator="in" result="s" /><feMerge><feMergeNode in="s" /><feMergeNode in="o" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      <filter id="secE-camblur" x="-5%" y="-5%" width="110%" height="110%"><feGaussianBlur id="secE-cbx" stdDeviation="0 0" /></filter>
+    </defs>
+  </svg>
+
+  <!-- ============ E1: plató rojo, claqueta gigante ============ -->
+  <div id="secE-s1" class="secE-scene" data-layout-allow-overflow>
+    <div id="secE-red" class="secE-flood"></div>
+    <div id="secE-fore1" class="secE-plane" data-layout-allow-overflow>
+      <div id="secE-gelY" class="secE-gel"><i class="secE-spec"></i></div>
+    </div>
+  </div>
+  <div id="secE-w1" class="secE-plane" data-layout-allow-overflow data-layout-ignore>
+    <div id="secE-slam"><span>¡ACCIÓN!</span></div>
+    <div id="secE-slateR">
+      <div id="secE-slateK">
+        <div id="secE-body">
+          <div id="secE-plate"><svg width="900" height="74"><g fill="#f1eee6"><path d="M40 0h76l-44 74h-76zM192 0h76l-44 74h-76zM344 0h76l-44 74h-76zM496 0h76l-44 74h-76zM648 0h76l-44 74h-76zM800 0h76l-44 74h-76z" /></g></svg></div>
+          <div class="secE-sl" style="left: 48px; top: 106px">Producción</div>
+          <div id="secE-prod">El último verano</div>
+          <i id="secE-hl"></i>
+          <i class="secE-vl" style="left: 320px"></i>
+          <i class="secE-vl" style="left: 590px"></i>
+          <div class="secE-sl" style="left: 48px; top: 256px">Esc</div>
+          <div class="secE-sl" style="left: 350px; top: 256px">Plano</div>
+          <div class="secE-sl" style="left: 620px; top: 256px">Toma</div>
+          <div id="secE-dig1">
+            <div class="secE-sv" style="left: 44px; top: 300px">3</div>
+            <div class="secE-sv" style="left: 346px; top: 300px">1A</div>
+            <div class="secE-sv" style="left: 616px; top: 300px; color: #f0503f">1</div>
+          </div>
+          <div id="secE-dig2">
+            <div class="secE-sv" style="left: 44px; top: 300px">7</div>
+            <div class="secE-sv" style="left: 346px; top: 300px">4B</div>
+            <div class="secE-sv" style="left: 616px; top: 300px; color: #f0503f">2</div>
+          </div>
+          <div class="secE-sl" style="left: 48px; top: 430px; font-size: 16px; color: #6d6a63">Rollo A-07 · Cám. A · 24 fps · 16·10·26</div>
+        </div>
+        <div class="secE-stick secE-ghost" id="secE-gh1"><svg width="912" height="82"><g fill="#f1eee6"><path d="M70 0h78l-48 82h-78zM226 0h78l-48 82h-78zM382 0h78l-48 82h-78zM538 0h78l-48 82h-78zM694 0h78l-48 82h-78zM850 0h78l-48 82h-78z" /></g></svg></div>
+        <div class="secE-stick secE-ghost" id="secE-gh2"><svg width="912" height="82"><g fill="#f1eee6"><path d="M70 0h78l-48 82h-78zM226 0h78l-48 82h-78zM382 0h78l-48 82h-78zM538 0h78l-48 82h-78zM694 0h78l-48 82h-78zM850 0h78l-48 82h-78z" /></g></svg></div>
+        <div class="secE-stick secE-ghost" id="secE-gh3"><svg width="912" height="82"><g fill="#f1eee6"><path d="M70 0h78l-48 82h-78zM226 0h78l-48 82h-78zM382 0h78l-48 82h-78zM538 0h78l-48 82h-78zM694 0h78l-48 82h-78zM850 0h78l-48 82h-78z" /></g></svg></div>
+        <div class="secE-stick secE-ghost" id="secE-gh4"><svg width="912" height="82"><g fill="#f1eee6"><path d="M70 0h78l-48 82h-78zM226 0h78l-48 82h-78zM382 0h78l-48 82h-78zM538 0h78l-48 82h-78zM694 0h78l-48 82h-78zM850 0h78l-48 82h-78z" /></g></svg></div>
+        <div class="secE-stick secE-ghost" id="secE-gh5"><svg width="912" height="82"><g fill="#f1eee6"><path d="M70 0h78l-48 82h-78zM226 0h78l-48 82h-78zM382 0h78l-48 82h-78zM538 0h78l-48 82h-78zM694 0h78l-48 82h-78zM850 0h78l-48 82h-78z" /></g></svg></div>
+        <div class="secE-stick secE-ghost" id="secE-gh6"><svg width="912" height="82"><g fill="#f1eee6"><path d="M70 0h78l-48 82h-78zM226 0h78l-48 82h-78zM382 0h78l-48 82h-78zM538 0h78l-48 82h-78zM694 0h78l-48 82h-78zM850 0h78l-48 82h-78z" /></g></svg></div>
+        <div class="secE-stick secE-ghost" id="secE-gh2"><svg width="912" height="82"><g fill="#f1eee6"><path d="M70 0h78l-48 82h-78zM226 0h78l-48 82h-78zM382 0h78l-48 82h-78zM538 0h78l-48 82h-78zM694 0h78l-48 82h-78zM850 0h78l-48 82h-78z" /></g></svg></div>
+        <div class="secE-stick secE-ghost" id="secE-gh3"><svg width="912" height="82"><g fill="#f1eee6"><path d="M70 0h78l-48 82h-78zM226 0h78l-48 82h-78zM382 0h78l-48 82h-78zM538 0h78l-48 82h-78zM694 0h78l-48 82h-78zM850 0h78l-48 82h-78z" /></g></svg></div>
+        <div class="secE-stick secE-ghost" id="secE-gh4"><svg width="912" height="82"><g fill="#f1eee6"><path d="M70 0h78l-48 82h-78zM226 0h78l-48 82h-78zM382 0h78l-48 82h-78zM538 0h78l-48 82h-78zM694 0h78l-48 82h-78zM850 0h78l-48 82h-78z" /></g></svg></div>
+        <div class="secE-stick" id="secE-stick"><svg width="912" height="82"><g fill="#f1eee6"><path d="M70 0h78l-48 82h-78zM226 0h78l-48 82h-78zM382 0h78l-48 82h-78zM538 0h78l-48 82h-78zM694 0h78l-48 82h-78zM850 0h78l-48 82h-78z" /></g></svg></div>
+        <i id="secE-hinge" class="secE-abs"></i>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ montaje a corcheas (54.0–56.0) ============ -->
+  <!-- M1 · opal: el día de rodaje en directo -->
+  <div id="secE-m1" class="secE-scene" data-layout-ignore>
+    <div class="secE-flood" style="background: #f6f3ea"></div>
+    <div class="secE-in" id="secE-m1i">
+      <div class="secE-card" style="left: 330px; top: 150px; width: 1260px; height: 780px; transform: rotate(-2deg); box-shadow: 0 3px 0 rgba(60, 52, 38, 0.3), 0 50px 70px -36px rgba(60, 52, 38, 0.6)">
+        <div class="secE-mono" style="position: absolute; left: 56px; top: 54px; font-size: 26px; color: #f1eee6"><i style="display: inline-block; width: 20px; height: 20px; border-radius: 50%; background: #f0503f; margin-right: 18px"></i>En directo · Jornada 1 · Playa</div>
+        <div class="secE-mono" style="position: absolute; right: 56px; top: 54px; font-size: 26px; color: #9a978f">Día de rodaje</div>
+        <div style="position: absolute; left: 56px; top: 150px; font-weight: 800; font-stretch: 112%; font-size: 76px; line-height: 1; white-space: nowrap">Esc 3 · Ext. Playa</div>
+        <div id="secE-m1tc" style="position: absolute; left: 52px; top: 270px; font-family: 'JB Mono', monospace; font-weight: 700; font-size: 230px; line-height: 1; letter-spacing: -0.02em; color: #4fc47f; white-space: nowrap">07:42:16</div>
+        <div class="secE-mono" style="position: absolute; left: 56px; top: 560px; font-size: 24px; color: #9a978f">Escenas del día</div>
+        <div style="position: absolute; left: 56px; top: 610px; width: 1148px; height: 30px">
+          <i class="secE-abs" style="left: 0; top: 0; width: 180px; height: 30px; border-radius: 8px; background: #4fc47f"></i>
+          <i class="secE-abs" style="left: 194px; top: 0; width: 180px; height: 30px; border-radius: 8px; background: #4fc47f"></i>
+          <i class="secE-abs" id="secE-m1live" style="left: 388px; top: 0; width: 180px; height: 30px; border-radius: 8px; background: #f0c94a"></i>
+          <i class="secE-abs" style="left: 582px; top: 0; width: 180px; height: 30px; border-radius: 8px; background: #2e2e35"></i>
+          <i class="secE-abs" style="left: 776px; top: 0; width: 180px; height: 30px; border-radius: 8px; background: #2e2e35"></i>
+          <i class="secE-abs" style="left: 970px; top: 0; width: 178px; height: 30px; border-radius: 8px; background: #2e2e35"></i>
+        </div>
+        <div class="secE-mono" style="position: absolute; left: 56px; top: 680px; font-size: 24px; color: #f1eee6">3 / 6 · Citación 07:30 · Va en hora</div>
+      </div>
+    </div>
+  </div>
+  <!-- M2 · amarillo: TOMA 2 -->
+  <div id="secE-m2" class="secE-scene">
+    <div class="secE-flood" style="background: #f0c94a"></div>
+    <div class="secE-in" id="secE-m2i">
+      <div class="secE-cond" style="left: 200px; top: 190px; font-size: 120px; color: #151519">Toma</div>
+      <div class="secE-big" id="secE-m2n" style="left: 760px; top: 120px; font-size: 900px; color: #151519; transform-origin: 300px 500px">2</div>
+      <div class="secE-mono" style="position: absolute; left: 206px; top: 360px; font-size: 26px; color: #4a3d12">Esc 3 · Plano 1A</div>
+      <div class="secE-pill" style="left: 200px; top: 780px; background: transparent; box-shadow: inset 0 0 0 3px #151519; color: #151519">1 · repetir</div>
+    </div>
+  </div>
+  <!-- M3 · tinta: TOMA 3 -->
+  <div id="secE-m3" class="secE-scene">
+    <div class="secE-flood" style="background: #151519"></div>
+    <div class="secE-in" id="secE-m3i">
+      <div class="secE-big" id="secE-m3n" style="left: 230px; top: 120px; font-size: 900px; color: #f0503f; transform-origin: 300px 500px">3</div>
+      <div class="secE-cond" style="left: 1080px; top: 190px; font-size: 120px; color: #f1eee6">Toma</div>
+      <div class="secE-mono" style="position: absolute; left: 1086px; top: 360px; font-size: 26px; color: #9a978f">Esc 3 · Plano 1A</div>
+      <div class="secE-pill" id="secE-m3p" style="left: 1080px; top: 780px; background: #4fc47f; color: #151519">✓ Buena</div>
+    </div>
+  </div>
+  <!-- M4 · verde: escena rodada -->
+  <div id="secE-m4" class="secE-scene">
+    <div class="secE-flood" style="background: #4fc47f"></div>
+    <div class="secE-in" id="secE-m4i">
+      <svg class="secE-abs" style="left: 150px; top: 170px" width="760" height="740" viewBox="0 0 760 740"><path id="secE-chk" d="M70 400 L290 610 L690 120" fill="none" stroke="#151519" stroke-width="110" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="1000" stroke-dashoffset="1000" /></svg>
+      <div style="position: absolute; left: 960px; top: 330px; font-weight: 900; font-stretch: 125%; font-size: 190px; line-height: 0.86; letter-spacing: -0.03em; color: #151519; white-space: nowrap">Esc 3</div>
+      <div class="secE-cond" style="left: 966px; top: 520px; font-size: 120px; color: #151519">Rodada</div>
+      <div class="secE-mono" style="position: absolute; left: 970px; top: 670px; font-size: 26px; color: #1d4a2e">07:58 · 3 tomas · 1 buena</div>
+    </div>
+  </div>
+  <!-- M5 · rojo: ¡buena! (ajolote salta) -->
+  <div id="secE-m5" class="secE-scene">
+    <div class="secE-flood" style="background: #f0503f"></div>
+    <div class="secE-in" id="secE-m5i">
+      <div style="position: absolute; left: 0; top: 150px; width: 1920px; text-align: center; font-weight: 900; font-stretch: 125%; font-size: 296px; line-height: 0.86; letter-spacing: -0.035em; color: #151519; white-space: nowrap">¡BUENA!</div>
+      <div class="secE-mono" style="position: absolute; left: 0; top: 960px; width: 1920px; text-align: center; font-size: 26px; color: #151519">Esc 3 · Toma 3 · Se queda</div>
+    </div>
+  </div>
+  <!-- M6 · opal: lista de planos que se tachan -->
+  <div id="secE-m6" class="secE-scene" data-layout-ignore>
+    <div class="secE-flood" style="background: #f6f3ea"></div>
+    <div class="secE-in" id="secE-m6i">
+      <div class="secE-card" style="left: 360px; top: 110px; width: 1200px; height: 860px; transform: rotate(1.5deg); box-shadow: 0 3px 0 rgba(60, 52, 38, 0.3), 0 50px 70px -36px rgba(60, 52, 38, 0.6)">
+        <div class="secE-mono" style="position: absolute; left: 48px; top: 46px; font-size: 26px; color: #9a978f">Planos · Jornada 1</div>
+        <div class="secE-mono" style="position: absolute; right: 48px; top: 46px; font-size: 26px; color: #4fc47f">5 / 8</div>
+        <div class="secE-row" style="top: 120px"><b>1A</b><span>PG · Lucía camina por la orilla</span><i id="secE-r0">✓ Rodado</i></div>
+        <div class="secE-row" style="top: 224px"><b>1B</b><span>PM · El abrigo rojo</span><i id="secE-r1">✓ Rodado</i></div>
+        <div class="secE-row" style="top: 328px"><b>2A</b><span>PP · Marco la mira</span><i id="secE-r2">✓ Rodado</i></div>
+        <div class="secE-row" style="top: 432px"><b>2B</b><span>PD · La taza en la arena</span><i id="secE-r3">✓ Rodado</i></div>
+        <div class="secE-row" style="top: 536px"><b>3A</b><span>PG · La furgoneta arranca</span><i id="secE-r4">✓ Rodado</i></div>
+        <div class="secE-row" style="top: 640px"><b>3B</b><span>PM · Nadie dice adiós</span><i id="secE-r5" style="background: #f0c94a">● Ahora</i></div>
+      </div>
+    </div>
+  </div>
+  <!-- M7 · amarillo: la jornada avanza -->
+  <div id="secE-m7" class="secE-scene">
+    <div class="secE-flood" style="background: #f0c94a"></div>
+    <div class="secE-in" id="secE-m7i">
+      <div class="secE-cond" style="left: 200px; top: 220px; font-size: 260px; color: #151519">Jornada</div>
+      <div style="position: absolute; left: 1250px; top: 150px; width: 520px; height: 400px; overflow: hidden" data-layout-allow-overlap>
+        <div id="secE-m7a" class="secE-big" style="left: 0; top: 30px; font-size: 400px; color: #151519">1</div>
+        <div id="secE-m7b" class="secE-big" style="left: 0; top: 430px; font-size: 400px; color: #151519">2</div>
+      </div>
+      <div style="position: absolute; left: 206px; top: 640px; width: 1500px; height: 40px; background: rgba(21, 21, 25, 0.16); border-radius: 10px">
+        <i id="secE-m7bar" class="secE-abs" style="left: 0; top: 0; width: 1500px; height: 40px; border-radius: 10px; background: #151519; transform-origin: 0 50%"></i>
+      </div>
+      <div class="secE-mono" style="position: absolute; left: 206px; top: 712px; font-size: 26px; color: #4a3d12">Esc 7 / 24 · Citación mañana 08:00 · Hoja enviada</div>
+    </div>
+  </div>
+
+  <!-- ============ rebobinado + logo (sala oscura) ============ -->
+  <div id="secE-end" class="secE-scene" data-layout-allow-overflow data-layout-ignore>
+    <div id="secE-dark" class="secE-flood"></div>
+    <div id="secE-rwlens">
+      <div id="secE-strip">
+        <div id="secE-film">
+          <div class="secE-prow" style="top: 0"></div>
+          <div class="secE-prow" style="top: 356px"></div>
+          <div class="secE-ec" style="left: 86px">VD-01 ▸ 00:10:12</div>
+          <div class="secE-ec" style="left: 646px">VD-02 ▸ 00:18:15</div>
+          <div class="secE-ec" style="left: 1206px">VD-02 ▸ 00:24:15</div>
+          <div class="secE-ec" style="left: 1766px">VD-02 ▸ 00:29:15</div>
+          <div class="secE-ec" style="left: 2326px">VD-02 ▸ 00:32:15</div>
+          <div class="secE-ec" style="left: 2886px">VD-02 ▸ 00:37:00</div>
+          <div class="secE-ec" style="left: 3446px">VD-02 ▸ 00:41:15</div>
+        </div>
+        <!-- 1 · guion -->
+        <div class="secE-fr" id="secE-f0" style="left: 0; background: #f6f3ea">
+          <div class="secE-abs" style="left: 120px; top: 30px; width: 280px; height: 300px; background: #e9e5da; transform: rotate(-3deg); box-shadow: 0 2px 0 rgba(60, 52, 38, 0.25), 0 14px 20px -12px rgba(60, 52, 38, 0.4); font-family: 'Courier Prime', monospace; font-size: 11px; line-height: 16px; color: #151519; padding: 22px 24px; white-space: nowrap">
+            <div style="text-align: center; font-weight: 700">EL ÚLTIMO VERANO</div>
+            <div style="margin-top: 10px; font-weight: 700"><span style="background: #f0c94a; padding: 0 3px">1. EXT. PLAYA — AMANECER</span></div>
+            <div><span style="background: #a7e2bf; padding: 0 2px">LUCÍA</span> (17) camina por la</div>
+            <div>orilla con el abrigo rojo.</div>
+            <div><span style="background: #a7e2bf; padding: 0 2px">MARCO</span> la sigue.</div>
+            <div style="margin-left: 80px; margin-top: 8px">LUCÍA</div>
+            <div style="margin-left: 40px">No pienso volver.</div>
+            <div style="margin-top: 10px; font-weight: 700"><span style="background: #f0c94a; padding: 0 3px">2. INT. CASA — NOCHE</span></div>
+            <div>La abuela fríe algo.</div>
+          </div>
+          <div class="secE-abs" style="left: -60px; top: 200px; width: 220px; height: 160px; background: #8fd0d6; mix-blend-mode: multiply; transform: rotate(-16deg)"></div>
+          <div class="secE-fl" style="color: #5c5a54">VD-01 · Guion</div>
+          <i class="secE-fgel" style="background: #ece8dc"></i>
+        </div>
+        <!-- 2 · mesa de preparación -->
+        <div class="secE-fr" id="secE-f1" style="left: 560px; background: #f0c94a">
+          <div class="secE-card" style="left: 70px; top: 52px; width: 380px; height: 210px; border-radius: 10px; box-shadow: 0 2px 0 rgba(0, 0, 0, 0.25), 0 18px 24px -14px #9c7a1f">
+            <div class="secE-mono" style="position: absolute; left: 18px; top: 14px; font-size: 11px; color: #9a978f">Mesa de preparación</div>
+            <div style="position: absolute; right: 16px; top: 8px; font-weight: 900; font-stretch: 125%; font-size: 26px; color: #4fc47f">85%</div>
+            <div class="secE-abs" style="left: 18px; top: 50px; width: 344px">
+              <div class="secE-abs" style="left: 0; top: 0"><i class="secE-cb" style="left: 0; background: #4fc47f"></i><i class="secE-cb" style="left: 58px; background: #4fc47f"></i><i class="secE-cb" style="left: 116px; background: #4fc47f"></i><i class="secE-cb" style="left: 174px; background: #f0c94a"></i><i class="secE-cb" style="left: 232px; background: #4fc47f"></i></div>
+              <div class="secE-abs" style="left: 0; top: 36px"><i class="secE-cb" style="left: 0; background: #4fc47f"></i><i class="secE-cb" style="left: 58px; background: #f0c94a"></i><i class="secE-cb" style="left: 116px; background: #4fc47f"></i><i class="secE-cb" style="left: 174px; background: #f0503f"></i><i class="secE-cb" style="left: 232px; background: #4fc47f"></i></div>
+              <div class="secE-abs" style="left: 0; top: 72px"><i class="secE-cb" style="left: 0; background: #4fc47f"></i><i class="secE-cb" style="left: 58px; background: #4fc47f"></i><i class="secE-cb" style="left: 116px; background: #f0c94a"></i><i class="secE-cb" style="left: 174px; background: #4fc47f"></i><i class="secE-cb" style="left: 232px; background: #2e2e35"></i></div>
+              <div class="secE-abs" style="left: 0; top: 108px"><i class="secE-cb" style="left: 0; background: #f0c94a"></i><i class="secE-cb" style="left: 58px; background: #2e2e35"></i><i class="secE-cb" style="left: 116px; background: #4fc47f"></i><i class="secE-cb" style="left: 174px; background: #2e2e35"></i><i class="secE-cb" style="left: 232px; background: #2e2e35"></i></div>
+            </div>
+          </div>
+          <div class="secE-fl" style="color: #4a3d12">VD-02 · Mesa</div>
+          <i class="secE-fgel" style="background: #f0c94a"></i>
+        </div>
+        <!-- 3 · desglose -->
+        <div class="secE-fr" id="secE-f2" style="left: 1120px; background: #f6f3ea">
+          <div class="secE-abs" style="left: 40px; top: 56px; width: 270px; height: 210px; background: #e9e5da; font-family: 'Courier Prime', monospace; font-size: 14px; line-height: 24px; color: #151519; padding: 16px 18px; white-space: nowrap; box-shadow: 0 2px 0 rgba(60, 52, 38, 0.25)">
+            <div>¿Una <span style="background: #f0c94a; padding: 0 2px">taza</span>?</div>
+            <div>¿Un <span style="background: #f7a198; padding: 0 2px">abrigo rojo</span>?</div>
+            <div>¿Un <span style="background: #8fd0d6; padding: 0 2px">coche de los</span></div>
+            <div><span style="background: #8fd0d6; padding: 0 2px">ochenta</span>?</div>
+            <div style="margin-top: 12px; font-weight: 700">Apuntado.</div>
+          </div>
+          <div class="secE-abs" style="left: 330px; top: 70px; width: 160px">
+            <div class="secE-abs" style="left: 0; top: 0; height: 34px; padding: 0 14px; border-radius: 17px; background: #151519; color: #f0c94a; font-family: 'JB Mono', monospace; font-size: 12px; line-height: 34px; letter-spacing: 0.1em; white-space: nowrap">ATREZZO 12</div>
+            <div class="secE-abs" style="left: 0; top: 50px; height: 34px; padding: 0 14px; border-radius: 17px; background: #151519; color: #f7a198; font-family: 'JB Mono', monospace; font-size: 12px; line-height: 34px; letter-spacing: 0.1em; white-space: nowrap">VESTUARIO 8</div>
+            <div class="secE-abs" style="left: 0; top: 100px; height: 34px; padding: 0 14px; border-radius: 17px; background: #151519; color: #8fd0d6; font-family: 'JB Mono', monospace; font-size: 12px; line-height: 34px; letter-spacing: 0.1em; white-space: nowrap">VEHÍCULOS 2</div>
+          </div>
+          <div class="secE-abs" style="left: 350px; top: 200px; width: 112px; height: 54px; border: 4px solid #f0503f; border-radius: 6px; color: #f0503f; font-weight: 900; font-stretch: 112%; font-size: 17px; line-height: 46px; text-align: center; transform: rotate(-8deg)">APUNTADO</div>
+          <div class="secE-fl" style="color: #5c5a54">VD-02 · Desglose</div>
+          <i class="secE-fgel" style="background: #f0c94a"></i>
+        </div>
+        <!-- 4 · visor -->
+        <div class="secE-fr" id="secE-f3" style="left: 1680px; background: #151519">
+          <div class="secE-abs" style="left: 150px; top: 70px; width: 220px; height: 150px; background: #f6f3ea; border-radius: 3px">
+            <i class="secE-abs" style="left: 70px; top: 30px; width: 80px; height: 80px; border-radius: 50%; background: #f7c1cc; box-shadow: 0 0 0 4px #d0708a"></i>
+            <i class="secE-abs" style="left: 0; top: 120px; width: 220px; height: 30px; background: #8fd0d6"></i>
+          </div>
+          <i class="secE-cor" style="left: 116px; top: 44px; border-left-width: 5px; border-top-width: 5px"></i>
+          <i class="secE-cor" style="left: 358px; top: 44px; border-right-width: 5px; border-top-width: 5px"></i>
+          <i class="secE-cor" style="left: 116px; top: 200px; border-left-width: 5px; border-bottom-width: 5px"></i>
+          <i class="secE-cor" style="left: 358px; top: 200px; border-right-width: 5px; border-bottom-width: 5px"></i>
+          <div class="secE-abs" style="left: 410px; top: 220px; font-weight: 900; font-stretch: 125%; font-size: 40px; color: #f0c94a">PP</div>
+          <div class="secE-fl" style="color: #9a978f">VD-02 · Planos</div>
+          <div class="secE-abs secE-mono" style="right: 18px; top: 16px; font-size: 13px; color: #f0503f">● REC</div>
+          <i class="secE-fgel" style="background: #f0c94a"></i>
+        </div>
+        <!-- 5 · storyboard -->
+        <div class="secE-fr" id="secE-f4" style="left: 2240px; background: #151519">
+          <div class="secE-pan" style="left: 34px; top: 56px"><svg width="104" height="64"><path d="M6 46 H98 M30 46 C34 24 52 24 56 46" fill="none" stroke="#151519" stroke-width="2.5" stroke-linecap="round" /></svg></div>
+          <div class="secE-pan" style="left: 152px; top: 56px"><svg width="104" height="64"><circle cx="52" cy="30" r="16" fill="none" stroke="#151519" stroke-width="2.5" /><path d="M24 62 C30 44 74 44 80 62" fill="none" stroke="#151519" stroke-width="2.5" /></svg></div>
+          <div class="secE-pan" style="left: 270px; top: 56px"><svg width="104" height="64"><path d="M10 50 L40 22 L60 38 L94 12" fill="none" stroke="#151519" stroke-width="2.5" stroke-linecap="round" /></svg></div>
+          <div class="secE-pan" style="left: 388px; top: 56px"><svg width="104" height="64"><rect x="22" y="28" width="56" height="22" rx="6" fill="none" stroke="#151519" stroke-width="2.5" /><circle cx="36" cy="52" r="6" fill="#151519" /><circle cx="66" cy="52" r="6" fill="#151519" /></svg></div>
+          <div class="secE-pan" style="left: 34px; top: 136px"><svg width="104" height="64"><path d="M8 40 H96" stroke="#151519" stroke-width="2.5" /><circle cx="70" cy="20" r="9" fill="none" stroke="#151519" stroke-width="2.5" /></svg></div>
+          <div class="secE-pan" style="left: 152px; top: 136px; background: #f7c1cc"><svg width="104" height="64"><ellipse cx="52" cy="36" rx="20" ry="16" fill="none" stroke="#d0708a" stroke-width="3" /><path d="M28 26 l-10 -8 M28 34 l-12 -2 M76 26 l10 -8 M76 34 l12 -2" stroke="#ff6a45" stroke-width="3" stroke-linecap="round" /></svg></div>
+          <div class="secE-pan" style="left: 270px; top: 136px"><svg width="104" height="64"><path d="M52 8 V56 M30 30 H74" stroke="#151519" stroke-width="2.5" /></svg></div>
+          <div class="secE-pan" style="left: 388px; top: 136px"><svg width="104" height="64"><path d="M14 50 C30 20 74 20 90 50" fill="none" stroke="#151519" stroke-width="2.5" /></svg></div>
+          <div class="secE-abs secE-mono" style="left: 34px; top: 226px; font-size: 13px; color: #9a978f">12 viñetas · Esc 1–3</div>
+          <div class="secE-fl" style="color: #9a978f">VD-02 · Storyboard</div>
+          <i class="secE-fgel" style="background: #f0c94a"></i>
+        </div>
+        <!-- 6 · moodboard -->
+        <div class="secE-fr" id="secE-f5" style="left: 2800px; background: #f6f3ea">
+          <div class="secE-slide" style="left: 54px; top: 64px; transform: rotate(-7deg)"><i style="background: #8fd0d6"></i></div>
+          <div class="secE-slide" style="left: 196px; top: 50px; transform: rotate(2deg)"><i style="background: #f0503f"></i></div>
+          <div class="secE-slide" style="left: 338px; top: 66px; transform: rotate(8deg)"><i style="background: #f0c94a"></i></div>
+          <div class="secE-abs" style="left: 110px; top: 220px; width: 300px; height: 40px">
+            <i class="secE-abs" style="left: 0; top: 0; width: 52px; height: 40px; border-radius: 5px; background: #e98da2"></i>
+            <i class="secE-abs" style="left: 62px; top: 0; width: 52px; height: 40px; border-radius: 5px; background: #8fd0d6"></i>
+            <i class="secE-abs" style="left: 124px; top: 0; width: 52px; height: 40px; border-radius: 5px; background: #f0c94a"></i>
+            <i class="secE-abs" style="left: 186px; top: 0; width: 52px; height: 40px; border-radius: 5px; background: #f0503f"></i>
+            <i class="secE-abs" style="left: 248px; top: 0; width: 52px; height: 40px; border-radius: 5px; background: #2b7a4a"></i>
+          </div>
+          <div class="secE-fl" style="color: #5c5a54">VD-02 · Biblia visual</div>
+          <i class="secE-fgel" style="background: #f0c94a"></i>
+        </div>
+        <!-- 7 · jornadas -->
+        <div class="secE-fr" id="secE-f6" style="left: 3360px; background: #f0c94a">
+          <div class="secE-card" style="left: 40px; top: 56px; width: 140px; height: 200px; border-radius: 10px"><div class="secE-mono" style="position: absolute; left: 14px; top: 12px; font-size: 12px; color: #9a978f">Jornada 1</div><i class="secE-blk" style="left: 12px; top: 44px; width: 116px; background: #8fd0d6"></i><i class="secE-blk" style="left: 12px; top: 88px; width: 116px; background: #f7a198"></i><i class="secE-blk" style="left: 12px; top: 132px; width: 116px; background: #8fd0d6"></i></div>
+          <div class="secE-card" style="left: 190px; top: 56px; width: 140px; height: 200px; border-radius: 10px"><div class="secE-mono" style="position: absolute; left: 14px; top: 12px; font-size: 12px; color: #9a978f">Jornada 2</div><i class="secE-blk" style="left: 12px; top: 44px; width: 116px; background: #f7a198"></i><i class="secE-blk" style="left: 12px; top: 88px; width: 116px; background: #a7e2bf"></i></div>
+          <div class="secE-card" style="left: 340px; top: 56px; width: 140px; height: 200px; border-radius: 10px"><div class="secE-mono" style="position: absolute; left: 14px; top: 12px; font-size: 12px; color: #9a978f">Jornada 3</div><i class="secE-blk" style="left: 12px; top: 44px; width: 116px; background: #a7e2bf"></i><i class="secE-blk" style="left: 12px; top: 88px; width: 116px; background: #8fd0d6"></i><i class="secE-blk" style="left: 12px; top: 132px; width: 116px; background: #f7a198"></i></div>
+          <svg class="secE-abs" style="left: 420px; top: 14px" width="80" height="50"><path d="M4 30 L76 6 L44 46 L36 30 Z M36 30 L76 6" fill="#f6f3ea" stroke="#151519" stroke-width="2.5" stroke-linejoin="round" /></svg>
+          <div class="secE-fl" style="color: #4a3d12">VD-02 · Jornadas</div>
+          <i class="secE-fgel" style="background: #f0c94a"></i>
+        </div>
+      </div>
+    </div>
+    <div id="secE-hud"><b>◀◀</b> Rebobinando</div>
+    <div id="secE-hud2">00:00:46:00</div>
+
+    <div id="secE-logo">
+      <div class="secE-crop" style="left: 96px; top: 96px"><i style="left: 21px; top: 0; width: 2px; height: 44px"></i><i style="left: 0; top: 21px; width: 44px; height: 2px"></i></div>
+      <div class="secE-crop" style="right: 96px; top: 96px"><i style="left: 21px; top: 0; width: 2px; height: 44px"></i><i style="left: 0; top: 21px; width: 44px; height: 2px"></i></div>
+      <div class="secE-crop" style="left: 96px; bottom: 96px"><i style="left: 21px; top: 0; width: 2px; height: 44px"></i><i style="left: 0; top: 21px; width: 44px; height: 2px"></i></div>
+      <div class="secE-crop" style="right: 96px; bottom: 96px"><i style="left: 21px; top: 0; width: 2px; height: 44px"></i><i style="left: 0; top: 21px; width: 44px; height: 2px"></i></div>
+      <div id="secE-wmask"><div id="secE-word">Versión definitiva</div></div>
+      <div class="secE-seg" id="secE-sg0" style="background: #ece8dc"><i class="secE-spec"></i></div>
+      <div class="secE-seg" id="secE-sg1" style="background: #f0c94a"><i class="secE-spec"></i></div>
+      <div class="secE-seg" id="secE-sg2" style="background: #f0503f"><i class="secE-spec"></i></div>
+      <div class="secE-seg" id="secE-sg3" style="background: #4fc47f"><i class="secE-spec"></i></div>
+      <div class="secE-sgl" id="secE-sl0" style="color: #ece8dc">Escribir</div>
+      <div class="secE-sgl" id="secE-sl1" style="color: #f0c94a">Preparar</div>
+      <div class="secE-sgl" id="secE-sl2" style="color: #f0503f">Rodar</div>
+      <div class="secE-sgl" id="secE-sl3" style="color: #4fc47f">Entregar</div>
+      <div id="secE-tallerM"><div id="secE-taller">Taller</div></div>
+      <div id="secE-tag"><span id="secE-t1">Prepara la película.</span> <span id="secE-t2" class="secE-t2">No el caos.</span></div>
+      <div id="secE-cta">Empieza tu primer proyecto<span id="secE-arrow">→</span></div>
+      <div id="secE-ping"></div>
+    </div>
+  </div>
+
+  <!-- ============ ajolote (rig axE) ============ -->
+  <div id="secE-axcam" data-layout-allow-overflow data-layout-ignore>
+<!-- ===== AJOLOTE v2 · rig SVG (ids con prefijo axE-) =====
+     Pegar dentro del root de la composición. #axE se coloca con GSAP x/y = punto entre los pies.
+     Requiere poses.js (window.AxRig). Generado por build/gen.js -->
+<style>
+  #axE { position: absolute; left: -220px; top: -380px; width: 440px; height: 420px; z-index: 30; pointer-events: none; }
+  #axE-svg { display: block; width: 100%; height: 100%; overflow: visible; }
+  #axE-trail { position: absolute; left: 0; top: 0; width: 1px; height: 1px; z-index: 29; pointer-events: none; }
+  .axE-bub { position: absolute; display: block; left: -10px; top: -10px; width: 20px; height: 20px; border-radius: 50%;
+    border: 2.5px solid rgba(236, 232, 220, 0.6); background: rgba(236, 232, 220, 0.07); opacity: 0; }
+</style>
+<div id="axE-trail"><i class="axE-bub ax-bub"></i><i class="axE-bub ax-bub"></i><i class="axE-bub ax-bub"></i><i class="axE-bub ax-bub"></i><i class="axE-bub ax-bub"></i><i class="axE-bub ax-bub"></i><i class="axE-bub ax-bub"></i><i class="axE-bub ax-bub"></i><i class="axE-bub ax-bub"></i><i class="axE-bub ax-bub"></i><i class="axE-bub ax-bub"></i><i class="axE-bub ax-bub"></i><i class="axE-bub ax-bub"></i><i class="axE-bub ax-bub"></i><i class="axE-bub ax-bub"></i><i class="axE-bub ax-bub"></i></div>
+<div id="axE">
+<svg id="axE-svg" viewBox="-220 -380 440 420" xmlns="http://www.w3.org/2000/svg" aria-label="Ajolote">
+  <defs>
+    <filter id="axE-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.4"/></filter>
+    <filter id="axE-blur" x="-50%" y="-200%" width="200%" height="500%"><feGaussianBlur stdDeviation="5"/></filter>
+    <clipPath id="axE-clip" clipPathUnits="userSpaceOnUse"><rect id="axE-clipRect" x="-3000" y="-3000" width="6000" height="6000"/></clipPath>
+    <clipPath id="axE-headClip"><path d="M0 -314 C82 -314 134 -276 134 -214 C134 -152 78 -124 0 -124 C-78 -124 -134 -152 -134 -214 C-134 -276 -82 -314 0 -314 Z"/></clipPath>
+    <clipPath id="axE-bodyClip"><path d="M0 -152 C50 -152 76 -108 74 -62 C72 -20 46 -2 0 -2 C-46 -2 -72 -20 -74 -62 C-76 -108 -50 -152 0 -152 Z"/></clipPath>
+    <clipPath id="axE-mouthClip"><use href="#axE-mouth"/></clipPath>
+  </defs>
+  <g id="axE-shadow"><ellipse cx="0" cy="4" rx="96" ry="12" fill="#000" opacity="0.38" filter="url(#axE-blur)"/></g>
+  <g id="axE-all" clip-path="url(#axE-clip)">
+  <g id="axE-hop"><g id="axE-tilt">
+    <g id="axE-flip"><g id="axE-squash"><g id="axE-breath">
+      <path id="axE-tail" d="M28.4 -57.5 C29.9 -57.1 34.6 -56 37.7 -55.5 C40.9 -55.1 44.1 -54.7 47.3 -54.8 C50.5 -54.8 53.7 -55.2 56.9 -55.9 C60 -56.6 63 -57.6 66 -58.8 C68.9 -60 71.8 -61.5 74.5 -63.1 C77.3 -64.7 80 -66.5 82.6 -68.3 C85.2 -70.2 87.7 -72.2 90.3 -74.3 C92.8 -76.4 95.3 -78.7 97.7 -80.9 C100.2 -83.2 102.7 -85.6 105.1 -88 C107.5 -90.4 110 -92.8 112.4 -95.3 C114.8 -97.8 117.2 -100.4 119.5 -103 C121.8 -105.5 124 -108.2 126.2 -110.9 C128.3 -113.6 130.3 -116.3 132.2 -119.2 C134 -122.1 135.8 -125 137.2 -128.1 C138.7 -131.2 140 -134.5 140.9 -137.8 C141.8 -141.2 142.5 -144.7 142.8 -148.3 C143.1 -152 143 -155.7 142.5 -159.4 C142 -163.2 139.4 -170.5 140 -170.7 C140.6 -170.8 144.5 -164 146.2 -160.3 C147.9 -156.7 149.2 -152.7 150.1 -148.7 C151 -144.8 151.6 -140.6 151.7 -136.5 C151.9 -132.3 151.7 -128.1 151.1 -124 C150.5 -119.9 149.6 -115.8 148.4 -111.8 C147.2 -107.8 145.7 -103.9 144.1 -100.1 C142.4 -96.3 140.5 -92.7 138.4 -89.1 C136.4 -85.5 134.2 -82 131.9 -78.6 C129.5 -75.2 127.1 -71.9 124.4 -68.7 C121.8 -65.5 119.1 -62.3 116.2 -59.3 C113.3 -56.2 110.3 -53.2 107.1 -50.4 C103.8 -47.6 100.4 -44.9 96.9 -42.4 C93.3 -39.9 89.6 -37.5 85.7 -35.4 C81.8 -33.3 77.7 -31.4 73.5 -29.7 C69.3 -28.1 64.9 -26.8 60.6 -25.7 C56.2 -24.7 51.7 -23.9 47.2 -23.4 C42.7 -22.9 38.1 -22.7 33.6 -22.8 C29 -22.9 22.2 -23.7 20 -23.9 Z" fill="#f5b8c6" stroke="#d0708a" stroke-width="4" stroke-linejoin="round"/>
+      <path id="axE-tailStripe" d="M47.3 -45.3 C49.1 -45.5 54.5 -45.9 58 -46.6 C61.5 -47.3 65 -48.3 68.4 -49.5 C71.8 -50.7 75.1 -52.2 78.3 -53.8 C81.5 -55.5 84.6 -57.3 87.6 -59.3 C90.6 -61.3 93.5 -63.4 96.3 -65.7 C99.2 -68 101.9 -70.4 104.6 -72.9 C107.3 -75.4 109.9 -78 112.5 -80.6 C115 -83.3 117.5 -86 119.9 -88.8 C122.3 -91.7 124.7 -94.5 126.9 -97.5 C129.1 -100.5 131.3 -103.5 133.2 -106.6 C135.1 -109.8 137 -113 138.5 -116.3 C140.1 -119.6 141.5 -123 142.6 -126.5 C143.7 -130 144.5 -133.7 145 -137.3 C145.4 -141 145.3 -146.6 145.4 -148.5" fill="none" stroke="#e98ca3" stroke-width="5" stroke-linecap="round"/>
+      <path d="M0 -152 C50 -152 76 -108 74 -62 C72 -20 46 -2 0 -2 C-46 -2 -72 -20 -74 -62 C-76 -108 -50 -152 0 -152 Z" fill="#f7c1cc" stroke="#d0708a" stroke-width="4.5"/>
+      <g clip-path="url(#axE-bodyClip)">
+        <ellipse cx="0" cy="-50" rx="47" ry="41" fill="#fde3e8"/>
+        <ellipse cx="0" cy="-134" rx="78" ry="26" fill="#eea3b5" opacity="0.6"/>
+        <path d="M-30 -60 Q0 -54 30 -60 M-26 -38 Q0 -32 26 -38" fill="none" stroke="#eea3b5" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+      </g>
+      <g><ellipse cx="-36" cy="-6" rx="22" ry="11.5" fill="#f7c1cc" stroke="#d0708a" stroke-width="4"/><path d="M-44 -9 L-44 -2 M-34 -9 L-34 -1" stroke="#d0708a" stroke-width="2.4" stroke-linecap="round" opacity="0.7"/></g>
+      <g><ellipse cx="36" cy="-6" rx="22" ry="11.5" fill="#f7c1cc" stroke="#d0708a" stroke-width="4"/><path d="M44 -9 L44 -2 M34 -9 L34 -1" stroke="#d0708a" stroke-width="2.4" stroke-linecap="round" opacity="0.7"/></g>
+      <g id="axE-headY"><g id="axE-head"><g id="axE-headBob"><g id="axE-headBobR">
+        <g><g transform="translate(-104 -262) rotate(-146)"><g id="axE-gL1"><g id="axE-gL1w"><path d="M0 -5.8 Q4.9 -14.9 19.4 -15.2 Q17.4 -9.8 18.8 -8 Q23.7 -14.8 38.2 -15.1 Q36.2 -9.3 37.6 -7.3 Q42.5 -10.4 57 -10.6 Q55 -5.9 56.4 -4.3 Q61.3 -5.2 75.8 -5.4 Q73.8 -2.3 75.2 -1.2 L80 0 L75.2 1.2 Q73.8 2.3 75.8 5.4 Q61.3 5.2 56.4 4.3 Q55 5.9 57 10.6 Q42.5 10.4 37.6 7.3 Q36.2 9.3 38.2 15.1 Q23.7 14.8 18.8 8 Q17.4 9.8 19.4 15.2 Q4.9 14.9 0 5.8 Z" fill="#ff6a45" stroke="#d9452f" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 -2.8 Q36 -9.3 68.8 0 Q36 9.3 4 2.8 Z" fill="#ff8a5e" opacity="0.75"/><path d="M6 0 Q40 -1.5 72 0 M21.6 0 L32 -7.2 M21.6 0 L32 7.2 M40.4 0 L50.8 -6.2 M40.4 0 L50.8 6.2 M59.2 0 L69.6 -3.3 M59.2 0 L69.6 3.3" fill="none" stroke="#b8331f" stroke-width="1.7" stroke-linecap="round" opacity="0.55"/></g></g></g><g transform="translate(-121 -224) rotate(-177)"><g id="axE-gL2"><g id="axE-gL2w"><path d="M0 -6.2 Q5.2 -15.9 21 -16.3 Q19 -10.5 20.7 -8.5 Q25.9 -15.7 41.6 -16.1 Q39.6 -9.9 41.4 -7.8 Q46.6 -11.1 62.3 -11.3 Q60.3 -6.3 62 -4.6 Q67.3 -5.6 83 -5.7 Q81 -2.4 82.7 -1.3 L88 0 L82.7 1.3 Q81 2.4 83 5.7 Q67.3 5.6 62 4.6 Q60.3 6.3 62.3 11.3 Q46.6 11.1 41.4 7.8 Q39.6 9.9 41.6 16.1 Q25.9 15.7 20.7 8.5 Q19 10.5 21 16.3 Q5.2 15.9 0 6.2 Z" fill="#ff6a45" stroke="#d9452f" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 -3 Q39.6 -9.9 75.7 0 Q39.6 9.9 4 3 Z" fill="#ff8a5e" opacity="0.75"/><path d="M6 0 Q44 -1.5 79.2 0 M23.8 0 L35.2 -7.7 M23.8 0 L35.2 7.7 M44.5 0 L55.8 -6.6 M44.5 0 L55.8 6.6 M65.1 0 L76.5 -3.5 M65.1 0 L76.5 3.5" fill="none" stroke="#b8331f" stroke-width="1.7" stroke-linecap="round" opacity="0.55"/></g></g></g><g transform="translate(-113 -186) rotate(152)"><g id="axE-gL3"><g id="axE-gL3w"><path d="M0 -5.4 Q4.7 -13.9 18.6 -14.2 Q16.6 -9.1 17.9 -7.5 Q22.5 -13.8 36.5 -14.1 Q34.5 -8.6 35.7 -6.8 Q40.4 -9.7 54.4 -9.9 Q52.4 -5.5 53.6 -4 Q58.2 -4.9 72.2 -5 Q70.2 -2.1 71.4 -1.1 L76 0 L71.4 1.1 Q70.2 2.1 72.2 5 Q58.2 4.9 53.6 4 Q52.4 5.5 54.4 9.9 Q40.4 9.7 35.7 6.8 Q34.5 8.6 36.5 14.1 Q22.5 13.8 17.9 7.5 Q16.6 9.1 18.6 14.2 Q4.7 13.9 0 5.4 Z" fill="#ff6a45" stroke="#d9452f" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 -2.6 Q34.2 -8.7 65.4 0 Q34.2 8.7 4 2.6 Z" fill="#ff8a5e" opacity="0.75"/><path d="M6 0 Q38 -1.5 68.4 0 M20.5 0 L30.4 -6.7 M20.5 0 L30.4 6.7 M38.4 0 L48.2 -5.8 M38.4 0 L48.2 5.8 M56.3 0 L66.1 -3.1 M56.3 0 L66.1 3.1" fill="none" stroke="#b8331f" stroke-width="1.7" stroke-linecap="round" opacity="0.55"/></g></g></g></g>
+        <g transform="scale(-1 1)"><g transform="translate(-104 -262) rotate(-146)"><g id="axE-gR1"><g id="axE-gR1w"><path d="M0 -5.8 Q4.9 -14.9 19.4 -15.2 Q17.4 -9.8 18.8 -8 Q23.7 -14.8 38.2 -15.1 Q36.2 -9.3 37.6 -7.3 Q42.5 -10.4 57 -10.6 Q55 -5.9 56.4 -4.3 Q61.3 -5.2 75.8 -5.4 Q73.8 -2.3 75.2 -1.2 L80 0 L75.2 1.2 Q73.8 2.3 75.8 5.4 Q61.3 5.2 56.4 4.3 Q55 5.9 57 10.6 Q42.5 10.4 37.6 7.3 Q36.2 9.3 38.2 15.1 Q23.7 14.8 18.8 8 Q17.4 9.8 19.4 15.2 Q4.9 14.9 0 5.8 Z" fill="#ff6a45" stroke="#d9452f" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 -2.8 Q36 -9.3 68.8 0 Q36 9.3 4 2.8 Z" fill="#ff8a5e" opacity="0.75"/><path d="M6 0 Q40 -1.5 72 0 M21.6 0 L32 -7.2 M21.6 0 L32 7.2 M40.4 0 L50.8 -6.2 M40.4 0 L50.8 6.2 M59.2 0 L69.6 -3.3 M59.2 0 L69.6 3.3" fill="none" stroke="#b8331f" stroke-width="1.7" stroke-linecap="round" opacity="0.55"/></g></g></g><g transform="translate(-121 -224) rotate(-177)"><g id="axE-gR2"><g id="axE-gR2w"><path d="M0 -6.2 Q5.2 -15.9 21 -16.3 Q19 -10.5 20.7 -8.5 Q25.9 -15.7 41.6 -16.1 Q39.6 -9.9 41.4 -7.8 Q46.6 -11.1 62.3 -11.3 Q60.3 -6.3 62 -4.6 Q67.3 -5.6 83 -5.7 Q81 -2.4 82.7 -1.3 L88 0 L82.7 1.3 Q81 2.4 83 5.7 Q67.3 5.6 62 4.6 Q60.3 6.3 62.3 11.3 Q46.6 11.1 41.4 7.8 Q39.6 9.9 41.6 16.1 Q25.9 15.7 20.7 8.5 Q19 10.5 21 16.3 Q5.2 15.9 0 6.2 Z" fill="#ff6a45" stroke="#d9452f" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 -3 Q39.6 -9.9 75.7 0 Q39.6 9.9 4 3 Z" fill="#ff8a5e" opacity="0.75"/><path d="M6 0 Q44 -1.5 79.2 0 M23.8 0 L35.2 -7.7 M23.8 0 L35.2 7.7 M44.5 0 L55.8 -6.6 M44.5 0 L55.8 6.6 M65.1 0 L76.5 -3.5 M65.1 0 L76.5 3.5" fill="none" stroke="#b8331f" stroke-width="1.7" stroke-linecap="round" opacity="0.55"/></g></g></g><g transform="translate(-113 -186) rotate(152)"><g id="axE-gR3"><g id="axE-gR3w"><path d="M0 -5.4 Q4.7 -13.9 18.6 -14.2 Q16.6 -9.1 17.9 -7.5 Q22.5 -13.8 36.5 -14.1 Q34.5 -8.6 35.7 -6.8 Q40.4 -9.7 54.4 -9.9 Q52.4 -5.5 53.6 -4 Q58.2 -4.9 72.2 -5 Q70.2 -2.1 71.4 -1.1 L76 0 L71.4 1.1 Q70.2 2.1 72.2 5 Q58.2 4.9 53.6 4 Q52.4 5.5 54.4 9.9 Q40.4 9.7 35.7 6.8 Q34.5 8.6 36.5 14.1 Q22.5 13.8 17.9 7.5 Q16.6 9.1 18.6 14.2 Q4.7 13.9 0 5.4 Z" fill="#ff6a45" stroke="#d9452f" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 -2.6 Q34.2 -8.7 65.4 0 Q34.2 8.7 4 2.6 Z" fill="#ff8a5e" opacity="0.75"/><path d="M6 0 Q38 -1.5 68.4 0 M20.5 0 L30.4 -6.7 M20.5 0 L30.4 6.7 M38.4 0 L48.2 -5.8 M38.4 0 L48.2 5.8 M56.3 0 L66.1 -3.1 M56.3 0 L66.1 3.1" fill="none" stroke="#b8331f" stroke-width="1.7" stroke-linecap="round" opacity="0.55"/></g></g></g></g>
+        <path d="M0 -314 C82 -314 134 -276 134 -214 C134 -152 78 -124 0 -124 C-78 -124 -134 -152 -134 -214 C-134 -276 -82 -314 0 -314 Z" fill="#f7c1cc" stroke="#d0708a" stroke-width="4.5"/>
+        <g clip-path="url(#axE-headClip)">
+          <ellipse cx="0" cy="-116" rx="150" ry="36" fill="#eea3b5" opacity="0.55"/>
+          <path d="M-78 -270 C-66 -292 -30 -302 0 -298 C-26 -292 -56 -282 -70 -262 C-74 -258 -80 -262 -78 -270 Z" fill="#fde3e8" opacity="0.9"/>
+          <circle cx="22" cy="-294" r="5" fill="#fde3e8" opacity="0.85"/>
+        </g>
+        <g id="axE-face">
+          <g transform="translate(-84 -176)"><ellipse id="axE-cheekL" rx="17" ry="10" fill="#ff8aa3" opacity="0.55" filter="url(#axE-soft)"/></g>
+          <g transform="translate(84 -176)"><ellipse id="axE-cheekR" rx="17" ry="10" fill="#ff8aa3" opacity="0.55" filter="url(#axE-soft)"/></g>
+          <g transform="translate(-48 -208)"><g id="axE-eyeL"><g id="axE-openL"><g id="axE-blinkL"><g id="axE-lookL"><ellipse rx="11" ry="13" fill="#2a1520"/><g id="axE-hlL"><circle cx="3.8" cy="-5" r="4.2" fill="#fff"/><circle cx="-3.6" cy="4.6" r="1.9" fill="#fff" opacity="0.85"/></g></g></g></g><path id="axE-happyL" opacity="0" d="M-11 4 Q0 -11 11 4" fill="none" stroke="#2a1520" stroke-width="5" stroke-linecap="round"/><path id="axE-sqzL" opacity="0" d="M-8 -8 L6 0 L-8 8" fill="none" stroke="#2a1520" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path id="axE-winkL" opacity="0" d="M-11 -1 Q0 7 11 -1" fill="none" stroke="#2a1520" stroke-width="5" stroke-linecap="round"/></g></g><g transform="translate(48 -208)"><g id="axE-eyeR"><g id="axE-openR"><g id="axE-blinkR"><g id="axE-lookR"><ellipse rx="11" ry="13" fill="#2a1520"/><g id="axE-hlR"><circle cx="3.8" cy="-5" r="4.2" fill="#fff"/><circle cx="-3.6" cy="4.6" r="1.9" fill="#fff" opacity="0.85"/></g></g></g></g><path id="axE-happyR" opacity="0" d="M-11 4 Q0 -11 11 4" fill="none" stroke="#2a1520" stroke-width="5" stroke-linecap="round"/><path id="axE-sqzR" opacity="0" d="M8 -8 L-6 0 L8 8" fill="none" stroke="#2a1520" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path id="axE-winkR" opacity="0" d="M-11 -1 Q0 7 11 -1" fill="none" stroke="#2a1520" stroke-width="5" stroke-linecap="round"/></g></g>
+          <g transform="translate(-48 -238)"><g id="axE-browL"><path id="axE-browLr" d="M-9 2 Q-1 -3 9 0" fill="none" stroke="#c05f7b" stroke-width="4.2" stroke-linecap="round" opacity="0.8"/></g></g><g transform="translate(48 -238) scale(-1 1)"><g id="axE-browR"><path id="axE-browRr" d="M-9 2 Q-1 -3 9 0" fill="none" stroke="#c05f7b" stroke-width="4.2" stroke-linecap="round" opacity="0.8"/></g></g>
+          <path id="axE-mouth" d="M-17 -170 C-11 -162 11 -162 17 -170 C11 -151 -11 -151 -17 -170 Z" fill="#7a1f37" stroke="#7a1f37" stroke-width="2" stroke-linejoin="round"/>
+          <ellipse cx="0" cy="-138" rx="13" ry="9" fill="#ff7f99" clip-path="url(#axE-mouthClip)"/>
+        </g>
+      </g></g></g></g>
+      <g transform="translate(0 -72) scale(1.15)"><g id="axE-clapY"><g id="axE-clap" opacity="0">
+        <rect x="-60" y="-26" width="120" height="68" rx="7" fill="#1b1b20" stroke="#0b0b0d" stroke-width="3"/>
+        <rect x="-60" y="-26" width="120" height="14" rx="3" fill="#ece8dc"/>
+        <path d="M-54 -26 L-42 -26 L-48 -12 L-60 -12 Z M-30 -26 L-18 -26 L-24 -12 L-36 -12 Z M-6 -26 L6 -26 L0 -12 L-12 -12 Z M18 -26 L30 -26 L24 -12 L12 -12 Z M42 -26 L54 -26 L48 -12 L36 -12 Z" fill="#1b1b20"/>
+        <line x1="-52" y1="12" x2="52" y2="12" stroke="#4a4a54" stroke-width="1.5"/>
+        <line x1="0" y1="-6" x2="0" y2="36" stroke="#4a4a54" stroke-width="1.5"/>
+        <text x="-26" y="6" text-anchor="middle" font-family="JB Mono, monospace" font-size="9" fill="#9a978f">ESCENA</text>
+        <text x="26" y="6" text-anchor="middle" font-family="JB Mono, monospace" font-size="9" fill="#9a978f">TOMA</text>
+        <text x="-26" y="31" text-anchor="middle" font-family="Archivo, sans-serif" font-weight="800" font-size="17" fill="#f0c94a">1</text>
+        <text x="26" y="31" text-anchor="middle" font-family="Archivo, sans-serif" font-weight="800" font-size="17" fill="#ece8dc">1</text>
+        <g transform="translate(-60 -28)"><g id="axE-clapStick">
+          <rect x="0" y="-14" width="120" height="14" rx="3" fill="#ece8dc" stroke="#0b0b0d" stroke-width="2"/>
+          <path d="M-6 -14 L6 -14 L12 0 L0 0 Z M18 -14 L30 -14 L36 0 L24 0 Z M42 -14 L54 -14 L60 0 L48 0 Z M66 -14 L78 -14 L84 0 L72 0 Z M90 -14 L102 -14 L108 0 L96 0 Z" fill="#1b1b20"/>
+          <circle cx="5" cy="-1" r="3" fill="#4a4a54"/>
+        </g></g>
+      </g></g></g>
+      <g transform="translate(-66 -106) scale(-1 1) rotate(-9)"><g id="axE-armL"><g id="axE-armLw"><g id="axE-armLs"><g id="axE-fingerL" opacity="0"><path d="M2 44 L3 68" stroke="#d0708a" stroke-width="13" stroke-linecap="round"/><path d="M2 44 L3 68" stroke="#f7c1cc" stroke-width="7.5" stroke-linecap="round"/></g><path d="M-11 -4 C-12 10 -11 22 -10 31 C-15 37 -15 45 -10 48 C-8 50 -4 50 -3 47 C-2 52 3 54 5 50 C7 53 12 51 12 47 C16 46 18 40 14 34 C12 24 12 10 11 -4 C11 -10 -11 -10 -11 -4 Z" fill="#f7c1cc" stroke="#d0708a" stroke-width="4" stroke-linejoin="round"/><path d="M-3 47 C-3 44 -2 42 -1 41 M5 50 C5 46 5 44 5 42" fill="none" stroke="#d0708a" stroke-width="2.2" stroke-linecap="round" opacity="0.75"/></g></g></g></g>
+      <g transform="translate(66 -106) rotate(-9)"><g id="axE-armR"><g id="axE-armRw"><g id="axE-armRs"><g id="axE-fingerR" opacity="0"><path d="M2 44 L3 68" stroke="#d0708a" stroke-width="13" stroke-linecap="round"/><path d="M2 44 L3 68" stroke="#f7c1cc" stroke-width="7.5" stroke-linecap="round"/></g><path d="M-11 -4 C-12 10 -11 22 -10 31 C-15 37 -15 45 -10 48 C-8 50 -4 50 -3 47 C-2 52 3 54 5 50 C7 53 12 51 12 47 C16 46 18 40 14 34 C12 24 12 10 11 -4 C11 -10 -11 -10 -11 -4 Z" fill="#f7c1cc" stroke="#d0708a" stroke-width="4" stroke-linejoin="round"/><path d="M-3 47 C-3 44 -2 42 -1 41 M5 50 C5 46 5 44 5 42" fill="none" stroke="#d0708a" stroke-width="2.2" stroke-linecap="round" opacity="0.75"/></g></g></g></g>
+    </g></g></g>
+    <g id="axE-fx">
+      <g transform="translate(128 -340) scale(1.5)"><g id="axE-fxBangY"><g id="axE-fxBang" opacity="0"><path d="M-7 -34 L7 -34 L4 2 L-4 2 Z" fill="#f0c94a" stroke="#0b0b0d" stroke-width="3" stroke-linejoin="round"/><circle cx="0" cy="13" r="6" fill="#f0c94a" stroke="#0b0b0d" stroke-width="3"/></g></g></g>
+      <g transform="translate(98 -256)"><g id="axE-fxSpark" opacity="0"><path d="M0 -16 Q2 -2 16 0 Q2 2 0 16 Q-2 2 -16 0 Q-2 -2 0 -16 Z" fill="#fff4c4"/></g></g>
+      <g transform="translate(118 -306)"><circle id="axE-th1" r="6" fill="#ece8dc" opacity="0"/></g>
+      <g transform="translate(142 -334)"><circle id="axE-th2" r="9" fill="#ece8dc" opacity="0"/></g>
+      <g transform="translate(174 -366)"><circle id="axE-th3" r="13" fill="#ece8dc" opacity="0"/></g>
+      <g transform="translate(0 -60)"><g id="axE-fxImpact" opacity="0" stroke="#f0c94a" stroke-width="5" stroke-linecap="round" fill="none">
+        <path d="M-84 -40 L-102 -54"/><path d="M-90 -6 L-112 -6"/><path d="M-84 26 L-102 40"/>
+        <path d="M84 -40 L102 -54"/><path d="M90 -6 L112 -6"/><path d="M84 26 L102 40"/>
+      </g></g>
+      <g transform="translate(0 -324) scale(1 0.36)"><g id="axE-fxStars" opacity="0">
+        <path transform="translate(80 0)" d="M0 -13 L3.2 -4.4 L12.4 -4 L5.2 1.7 L7.6 10.5 L0 5.5 L-7.6 10.5 L-5.2 1.7 L-12.4 -4 L-3.2 -4.4 Z" fill="#f0c94a"/>
+        <path transform="translate(-40 69)" d="M0 -11 L2.6 -3.6 L10.5 -3.4 L4.3 1.4 L6.5 8.9 L0 4.5 L-6.5 8.9 L-4.3 1.4 L-10.5 -3.4 L-2.6 -3.6 Z" fill="#ece8dc"/>
+        <path transform="translate(-40 -69)" d="M0 -12 L2.9 -4 L11.4 -3.7 L4.8 1.5 L7.1 9.7 L0 5 L-7.1 9.7 L-4.8 1.5 L-11.4 -3.7 L-2.9 -4 Z" fill="#f0c94a"/>
+      </g></g>
+      <g transform="translate(118 -262)"><g id="axE-fxSweatY"><path id="axE-fxSweat" opacity="0" d="M0 -12 C6 -2 9 3 9 7 C9 12 5 15 0 15 C-5 15 -9 12 -9 7 C-9 3 -6 -2 0 -12 Z" fill="#9cc2ff" stroke="#5b86c9" stroke-width="2"/></g></g>
+      <g transform="translate(0 -10) scale(1.1 0.7)"><g id="axE-fxImpact2" opacity="0" stroke="#f0c94a" stroke-width="5" stroke-linecap="round" fill="none">
+        <path d="M-84 -40 L-102 -54"/><path d="M-90 -6 L-112 -6"/><path d="M-84 26 L-102 40"/>
+        <path d="M84 -40 L102 -54"/><path d="M90 -6 L112 -6"/><path d="M84 26 L102 40"/>
+      </g></g>
+    </g>
+  </g></g>
+  </g>
+</svg>
+</div>
+
+  </div>
+
+  <!-- capas de primer término del plató rojo (perforaciones, rótulos) -->
+  <div id="secE-hud1" class="secE-scene">
+    <div class="secE-perfs" id="secE-pl" style="left: 0"></div>
+    <div class="secE-perfs" id="secE-pr" style="right: 0"></div>
+    <div id="secE-edge">VD-03 ▸ RODAR ▸ 24 FPS ▸ KD 0051+00</div>
+    <div id="secE-edgeR">EL ÚLTIMO VERANO ▸ ROLLO A-07</div>
+    <div id="secE-jor">Jornada 1 · Playa · Citación 07:30</div>
+    <div id="secE-rec"><i id="secE-recdot"></i><span id="secE-rect">REC 00:00:51:00</span></div>
+  </div>
+  <div id="secE-stripes" data-layout-allow-overflow></div>
+  <div id="secE-blk"></div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  const DUR = 14.5, T0 = 51.0, FPS = 30;
+  const C = window.CUES;
+  const L = (k) => C.hits[k] - T0; // golpe en tiempo local
+  const $ = (s) => document.querySelector(s);
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const lerp = (a, b, e) => a + (b - a) * e;
+  const seg = (t, a, b) => clamp((t - a) / (b - a), 0, 1);
+
+  /* ---------- curvas propias vd.* ---------- */
+  if (!window.__vdEases) {
+    const bez = (x1, y1, x2, y2) => {
+      const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
+      const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+      const sx = (t) => ((ax * t + bx) * t + cx) * t, sy = (t) => ((ay * t + by) * t + cy) * t;
+      const dx = (t) => (3 * ax * t + 2 * bx) * t + cx;
+      return (p) => {
+        if (p <= 0) return 0; if (p >= 1) return 1;
+        let t = p;
+        for (let i = 0; i < 6; i++) { const e = sx(t) - p, d = dx(t); if (Math.abs(e) < 1e-6 || Math.abs(d) < 1e-6) break; t -= e / d; }
+        if (t < 0 || t > 1) { let lo = 0, hi = 1; t = p; for (let i = 0; i < 30; i++) { sx(t) < p ? (lo = t) : (hi = t); t = (lo + hi) / 2; } }
+        return sy(t);
+      };
+    };
+    const spring = (z = 0.42, w = 13) => (p) => (p >= 1 ? 1 : 1 - Math.exp(-z * w * p) * Math.cos(w * Math.sqrt(1 - z * z) * p));
+    const E = {
+      "vd.land": bez(0.16, 1, 0.3, 1), "vd.settle": bez(0, 0.65, 0.51, 0.99), "vd.glide": bez(0.7, 0, 0.2, 1),
+      "vd.push": bez(0.33, 0, 0.67, 1), "vd.whip": bez(0.86, 0, 0.12, 1), "vd.dive": bez(0.55, 0, 0.95, 0.55),
+      "vd.exit": bez(0.7, 0, 0.84, 0), "vd.spring": spring(),
+      "vd.fold": (p) => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2),
+    };
+    Object.keys(E).forEach((k) => gsap.registerEase(k, E[k]));
+    window.__vdEases = true;
+  }
+  const ez = (n) => gsap.parseEase(n);
+  const eLand = ez("vd.land"), eSettle = ez("vd.settle"), eGlide = ez("vd.glide"), ePush = ez("vd.push"), eWhip = ez("vd.whip");
+  const eP4in = ez("power4.in"), eP2out = ez("power2.out"), eP3out = ez("power3.out");
+
+  const tl = gsap.timeline({ paused: true });
+
+  /* =====================================================================
+     TIEMPOS (locales)
+     ===================================================================== */
+  const T_SIL = L("silence");      // 1.0  silencio total
+  const T_ACC = C.vo.L13b.t - T0;  // 1.9  «¡Acción!» + anticipación
+  const T_CLAC = L("clac");        // 2.5  CLAC
+  const T_BLK = T_CLAC + 2 / FPS;  // negro tras 2 f de impacto
+  const T_SWP = T_CLAC + 0.25;     // 2.75 rayas del palo
+  const T_DROP = L("drop");        // 3.0
+  const T_RW = L("rewind");        // 5.0
+  const T_LOGO = L("logo");        // 7.5
+  const T_BTN = L("button");       // 11.0
+  const T_STG = L("stinger");      // 12.5
+  const T_MINI = L("miniclac");    // 14.0
+  const T_END = T_MINI + 0.25;     // 14.25 corte a negro (una corchea después del mini-clac)
+  const SHOT = 0.25, M8 = T_DROP + 7 * SHOT; // 4.75: plano de claqueta (callback)
+
+  /* =====================================================================
+     E1 · cámara del plató (función pura de t)
+     ===================================================================== */
+  const pulse = (dt) => (dt < 0 ? 0 : dt < 2 / FPS ? dt / (2 / FPS) : Math.exp(-(dt - 2 / FPS) / (6 / FPS)));
+  const hand = (t) => ({
+    x: 2.6 * Math.sin(2 * Math.PI * 0.31 * t + 1.3) + 1.1 * Math.sin(2 * Math.PI * 0.77 * t + 0.4),
+    y: 1.9 * Math.sin(2 * Math.PI * 0.23 * t + 2.1) + 0.9 * Math.sin(2 * Math.PI * 0.91 * t + 5.2),
+    r: 0.1 * Math.sin(2 * Math.PI * 0.17 * t + 0.7),
+  });
+  function cam1(t) {
+    if (t >= M8 - 1e-6) { // plano detalle de la claqueta en el montaje (corchea 8)
+      const u = seg(t, M8, T_RW);
+      const k = pulse(t - (T_RW - 0.02));
+      return { x: 880 + 30 * u, y: 770, s: 1.42 + 0.08 * ePush(u) + 0.05 * k, r: 5 - 1.2 * u, h: 0.0, sx: 0 };
+    }
+    // tensión = quietud: push imperceptible 1.00 → 1.022 y en mano que se apaga en el silencio
+    const s = 1 + 0.022 * ePush(seg(t, 0, T_CLAC));
+    const h = 0.55 * (1 - seg(t, T_SIL - 0.15, T_SIL + 0.1));
+    const dt = t - T_CLAC;
+    const k = pulse(dt);
+    const shake = dt >= 0 ? 14 * Math.sin(dt * 90 + 0.6) * Math.exp(-dt * 18) : 0;
+    return { x: 960, y: 560, s: s * (1 + 0.045 * k), r: 0, h, sx: shake };
+  }
+  function setCam(el, c, d, t) {
+    const n = hand(t), s = 1 + (c.s - 1) * d;
+    el.style.transform = `translate(${(960 + n.x * c.h + c.sx).toFixed(2)}px, ${(540 + n.y * c.h).toFixed(2)}px) rotate(${(c.r * d + n.r * c.h).toFixed(3)}deg) scale(${s.toFixed(5)}) translate(${(-c.x).toFixed(2)}px, ${(-c.y).toFixed(2)}px)`;
+  }
+
+  // ángulo del palo (función pura) — abierto −30°, anticipación −34°, cierre en 3 f
+  function stickA(t) {
+    if (t >= M8 - 1e-6) {
+      const tc = T_RW - 0.02;
+      if (t < tc - 0.1) return lerp(-24, -30, eLand(seg(t, M8, M8 + 0.12)));
+      if (t < tc) return lerp(-30, 0, eP4in(seg(t, tc - 0.1, tc)));
+      return 0;
+    }
+    if (t < 0.7) return lerp(-21, -30, eLand(seg(t, 0, 0.7)));
+    if (t < T_ACC) return -30;
+    const TC = T_CLAC - 0.004;
+    if (t < TC - 0.1) return lerp(-30, -34, eP2out(seg(t, T_ACC, T_ACC + 0.3)));
+    if (t < TC) return lerp(-34, 0, eP4in(seg(t, TC - 0.1, TC)));
+    return 0;
+  }
+
+  /* =====================================================================
+     REBOBINADO: tira de película (función pura de t)
+     ===================================================================== */
+  const FX = (i) => i * 560 + 260;           // centro de cada fotograma en la tira
+  const HOPS = [0.31, 0.26, 0.22, 0.19, 0.16, 0.14]; // corcheas que se aceleran (◀◀)
+  const HOP_T = [T_RW]; HOPS.forEach((d, i) => HOP_T.push(HOP_T[i] + d));
+  const T_DEZ = HOP_T[HOP_T.length - 1] - 0.1;      // dezoom al mapa completo
+  const S_ZOOM = 2.0, S_ALL = 0.43, CX_ALL = (FX(0) + FX(6)) / 2, CY_ALL = 0;
+  const T_COND = T_DEZ + 0.55;                       // fotogramas → franjas de gel
+  function cam2(t) {
+    // posición: salto de fotograma en fotograma, de la jornada (6) al guion (0)
+    let x = FX(6) + 70, s = S_ZOOM, y = 0;
+    for (let i = 0; i < HOPS.length; i++) {
+      const a = HOP_T[i], b = HOP_T[i + 1];
+      if (t >= a) x = lerp(FX(6 - i) + (i ? 0 : 70), FX(5 - i), eWhip(seg(t, a, b)));
+    }
+    const u = eSettle(seg(t, T_DEZ, T_DEZ + 0.62));
+    const zs = Math.exp(lerp(Math.log(s), Math.log(S_ALL), u));
+    const w = (1 / s - 1 / zs) / (1 / s - 1 / S_ALL || 1);
+    return { x: lerp(x, CX_ALL, u > 0 ? w : 0), y: lerp(y, CY_ALL, u > 0 ? w : 0), s: zs };
+  }
+  // destino de cada franja en la barra del logo (coordenadas de pantalla)
+  const BAR = { x0: 0, w: 0, y: 489, h: 22 }; // se completa abajo con la maqueta
+  const SEGW = [0.17, 0.43, 0.23, 0.17];
+
+  /* =====================================================================
+     MAQUETA DEL LOGO (coordenadas de autor)
+     ===================================================================== */
+  const WORD_W = 1440;                  // ancho de «Versión definitiva» a 150 px, wdth 118 (medido)
+  const LX0 = 960 - WORD_W / 2, LX1 = 960 + WORD_W / 2;
+  const TALLER_W = 292, GAP = 34;
+  BAR.x0 = LX0; BAR.w = LX1 - TALLER_W - GAP - LX0;
+  const segX = [], segWpx = [];
+  { let x = BAR.x0; SEGW.forEach((f, i) => { const w = BAR.w * f - (i < 3 ? 6 : 0); segX.push(x); segWpx.push(w); x += BAR.w * f; }); }
+  segX.forEach((x, i) => {
+    const el = $("#secE-sg" + i); el.style.left = x + "px"; el.style.width = segWpx[i] + "px";
+    $("#secE-sl" + i).style.left = x + "px";
+  });
+  const tm = $("#secE-tallerM"); tm.style.left = (LX1 - TALLER_W) + "px"; tm.style.width = (TALLER_W + 40) + "px";
+  const ping = $("#secE-ping"); ping.style.left = (BAR.x0 + BAR.w - 30) + "px"; ping.style.top = (BAR.y - 30) + "px";
+  // franjas: 0 → escribir, 1..6 → preparar (seis tramos contiguos)
+  const TGT = [];
+  TGT.push({ x: segX[0] + segWpx[0] / 2, w: segWpx[0] });
+  for (let i = 0; i < 6; i++) { const w = segWpx[1] / 6; TGT.push({ x: segX[1] + w * (i + 0.5), w: w + 0.6 }); }
+
+  /* =====================================================================
+     ESCENAS: quién se ve cuándo (función pura de t)
+     ===================================================================== */
+  const sc = {
+    s1: $("#secE-s1"), w1: $("#secE-w1"), fore1: $("#secE-fore1"), hud1: $("#secE-hud1"),
+    end: $("#secE-end"), ax: $("#secE-axcam"), stripes: $("#secE-stripes"), blk: $("#secE-blk"),
+    logo: $("#secE-logo"), m: [1, 2, 3, 4, 5, 6, 7].map((i) => $("#secE-m" + i)),
+  };
+  const vis = (el, on) => { const v = on ? "visible" : "hidden"; if (el.style.visibility !== v) el.style.visibility = v; };
+
+  const stick = $("#secE-stick"), ghosts = [1, 2, 3, 4, 5, 6].map((i) => $("#secE-gh" + i));
+  const slateK = $("#secE-slateK"), pl = $("#secE-pl"), pr = $("#secE-pr");
+  const edge = $("#secE-edge"), rect = $("#secE-rect"), recdot = $("#secE-recdot");
+  const slamEl = $("#secE-slam");
+  const dig1 = $("#secE-dig1"), dig2 = $("#secE-dig2");
+  const strip = $("#secE-strip"), film = $("#secE-film"), rwlens = $("#secE-rwlens"), cbx = $("#secE-cbx");
+  const frs = [0, 1, 2, 3, 4, 5, 6].map((i) => $("#secE-f" + i)), fgels = frs.map((f) => f.querySelector(".secE-fgel"));
+  const hud = $("#secE-hud"), hud2 = $("#secE-hud2"), m1tc = $("#secE-m1tc");
+  const FR_TC = [10.5, 18.5, 24.5, 29.5, 32.5, 37.0, 41.5];
+  const tcode = (sec) => { const f = Math.max(0, Math.floor(sec * 30 + 1e-6)), ss = Math.floor(f / 30), ff = f % 30; return `00:00:${String(ss).padStart(2, "0")}:${String(ff).padStart(2, "0")}`; };
+  let lastTxt = {};
+  const txt = (el, k, s) => { if (lastTxt[k] !== s) { el.textContent = s; lastTxt[k] = s; } };
+
+  function render(t) {
+    const inS1 = t < T_BLK || (t >= M8 && t < T_RW);
+    vis(sc.s1, inS1); vis(sc.w1, inS1); vis(sc.hud1, inS1); vis(sc.fore1, inS1);
+    const mi = Math.floor((t - T_DROP) / SHOT + 1e-6);
+    const swX = lerp(1940, -4300, eWhip(seg(t, T_SWP, T_DROP + 0.03)));
+    const revealed = t >= T_SWP && swX <= -624;
+    sc.m.forEach((el, i) => vis(el, (i === mi && t >= T_DROP && t < M8) || (i === 0 && revealed && t < T_DROP + SHOT)));
+    vis(sc.end, t >= T_RW && t < T_END);
+    vis(sc.blk, t >= T_END);
+    const axOn = (t < T_BLK) || (t >= T_DROP + 4 * SHOT && t < T_DROP + 5 * SHOT) || (t >= T_STG - 0.1 && t < T_END);
+    vis(sc.ax, axOn);
+
+    // --- cámara del plató ---
+    if (inS1) {
+      const c = cam1(t);
+      setCam(sc.w1, c, 1, t + T0);
+      setCam(sc.fore1, c, 1.25, t + T0);
+      if (axOn) setCam(sc.ax, c, 1, t + T0);
+      // palo + estela (4 sub-muestras dentro del obturador de 1 f)
+      const a = stickA(t);
+      stick.style.transform = `rotate(${a.toFixed(3)}deg)`;
+      ghosts.forEach((g, k) => {
+        const ag = stickA(t - ((k + 1) / 6) * (1.2 / FPS));
+        const on = Math.abs(ag - a) > 0.4;
+        g.style.transform = `rotate(${ag.toFixed(3)}deg)`;
+        g.style.opacity = on ? (0.26 - k * 0.032).toFixed(3) : "0";
+      });
+      // temblor del cuerpo de la claqueta en el golpe
+      const dt = t - T_CLAC;
+      const sk = dt >= 0 && t < M8 ? 9 * Math.sin(dt * 110) * Math.exp(-dt * 22) : 0;
+      slateK.style.transform = `translate(${(sk * 0.4).toFixed(2)}px, ${(Math.abs(sk)).toFixed(2)}px)`;
+      // perforaciones: la película corre a 24 fps y se para en el silencio
+      const tf = Math.min(t, T_SIL);
+      const py = (Math.floor(tf * 24) * 19) % 54;
+      pl.style.backgroundPosition = `0px ${py}px`; pr.style.backgroundPosition = `0px ${py}px`;
+      const fr = Math.floor((t + T0) * 24);
+      txt(edge, "edge", `VD-03 ▸ RODAR ▸ 24 FPS ▸ KD ${String(Math.floor(fr / 16)).padStart(4, "0")}+${String(fr % 16).padStart(2, "0")}`);
+      txt(rect, "rec", "REC " + tcode(t + T0));
+      recdot.style.opacity = Math.floor((t + T0) * 2) % 2 === 0 ? "1" : "0.2";
+      const m8 = t >= M8;
+      dig1.style.opacity = m8 ? "0" : "1"; dig2.style.opacity = m8 ? "1" : "0";
+      slamEl.style.opacity = m8 ? "0" : "1";
+    } else if (axOn) {
+      sc.ax.style.transform = "none";
+    }
+
+    // --- montaje: reloj de rodaje vivo ---
+    if (t >= T_SWP && t < T_DROP + SHOT) {
+      const s = 7 * 3600 + 42 * 60 + 16 + (t - T_DROP) * 24;
+      const hh = Math.floor(s / 3600), mm = Math.floor((s % 3600) / 60), ss = Math.floor(s % 60);
+      txt(m1tc, "m1", `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}:${String(ss).padStart(2, "0")}`);
+    }
+
+    // --- rayas del palo a pantalla completa (barren de derecha a izquierda) ---
+    const su = seg(t, T_SWP, T_DROP + 0.03);
+    vis(sc.stripes, t >= T_SWP && t < T_DROP + 0.03);
+    if (t >= T_SWP && t < T_DROP + 0.03) sc.stripes.style.transform = `translateX(${swX.toFixed(1)}px)`;
+
+    // --- rebobinado ---
+    if (t >= T_RW && t < T_END) {
+      const c = cam2(t);
+      strip.style.transform = `translate(960px, 540px) scale(${c.s.toFixed(5)}) translate(${(-c.x).toFixed(2)}px, ${(-c.y).toFixed(2)}px)`;
+      // estela de cámara (solo en los saltos, nunca en el dezoom)
+      const h = 0.5 / FPS, c0 = cam2(Math.max(T_RW, t - h)), c1 = cam2(t + h);
+      const v = Math.abs(c1.x - c0.x) * c.s;
+      const pan = Math.abs(Math.log(c1.s / c0.s)) < 0.02;
+      const bx = pan ? Math.min(28, v * 0.3) : 0;
+      if (bx > 0.6) { cbx.setAttribute("stdDeviation", `${bx.toFixed(2)} 0`); rwlens.style.filter = "url(#secE-camblur)"; }
+      else if (rwlens.style.filter !== "none") rwlens.style.filter = "none";
+      // contador ◀◀ que baja con el fotograma centrado
+      const fi = clamp((c.x - FX(0)) / 560, 0, 6), f0 = Math.floor(fi), f1 = Math.min(6, f0 + 1);
+      const tcv = lerp(FR_TC[f0], FR_TC[f1], fi - f0);
+      txt(hud2, "hud2", tcode(t < T_DEZ ? tcv : FR_TC[0]));
+      const hudOn = t < T_COND;
+      hud.style.opacity = hudOn ? (Math.floor(t * 6) % 2 === 0 ? "1" : "0.55") : "0";
+      hud2.style.opacity = hudOn ? "1" : "0";
+      // la película se recoge y los fotogramas se condensan en franjas de gel que vuelan al logo
+      const fu = eP3out(seg(t, T_COND - 0.05, T_COND + 0.25));
+      film.style.transform = `scaleY(${(1 - fu).toFixed(4)})`;
+      film.style.opacity = (1 - fu).toFixed(3);
+      frs.forEach((el, i) => {
+        const a = T_COND + i * 0.035;
+        const sq = eP3out(seg(t, a, a + 0.16));     // se aplasta
+        const fl = eGlide(seg(t, a + 0.06, a + 0.48)); // vuela a la barra
+        const g = seg(t, a, a + 0.1);
+        fgels[i].style.opacity = g.toFixed(3);
+        const tgx = (TGT[i].x - 960) / c.s + c.x, tgy = (BAR.y - 540) / c.s + c.y;
+        const fx = FX(i), fy = 0;
+        const sx = lerp(1, lerp(0.86, TGT[i].w / c.s / 520, fl), sq);
+        const sy = lerp(1, (BAR.h / c.s) / 292, sq);
+        const arc = -Math.sin(Math.PI * fl) * 160 * (1 - i / 9);
+        const x = lerp(fx, tgx, fl) - fx, y = lerp(fy, tgy, fl) + arc;
+        el.style.transform = `translate(${x.toFixed(2)}px, ${y.toFixed(2)}px) scale(${sx.toFixed(4)}, ${sy.toFixed(4)})`;
+        el.style.borderRadius = sq > 0.5 ? "0" : "4px";
+      });
+      vis(strip, t < T_LOGO + 0.02);
+      vis(sc.logo, t >= T_LOGO);
+    }
+  }
+
+  /* =====================================================================
+     GOLPES CON GSAP (tipografía y pequeños gestos)
+     ===================================================================== */
+  // ¡ACCIÓN! entra en «Acción» (vd.slam: 1.9 → 0.94 → 1.02 → 1) letra a letra a 1 f
+  {
+    const slam = $("#secE-slam span");
+    const chars = Array.from(slam.textContent);
+    slam.innerHTML = chars.map((ch, i) => `<span class="secE-ch" id="secE-ch${i}" style="display:inline-block">${ch}</span>`).join("");
+    chars.forEach((_, i) => {
+      const t = T_ACC + 0.02 + i * (1 / FPS);
+      tl.fromTo("#secE-ch" + i, { opacity: 0, scale: 1.9, y: -30 }, { opacity: 1, scale: 0.94, y: 6, duration: 0.1, ease: "power4.out" }, t);
+      tl.to("#secE-ch" + i, { scale: 1.02, y: -2, duration: 0.06, ease: "power2.out" }, t + 0.1);
+      tl.to("#secE-ch" + i, { scale: 1, y: 0, duration: 0.1, ease: "power2.out" }, t + 0.16);
+    });
+    // en el CLAC el rótulo da un respingo
+    tl.fromTo("#secE-slam", { y: 0 }, { y: 12, duration: 0.033, ease: "none" }, T_CLAC);
+    tl.to("#secE-slam", { y: 0, duration: 0.2, ease: "power2.out" }, T_CLAC + 0.033);
+  }
+
+  // M1 (drop): punch de llegada; la celda «en curso» late
+  tl.fromTo("#secE-m1i", { scale: 1.14, rotation: 1.5 }, { scale: 1.0, rotation: 0, duration: 0.3, ease: "vd.land" }, T_DROP - 0.12);
+  tl.fromTo("#secE-m1live", { scaleX: 0.2 }, { scaleX: 1, transformOrigin: "0% 50%", duration: 0.2, ease: "vd.land" }, T_DROP);
+  // M2: TOMA 2
+  tl.fromTo("#secE-m2i", { x: 60 }, { x: 0, duration: 0.25, ease: "none" }, T_DROP + SHOT);
+  tl.fromTo("#secE-m2n", { scale: 1.5, rotation: -14 }, { scale: 1, rotation: -4, duration: 0.18, ease: "power4.out" }, T_DROP + SHOT);
+  // M3: TOMA 3 + ✓ buena
+  tl.fromTo("#secE-m3i", { x: -60 }, { x: 0, duration: 0.25, ease: "none" }, T_DROP + 2 * SHOT);
+  tl.fromTo("#secE-m3n", { scale: 1.5, rotation: 14 }, { scale: 1, rotation: 4, duration: 0.18, ease: "power4.out" }, T_DROP + 2 * SHOT);
+  tl.fromTo("#secE-m3p", { scale: 0.4, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.14, ease: "vd.land" }, T_DROP + 2 * SHOT + 0.1);
+  // M4: ✓ que se dibuja + escena rodada
+  tl.fromTo("#secE-chk", { attr: { "stroke-dashoffset": 1000 } }, { attr: { "stroke-dashoffset": 0 }, duration: 0.17, ease: "power3.out" }, T_DROP + 3 * SHOT);
+  tl.fromTo("#secE-m4i", { scale: 1.06 }, { scale: 1, duration: 0.25, ease: "vd.land" }, T_DROP + 3 * SHOT);
+  // M5: ¡BUENA!
+  tl.fromTo("#secE-m5i", { scale: 1.2 }, { scale: 1, duration: 0.2, ease: "power4.out" }, T_DROP + 4 * SHOT);
+  // M6: la lista se tacha en cascada
+  tl.fromTo("#secE-m6i", { y: 40 }, { y: -10, duration: 0.25, ease: "none" }, T_DROP + 5 * SHOT);
+  [0, 1, 2, 3, 4].forEach((i) => tl.fromTo("#secE-r" + i, { scale: 0.3, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.1, ease: "vd.land" }, T_DROP + 5 * SHOT + 0.01 + i * 0.03));
+  // M7: JORNADA 1 → 2, la barra avanza
+  tl.fromTo("#secE-m7i", { x: 40 }, { x: -20, duration: 0.25, ease: "none" }, T_DROP + 6 * SHOT);
+  tl.fromTo(["#secE-m7a", "#secE-m7b"], { y: 0 }, { y: -400, duration: 0.14, ease: "power3.inOut" }, T_DROP + 6 * SHOT + 0.05);
+  tl.fromTo("#secE-m7bar", { scaleX: 0.33 }, { scaleX: 0.66, duration: 0.18, ease: "vd.land" }, T_DROP + 6 * SHOT + 0.04);
+
+  // ---- LOGO ----
+  // «Versión definitiva» se abre desde la barra de gel: wdth 62 → 118 + sube del filo
+  tl.fromTo("#secE-word", { fontStretch: "62%", y: 215 }, { fontStretch: "118%", y: 0, duration: 0.75, ease: "vd.settle" }, T_LOGO);
+  // la barra: escribir y preparar ya llegaron; rodar entra con el nombre; entregar se completa en el button
+  tl.fromTo("#secE-sg2", { scaleX: 0 }, { scaleX: 1, duration: 0.42, ease: "vd.land" }, T_LOGO + 0.08);
+  tl.fromTo("#secE-sg3", { scaleX: 0 }, { scaleX: 1, duration: 0.36, ease: "vd.land" }, T_BTN - 0.03);
+  ["#secE-sl0", "#secE-sl1", "#secE-sl2"].forEach((s, i) => tl.fromTo(s, { opacity: 0, y: -14 }, { opacity: 1, y: 0, duration: 0.4, ease: "vd.land" }, T_LOGO + 0.3 + i * 0.07));
+  tl.fromTo("#secE-sl3", { opacity: 0, y: -14 }, { opacity: 1, y: 0, duration: 0.4, ease: "vd.land" }, T_BTN + 0.12);
+  // TALLER sube del filo en la palabra «Taller» de la voz
+  const T_TALLER = C.vo.L15.t - T0 + 1.07;
+  tl.fromTo("#secE-taller", { y: 100, fontStretch: "62%" }, { y: 0, duration: 0.5, ease: "vd.land" }, T_TALLER);
+  // CTA con «…empieza aquí»
+  const T_CTA = C.vo.L15.t - T0 + 1.9;
+  tl.fromTo("#secE-cta", { opacity: 0, y: 40, scale: 0.92 }, { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "vd.land" }, T_CTA);
+  tl.fromTo("#secE-arrow", { x: -12 }, { x: 0, duration: 0.5, ease: "vd.land" }, T_CTA + 0.1);
+  // tagline al acabar la voz (dos golpes)
+  const T_TAG = C.vo.L15.t + C.vo.L15.d - T0 + 0.06;
+  tl.fromTo("#secE-t1", { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.45, ease: "vd.land" }, T_TAG);
+  tl.fromTo("#secE-t2", { opacity: 0, y: 26 }, { opacity: 1, y: 0, duration: 0.45, ease: "vd.land" }, T_TAG + 0.25);
+  // button: la barra se completa en verde, el CTA late una vez, ping verde
+  tl.to("#secE-cta", { scale: 1.05, duration: 0.08, ease: "power2.out" }, T_BTN);
+  tl.to("#secE-cta", { scale: 1, duration: 0.45, ease: "vd.settle" }, T_BTN + 0.08);
+  tl.to("#secE-arrow", { x: 14, duration: 0.1, ease: "power2.out" }, T_BTN);
+  tl.to("#secE-arrow", { x: 0, duration: 0.4, ease: "vd.settle" }, T_BTN + 0.1);
+  tl.fromTo("#secE-ping", { scale: 0.6, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.05, ease: "none" }, T_BTN + 0.3);
+  tl.to("#secE-ping", { scale: 3.4, opacity: 0, duration: 0.6, ease: "power2.out" }, T_BTN + 0.35);
+  // logo: push lento continuo (1.00 → 1.035) que no deja el plano congelado
+  tl.fromTo("#secE-logo", { scale: 1 }, { scale: 1.035, duration: T_END - T_LOGO, ease: "vd.push" }, T_LOGO);
+
+  /* =====================================================================
+     AJOLOTE (rig axE)
+     ===================================================================== */
+  const ax = AxRig(tl, { prefix: "axE", seed: 65 });
+  const AX = "#axE";
+  const raw = (id, v, t) => tl.to("#axE-" + id, Object.assign({ svgOrigin: id === "head" ? "0 -132" : "0 0" }, v), t);
+  const lip = (key, cut) => {
+    const v = C.vo[key], a = Math.round(v.t * FPS), b = Math.round((v.t + (cut || v.d)) * FPS);
+    ax.lipsync(C.env.lv.slice(a + 1, b), FPS, (a + 1) / FPS - T0);
+  };
+  // --- E1: sostiene la claqueta con las dos manos, en tensión ---
+  ax.init(0, { x: 1505, y: 1072, s: 1.1 });
+  tl.set("#axE-shadow", { opacity: 0, svgOrigin: "0 4" }, 0.01);
+  raw("armL", { rotation: -96, duration: 0.01 }, 0.02);
+  raw("armLs", { scaleY: 1.5, duration: 0.01 }, 0.02);
+  raw("armR", { rotation: -30, duration: 0.01 }, 0.02);
+  raw("tilt", { rotation: -6, duration: 0.01 }, 0.02);
+  ax.look(0.03, -5, -3, 0.01);
+  ax.brows(0.03, "worried", 0.01);
+  // «Preparados…» (susurro): sube un poco la claqueta, labios pequeños
+  raw("hop", { y: -10, duration: 0.6, ease: "power2.out" }, 0.05);
+  lip("L13a");
+  ax.mouth(0.92, "hmm", 0.08);
+  // silencio total: contiene la respiración (mejillas, ojos muy abiertos)
+  tl.to("#axE-eyeL, #axE-eyeR", { scale: 1.12, svgOrigin: "0 0", duration: 0.25, ease: "power2.out" }, T_SIL);
+  ax.blush(T_SIL, 1.35, 0.4);
+  ax.look(T_SIL + 0.35, 0, -1, 0.14);   // mira a cámara (lo sabe)
+  ax.look(T_SIL + 0.62, -5, -3, 0.12);  // vuelve a la claqueta
+  // «¡Acción!»: se echa hacia atrás con el palo (anticipación), ceño
+  raw("tilt", { rotation: -9, duration: 0.3, ease: "power2.out" }, T_ACC);
+  raw("hop", { y: -18, duration: 0.3, ease: "power2.out" }, T_ACC);
+  ax.brows(T_ACC, "angry", 0.12);
+  tl.to("#axE-eyeL, #axE-eyeR", { scale: 1, svgOrigin: "0 0", duration: 0.12, ease: "power2.out" }, T_ACC);
+  lip("L13b");
+  // CLAC: ojos apretados, golpe hacia abajo
+  ax.eyes(T_CLAC - 0.03, "sqz");
+  raw("hop", { y: 6, duration: 0.05, ease: "power4.in" }, T_CLAC - 0.05);
+  raw("squash", { scaleX: 1.12, scaleY: 0.88, duration: 0.05, ease: "power2.out" }, T_CLAC);
+  raw("tilt", { rotation: 2, duration: 0.06, ease: "power4.in" }, T_CLAC - 0.06);
+  ax.gillFlick(T_CLAC, 18, 0.6);
+
+  // --- M5: ¡BUENA! salta de alegría (pegatina grande) ---
+  const TM5 = T_DROP + 4 * SHOT;
+  ax.place(TM5 - 0.06, { x: 960, y: 1010, s: 1.25 });
+  tl.set("#axE-hop", { y: 0, svgOrigin: "0 0" }, TM5 - 0.05);
+  tl.set("#axE-tilt", { rotation: 0, svgOrigin: "0 0" }, TM5 - 0.05);
+  ax.expr(TM5 - 0.04, "laugh", 0.01);
+  raw("armL", { rotation: -150, duration: 0.06, ease: "power2.out" }, TM5 - 0.04);
+  raw("armR", { rotation: -150, duration: 0.06, ease: "power2.out" }, TM5 - 0.04);
+  raw("armLs", { scaleY: 1.4, duration: 0.06 }, TM5 - 0.04);
+  raw("armRs", { scaleY: 1.4, duration: 0.06 }, TM5 - 0.04);
+  raw("squash", { scaleX: 0.86, scaleY: 1.16, duration: 0.08, ease: "power2.out" }, TM5);
+  raw("hop", { y: -90, duration: 0.2, ease: "power3.out" }, TM5);
+  raw("tilt", { rotation: 6, duration: 0.2, ease: "power2.out" }, TM5);
+  raw("squash", { scaleX: 1, scaleY: 1, duration: 0.16, ease: "vd.spring" }, TM5 + 0.08);
+  ax.gills(TM5, 22, 0.14, "power2.out");
+
+  // --- STINGER: asoma por abajo con la claqueta mini, mira a cámara, ladea la cabeza ---
+  ax.place(T_STG - 0.3, { x: 1640, y: 1400, s: 1.12 });
+  ["armL", "armR"].forEach((a) => tl.set("#axE-" + a, { rotation: 0, svgOrigin: "0 0" }, T_STG - 0.29));
+  ["armLs", "armRs"].forEach((a) => tl.set("#axE-" + a, { scaleY: 1, svgOrigin: "0 0" }, T_STG - 0.29));
+  tl.set("#axE-hop", { y: 0, svgOrigin: "0 0" }, T_STG - 0.29);
+  tl.set("#axE-tilt", { rotation: 0, svgOrigin: "0 0" }, T_STG - 0.29);
+  tl.set("#axE-squash", { scaleX: 1, scaleY: 1, svgOrigin: "0 0" }, T_STG - 0.29);
+  ax.gills(T_STG - 0.29, 0, 0.01);
+  ax.expr(T_STG - 0.28, "neutral", 0.01);
+  ax.blush(T_STG - 0.28, 1, 0.01);
+  ax.look(T_STG - 0.28, 4, -2, 0.01);
+  // sube del borde inferior (con un pequeño rebote de personaje)
+  tl.fromTo(AX, { y: 1400 }, { y: 1086, duration: 0.42, ease: "back.out(1.7)", immediateRender: false }, T_STG - 0.12);
+  ax.clapIn(T_STG + 0.06);
+  ax.look(T_STG + 0.5, 0, 0, 0.16);  // a cámara
+  lip("L16");
+  raw("head", { rotation: 13, duration: 0.42, ease: "back.out(2.2)" }, T_STG + 0.72); // ladea la cabeza: «¿por seguridad?»
+  ax.brows(T_STG + 0.72, "up", 0.2);
+  // mini-clac a las 65.0 (anticipación −27°, cierre en 2 f)
+  const OPEN = T_MINI - 0.36;
+  raw("clapStick", { rotation: -28, duration: 0.2, ease: "back.out(1.8)" }, OPEN);
+  raw("clapStick", { rotation: 0, duration: 0.07, ease: "power4.in" }, T_MINI - 0.07);
+  raw("clapY", { y: 5, duration: 0.05, ease: "power2.out" }, T_MINI);
+  raw("clapY", { y: 0, duration: 0.2, ease: "power2.out" }, T_MINI + 0.05);
+  raw("squash", { scaleY: 0.9, scaleX: 1.08, duration: 0.05, ease: "power2.out" }, T_MINI);
+  tl.set("#axE-fxImpact", { opacity: 1, svgOrigin: "0 0" }, T_MINI);
+  tl.fromTo("#axE-fxImpact", { scale: 0.5, svgOrigin: "0 0" }, { scale: 1.25, svgOrigin: "0 0", duration: 0.2, ease: "power3.out", immediateRender: false }, T_MINI);
+  ax.eyes(T_MINI, "sqz"); ax.mouth(T_MINI, "grin", 0.06);
+  ax.gillFlick(T_MINI, 16, 0.5);
+
+  ax.base(0, T_SIL);              // en el silencio hasta la respiración se para
+  ax.base(T_DROP, DUR);
+  ax.blinks(T_STG, T_MINI - 0.3);
+
+  /* =====================================================================
+     CONDUCTOR ÚNICO
+     ===================================================================== */
+  const drv = { t: 0 };
+  tl.fromTo(drv, { t: 0 }, { t: DUR, duration: DUR, ease: "none", onUpdate: () => render(drv.t) }, 0);
+  render(0);
+
+  window.__timelines["secE"] = tl;
+})();
+</script>
+</template>
+</body>
+</html>

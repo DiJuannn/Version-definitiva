@@ -1,0 +1,51 @@
+# Tráiler v2 · contrato de construcción
+
+Proyecto final: `/tmp/claude-0/-home-user/a998811e-5362-50ee-99b9-816e224e6aa5/scratchpad/hf/trailer2` (= `$P`).
+Investigación (LÉELA ENTERA, es la biblia): `$S/hf/v2/research/01-referencias.md`, `02-guion.md`, `03-ajolote.md`, `04-arte.md`, `05-coreografia.md`
+(`$S` = `/tmp/claude-0/-home-user/a998811e-5362-50ee-99b9-816e224e6aa5/scratchpad`). Prototipos probados: `$S/hf/v2/coreo/index.html` (cámara one-take, eases `vd.*`, whip, picado al ojo, iris), `$S/hf/v2/coreo-fold/index.html` (plegado en acordeón), `$S/hf/v2/arte/frames.html` + `frame-1..4.png` (dirección de arte de referencia, filtro `#sticker`), `$S/hf/v2/rig/test/index.html` (uso del rig).
+
+## Objetivo de calidad
+El usuario quiere que la gente quede FASCINADA: nivel tráiler de Apple / Linear / Buck / Spider-Verse. Nada de "aparece con fade". Todo entra por causa (cámara llega, objeto puente, el ajolote lo provoca, golpe musical). Cámara viva, profundidad, eases propios, anticipación/overshoot, follow-through, holds de lectura. Cada fotograma pausado debería poder ser un póster. Dirección de arte «MESA DE LUZ» (04-arte.md): superficies planas encendidas (opal #f6f3ea) y floods de gel de color sólido por fase, papel, sombras tintadas, grano; CERO gradientes decorativos.
+
+## Tiempos: única fuente de verdad
+`$P/assets/cues.js` define `window.CUES = { dur, bpm:120, beat:0.5, hits:{...}, vo:{L01:{t,d},...}, env:{fps:30, lv:[...]} }` en tiempo GLOBAL del tráiler.
+La banda sonora final (voz + música + SFX) YA está hecha: `$P/assets/audio/banda.wav` (65,5 s). No la cambies; sincroniza la imagen con ella. Para lipsync usa `CUES.env.lv` (niveles 0–3 a 30 fps, tiempo global) restando el inicio de tu sección: índice = round((tGlobal)*30).
+Locuciones (texto exacto en `$S/tts/lines3.tsv`), inicio global y duración en `CUES.vo`.
+
+## Reparto de secciones (tiempo global)
+| Sección | Archivo | data-start | dur | Contenido (ver 02-guion.md filas y 05 §2.4/§3) |
+|---|---|---|---|---|
+| A | `compositions/secA.html` | 0.0 | 9.0 | Caos (0–5): avalancha de guasaps, excels, post-its, archivos, contador de mensajes; time-freeze 5.0 (grayscale + tape-stop), silencio 5.5–6.5, branquias asoman por la pila, el ajolote salta (L02 6.5 «Vale. Respira. Yo me encargo.»), sopla burbuja y ¡pop! en 8.0 → iris revela la mesa de luz limpia (encendido fluorescente), hold hasta 9.0 (corte seco a negro en 9.0, lo tapa el intertítulo) |
+| — | intertítulo (root) | 9.0 | 1.5 | DEL CAOS… |
+| B | `compositions/secB.html` | 10.5 | 12.5 | Guion: el ajolote atrapa el guion y lo deja caer (L03 10.5); 12.0 escáner que despega palabras a columnas ESCENAS/PERSONAJES/LUGARES con contadores por tick (24/9/6); L04 13.5; 18.0 el papel se pliega en acordeón y se vuelve la tabla Mesa de preparación sobre flood amarillo #f0c94a (L05 18.5); filas se iluminan; 21.0 celda roja «falta», el ajolote se asoma por el borde, la señala (L06 21.0) y guiña en 22.5; corte seco en 23.0 |
+| — | intertítulo (root) | 23.0 | 1.5 | …AL ORDEN… |
+| C | `compositions/secC.html` | 24.5 | 12.0 | Desglose (L07 24.5): texto de guion en Courier Prime, rotulador-gel subraya taza (25.0) / abrigo rojo (26.0) / coche de los ochenta (27.5), cada palabra salta como chip a ATREZZO/VESTUARIO/VEHÍCULOS, SELLO «Apuntado» 29.0 con punch de cámara; whip vertical 29.0 a Planos (sala oscura, caja de luz pequeña); L08 29.5: visor cuyas esquinas son la cámara: PG 30.0 / PM 30.5 / PP 31.0 / PD 31.5 (clics de obturador); 32.5 esquinas se cierran → storyboard de 12 viñetas que se dibujan solas (stroke-dashoffset), el ajolote actúa dentro de una viñeta; L09 34.5 «Y el estoribord, sale solo.» dezoom; termina con whip horizontal saliendo hacia la derecha en 36.25–36.5 |
+| D1 | `compositions/secD1.html` | 36.5 | 3.5 | Moodboard / Biblia visual (L10 37.0): entra con whip desde la izquierda; diapositivas 35 mm / polaroids que se abren en abanico, cuentagotas toma colores, muestras de paleta caen como fichas en 38.0/38.25/38.5/38.75/39.0; termina en corte seco 40.0 |
+| — | intertítulo (root) | 40.0 | 1.5 | …A LA MAGIA. |
+| D2 | `compositions/secD2.html` | 41.5 | 7.5 | Plan (L11 41.5): bloques de escena que encajan (snap) en JORNADA 1/2/3; la hoja de llamada se pliega en avión de papel (~43.2), la cámara lo sigue y llega a una fila de avatares que se iluminan con un ping cada uno en 44.0/44.25/44.5/44.75/45.0; 47.0 se apagan las luces, piloto REC rojo (L12 47.0 «Y entonces… llega el día.»); 47.6–49.0 picado a través del ojo del ajolote hasta negro total en 49.0 |
+| — | intertítulos (root) | 49.0 | 2.0 | UN DÍA. (49.0) / UN EQUIPO. (49.5) / UNA TOMA. (50.0) |
+| E | `compositions/secE.html` | 51.0 | 14.5 | Claqueta gigante en primer plano sobre flood rojo #f0503f + perforaciones (L13a «Preparados…» 51.0 susurrado), palos abiertos, silencio total 52.0, anticipación −34° en 52.9, L13b «¡Acción!» 52.9, CLAC 53.5 (3 f, temblor), negro 53.5–53.75, rayas del palo a pantalla completa barren y destapan el DROP 54.0: montaje a corcheas (0.25 s/plano) del día de rodaje en directo (escena rodada ✓ verde, toma 1-2-3, jornada avanzando, ¡ACCIÓN!); 56.0 rebobinado ◀◀ ultra rápido de miniaturas de todas las estaciones (L14 «Del primer folio, al último plano.») que se condensan en franjas de gel; 58.5 logo «Versión definitiva · Taller» (L15) con abanico de geles y tagline «Prepara la película. No el caos.» + CTA «Empieza tu primer proyecto»; button 62.0; stinger 63.5 el ajolote asoma con claqueta mini (L16 «¿Otra, por seguridad?»), mini-clac 65.0; negro 65.5 |
+
+## Reglas técnicas de cada sección (sub-composición HyperFrames)
+- Lee `/root/.claude/skills/hyperframes-core/SKILL.md` y `references/sub-compositions.md`, `determinism-rules.md`.
+- Archivo `compositions/secX.html` con `<template id="secX-template">` envolviendo `<div data-composition-id="secX" data-width="1920" data-height="1080" data-duration="<dur>">`. `<style>` y `<script>` DENTRO del template. Tiempo LOCAL (0 = inicio de la sección). Un solo `gsap.timeline({paused:true})` registrado al final en `window.__timelines["secX"]`.
+- TODOS los ids y clases propios prefijados con `secX-` (y el rig con prefijo `axX` — ver abajo). Nada de selectores globales sin prefijo (body, .card…) que choquen con otras secciones.
+- Fondo opaco a pantalla completa propio (cada sección pinta su mundo).
+- Fuentes ya en `assets/fonts/`: archivo.woff2 (Archivo variable wdth 62–125, wght 100–900), jbmono.woff2 (JetBrains Mono), courier-400.woff2 y courier-700.woff2 (Courier Prime), marker.woff2 (Permanent Marker). Declara @font-face dentro de tu template con familias prefijadas si hace falta (o las globales "Archivo", "JB Mono", "Courier Prime", "Permanent Marker" — el root también las declarará con esos mismos nombres).
+- Assets compartidos (NO modificar; si necesitas cambiar algo, copia con otro nombre): `assets/gsap.min.js`, `assets/poses.js` (rig), `assets/ajolote.html` (marcado del rig con prefijo `ax`), `assets/arte.css` (tokens y componentes de arte; cópialo dentro de tu template prefijando selectores si lo usas), `assets/cues.js`. El root carga `gsap.min.js`, `poses.js` y `cues.js` en el `<head>`: no hace falta que los cargues tú, pero tu harness de prueba sí.
+- Rig del ajolote: pega `assets/ajolote.html` en tu template sustituyendo el prefijo `ax` por `axX` (A→`axA`, B→`axB`, C→`axC`, D1→`axD1`, D2→`axD2`, E→`axE`) en ids, clases, `url(#…)` y `href="#…"`, y usa `AxRig(tl, { prefix: "axX", seed: … })`. Comprueba que poses.js usa el prefijo en TODOS sus selectores (si encuentras algo cableado a "ax", avísalo en tu resumen y resuélvelo en tu copia local `assets/poses-secX.js` sin tocar el original). Fuera del opal el ajolote lleva el filtro sticker (borde opal 6 px + sombra) — define el filtro con id prefijado. Llama a `base`/`blinks` al final. Lipsync solo en tramos de habla, desde `CUES.env`.
+- Eases propios `vd.*` (05 §1.1): regístralos con `gsap.registerEase` solo si no existen (`if (!gsap.parseEase("vd.land")…)` no sirve: usa una bandera `window.__vdEases`). Prohibido `back.out` genérico salvo en el ajolote.
+- Cámara: patrón de función pura de `t` de 05 §2.2 dentro de tu sección (un conductor `{t}` con onUpdate). Desenfoque de cámara solo en paneos, aplicado a un contenedor fijo.
+- Determinismo: sin Math.random/Date.now; PRNG con semilla. repeat finitos con floor. Sin CSS transform inicial en lo que GSAP anima; `fromTo` con `immediateRender:false` en los repetidos sobre la misma propiedad. Sin `<br>` en texto corrido.
+- Texto sobre rojo siempre en tinta #151519. Contraste AA.
+- Sin WebGL/shaders. 3D CSS sí funciona.
+
+## Cómo probar tu sección (obligatorio, itera hasta que sea espectacular)
+1. Crea un harness en `$S/hf/v2/build/secX/` copiando `$P` (sin `compositions/` de otros): `cp -r $P $S/hf/v2/build/secX` y escribe ahí un `index.html` root (`data-composition-id="main"`, data-duration = tu dur) que cargue gsap/poses/cues en el head, monte `<div data-composition-id="secX" data-composition-src="compositions/secX.html" data-start="0" data-duration="<dur>" data-track-index="1"></div>` y añada el audio de tu tramo: `<audio id="a" src="assets/audio/banda.wav" data-start="0" data-duration="<dur>" data-media-start="<inicio global>" data-track-index="9"></audio>`.
+2. `cd $S/hf/v2/build/secX && npx hyperframes check` → 0 errores (los avisos de solape de texto en movimiento son tolerables; justifica).
+3. `npx hyperframes snapshot --at <muchos tiempos, incl. ±2 f de cada golpe> --no-end -o snaps --describe false` y MIRA los contact sheets con Read. Critica como director/a de arte exigente y corrige. Mínimo 3 rondas.
+4. Opcional pero recomendado: render corto de tu tramo (`npx hyperframes render -o $S/hf/v2/build/secX/secX.mp4`) para revisar el movimiento con fotogramas extraídos con ffmpeg a 10 fps.
+5. Copia la versión final a `$P/compositions/secX.html` (y si creaste `assets/poses-secX.js` u otros assets nuevos, cópialos a `$P/assets/` con nombre prefijado). No toques archivos de otras secciones ni el index.html del root.
+
+## Entrega (respuesta final)
+Resumen corto: qué hiciste, golpes sincronizados, rutas a la hoja de contactos final, problemas pendientes, y cualquier requisito para el root (ids que necesita, assets nuevos, si el inicio/final espera un negro, etc.).

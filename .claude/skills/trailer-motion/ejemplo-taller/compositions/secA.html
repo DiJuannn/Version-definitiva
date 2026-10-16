@@ -1,0 +1,713 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="UTF-8" /><title>secA · Caos → Mesa de luz</title></head>
+<body>
+<template id="secA-template">
+<style>
+  @font-face { font-family: "Archivo"; src: url("assets/fonts/archivo.woff2") format("woff2"); font-weight: 100 900; font-stretch: 62% 125%; }
+  @font-face { font-family: "JB Mono"; src: url("assets/fonts/jbmono.woff2") format("woff2"); font-weight: 100 800; }
+  @font-face { font-family: "Courier Prime"; src: url("assets/fonts/courier-400.woff2") format("woff2"); font-weight: 400; }
+  @font-face { font-family: "Courier Prime"; src: url("assets/fonts/courier-700.woff2") format("woff2"); font-weight: 700; }
+
+  #secA-root { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; background: #0b0b0d; font-family: "Archivo", system-ui, sans-serif; color: #f1eee6; }
+  #secA-root .secA-lens { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; }
+  #secA-root .secA-plane { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; }
+  #secA-root .secA-abs { position: absolute; left: 0; top: 0; }
+
+  /* ---------- L0 · sala + caja de luz (debajo del caos) ---------- */
+  #secA-room { position: absolute; left: -900px; top: -700px; width: 3720px; height: 2480px; background: #0b0b0d; }
+  #secA-box { position: absolute; left: 96px; top: 96px; width: 1728px; height: 888px; background: #26262b; outline: 18px solid #1d1d22; box-shadow: 0 0 0 19px #2e2e35, 0 40px 0 -10px rgba(0, 0, 0, 0.35); }
+  #secA-opal { position: absolute; left: 0; top: 0; width: 1728px; height: 888px; background: #f6f3ea; overflow: hidden; opacity: 0; }
+  #secA-opal .secA-tube { position: absolute; left: 0; width: 1728px; height: 120px; background: #fbf9f3; filter: blur(46px); }
+  #secA-ruler { position: absolute; left: 0; top: 0; width: 1728px; height: 28px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='28'%3E%3Cpath d='M1 0v16M11 0v7M21 0v11M31 0v7' stroke='%23151519' stroke-width='2' opacity='.45'/%3E%3C/svg%3E"); background-repeat: repeat-x; }
+  #secA-root .secA-crop { position: absolute; width: 44px; height: 44px; color: #151519; }
+  #secA-root .secA-crop::before, #secA-root .secA-crop::after { content: ""; position: absolute; background: currentColor; }
+  #secA-root .secA-crop::before { left: 21px; top: 0; width: 2px; height: 44px; }
+  #secA-root .secA-crop::after { top: 21px; left: 0; height: 2px; width: 44px; }
+  #secA-root .secA-crop b { position: absolute; left: 10px; top: 10px; width: 24px; height: 24px; border: 2px solid currentColor; border-radius: 50%; }
+  #secA-root .secA-mono { font-family: "JB Mono", ui-monospace, monospace; font-weight: 500; font-size: 20px; letter-spacing: 0.12em; text-transform: uppercase; white-space: nowrap; }
+  #secA-lab1, #secA-lab2 { position: absolute; top: 1018px; color: #9a978f; opacity: 0; }
+  #secA-lab1 { left: 96px; } #secA-lab2 { left: 1460px; width: 364px; text-align: right; }
+  #secA-lab1 i { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: #8fd0d6; margin-right: 14px; vertical-align: 1px; }
+  #secA-kick { position: absolute; left: 96px; top: 74px; color: #5c5a54; }
+
+  /* ---------- L1 · tablero sucio (lo que el iris recorta) ---------- */
+  #secA-floorbg { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; background: #121215; }
+  #secA-root .secA-dim { position: absolute; left: 0; top: 0; background: #19191d; box-shadow: 0 2px 0 rgba(0, 0, 0, 0.35); }
+  #secA-root .secA-dim i { position: absolute; left: 28px; height: 6px; border-radius: 3px; background: #212126; display: block; }
+
+  /* ---------- L2 · caos (globos, hojas, archivos, post-its, tipografía) ---------- */
+  #secA-root .secA-it { position: absolute; left: 0; top: 0; opacity: 0; }
+  #secA-root .secA-msg { background: #f1eee6; color: #151519; border-radius: 26px 26px 26px 7px; padding: 16px 26px 14px; min-width: 250px;
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.45), 0 28px 44px -18px rgba(0, 0, 0, 0.8); white-space: nowrap; }
+  #secA-root .secA-msg.secA-out { background: #cfe9d8; border-radius: 26px 26px 7px 26px; }
+  #secA-root .secA-msg .secA-from { display: block; font-family: "JB Mono", monospace; font-weight: 600; font-size: 16px; letter-spacing: 0.06em; color: #5c5a54; margin-bottom: 6px; }
+  #secA-root .secA-msg .secA-tx { display: block; font-weight: 600; font-size: 34px; line-height: 1.15; font-stretch: 100%; }
+  #secA-root .secA-msg .secA-tm { display: block; text-align: right; font-family: "JB Mono", monospace; font-size: 15px; color: #5c5a54; margin-top: 4px; letter-spacing: 0.04em; }
+  #secA-root .secA-msg.secA-big .secA-tx { font-size: 46px; font-weight: 700; }
+  #secA-root .secA-msg.secA-big .secA-from { font-size: 18px; }
+  #secA-root .secA-wave { display: flex; align-items: center; gap: 5px; height: 44px; }
+  #secA-root .secA-wave b { display: block; width: 0; height: 0; border-left: 20px solid #151519; border-top: 12px solid transparent; border-bottom: 12px solid transparent; margin-right: 10px; }
+  #secA-root .secA-wave i { display: block; width: 5px; border-radius: 3px; background: #4a4a54; }
+  #secA-root .secA-wave span { font-family: "JB Mono", monospace; font-size: 18px; color: #5c5a54; margin-left: 12px; }
+
+  #secA-root .secA-sheet { width: 520px; background: #1d1d22; border: 2px solid #2e2e35; border-radius: 14px; overflow: hidden; color: #9a978f;
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.45), 0 30px 50px -22px rgba(0, 0, 0, 0.85); }
+  #secA-root .secA-sheet .secA-sh { display: flex; align-items: center; gap: 12px; height: 46px; padding: 0 18px; background: #151519; border-bottom: 2px solid #2e2e35; font-family: "JB Mono", monospace; font-size: 17px; letter-spacing: 0.04em; color: #ece8dc; }
+  #secA-root .secA-sheet .secA-sh u { display: block; width: 18px; height: 18px; border-radius: 4px; background: #4fc47f; text-decoration: none; }
+  #secA-root .secA-grid { display: grid; grid-template-columns: 34px repeat(5, 1fr); }
+  #secA-root .secA-grid span { display: block; height: 34px; line-height: 32px; padding: 0 8px; border-right: 1px solid #2e2e35; border-bottom: 1px solid #2e2e35; font-family: "JB Mono", monospace; font-size: 15px; color: #c9c5bb; white-space: nowrap; overflow: hidden; }
+  #secA-root .secA-grid span.secA-hd { color: #6a6760; background: #18181c; text-align: center; padding: 0; }
+  #secA-root .secA-grid span.secA-y { background: #f0c94a; color: #151519; }
+  #secA-root .secA-grid span.secA-r { color: #f0503f; box-shadow: inset 0 0 0 2px #f0503f; }
+  #secA-root .secA-row { display: contents; }
+
+  #secA-root .secA-file { display: flex; align-items: center; gap: 20px; width: 470px; padding: 18px 22px; background: #f1eee6; color: #151519; border-radius: 14px;
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.45), 0 28px 44px -18px rgba(0, 0, 0, 0.8); }
+  #secA-root .secA-file .secA-ic { position: relative; flex: none; width: 58px; height: 74px; background: #e1ddd2; clip-path: polygon(0 0, 70% 0, 100% 24%, 100% 100%, 0 100%); }
+  #secA-root .secA-file .secA-ic b { position: absolute; left: 0; bottom: 10px; height: 24px; padding: 0 5px; font-family: "JB Mono", monospace; font-size: 13px; font-weight: 700; line-height: 24px; color: #151519; }
+  #secA-root .secA-file .secA-fn { display: block; font-weight: 700; font-size: 27px; line-height: 1.1; white-space: nowrap; }
+  #secA-root .secA-file .secA-fm { display: block; font-family: "JB Mono", monospace; font-size: 15px; color: #5c5a54; margin-top: 6px; letter-spacing: 0.04em; }
+
+  #secA-root .secA-post { width: 236px; height: 220px; padding: 34px 22px 0; background: #e8dcb8; color: #151519; font-weight: 800; font-stretch: 62%; font-size: 50px; line-height: 0.95; text-transform: uppercase;
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.4), 0 26px 40px -18px rgba(0, 0, 0, 0.8); white-space: normal; }
+  #secA-root .secA-post i { position: absolute; left: 62px; top: -14px; width: 112px; height: 30px; background: rgba(241, 238, 230, 0.55); display: block; }
+
+  #secA-root .secA-w { white-space: nowrap; line-height: 0.84; padding: 0.06em 0.1em 0.02em; font-weight: 900; }
+  #secA-root .secA-wd { background: #0b0b0d; color: #f1eee6; box-shadow: 0 0 0 2px #2e2e35, 0 30px 50px -20px rgba(0, 0, 0, 0.9); }
+  #secA-root .secA-wl { background: #f1eee6; color: #151519; box-shadow: 0 30px 50px -20px rgba(0, 0, 0, 0.9); }
+
+  #secA-badge { display: flex; align-items: center; gap: 22px; }
+  #secA-badge b { display: block; width: 168px; height: 168px; border-radius: 50%; background: #f0503f; color: #151519; text-align: center; font-weight: 900; font-stretch: 125%; font-size: 92px; line-height: 168px; letter-spacing: -0.04em;
+    box-shadow: 0 0 0 8px #151519, 0 30px 50px -20px rgba(0, 0, 0, 0.9); }
+  #secA-badge em { display: block; font-style: normal; }
+  #secA-badge span { display: block; background: #0b0b0d; color: #f1eee6; padding: 10px 14px; font-family: "JB Mono", monospace; font-weight: 600; font-size: 20px; letter-spacing: 0.12em; text-transform: uppercase; line-height: 1.25; box-shadow: 0 0 0 2px #2e2e35; white-space: nowrap; }
+
+  /* ---------- papel (pila delantera + folio que cae) ---------- */
+  #secA-root .secA-paper { position: absolute; left: 0; top: 0; background: #e9e5da; color: #151519; font-family: "Courier Prime", "Courier New", monospace; font-size: 19px; line-height: 1.45; padding: 34px 40px; overflow: hidden;
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.4), 0 -18px 40px -14px rgba(0, 0, 0, 0.75); }
+  #secA-root .secA-paper p { margin: 0 0 8px; white-space: nowrap; }
+  #secA-root .secA-paper .secA-sl { font-weight: 700; text-transform: uppercase; }
+  #secA-root .secA-mug { position: absolute; left: 0; top: 0; width: 120px; height: 138px; background: #ece8dc; border-radius: 10px 10px 22px 22px; box-shadow: 0 2px 0 rgba(0, 0, 0, 0.4), 0 24px 40px -16px rgba(0, 0, 0, 0.8); }
+  #secA-root .secA-mug::after { content: ""; position: absolute; right: -38px; top: 30px; width: 46px; height: 62px; border: 12px solid #ece8dc; border-left: 0; border-radius: 0 30px 30px 0; }
+  #secA-root .secA-mug i { position: absolute; left: 22px; top: 50px; font-style: normal; font-family: "JB Mono", monospace; font-weight: 700; font-size: 18px; color: #4a4a54; letter-spacing: 0.08em; }
+
+  /* ---------- burbuja del ajolote + iris ---------- */
+  #secA-bub { position: absolute; left: 0; top: 0; width: 200px; height: 200px; border-radius: 50%; border: 5px solid #f6f3ea; background: rgba(143, 208, 214, 0.34); opacity: 0; z-index: 40; box-shadow: 0 0 0 2px rgba(21, 21, 25, 0.25); }
+  #secA-root .secA-mini { position: absolute; left: 0; top: 0; width: 20px; height: 20px; border-radius: 50%; border: 3px solid #8fd0d6; opacity: 0; z-index: 39; }
+  #secA-bub i { position: absolute; left: 17%; top: 15%; width: 23%; height: 11%; border-radius: 50%; background: rgba(251, 249, 243, 0.85); transform: rotate(-32deg); display: block; }
+  #secA-bub u { position: absolute; right: 17%; bottom: 18%; width: 7%; height: 7%; border-radius: 50%; background: rgba(251, 249, 243, 0.6); display: block; }
+  #secA-root .secA-spark { position: absolute; left: 0; top: 0; width: 46px; height: 6px; margin-top: -3px; border-radius: 3px; background: #f6f3ea; transform-origin: 0 50%; opacity: 0; z-index: 41; }
+  #secA-rim { position: absolute; left: 0; top: 0; width: 100px; height: 100px; border-radius: 50%; border: 7px solid #f6f3ea; opacity: 0; pointer-events: none; }
+  #secA-axwrap #axA { filter: url(#secA-sticker); }
+  #secA-axwrap #axA-shadow ellipse { fill: #3c3426; }
+
+  #secA-grain { position: absolute; left: -60px; top: -60px; width: 2040px; height: 1200px; pointer-events: none; opacity: 0.2; mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='256' height='256' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 256px 256px; }
+</style>
+
+<div id="secA-root" data-composition-id="secA" data-width="1920" data-height="1080" data-duration="9">
+  <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+    <filter id="secA-sticker" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+      <feMorphology in="SourceAlpha" operator="dilate" radius="6" result="d" />
+      <feFlood flood-color="#f6f3ea" /><feComposite in2="d" operator="in" result="o" />
+      <feOffset in="d" dy="5" result="sd" /><feFlood flood-color="#151519" flood-opacity=".22" /><feComposite in2="sd" operator="in" result="s" />
+      <feMerge><feMergeNode in="s" /><feMergeNode in="o" /><feMergeNode in="SourceGraphic" /></feMerge>
+    </filter>
+  </svg>
+
+  <!-- L0 · la mesa de luz, enterrada bajo el caos -->
+  <div class="secA-lens" id="secA-L0" data-layout-allow-overflow>
+    <div class="secA-plane" id="secA-P0" data-layout-allow-overflow>
+      <div id="secA-room"></div>
+      <div id="secA-box">
+        <div id="secA-opal">
+          <i class="secA-tube" style="top: 110px"></i><i class="secA-tube" style="top: 420px"></i><i class="secA-tube" style="top: 720px"></i>
+          <div id="secA-ruler"></div>
+          <div class="secA-crop" style="left: 28px; top: 816px"><b></b></div>
+          <div class="secA-crop" style="left: 1656px; top: 44px"><b></b></div>
+          <div class="secA-crop" style="left: 1656px; top: 816px"><b></b></div>
+          <div class="secA-crop" style="left: 28px; top: 44px"><b></b></div>
+          <div id="secA-kick" class="secA-mono">Versión definitiva · Taller</div>
+        </div>
+      </div>
+      <div id="secA-lab1" class="secA-mono"><i></i>Mesa de luz &nbsp;&nbsp; <span id="secA-tc">00:00:08:00</span></div>
+      <div id="secA-lab2" class="secA-mono">VD-00 · Encendido</div>
+    </div>
+  </div>
+
+  <!-- L1 · tablero oscuro sucio: el iris le abre un agujero -->
+  <div class="secA-lens" id="secA-L1" data-layout-allow-overflow>
+    <div id="secA-floorbg"></div>
+    <div class="secA-plane" id="secA-P1" data-layout-allow-overflow></div>
+  </div>
+
+  <!-- L2 · el caos -->
+  <div class="secA-lens" id="secA-L2" data-layout-allow-overflow data-layout-ignore>
+    <div class="secA-plane" id="secA-P2" data-layout-allow-overflow></div>
+  </div>
+
+  <!-- L3 · el ajolote (siempre a color) -->
+  <div class="secA-lens" id="secA-L3" data-layout-allow-overflow>
+    <div class="secA-plane" id="secA-P3" data-layout-allow-overflow>
+      <div id="secA-axwrap">
+<!-- ===== AJOLOTE v2 · rig SVG (ids con prefijo axA-) =====
+     Pegar dentro del root de la composición. #ax se coloca con GSAP x/y = punto entre los pies.
+     Requiere poses.js (window.AxRig). Generado por build/gen.js -->
+<style>
+  #axA { position: absolute; left: -220px; top: -380px; width: 440px; height: 420px; z-index: 30; pointer-events: none; }
+  #axA-svg { display: block; width: 100%; height: 100%; overflow: visible; }
+  #axA-trail { position: absolute; left: 0; top: 0; width: 1px; height: 1px; z-index: 29; pointer-events: none; }
+  .axA-bub { position: absolute; display: block; left: -10px; top: -10px; width: 20px; height: 20px; border-radius: 50%;
+    border: 2.5px solid rgba(236, 232, 220, 0.6); background: rgba(236, 232, 220, 0.07); opacity: 0; }
+</style>
+<div id="axA-trail"><i class="axA-bub"></i><i class="axA-bub"></i><i class="axA-bub"></i><i class="axA-bub"></i><i class="axA-bub"></i><i class="axA-bub"></i><i class="axA-bub"></i><i class="axA-bub"></i><i class="axA-bub"></i><i class="axA-bub"></i><i class="axA-bub"></i><i class="axA-bub"></i><i class="axA-bub"></i><i class="axA-bub"></i><i class="axA-bub"></i><i class="axA-bub"></i></div>
+<div id="axA">
+<svg id="axA-svg" viewBox="-220 -380 440 420" xmlns="http://www.w3.org/2000/svg" aria-label="Ajolote">
+  <defs>
+    <filter id="axA-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.4"/></filter>
+    <filter id="axA-blur" x="-50%" y="-200%" width="200%" height="500%"><feGaussianBlur stdDeviation="5"/></filter>
+    <clipPath id="axA-clip" clipPathUnits="userSpaceOnUse"><rect id="axA-clipRect" x="-3000" y="-3000" width="6000" height="6000"/></clipPath>
+    <clipPath id="axA-headClip"><path d="M0 -314 C82 -314 134 -276 134 -214 C134 -152 78 -124 0 -124 C-78 -124 -134 -152 -134 -214 C-134 -276 -82 -314 0 -314 Z"/></clipPath>
+    <clipPath id="axA-bodyClip"><path d="M0 -152 C50 -152 76 -108 74 -62 C72 -20 46 -2 0 -2 C-46 -2 -72 -20 -74 -62 C-76 -108 -50 -152 0 -152 Z"/></clipPath>
+    <clipPath id="axA-mouthClip"><use href="#axA-mouth"/></clipPath>
+  </defs>
+  <g id="axA-shadow"><ellipse cx="0" cy="4" rx="96" ry="12" fill="#000" opacity="0.38" filter="url(#axA-blur)"/></g>
+  <g id="axA-all" clip-path="url(#axA-clip)">
+  <g id="axA-hop"><g id="axA-tilt">
+    <g id="axA-flip"><g id="axA-squash"><g id="axA-breath">
+      <path id="axA-tail" d="M28.4 -57.5 C29.9 -57.1 34.6 -56 37.7 -55.5 C40.9 -55.1 44.1 -54.7 47.3 -54.8 C50.5 -54.8 53.7 -55.2 56.9 -55.9 C60 -56.6 63 -57.6 66 -58.8 C68.9 -60 71.8 -61.5 74.5 -63.1 C77.3 -64.7 80 -66.5 82.6 -68.3 C85.2 -70.2 87.7 -72.2 90.3 -74.3 C92.8 -76.4 95.3 -78.7 97.7 -80.9 C100.2 -83.2 102.7 -85.6 105.1 -88 C107.5 -90.4 110 -92.8 112.4 -95.3 C114.8 -97.8 117.2 -100.4 119.5 -103 C121.8 -105.5 124 -108.2 126.2 -110.9 C128.3 -113.6 130.3 -116.3 132.2 -119.2 C134 -122.1 135.8 -125 137.2 -128.1 C138.7 -131.2 140 -134.5 140.9 -137.8 C141.8 -141.2 142.5 -144.7 142.8 -148.3 C143.1 -152 143 -155.7 142.5 -159.4 C142 -163.2 139.4 -170.5 140 -170.7 C140.6 -170.8 144.5 -164 146.2 -160.3 C147.9 -156.7 149.2 -152.7 150.1 -148.7 C151 -144.8 151.6 -140.6 151.7 -136.5 C151.9 -132.3 151.7 -128.1 151.1 -124 C150.5 -119.9 149.6 -115.8 148.4 -111.8 C147.2 -107.8 145.7 -103.9 144.1 -100.1 C142.4 -96.3 140.5 -92.7 138.4 -89.1 C136.4 -85.5 134.2 -82 131.9 -78.6 C129.5 -75.2 127.1 -71.9 124.4 -68.7 C121.8 -65.5 119.1 -62.3 116.2 -59.3 C113.3 -56.2 110.3 -53.2 107.1 -50.4 C103.8 -47.6 100.4 -44.9 96.9 -42.4 C93.3 -39.9 89.6 -37.5 85.7 -35.4 C81.8 -33.3 77.7 -31.4 73.5 -29.7 C69.3 -28.1 64.9 -26.8 60.6 -25.7 C56.2 -24.7 51.7 -23.9 47.2 -23.4 C42.7 -22.9 38.1 -22.7 33.6 -22.8 C29 -22.9 22.2 -23.7 20 -23.9 Z" fill="#f5b8c6" stroke="#d0708a" stroke-width="4" stroke-linejoin="round"/>
+      <path id="axA-tailStripe" d="M47.3 -45.3 C49.1 -45.5 54.5 -45.9 58 -46.6 C61.5 -47.3 65 -48.3 68.4 -49.5 C71.8 -50.7 75.1 -52.2 78.3 -53.8 C81.5 -55.5 84.6 -57.3 87.6 -59.3 C90.6 -61.3 93.5 -63.4 96.3 -65.7 C99.2 -68 101.9 -70.4 104.6 -72.9 C107.3 -75.4 109.9 -78 112.5 -80.6 C115 -83.3 117.5 -86 119.9 -88.8 C122.3 -91.7 124.7 -94.5 126.9 -97.5 C129.1 -100.5 131.3 -103.5 133.2 -106.6 C135.1 -109.8 137 -113 138.5 -116.3 C140.1 -119.6 141.5 -123 142.6 -126.5 C143.7 -130 144.5 -133.7 145 -137.3 C145.4 -141 145.3 -146.6 145.4 -148.5" fill="none" stroke="#e98ca3" stroke-width="5" stroke-linecap="round"/>
+      <path d="M0 -152 C50 -152 76 -108 74 -62 C72 -20 46 -2 0 -2 C-46 -2 -72 -20 -74 -62 C-76 -108 -50 -152 0 -152 Z" fill="#f7c1cc" stroke="#d0708a" stroke-width="4.5"/>
+      <g clip-path="url(#axA-bodyClip)">
+        <ellipse cx="0" cy="-50" rx="47" ry="41" fill="#fde3e8"/>
+        <ellipse cx="0" cy="-134" rx="78" ry="26" fill="#eea3b5" opacity="0.6"/>
+        <path d="M-30 -60 Q0 -54 30 -60 M-26 -38 Q0 -32 26 -38" fill="none" stroke="#eea3b5" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+      </g>
+      <g><ellipse cx="-36" cy="-6" rx="22" ry="11.5" fill="#f7c1cc" stroke="#d0708a" stroke-width="4"/><path d="M-44 -9 L-44 -2 M-34 -9 L-34 -1" stroke="#d0708a" stroke-width="2.4" stroke-linecap="round" opacity="0.7"/></g>
+      <g><ellipse cx="36" cy="-6" rx="22" ry="11.5" fill="#f7c1cc" stroke="#d0708a" stroke-width="4"/><path d="M44 -9 L44 -2 M34 -9 L34 -1" stroke="#d0708a" stroke-width="2.4" stroke-linecap="round" opacity="0.7"/></g>
+      <g id="axA-headY"><g id="axA-head"><g id="axA-headBob"><g id="axA-headBobR">
+        <g><g transform="translate(-104 -262) rotate(-146)"><g id="axA-gL1"><g id="axA-gL1w"><path d="M0 -5.8 Q4.9 -14.9 19.4 -15.2 Q17.4 -9.8 18.8 -8 Q23.7 -14.8 38.2 -15.1 Q36.2 -9.3 37.6 -7.3 Q42.5 -10.4 57 -10.6 Q55 -5.9 56.4 -4.3 Q61.3 -5.2 75.8 -5.4 Q73.8 -2.3 75.2 -1.2 L80 0 L75.2 1.2 Q73.8 2.3 75.8 5.4 Q61.3 5.2 56.4 4.3 Q55 5.9 57 10.6 Q42.5 10.4 37.6 7.3 Q36.2 9.3 38.2 15.1 Q23.7 14.8 18.8 8 Q17.4 9.8 19.4 15.2 Q4.9 14.9 0 5.8 Z" fill="#ff6a45" stroke="#d9452f" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 -2.8 Q36 -9.3 68.8 0 Q36 9.3 4 2.8 Z" fill="#ff8a5e" opacity="0.75"/><path d="M6 0 Q40 -1.5 72 0 M21.6 0 L32 -7.2 M21.6 0 L32 7.2 M40.4 0 L50.8 -6.2 M40.4 0 L50.8 6.2 M59.2 0 L69.6 -3.3 M59.2 0 L69.6 3.3" fill="none" stroke="#b8331f" stroke-width="1.7" stroke-linecap="round" opacity="0.55"/></g></g></g><g transform="translate(-121 -224) rotate(-177)"><g id="axA-gL2"><g id="axA-gL2w"><path d="M0 -6.2 Q5.2 -15.9 21 -16.3 Q19 -10.5 20.7 -8.5 Q25.9 -15.7 41.6 -16.1 Q39.6 -9.9 41.4 -7.8 Q46.6 -11.1 62.3 -11.3 Q60.3 -6.3 62 -4.6 Q67.3 -5.6 83 -5.7 Q81 -2.4 82.7 -1.3 L88 0 L82.7 1.3 Q81 2.4 83 5.7 Q67.3 5.6 62 4.6 Q60.3 6.3 62.3 11.3 Q46.6 11.1 41.4 7.8 Q39.6 9.9 41.6 16.1 Q25.9 15.7 20.7 8.5 Q19 10.5 21 16.3 Q5.2 15.9 0 6.2 Z" fill="#ff6a45" stroke="#d9452f" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 -3 Q39.6 -9.9 75.7 0 Q39.6 9.9 4 3 Z" fill="#ff8a5e" opacity="0.75"/><path d="M6 0 Q44 -1.5 79.2 0 M23.8 0 L35.2 -7.7 M23.8 0 L35.2 7.7 M44.5 0 L55.8 -6.6 M44.5 0 L55.8 6.6 M65.1 0 L76.5 -3.5 M65.1 0 L76.5 3.5" fill="none" stroke="#b8331f" stroke-width="1.7" stroke-linecap="round" opacity="0.55"/></g></g></g><g transform="translate(-113 -186) rotate(152)"><g id="axA-gL3"><g id="axA-gL3w"><path d="M0 -5.4 Q4.7 -13.9 18.6 -14.2 Q16.6 -9.1 17.9 -7.5 Q22.5 -13.8 36.5 -14.1 Q34.5 -8.6 35.7 -6.8 Q40.4 -9.7 54.4 -9.9 Q52.4 -5.5 53.6 -4 Q58.2 -4.9 72.2 -5 Q70.2 -2.1 71.4 -1.1 L76 0 L71.4 1.1 Q70.2 2.1 72.2 5 Q58.2 4.9 53.6 4 Q52.4 5.5 54.4 9.9 Q40.4 9.7 35.7 6.8 Q34.5 8.6 36.5 14.1 Q22.5 13.8 17.9 7.5 Q16.6 9.1 18.6 14.2 Q4.7 13.9 0 5.4 Z" fill="#ff6a45" stroke="#d9452f" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 -2.6 Q34.2 -8.7 65.4 0 Q34.2 8.7 4 2.6 Z" fill="#ff8a5e" opacity="0.75"/><path d="M6 0 Q38 -1.5 68.4 0 M20.5 0 L30.4 -6.7 M20.5 0 L30.4 6.7 M38.4 0 L48.2 -5.8 M38.4 0 L48.2 5.8 M56.3 0 L66.1 -3.1 M56.3 0 L66.1 3.1" fill="none" stroke="#b8331f" stroke-width="1.7" stroke-linecap="round" opacity="0.55"/></g></g></g></g>
+        <g transform="scale(-1 1)"><g transform="translate(-104 -262) rotate(-146)"><g id="axA-gR1"><g id="axA-gR1w"><path d="M0 -5.8 Q4.9 -14.9 19.4 -15.2 Q17.4 -9.8 18.8 -8 Q23.7 -14.8 38.2 -15.1 Q36.2 -9.3 37.6 -7.3 Q42.5 -10.4 57 -10.6 Q55 -5.9 56.4 -4.3 Q61.3 -5.2 75.8 -5.4 Q73.8 -2.3 75.2 -1.2 L80 0 L75.2 1.2 Q73.8 2.3 75.8 5.4 Q61.3 5.2 56.4 4.3 Q55 5.9 57 10.6 Q42.5 10.4 37.6 7.3 Q36.2 9.3 38.2 15.1 Q23.7 14.8 18.8 8 Q17.4 9.8 19.4 15.2 Q4.9 14.9 0 5.8 Z" fill="#ff6a45" stroke="#d9452f" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 -2.8 Q36 -9.3 68.8 0 Q36 9.3 4 2.8 Z" fill="#ff8a5e" opacity="0.75"/><path d="M6 0 Q40 -1.5 72 0 M21.6 0 L32 -7.2 M21.6 0 L32 7.2 M40.4 0 L50.8 -6.2 M40.4 0 L50.8 6.2 M59.2 0 L69.6 -3.3 M59.2 0 L69.6 3.3" fill="none" stroke="#b8331f" stroke-width="1.7" stroke-linecap="round" opacity="0.55"/></g></g></g><g transform="translate(-121 -224) rotate(-177)"><g id="axA-gR2"><g id="axA-gR2w"><path d="M0 -6.2 Q5.2 -15.9 21 -16.3 Q19 -10.5 20.7 -8.5 Q25.9 -15.7 41.6 -16.1 Q39.6 -9.9 41.4 -7.8 Q46.6 -11.1 62.3 -11.3 Q60.3 -6.3 62 -4.6 Q67.3 -5.6 83 -5.7 Q81 -2.4 82.7 -1.3 L88 0 L82.7 1.3 Q81 2.4 83 5.7 Q67.3 5.6 62 4.6 Q60.3 6.3 62.3 11.3 Q46.6 11.1 41.4 7.8 Q39.6 9.9 41.6 16.1 Q25.9 15.7 20.7 8.5 Q19 10.5 21 16.3 Q5.2 15.9 0 6.2 Z" fill="#ff6a45" stroke="#d9452f" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 -3 Q39.6 -9.9 75.7 0 Q39.6 9.9 4 3 Z" fill="#ff8a5e" opacity="0.75"/><path d="M6 0 Q44 -1.5 79.2 0 M23.8 0 L35.2 -7.7 M23.8 0 L35.2 7.7 M44.5 0 L55.8 -6.6 M44.5 0 L55.8 6.6 M65.1 0 L76.5 -3.5 M65.1 0 L76.5 3.5" fill="none" stroke="#b8331f" stroke-width="1.7" stroke-linecap="round" opacity="0.55"/></g></g></g><g transform="translate(-113 -186) rotate(152)"><g id="axA-gR3"><g id="axA-gR3w"><path d="M0 -5.4 Q4.7 -13.9 18.6 -14.2 Q16.6 -9.1 17.9 -7.5 Q22.5 -13.8 36.5 -14.1 Q34.5 -8.6 35.7 -6.8 Q40.4 -9.7 54.4 -9.9 Q52.4 -5.5 53.6 -4 Q58.2 -4.9 72.2 -5 Q70.2 -2.1 71.4 -1.1 L76 0 L71.4 1.1 Q70.2 2.1 72.2 5 Q58.2 4.9 53.6 4 Q52.4 5.5 54.4 9.9 Q40.4 9.7 35.7 6.8 Q34.5 8.6 36.5 14.1 Q22.5 13.8 17.9 7.5 Q16.6 9.1 18.6 14.2 Q4.7 13.9 0 5.4 Z" fill="#ff6a45" stroke="#d9452f" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 -2.6 Q34.2 -8.7 65.4 0 Q34.2 8.7 4 2.6 Z" fill="#ff8a5e" opacity="0.75"/><path d="M6 0 Q38 -1.5 68.4 0 M20.5 0 L30.4 -6.7 M20.5 0 L30.4 6.7 M38.4 0 L48.2 -5.8 M38.4 0 L48.2 5.8 M56.3 0 L66.1 -3.1 M56.3 0 L66.1 3.1" fill="none" stroke="#b8331f" stroke-width="1.7" stroke-linecap="round" opacity="0.55"/></g></g></g></g>
+        <path d="M0 -314 C82 -314 134 -276 134 -214 C134 -152 78 -124 0 -124 C-78 -124 -134 -152 -134 -214 C-134 -276 -82 -314 0 -314 Z" fill="#f7c1cc" stroke="#d0708a" stroke-width="4.5"/>
+        <g clip-path="url(#axA-headClip)">
+          <ellipse cx="0" cy="-116" rx="150" ry="36" fill="#eea3b5" opacity="0.55"/>
+          <path d="M-78 -270 C-66 -292 -30 -302 0 -298 C-26 -292 -56 -282 -70 -262 C-74 -258 -80 -262 -78 -270 Z" fill="#fde3e8" opacity="0.9"/>
+          <circle cx="22" cy="-294" r="5" fill="#fde3e8" opacity="0.85"/>
+        </g>
+        <g id="axA-face">
+          <g transform="translate(-84 -176)"><ellipse id="axA-cheekL" rx="17" ry="10" fill="#ff8aa3" opacity="0.55" filter="url(#axA-soft)"/></g>
+          <g transform="translate(84 -176)"><ellipse id="axA-cheekR" rx="17" ry="10" fill="#ff8aa3" opacity="0.55" filter="url(#axA-soft)"/></g>
+          <g transform="translate(-48 -208)"><g id="axA-eyeL"><g id="axA-openL"><g id="axA-blinkL"><g id="axA-lookL"><ellipse rx="11" ry="13" fill="#2a1520"/><g id="axA-hlL"><circle cx="3.8" cy="-5" r="4.2" fill="#fff"/><circle cx="-3.6" cy="4.6" r="1.9" fill="#fff" opacity="0.85"/></g></g></g></g><path id="axA-happyL" opacity="0" d="M-11 4 Q0 -11 11 4" fill="none" stroke="#2a1520" stroke-width="5" stroke-linecap="round"/><path id="axA-sqzL" opacity="0" d="M-8 -8 L6 0 L-8 8" fill="none" stroke="#2a1520" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path id="axA-winkL" opacity="0" d="M-11 -1 Q0 7 11 -1" fill="none" stroke="#2a1520" stroke-width="5" stroke-linecap="round"/></g></g><g transform="translate(48 -208)"><g id="axA-eyeR"><g id="axA-openR"><g id="axA-blinkR"><g id="axA-lookR"><ellipse rx="11" ry="13" fill="#2a1520"/><g id="axA-hlR"><circle cx="3.8" cy="-5" r="4.2" fill="#fff"/><circle cx="-3.6" cy="4.6" r="1.9" fill="#fff" opacity="0.85"/></g></g></g></g><path id="axA-happyR" opacity="0" d="M-11 4 Q0 -11 11 4" fill="none" stroke="#2a1520" stroke-width="5" stroke-linecap="round"/><path id="axA-sqzR" opacity="0" d="M8 -8 L-6 0 L8 8" fill="none" stroke="#2a1520" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path id="axA-winkR" opacity="0" d="M-11 -1 Q0 7 11 -1" fill="none" stroke="#2a1520" stroke-width="5" stroke-linecap="round"/></g></g>
+          <g transform="translate(-48 -238)"><g id="axA-browL"><path id="axA-browLr" d="M-9 2 Q-1 -3 9 0" fill="none" stroke="#c05f7b" stroke-width="4.2" stroke-linecap="round" opacity="0.8"/></g></g><g transform="translate(48 -238) scale(-1 1)"><g id="axA-browR"><path id="axA-browRr" d="M-9 2 Q-1 -3 9 0" fill="none" stroke="#c05f7b" stroke-width="4.2" stroke-linecap="round" opacity="0.8"/></g></g>
+          <path id="axA-mouth" d="M-17 -170 C-11 -162 11 -162 17 -170 C11 -151 -11 -151 -17 -170 Z" fill="#7a1f37" stroke="#7a1f37" stroke-width="2" stroke-linejoin="round"/>
+          <ellipse cx="0" cy="-138" rx="13" ry="9" fill="#ff7f99" clip-path="url(#axA-mouthClip)"/>
+        </g>
+      </g></g></g></g>
+      <g transform="translate(0 -72) scale(1.15)"><g id="axA-clapY"><g id="axA-clap" opacity="0">
+        <rect x="-60" y="-26" width="120" height="68" rx="7" fill="#1b1b20" stroke="#0b0b0d" stroke-width="3"/>
+        <rect x="-60" y="-26" width="120" height="14" rx="3" fill="#ece8dc"/>
+        <path d="M-54 -26 L-42 -26 L-48 -12 L-60 -12 Z M-30 -26 L-18 -26 L-24 -12 L-36 -12 Z M-6 -26 L6 -26 L0 -12 L-12 -12 Z M18 -26 L30 -26 L24 -12 L12 -12 Z M42 -26 L54 -26 L48 -12 L36 -12 Z" fill="#1b1b20"/>
+        <line x1="-52" y1="12" x2="52" y2="12" stroke="#4a4a54" stroke-width="1.5"/>
+        <line x1="0" y1="-6" x2="0" y2="36" stroke="#4a4a54" stroke-width="1.5"/>
+        <text x="-26" y="6" text-anchor="middle" font-family="JB Mono, monospace" font-size="9" fill="#9a978f">ESCENA</text>
+        <text x="26" y="6" text-anchor="middle" font-family="JB Mono, monospace" font-size="9" fill="#9a978f">TOMA</text>
+        <text x="-26" y="31" text-anchor="middle" font-family="Archivo, sans-serif" font-weight="800" font-size="17" fill="#f0c94a">1</text>
+        <text x="26" y="31" text-anchor="middle" font-family="Archivo, sans-serif" font-weight="800" font-size="17" fill="#ece8dc">1</text>
+        <g transform="translate(-60 -28)"><g id="axA-clapStick">
+          <rect x="0" y="-14" width="120" height="14" rx="3" fill="#ece8dc" stroke="#0b0b0d" stroke-width="2"/>
+          <path d="M-6 -14 L6 -14 L12 0 L0 0 Z M18 -14 L30 -14 L36 0 L24 0 Z M42 -14 L54 -14 L60 0 L48 0 Z M66 -14 L78 -14 L84 0 L72 0 Z M90 -14 L102 -14 L108 0 L96 0 Z" fill="#1b1b20"/>
+          <circle cx="5" cy="-1" r="3" fill="#4a4a54"/>
+        </g></g>
+      </g></g></g>
+      <g transform="translate(-66 -106) scale(-1 1) rotate(-9)"><g id="axA-armL"><g id="axA-armLw"><g id="axA-armLs"><g id="axA-fingerL" opacity="0"><path d="M2 44 L3 68" stroke="#d0708a" stroke-width="13" stroke-linecap="round"/><path d="M2 44 L3 68" stroke="#f7c1cc" stroke-width="7.5" stroke-linecap="round"/></g><path d="M-11 -4 C-12 10 -11 22 -10 31 C-15 37 -15 45 -10 48 C-8 50 -4 50 -3 47 C-2 52 3 54 5 50 C7 53 12 51 12 47 C16 46 18 40 14 34 C12 24 12 10 11 -4 C11 -10 -11 -10 -11 -4 Z" fill="#f7c1cc" stroke="#d0708a" stroke-width="4" stroke-linejoin="round"/><path d="M-3 47 C-3 44 -2 42 -1 41 M5 50 C5 46 5 44 5 42" fill="none" stroke="#d0708a" stroke-width="2.2" stroke-linecap="round" opacity="0.75"/></g></g></g></g>
+      <g transform="translate(66 -106) rotate(-9)"><g id="axA-armR"><g id="axA-armRw"><g id="axA-armRs"><g id="axA-fingerR" opacity="0"><path d="M2 44 L3 68" stroke="#d0708a" stroke-width="13" stroke-linecap="round"/><path d="M2 44 L3 68" stroke="#f7c1cc" stroke-width="7.5" stroke-linecap="round"/></g><path d="M-11 -4 C-12 10 -11 22 -10 31 C-15 37 -15 45 -10 48 C-8 50 -4 50 -3 47 C-2 52 3 54 5 50 C7 53 12 51 12 47 C16 46 18 40 14 34 C12 24 12 10 11 -4 C11 -10 -11 -10 -11 -4 Z" fill="#f7c1cc" stroke="#d0708a" stroke-width="4" stroke-linejoin="round"/><path d="M-3 47 C-3 44 -2 42 -1 41 M5 50 C5 46 5 44 5 42" fill="none" stroke="#d0708a" stroke-width="2.2" stroke-linecap="round" opacity="0.75"/></g></g></g></g>
+    </g></g></g>
+    <g id="axA-fx">
+      <g transform="translate(128 -340) scale(1.5)"><g id="axA-fxBangY"><g id="axA-fxBang" opacity="0"><path d="M-7 -34 L7 -34 L4 2 L-4 2 Z" fill="#f0c94a" stroke="#0b0b0d" stroke-width="3" stroke-linejoin="round"/><circle cx="0" cy="13" r="6" fill="#f0c94a" stroke="#0b0b0d" stroke-width="3"/></g></g></g>
+      <g transform="translate(98 -256)"><g id="axA-fxSpark" opacity="0"><path d="M0 -16 Q2 -2 16 0 Q2 2 0 16 Q-2 2 -16 0 Q-2 -2 0 -16 Z" fill="#fff4c4"/></g></g>
+      <g transform="translate(118 -306)"><circle id="axA-th1" r="6" fill="#ece8dc" opacity="0"/></g>
+      <g transform="translate(142 -334)"><circle id="axA-th2" r="9" fill="#ece8dc" opacity="0"/></g>
+      <g transform="translate(174 -366)"><circle id="axA-th3" r="13" fill="#ece8dc" opacity="0"/></g>
+      <g transform="translate(0 -60)"><g id="axA-fxImpact" opacity="0" stroke="#f0c94a" stroke-width="5" stroke-linecap="round" fill="none">
+        <path d="M-84 -40 L-102 -54"/><path d="M-90 -6 L-112 -6"/><path d="M-84 26 L-102 40"/>
+        <path d="M84 -40 L102 -54"/><path d="M90 -6 L112 -6"/><path d="M84 26 L102 40"/>
+      </g></g>
+      <g transform="translate(0 -324) scale(1 0.36)"><g id="axA-fxStars" opacity="0">
+        <path transform="translate(80 0)" d="M0 -13 L3.2 -4.4 L12.4 -4 L5.2 1.7 L7.6 10.5 L0 5.5 L-7.6 10.5 L-5.2 1.7 L-12.4 -4 L-3.2 -4.4 Z" fill="#f0c94a"/>
+        <path transform="translate(-40 69)" d="M0 -11 L2.6 -3.6 L10.5 -3.4 L4.3 1.4 L6.5 8.9 L0 4.5 L-6.5 8.9 L-4.3 1.4 L-10.5 -3.4 L-2.6 -3.6 Z" fill="#ece8dc"/>
+        <path transform="translate(-40 -69)" d="M0 -12 L2.9 -4 L11.4 -3.7 L4.8 1.5 L7.1 9.7 L0 5 L-7.1 9.7 L-4.8 1.5 L-11.4 -3.7 L-2.9 -4 Z" fill="#f0c94a"/>
+      </g></g>
+      <g transform="translate(118 -262)"><g id="axA-fxSweatY"><path id="axA-fxSweat" opacity="0" d="M0 -12 C6 -2 9 3 9 7 C9 12 5 15 0 15 C-5 15 -9 12 -9 7 C-9 3 -6 -2 0 -12 Z" fill="#9cc2ff" stroke="#5b86c9" stroke-width="2"/></g></g>
+      <g transform="translate(0 -10) scale(1.1 0.7)"><g id="axA-fxImpact2" opacity="0" stroke="#f0c94a" stroke-width="5" stroke-linecap="round" fill="none">
+        <path d="M-84 -40 L-102 -54"/><path d="M-90 -6 L-112 -6"/><path d="M-84 26 L-102 40"/>
+        <path d="M84 -40 L102 -54"/><path d="M90 -6 L112 -6"/><path d="M84 26 L102 40"/>
+      </g></g>
+    </g>
+  </g></g>
+  </g>
+</svg>
+</div>
+
+      </div>
+      <div id="secA-bub"><i></i><u></u></div>
+    </div>
+  </div>
+
+  <!-- L4 · la pila delantera (escondite) -->
+  <div class="secA-lens" id="secA-L4" data-layout-allow-overflow data-layout-ignore>
+    <div class="secA-plane" id="secA-P4" data-layout-allow-overflow></div>
+  </div>
+
+  <!-- L5 · primer término (parallax 1.25) + el folio que cae -->
+  <div class="secA-lens" id="secA-L5" data-layout-allow-overflow data-layout-ignore>
+    <div class="secA-plane" id="secA-P5" data-layout-allow-overflow></div>
+  </div>
+
+  <div id="secA-rim"></div>
+  <div id="secA-grain" data-layout-allow-overflow></div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  const DUR = 9, FPS = 30, FZ = 5.0, POPT = 8.0;
+  const CUES = window.CUES || { env: { fps: 30, lv: [] } };
+  const $ = (id) => document.getElementById("secA-" + id);
+
+  /* ---------------- curvas propias vd.* (05 §1.1) ---------------- */
+  function bez(x1, y1, x2, y2) {
+    const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
+    const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+    const sx = (t) => ((ax * t + bx) * t + cx) * t, sy = (t) => ((ay * t + by) * t + cy) * t;
+    const dx = (t) => (3 * ax * t + 2 * bx) * t + cx;
+    return (p) => {
+      if (p <= 0) return 0; if (p >= 1) return 1;
+      let t = p;
+      for (let i = 0; i < 6; i++) { const e = sx(t) - p, d = dx(t); if (Math.abs(e) < 1e-6 || Math.abs(d) < 1e-6) break; t -= e / d; }
+      if (t < 0 || t > 1) { let lo = 0, hi = 1; t = p; for (let i = 0; i < 30; i++) { sx(t) < p ? (lo = t) : (hi = t); t = (lo + hi) / 2; } }
+      return sy(t);
+    };
+  }
+  const springF = (z = 0.42, w = 13) => (p) => (p >= 1 ? 1 : 1 - Math.exp(-z * w * p) * Math.cos(w * Math.sqrt(1 - z * z) * p));
+  if (!window.__vdEases) {
+    const EASE = {
+      "vd.land": bez(0.16, 1, 0.3, 1), "vd.settle": bez(0, 0.65, 0.51, 0.99), "vd.glide": bez(0.7, 0, 0.2, 1),
+      "vd.push": bez(0.33, 0, 0.67, 1), "vd.whip": bez(0.86, 0, 0.12, 1), "vd.dive": bez(0.55, 0, 0.95, 0.55),
+      "vd.exit": bez(0.7, 0, 0.84, 0), "vd.spring": springF(),
+      "vd.fold": (p) => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2),
+    };
+    Object.keys(EASE).forEach((k) => gsap.registerEase(k, EASE[k]));
+    window.__vdEases = true;
+  }
+  const EZ = (n) => gsap.parseEase(n);
+  const eLand = EZ("vd.land"), eGlide = EZ("vd.glide"), eExit = EZ("vd.exit"), eSettle = EZ("vd.settle");
+  const c01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
+  const lerp = (a, b, e) => a + (b - a) * e;
+  const outPow = (p, k) => 1 - Math.pow(1 - c01(p), k);
+
+  function mulberry32(a) { return function () { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  const rnd = mulberry32(20261016);
+
+  /* ---------------- pings (audio/build.py: t_k = 5·(1−0.82^k)) ---------------- */
+  const PINGS = [];
+  for (let k = 0; ; k++) { const tk = 5 * (1 - Math.pow(0.82, k)); if (tk >= 4.95) break; PINGS.push(tk); }
+  // contador de no leídos: 1 → 43 en el último ping
+  const COUNT = [];
+  PINGS.forEach((_, k) => { const v = k === 0 ? 1 : Math.max(COUNT[k - 1] + 1, Math.round(1 + 42 * Math.pow(k / (PINGS.length - 1), 1.35))); COUNT.push(v); });
+  COUNT[COUNT.length - 1] = 43;
+
+  /* ---------------- cámara: función pura de t (05 §2.2) ---------------- */
+  const K = [
+    { t: 0.0, x: 960, y: 530, s: 1.85, r: -0.6 },
+    { t: 0.5, x: 960, y: 532, s: 1.92, r: -0.4, ease: "vd.push" },
+    { t: 0.88, x: 960, y: 548, s: 1.0, r: 0.5, ease: "vd.land" },     // golpe "Cuarenta": la cámara salta atrás
+    { t: 5.0, x: 960, y: 566, s: 1.085, r: 0, ease: "none" },        // presión: push lineal
+    { t: 6.32, x: 960, y: 566, s: 1.085, r: 0, ease: "none" },       // freeze: cámara quieta
+    { t: 7.25, x: 1030, y: 735, s: 1.22, r: 0, ease: "vd.glide" },   // baja con el salto
+    { t: 8.0, x: 1040, y: 728, s: 1.27, r: 0, ease: "vd.push" },
+    { t: 8.85, x: 960, y: 540, s: 1.0, r: 0, ease: "vd.land" },      // ¡pop! → dezoom a la mesa
+    { t: 9.0, x: 960, y: 540, s: 1.0, r: 0, ease: "none" },
+  ];
+  function cam(t) {
+    if (t >= K[K.length - 1].t) return Object.assign({}, K[K.length - 1]);
+    let i = 1;
+    for (let k = 1; k < K.length; k++) if (t < K[k].t) { i = k; break; }
+    const a = K[i - 1], b = K[i];
+    const p = c01((t - a.t) / (b.t - a.t || 1));
+    const e = EZ(b.ease || "none")(p);
+    const s = Math.exp(lerp(Math.log(a.s), Math.log(b.s), e));
+    return { x: lerp(a.x, b.x, e), y: lerp(a.y, b.y, e), s, r: lerp(a.r, b.r, e) };
+  }
+  // peso de cámara en mano: nerviosa en el caos, se para en el freeze, respira al final
+  function handW(t) {
+    if (t < FZ) return 1.0 + 1.7 * Math.pow(t / FZ, 2);
+    if (t < FZ + 0.2) return 2.7 * (1 - (t - FZ) / 0.2);
+    if (t < 6.4) return 0;
+    return 0.55 * c01((t - 6.4) / 0.6);
+  }
+  const hand = (t) => ({
+    x: 2.6 * Math.sin(2 * Math.PI * 0.31 * t + 1.3) + 1.1 * Math.sin(2 * Math.PI * 0.77 * t + 0.4) + 0.9 * Math.sin(2 * Math.PI * 2.3 * t + 2.2),
+    y: 1.9 * Math.sin(2 * Math.PI * 0.23 * t + 2.1) + 0.9 * Math.sin(2 * Math.PI * 0.91 * t + 5.2) + 0.7 * Math.sin(2 * Math.PI * 2.7 * t + 0.6),
+    r: 0.12 * Math.sin(2 * Math.PI * 0.17 * t + 0.7),
+  });
+  // golpe de cámara por ping (sube en 2 f, cae exponencial) — se toma el máximo, no la suma
+  const pulse = (u) => (u < 0 ? 0 : u < 0.066 ? u / 0.066 : Math.exp(-(u - 0.066) / 0.13));
+  function camAt(t) {
+    const c = cam(t), tc = Math.min(t, FZ), w = handW(t), n = hand(t < FZ + 0.2 ? tc : t);
+    let pk = 0, jx = 0, jy = 0;
+    if (t < FZ + 1e-6) PINGS.forEach((tk, k) => { const v = pulse(tc - tk) * (k < 12 ? 1 : 0.55); if (v > pk) { pk = v; jx = Math.sin(k * 2.1) * 7 * v; jy = Math.cos(k * 1.3) * 5 * v; } });
+    const pop = 0.045 * pulse(t - POPT);
+    c.s *= 1 + 0.011 * pk + pop;
+    c.nx = n.x * w + jx; c.ny = n.y * w + jy; c.nr = n.r * w;
+    return c;
+  }
+  const PLANES = [["P0", 1], ["P1", 0.85], ["P2", 1], ["P3", 1], ["P4", 1.06], ["P5", 1.25]].map(([id, d]) => [$(id), d]);
+  function applyCam(c) {
+    for (const [el, d] of PLANES) {
+      const s = 1 + (c.s - 1) * d, cx = 960 + (c.x - 960) * d, cy = 540 + (c.y - 540) * d;
+      el.style.transform = `translate(${(960 + c.nx * d).toFixed(2)}px,${(540 + c.ny * d).toFixed(2)}px) rotate(${(c.r * d + c.nr).toFixed(3)}deg) scale(${s.toFixed(4)}) translate(${(-cx).toFixed(2)}px,${(-cy).toFixed(2)}px)`;
+    }
+  }
+  function toScreen(c, wx, wy) {
+    const a = ((c.r + c.nr) * Math.PI) / 180, dx = (wx - c.x) * c.s, dy = (wy - c.y) * c.s;
+    return [960 + c.nx + dx * Math.cos(a) - dy * Math.sin(a), 540 + c.ny + dx * Math.sin(a) + dy * Math.cos(a)];
+  }
+
+  /* ---------------- construcción del caos (coordenadas de autor) ---------------- */
+  const P1 = $("P1"), P2 = $("P2"), P4 = $("P4"), P5 = $("P5");
+  const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+  function mk(parent, cls, html) { const d = document.createElement("div"); d.className = cls; d.innerHTML = html; parent.appendChild(d); return d; }
+
+  // suelo: papeles apagados sobre el tablero (parallax 0.85)
+  [[160, 120, 520, 380, -6], [700, 40, 460, 330, 4], [1240, 90, 560, 420, -3], [80, 600, 480, 360, 7], [620, 520, 600, 430, -2], [1300, 600, 520, 400, 5], [960, 820, 520, 380, -8], [1600, 300, 420, 520, 9]].forEach(([x, y, w, h, r], i) => {
+    const d = mk(P1, "secA-dim", Array.from({ length: Math.floor(h / 46) - 1 }, (_, j) => `<i style="top:${36 + j * 46}px;width:${Math.round(w * (0.45 + 0.4 * ((i * 7 + j * 3) % 5) / 5))}px"></i>`).join(""));
+    d.style.width = w + "px"; d.style.height = h + "px"; d.style.transform = `translate(${x}px,${y}px) rotate(${r}deg)`;
+  });
+
+  const ITEMS = []; // {el, t0, x, y, r, kind, plane, d, dur}
+  const ROWS = [
+    ["J1", "6:00", "INT", "Casa", "OK"], ["J2", "6:30?", "EXT", "Playa", "??"], ["J2", "7:00", "INT", "Furgo", "#¡REF!"],
+    ["J3", "??", "EXT", "Faro", "v7"], ["J3", "6:00", "INT", "Bar", "v8"], ["J4", "—", "EXT", "Playa", "#¡REF!"],
+    ["J4", "7:30", "INT", "Cocina", "??"], ["J5", "6:00", "EXT", "Faro", "v8_bis"], ["J5", "6:15", "INT", "Casa", "#N/D"],
+  ];
+  const sheetHTML = (name, seed) => {
+    let g = `<span class="secA-hd"></span><span class="secA-hd">A</span><span class="secA-hd">B</span><span class="secA-hd">C</span><span class="secA-hd">D</span><span class="secA-hd">E</span>`;
+    ROWS.forEach((r, i) => {
+      const rr = ROWS[(i + seed) % ROWS.length];
+      g += `<div class="secA-row" data-r="${i}">` + `<span class="secA-hd secA-c" data-r="${i}">${i + 1}</span>` +
+        rr.map((v, j) => `<span class="secA-c${v.indexOf("#") === 0 ? " secA-r" : (i * 3 + j + seed) % 7 === 0 ? " secA-y" : ""}" data-r="${i}">${esc(v)}</span>`).join("") + `</div>`;
+    });
+    return `<div class="secA-sh"><u></u>${esc(name)}</div><div class="secA-grid">${g}</div>`;
+  };
+  const msgHTML = (o) => `<span class="secA-from">${esc(o.s || "")}</span><span class="secA-tx">${esc(o.tx)}</span><span class="secA-tm">${o.tm || "23:47"} ✓✓</span>`;
+  const voiceHTML = (o) => `<span class="secA-from">${esc(o.s)}</span><span class="secA-wave"><b></b>${[14, 26, 38, 22, 30, 44, 18, 34, 26, 40, 16, 28, 36, 20, 12, 24].map((h) => `<i style="height:${h}px"></i>`).join("")}<span>0:42</span></span><span class="secA-tm">${o.tm} ✓✓</span>`;
+  const fileHTML = (o) => `<span class="secA-ic"><b style="background:${o.c}">${o.ty}</b></span><span><span class="secA-fn">${esc(o.n)}</span><span class="secA-fm">${o.m} · hace 2 min</span></span>`;
+
+  const DEF = [
+    [0, "P2", 960, 540, -1.5, "msg", { s: "LUCÍA · PRODUCCIÓN", tx: "¿Quién trae la escalera?", tm: "23:41", big: 1 }],
+    [1, "P2", 1330, 262, 3, "msg", { s: "DANI · ARTE", tx: "¿el plan es el v7 o el v8?", tm: "23:42" }],
+    [2, "P2", 1560, 830, 5, "sheet", { n: "planing.xlsx", seed: 0 }],
+    [3, "P2", 1450, 790, -4, "sheet", { n: "planing (2).xlsx", seed: 3 }],
+    [4, "P2", 600, 300, -3, "msg", { s: "TÚ", tx: "mañana a las 6??", tm: "23:44", out: 1 }],
+    [5, "P2", 430, 905, -5, "file", { n: "guion_FINAL_v7_ahorasí.docx", ty: "DOCX", c: "#8fd0d6", m: "2,4 MB" }],
+    [6, "P2", 360, 236, 2, "msg", { s: "IKER · SONIDO", tx: "¿alguien tiene el guion bueno?", tm: "23:45" }],
+    [7, "P2", 1590, 418, 6, "file", { n: "NO BORRAR.pdf", ty: "PDF", c: "#f0503f", m: "880 KB" }],
+    [8, "P2", 230, 820, -9, "post", { tx: "¿ESCA­LERA?" }],
+    [9, "P2", 1210, 150, -2, "msg", { s: "TÚ", tx: "te paso el excel", tm: "23:46", out: 1 }],
+    [10, "P2", 1650, 880, 3, "sheet", { n: "planing_FINAL.xlsx", seed: 5 }],
+    [11, "P2", 560, 985, 4, "voice", { s: "LUCÍA · PRODUCCIÓN", tm: "23:47" }],
+    [12, "P2", 1735, 570, 8, "post", { tx: "LLAMAR A MARCO" }],
+    [13, "P2", 820, 392, -4, "msg", { s: "DANI · ARTE", tx: "¿la esc. 12 es INT o EXT?", tm: "23:47" }],
+    [14, "P2", 1160, 470, -6, "file", { n: "planing (2).xlsx", ty: "XLSX", c: "#4fc47f", m: "312 KB" }],
+    [15, "P2", 420, 668, 3, "msg", { s: "MARCO", tx: "llego tarde", tm: "23:48" }],
+    [16, "P2", 1460, 965, -3, "msg", { s: "IKER · SONIDO", tx: "??", tm: "23:48" }],
+    [17, "P2", 1010, 252, 5, "msg", { s: "MARTA · FOTO", tx: "¿v8 o v8_bis?", tm: "23:48" }],
+    [18, "P2", 680, 160, 10, "post", { tx: "v7 ≠ v8" }],
+    [19, "P2", 200, 500, -4, "msg", { s: "DANI · ARTE", tx: "¿hola?", tm: "23:49" }],
+    [20, "P5", 1400, 340, -5, "msg", { s: "LUCÍA · PRODUCCIÓN", tx: "¿¿alguien??", tm: "23:49", big: 1 }],
+    [21, "P5", 330, 905, 4, "msg", { s: "MARCO", tx: "ok pero ¿cuál?", tm: "23:49", big: 1 }],
+    [22, "P5", 1720, 1000, -7, "msg", { s: "IKER · SONIDO", tx: "!!", tm: "23:49", big: 1 }],
+    [23, "P5", 760, 112, 3, "msg", { s: "MARTA · FOTO", tx: "¿y la escalera?", tm: "23:50", big: 1 }],
+  ];
+  DEF.forEach(([k, pl, x, y, r, kind, o]) => {
+    const parent = pl === "P5" ? P5 : P2;
+    let el;
+    if (kind === "msg") el = mk(parent, "secA-it secA-msg" + (o.out ? " secA-out" : "") + (o.big ? " secA-big" : ""), msgHTML(o));
+    else if (kind === "voice") el = mk(parent, "secA-it secA-msg", voiceHTML(o));
+    else if (kind === "sheet") el = mk(parent, "secA-it secA-sheet", sheetHTML(o.n, o.seed));
+    else if (kind === "file") el = mk(parent, "secA-it secA-file", fileHTML(o));
+    else el = mk(parent, "secA-it secA-post", `<i></i>${esc(o.tx)}`);
+    const it = { el, t0: PINGS[k], x, y, r, kind, d: pl === "P5" ? 1.25 : 1, base: pl === "P5" ? 1.12 : 1, dur: kind === "sheet" ? 0.36 : 0.3, k };
+    if (kind === "sheet") it.rows = Array.from(el.querySelectorAll(".secA-c")).reduce((m, c) => { const i = +c.getAttribute("data-r"); (m[i] = m[i] || []).push(c); return m; }, []);
+    ITEMS.push(it);
+  });
+
+  // tipografía-golpe sincronizada con la locución L01 (0.5 s)
+  const WORDS = [
+    [0.50, 285, 196, -4, "40", "secA-wd", 290, 125],
+    [0.86, 950, 212, -4, "WHATSAPPS.", "secA-wl", 176, 62],
+    [1.33, 1175, 492, 4, "3", "secA-wd", 290, 125],
+    [1.50, 1545, 512, 4, "EXCELS.", "secA-wl", 176, 62],
+    [2.53, 300, 404, -2, "Y NADIE SABE", "secA-wd", 54, 100],
+    [3.30, 600, 492, -2, "¿QUIÉN TRAE", "secA-wd", 138, 100],
+    [3.68, 650, 624, -2, "LA ESCALERA?", "secA-wl", 138, 100],
+  ];
+  WORDS.forEach(([t0, x, y, r, tx, cls, fs, wd]) => {
+    const el = mk(P2, "secA-it secA-w " + cls, esc(tx));
+    el.style.fontSize = fs + "px"; el.style.fontStretch = wd + "%";
+    if (fs < 80) { el.style.fontWeight = "800"; el.style.letterSpacing = "0.04em"; }
+    ITEMS.push({ el, t0, x, y, r, kind: "word", d: 1, base: 1, dur: 0.26 });
+  });
+
+  // contador de no leídos
+  const badge = mk(P2, "secA-it", `<div id="secA-badge"><b id="secA-num">1</b><span><em>mensajes</em><em>sin leer</em></span></div>`);
+  const BADGE = { el: badge, t0: PINGS[1], x: 1665, y: 205, r: 2, kind: "badge", d: 1, base: 1, dur: 0.3 };
+  ITEMS.push(BADGE);
+  const numEl = $("num");
+
+  // orden de apilado = orden de llegada (lo último, encima)
+  ITEMS.sort((a, b) => a.t0 - b.t0).forEach((it, i) => { it.el.style.zIndex = String(10 + i); });
+  BADGE.el.style.zIndex = "400";
+
+  // empujones: cada llegada desplaza a los que ya estaban (función pura del tiempo)
+  ITEMS.forEach((a) => {
+    a.push = [];
+    ITEMS.forEach((b) => {
+      if (b === a || b.t0 <= a.t0 + 1e-6 || b.d !== a.d) return;
+      const dx = a.x - b.x, dy = a.y - b.y, L = Math.hypot(dx, dy) || 1;
+      const A = 34 * Math.exp(-L / 360);
+      if (A > 1.2) a.push.push({ t: b.t0, ux: dx / L, uy: dy / L, A, rr: (rnd() - 0.5) * 0.18 * A });
+    });
+    a.spin = (rnd() - 0.5) * 70; a.dist = 1500 + rnd() * 900; a.grow = a.d > 1 ? 0.7 : 0.15 + rnd() * 0.35;
+  });
+
+  // pila delantera (el escondite del ajolote)
+  const PILE = [];
+  const pileTxt = [
+    ["12. INT. CASA DE LUCÍA — NOCHE", "Lucía busca algo entre cajas.", "No lo encuentra."],
+    ["7. EXT. PLAYA — DÍA", "El viento se lleva el plano.", "MARCO (O.S.)"],
+    ["3. EXT. FURGONETA — DÍA", "Lucía sale con una taza rota.", "Lleva el abrigo rojo."],
+    ["PLAN DE RODAJE v7", "J1 · Casa · 6:00", "J2 · Playa · ??"],
+    ["15. INT. BAR — NOCHE", "La abuela pide otra.", "LUCÍA"],
+  ];
+  [[790, 735, 420, 360, -7], [930, 712, 440, 380, 5], [700, 770, 400, 340, 11], [1010, 760, 420, 360, -3], [840, 790, 470, 330, 2]].forEach(([x, y, w, h, r], i) => {
+    const t0 = PINGS[[2, 4, 6, 8, 10][i]];
+    const t = pileTxt[i];
+    const el = mk(P4, "secA-paper", `<p class="secA-sl">${esc(t[0])}</p><p>${esc(t[1])}</p><p>${esc(t[2])}</p><p>&nbsp;</p><p>— — — — — —</p>`);
+    el.style.width = w + "px"; el.style.height = h + "px";
+    PILE.push({ el, t0, x: x + w / 2, y: y + h / 2, r, w, h, spin: (rnd() - 0.5) * 80, dist: 1400 + rnd() * 700 });
+  });
+  const mug = mk(P4, "secA-mug", `<i>v7?</i>`);
+  PILE.push({ el: mug, t0: PINGS[12], x: 1250, y: 860, r: 4, w: 120, h: 138, spin: 40, dist: 1700 });
+
+  // el folio que cae a cámara lenta en el time-freeze (primer término)
+  const folio = mk(P5, "secA-paper", `<p class="secA-sl">guion_FINAL_v7</p><p>1. EXT. PLAYA — DÍA</p><p>Amanece. Nadie sabe</p><p>quién trae la escalera.</p><p>&nbsp;</p><p>LUCÍA</p><p>¿Y ahora qué?</p>`);
+  folio.style.width = "330px"; folio.style.height = "430px"; folio.style.zIndex = "60";
+
+  // destellos del ¡pop!
+  const P3 = $("P3");
+  const SPARKS = Array.from({ length: 12 }, (_, i) => { const d = document.createElement("i"); d.className = "secA-spark"; P3.appendChild(d); return { el: d, a: (i / 12) * Math.PI * 2 + 0.2, len: 0.8 + ((i * 5) % 3) * 0.25 }; });
+
+  const MINI = Array.from({ length: 7 }, (_, i) => { const d = document.createElement("i"); d.className = "secA-mini"; P3.appendChild(d); return { el: d, t0: 8.32 + i * 0.09 + rnd() * 0.05, x: (i % 2 ? 1 : -1) * (70 + rnd() * 70), sz: 12 + rnd() * 18, ph: rnd() * 6 }; });
+  /* ---------------- ajolote: posiciones de autor ---------------- */
+  const AX0 = { x: 960, y: 706, s: 0.85 };   // detrás de la pila
+  const AX1 = { x: 960, y: 892, s: 1.12 };   // delante, sobre la mesa
+  const MOUTH = { x: AX1.x, y: AX1.y - 160 * AX1.s };
+  const POP = { x: AX1.x + 236 * AX1.s, y: AX1.y - 146 * AX1.s }; // junto al dedo que señala
+  const BUBR = 64;
+
+  /* ---------------- render puro de t ---------------- */
+  const L0 = $("L0"), L1 = $("L1"), L2 = $("L2"), L3 = $("L3"), L4 = $("L4"), L5 = $("L5");
+  const opal = $("opal"), lab1 = $("lab1"), lab2 = $("lab2"), tcEl = $("tc"), rim = $("rim"), grain = $("grain"), bub = $("bub");
+  const G = [[0, 0], [-97, 41], [63, -118], [-152, -23], [121, 88], [-38, -160], [177, 12], [-81, 133]];
+  // encendido fluorescente: frames 0,2,4,9,11,14 → 0 .7 0 1 .85 1 (04 §6)
+  const LT0 = POPT + 0.033;
+  const FLK = [[0, 0], [2, 0.7], [4, 0], [9, 1], [11, 0.85], [14, 1]];
+  function light(t) { if (t < LT0) return 0; const f = Math.floor((t - LT0) * FPS + 1e-4); let v = 0; FLK.forEach(([fr, o]) => { if (f >= fr) v = o; }); return v; }
+  const slamS = (u) => (u < 0 ? 1.9 : u < 0.1 ? lerp(1.9, 0.94, outPow(u / 0.1, 3)) : u < 0.16 ? lerp(0.94, 1.02, (u - 0.1) / 0.06) : u < 0.26 ? lerp(1.02, 1, (u - 0.16) / 0.1) : 1);
+  const popS = (p) => (p < 0.55 ? lerp(0.62, 1.05, outPow(p / 0.55, 3)) : lerp(1.05, 1, (p - 0.55) / 0.45));
+  let lastNum = -1, lastTC = "";
+
+  function blast(t, x, y, it, delay) {
+    const q = c01((t - POPT - delay) / 0.62);
+    if (q <= 0) return null;
+    const dx = x - POP.x, dy = y - POP.y, L = Math.hypot(dx, dy) || 1, e = outPow(q, 2.2);
+    return { x: (dx / L) * it.dist * e, y: (dy / L) * it.dist * e, r: it.spin * e, s: 1 + (it.grow || 0) * e };
+  }
+
+  function render(t) {
+    const tc = Math.min(t, FZ);
+    const c = camAt(t);
+    applyCam(c);
+
+    /* caos */
+    for (const it of ITEMS) {
+      const u = tc - it.t0;
+      if (u < 0) { if (it.el.style.opacity !== "0") it.el.style.opacity = "0"; continue; }
+      let x = it.x, y = it.y, r = it.r, s = it.base, o = 1;
+      if (it.kind === "word") {
+        s *= slamS(u);
+        if (u < 0.2) { x += 3 * Math.sin(u * 97); y += 3 * Math.cos(u * 83); }
+      } else {
+        const p = c01(u / it.dur), e = eLand(p);
+        s *= popS(p); y += (1 - e) * 42; r += (1 - e) * (it.r >= 0 ? 7 : -7); o = c01(p / 0.4);
+        if (it.kind === "badge") s *= 1 + 0.16 * PINGS.reduce((m, tk) => Math.max(m, tk > it.t0 ? pulse(tc - tk) : 0), 0);
+      }
+      for (const pu of it.push) { if (tc > pu.t) { const k = 1 - Math.exp(-(tc - pu.t) * 16); x += pu.ux * pu.A * k; y += pu.uy * pu.A * k; r += pu.rr * k; } }
+      const b = blast(t, x, y, it, Math.hypot(x - POP.x, y - POP.y) * 0.00012);
+      if (b) { x += b.x; y += b.y; r += b.r; s *= b.s; }
+      it.el.style.opacity = o.toFixed(3);
+      it.el.style.transform = `translate(${x.toFixed(1)}px,${y.toFixed(1)}px) translate(-50%,-50%) rotate(${r.toFixed(2)}deg) scale(${s.toFixed(4)})`;
+      if (it.rows) {
+        const nAfter = PINGS.filter((tk) => tk > it.t0 + 1e-6 && tk <= tc).length;
+        const vis = Math.min(it.rows.length, 2 + nAfter);
+        it.rows.forEach((cells, i) => { const show = i < vis ? "1" : "0"; if (cells[0].style.opacity !== show) cells.forEach((cc) => (cc.style.opacity = show)); });
+      }
+    }
+    let n = 0; PINGS.forEach((tk, k) => { if (tk <= tc && k >= 1) n = COUNT[k]; });
+    if (n !== lastNum) { numEl.textContent = String(Math.max(1, n)); lastNum = n; }
+
+    /* pila delantera */
+    for (const p of PILE) {
+      const u = tc - p.t0;
+      if (u < 0) { p.el.style.opacity = "0"; continue; }
+      const pe = eLand(c01(u / 0.34));
+      p.el.style.opacity = c01(u / 0.08).toFixed(3);
+      const b = blast(t, p.x, p.y, p, 0.02);
+      const x = p.x + (b ? b.x : 0), y = p.y - (1 - pe) * 300 + (b ? b.y : 0), r = p.r + (1 - pe) * 14 + (b ? b.r : 0);
+      p.el.style.transform = `translate(${(x - p.w / 2).toFixed(1)}px,${(y - p.h / 2).toFixed(1)}px) rotate(${r.toFixed(2)}deg)`;
+    }
+
+    /* folio: cae; en el freeze sigue, a cámara lenta (×0.11) */
+    const uf = t < 4.0 ? -1 : t < FZ ? t - 4.0 : 1 + (t - FZ) * 0.11;
+    if (uf < 0) folio.style.opacity = "0";
+    else {
+      let fx = 720 - 250 * uf + 60 * Math.sin(2.6 * uf), fy = -330 + 560 * uf, fr = 16 - 24 * Math.sin(2.2 * uf + 0.4);
+      const b = blast(t, fx, fy, { dist: 1800, spin: -60, grow: 0.4 }, 0.04);
+      let fs = 1; if (b) { fx += b.x; fy += b.y; fr += b.r; fs = b.s; }
+      folio.style.opacity = "1";
+      folio.style.transform = `translate(${(fx - 165).toFixed(1)}px,${(fy - 215).toFixed(1)}px) rotate(${fr.toFixed(2)}deg) scale(${fs.toFixed(3)})`;
+    }
+
+    /* time-freeze: desaturar el mundo (el ajolote queda a color) */
+    const g = t < FZ ? 0 : c01((t - FZ) / 0.2);
+    const flt = g > 0 ? `grayscale(${g.toFixed(3)}) brightness(${(1 - 0.22 * g).toFixed(3)}) contrast(${(1 + 0.06 * g).toFixed(3)})` : "none";
+    L1.style.filter = flt; L2.style.filter = flt; L4.style.filter = flt; L5.style.filter = flt;
+
+    /* el ajolote pasa por delante de la pila en el vértice del salto */
+    L3.style.zIndex = t >= 6.66 ? "6" : "3"; L4.style.zIndex = "4"; L5.style.zIndex = "7";
+
+    /* burbuja: nace en la boca con «Respira», se suelta, flota hasta el dedo */
+    if (t < 7.06 || t >= POPT) bub.style.opacity = "0";
+    else {
+      let bx, by, br;
+      if (t < 7.42) { const p = outPow((t - 7.06) / 0.36, 2); bx = MOUTH.x; by = MOUTH.y + 6; br = lerp(5, 30, p); }
+      else { const p = eLand(c01((t - 7.42) / 0.56)); bx = lerp(MOUTH.x, POP.x, p); by = lerp(MOUTH.y + 6, POP.y, p) - 18 * Math.sin(Math.PI * p); br = lerp(30, BUBR, p); }
+      const wob = 0.045 * Math.sin(2 * Math.PI * 4.6 * t);
+      bub.style.opacity = "1";
+      const bw = 2 * br * (1 + wob), bh = 2 * br * (1 - wob);
+      bub.style.width = bw.toFixed(1) + "px"; bub.style.height = bh.toFixed(1) + "px";
+      bub.style.transform = `translate(${(bx - bw / 2).toFixed(1)}px,${(by - bh / 2).toFixed(1)}px)`;
+    }
+    /* ¡pop!: destellos */
+    const ps = t - POPT;
+    SPARKS.forEach((sp) => {
+      if (ps < 0 || ps > 0.3) { sp.el.style.opacity = "0"; return; }
+      const p = ps / 0.3, rr = BUBR + 10 + 120 * sp.len * outPow(p, 2.5);
+      sp.el.style.opacity = (1 - p).toFixed(3);
+      sp.el.style.transform = `translate(${(POP.x + Math.cos(sp.a) * rr).toFixed(1)}px,${(POP.y + Math.sin(sp.a) * rr).toFixed(1)}px) rotate(${((sp.a * 180) / Math.PI).toFixed(1)}deg) scaleX(${(sp.len * (1 - 0.6 * p)).toFixed(3)})`;
+    });
+
+    /* burbujitas de alegría */
+    MINI.forEach((m) => {
+      const u = t - m.t0;
+      if (u < 0) { m.el.style.opacity = "0"; return; }
+      const x = AX1.x + m.x * AX1.s + 10 * Math.sin(6 * u + m.ph), y = AX1.y - 250 * AX1.s - 150 * u;
+      m.el.style.opacity = c01(u / 0.08).toFixed(3);
+      m.el.style.width = m.el.style.height = m.sz.toFixed(1) + "px";
+      m.el.style.transform = `translate(${(x - m.sz / 2).toFixed(1)}px,${(y - m.sz / 2).toFixed(1)}px)`;
+    });
+
+    /* iris: la membrana de la burbuja se abre y destapa la mesa */
+    if (t < POPT) { L1.style.clipPath = "none"; L1.style.visibility = "visible"; rim.style.opacity = "0"; }
+    else {
+      const p = c01((t - POPT) / 0.75), [sx, sy] = toScreen(c, POP.x, POP.y);
+      const R = lerp(BUBR * c.s, 2400, outPow(p, 2.6));
+      if (R >= 2390) { L1.style.visibility = "hidden"; }
+      else {
+        L1.style.visibility = "visible";
+        L1.style.clipPath = `path(evenodd, "M-20 -20H1940V1100H-20Z M${(sx - R).toFixed(1)} ${sy.toFixed(1)}a${R.toFixed(1)} ${R.toFixed(1)} 0 1 0 ${(2 * R).toFixed(1)} 0a${R.toFixed(1)} ${R.toFixed(1)} 0 1 0 ${(-2 * R).toFixed(1)} 0Z")`;
+      }
+      const ro = 1 - c01((t - POPT - 0.22) / 0.3);
+      rim.style.opacity = ro.toFixed(3);
+      rim.style.width = rim.style.height = (2 * R).toFixed(1) + "px";
+      rim.style.transform = `translate(${(sx - R).toFixed(1)}px,${(sy - R).toFixed(1)}px)`;
+    }
+
+    /* luz de la mesa */
+    const lv = light(t);
+    opal.style.opacity = String(lv);
+    lab1.style.opacity = lab2.style.opacity = lv > 0.5 ? "1" : "0";
+    const fr = Math.round(t * FPS), tcs = `00:00:${String(Math.floor(fr / FPS)).padStart(2, "0")}:${String(fr % FPS).padStart(2, "0")}`;
+    if (tcs !== lastTC) { tcEl.textContent = tcs; lastTC = tcs; }
+
+    /* grano vivo a 12 fps */
+    const gp = G[Math.floor(t * 12) % 8];
+    grain.style.backgroundPosition = `${gp[0]}px ${gp[1]}px`;
+    grain.style.opacity = lv > 0.5 ? "0.3" : "0.2";
+  }
+
+  /* ---------------- timeline ---------------- */
+  const tl = gsap.timeline({ paused: true });
+  const drv = { t: 0 };
+  tl.fromTo(drv, { t: 0 }, { t: DUR, duration: DUR, ease: "none", onUpdate: () => render(drv.t) }, 0);
+  render(0);
+
+  /* ---------------- ajolote ---------------- */
+  const ax = AxRig(tl, { prefix: "axA", seed: 31 });
+  ax.init(0, AX0);
+  const HOP = "#axA-hop", CLIP = "#axA-clipRect";
+  // escondido detrás de la pila (recorte a ras del borde)
+  tl.set(CLIP, { attr: { x: -3000, y: -3000, width: 6000, height: 2992 } }, 0.02);
+  tl.set("#axA-shadow", { opacity: 0, svgOrigin: "0 4" }, 0.02);
+  tl.set(HOP, { y: 420, svgOrigin: "0 0" }, 0.03);
+  // 5.55 · asoman las branquias (único color en el mundo congelado)
+  tl.fromTo(HOP, { y: 420 }, { y: 262, duration: 0.42, ease: "power2.out", svgOrigin: "0 0", immediateRender: false }, 5.55);
+  ax.gillFlick(5.75, 9, 0.7);
+  ax.brows(5.6, "worried");
+  // 5.98 · los ojos
+  tl.fromTo(HOP, { y: 262 }, { y: 176, duration: 0.34, ease: "power3.out", svgOrigin: "0 0", immediateRender: false }, 5.98);
+  ax.mouth(5.98, "o", 0.1);
+  ax.look(6.08, -5, -1, 0.14);
+  ax.look(6.24, 5, -2, 0.14);
+  ax.blink(6.36);
+  ax.brows(6.36, "up");
+  // 6.40 · se agacha… y ¡salta! («Vale.»)
+  tl.fromTo(HOP, { y: 176 }, { y: 200, duration: 0.1, ease: "power2.in", svgOrigin: "0 0", immediateRender: false }, 6.4);
+  tl.set(CLIP, { attr: { x: -3000, y: -3000, width: 6000, height: 6000 } }, 6.5);
+  tl.set("#axA-shadow", { opacity: 1, svgOrigin: "0 4" }, 6.98);
+  ax.look(6.42, 0, 0, 0.12);
+  let t = ax.hopTo(6.40, { x: AX1.x, y: AX1.y, s: AX1.s, d: 0.56, arc: 210, lean: 1 });
+  // «Respira.» — ojos ^ ^, y la burbuja sale de la boca
+  ax.eyes(7.06, "happy"); ax.blush(7.06, 1.3);
+  ax.eyes(7.44, "open");
+  // «Yo me encargo.» — señala arriba y revienta la burbuja con el dedo en 8.0
+  ax.point(7.58, { dir: "right", hold: 0.6, keep: true });
+  // ¡pop! → celebración breve sobre la mesa limpia
+  ax.celebrate(8.1, { jumps: 1, height: 64, hold: 0.9 });
+  // boca con la voz (solo el tramo de habla L02)
+  const lvA = CUES.env.lv || [], i0 = Math.round(6.5 * FPS), i1 = Math.round(8.07 * FPS);
+  ax.lipsync(lvA.slice(i0, i1), FPS, i0 / FPS);
+  ax.mouth(8.08, "grin", 0.1);
+  ax.base(0, DUR);
+  ax.blinks(0, DUR);
+
+  window.__timelines["secA"] = tl;
+})();
+</script>
+</template>
+</body>
+</html>

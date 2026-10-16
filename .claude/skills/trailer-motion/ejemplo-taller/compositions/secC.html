@@ -1,0 +1,903 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="UTF-8" /><title>secC · Desglose → Planos → Storyboard</title></head>
+<body>
+<template id="secC-template">
+<style>
+  @font-face { font-family: "Archivo"; src: url("assets/fonts/archivo.woff2") format("woff2"); font-weight: 100 900; font-stretch: 62% 125%; }
+  @font-face { font-family: "JB Mono"; src: url("assets/fonts/jbmono.woff2") format("woff2"); font-weight: 100 800; }
+  @font-face { font-family: "Courier Prime"; src: url("assets/fonts/courier-400.woff2") format("woff2"); font-weight: 400; }
+  @font-face { font-family: "Courier Prime"; src: url("assets/fonts/courier-700.woff2") format("woff2"); font-weight: 700; }
+
+  #secC-root { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; background: #151519; font-family: "Archivo", system-ui, sans-serif; color: #f1eee6; }
+  #secC-root .secC-lens { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; }
+  #secC-root .secC-plane { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; }
+  #secC-root .secC-abs { position: absolute; left: 0; top: 0; }
+  #secC-root .secC-mono { font-family: "JB Mono", ui-monospace, monospace; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; white-space: nowrap; }
+
+  /* ---------- superficies ---------- */
+  #secC-opal { position: absolute; left: -1400px; top: -900px; width: 4800px; height: 2400px; background: #f6f3ea; }
+  #secC-rail { position: absolute; left: -1400px; top: 1500px; width: 4800px; height: 70px; background: #1d1d22; box-shadow: inset 0 3px 0 #2e2e35, inset 0 -3px 0 #0b0b0d; }
+  #secC-room { position: absolute; left: -1400px; top: 1570px; width: 9800px; height: 3400px; background: #151519; }
+  #secC-opal2 { position: absolute; left: 3700px; top: 1660px; width: 4200px; height: 1600px; background: #f6f3ea; outline: 18px solid #1d1d22; box-shadow: 0 0 0 20px #2e2e35; }
+  #secC-root .secC-mount { position: absolute; width: 250px; height: 250px; background: #ece8dc; border-radius: 10px; box-shadow: 0 2px 0 rgba(60, 52, 38, 0.3), 0 24px 40px -18px rgba(60, 52, 38, 0.35); }
+  #secC-root .secC-mount i { position: absolute; left: 44px; top: 62px; width: 162px; height: 112px; display: block; border-radius: 4px; }
+  #secC-ruler { position: absolute; left: 110px; top: 34px; width: 1800px; height: 28px; opacity: 0.8;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='28'%3E%3Cpath d='M1 0v16M11 0v7M21 0v11M31 0v7' stroke='%23151519' stroke-width='2' opacity='.45'/%3E%3C/svg%3E"); background-repeat: repeat-x; }
+  #secC-root .secC-gel { position: absolute; mix-blend-mode: multiply; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.28); }
+  #secC-root .secC-gel::after { content: ""; position: absolute; top: 0; bottom: 0; left: 18%; width: 9%; background: rgba(255, 255, 255, 0.16); transform: skewX(-18deg); }
+
+  /* ---------- guion (Courier Prime sobre papel retroiluminado) ---------- */
+  #secC-page { position: absolute; left: 110px; top: 110px; width: 920px; height: 1300px; background: #e9e5da; color: #151519; transform: rotate(-1.4deg); transform-origin: 0 0;
+    font-family: "Courier Prime", "Courier New", monospace; font-size: 30px; line-height: 46px; box-shadow: 0 2px 0 rgba(60, 52, 38, 0.32), 0 34px 60px -24px rgba(60, 52, 38, 0.42); }
+  #secC-fiber { position: absolute; left: 0; top: 0; width: 920px; height: 1300px; pointer-events: none; mix-blend-mode: multiply; opacity: 0.55;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012 .35' numOctaves='3' seed='3'/%3E%3CfeColorMatrix values='0 0 0 0 .55  0 0 0 0 .5  0 0 0 0 .42  0 0 0 .18 0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23f)'/%3E%3C/svg%3E"); }
+  #secC-root .secC-ln { position: absolute; left: 84px; height: 46px; white-space: pre; z-index: 2; }
+  #secC-root .secC-ln.secC-b { font-weight: 700; }
+  #secC-root .secC-hl { position: absolute; left: 0; top: 0; height: 36px; z-index: 1; mix-blend-mode: multiply; transform-origin: 0 50%; border-radius: 3px 5px 4px 3px; }
+  #secC-pgno { position: absolute; right: 70px; top: 40px; z-index: 2; }
+  #secC-pen { position: absolute; left: 0; top: 0; width: 1px; height: 1px; z-index: 5; }
+  #secC-root .secC-penp { position: absolute; display: block; }
+
+  /* ---------- tarjeta de desglose (pantalla oscura sobre la mesa) ---------- */
+  #secC-card { position: absolute; left: 1180px; top: 140px; width: 640px; height: 764px; background: #151519; border-radius: 14px; color: #ece8dc;
+    box-shadow: 0 0 0 2px #2e2e35, 0 2px 0 4px rgba(60, 52, 38, 0.2), 0 40px 60px -26px rgba(60, 52, 38, 0.55); }
+  #secC-hdr { position: absolute; left: 0; top: 0; width: 640px; height: 70px; border-bottom: 2px solid #2e2e35; }
+  #secC-hdr .secC-mono { position: absolute; top: 25px; font-size: 18px; color: #9a978f; }
+  #secC-root .secC-sec { position: absolute; left: 0; width: 640px; height: 220px; border-bottom: 1px solid #1d1d22; }
+  #secC-root .secC-secbg { position: absolute; left: 8px; top: 6px; width: 624px; height: 208px; border-radius: 10px; opacity: 0; }
+  #secC-root .secC-sect { position: absolute; left: 70px; top: 26px; font-weight: 700; font-stretch: 62%; font-size: 40px; line-height: 1; letter-spacing: 0.01em; text-transform: uppercase; color: #ece8dc; white-space: nowrap; }
+  #secC-root .secC-dot { position: absolute; left: 34px; top: 36px; width: 18px; height: 18px; border-radius: 50%; display: block; }
+  #secC-root .secC-cnt { position: absolute; right: 34px; top: 28px; font-family: "JB Mono", monospace; font-weight: 600; font-size: 30px; color: #9a978f; letter-spacing: 0.04em; }
+  #secC-root .secC-row { position: absolute; left: 32px; top: 96px; width: 580px; height: 56px; }
+  #secC-root .secC-chip { position: absolute; left: 0; top: 0; height: 52px; border-radius: 26px; font-weight: 600; font-stretch: 100%; font-size: 24px; line-height: 52px; text-align: center; white-space: nowrap; }
+  #secC-root .secC-old { background: #2e2e35; color: #c9c5bb; }
+  #secC-root .secC-sub { position: absolute; left: 34px; top: 166px; font-size: 15px; color: #6d6a63; }
+  #secC-root .secC-fly { position: absolute; left: 0; top: 0; z-index: 40; color: #151519; }
+
+  /* ---------- sello ---------- */
+  #secC-stamp { position: absolute; left: 0; top: 0; width: 600px; height: 150px; z-index: 50; opacity: 0; }
+  #secC-stamp .secC-ink { position: absolute; left: 0; top: 0; width: 600px; height: 150px; background: #f0503f; border-radius: 14px; box-shadow: inset 0 0 0 7px #f0503f, inset 0 0 0 11px #151519; }
+  #secC-stamp b { position: absolute; left: 0; width: 600px; text-align: center; top: 26px; font-weight: 900; font-stretch: 125%; font-size: 66px; line-height: 1; letter-spacing: -0.03em; color: #151519; white-space: nowrap; }
+  #secC-stamp .secC-mono { position: absolute; left: 0; width: 600px; text-align: center; top: 100px; font-size: 16px; color: #151519; }
+  #secC-stamp svg { position: absolute; left: 0; top: 0; }
+  #secC-sshadow { position: absolute; left: 0; top: 0; width: 600px; height: 150px; z-index: 49; border-radius: 14px; background: rgba(60, 52, 38, 0.34); opacity: 0; }
+  #secC-burst { position: absolute; left: 0; top: 0; width: 1px; height: 1px; z-index: 52; }
+  #secC-burst i { position: absolute; left: 0; top: -3px; width: 54px; height: 6px; border-radius: 3px; background: #151519; display: block; transform-origin: 0 50%; opacity: 0; }
+  #secC-tool { position: absolute; left: 0; top: 0; width: 580px; height: 200px; z-index: 51; opacity: 0; }
+  #secC-tool .secC-tsh { position: absolute; left: 0; top: 0; width: 580px; height: 200px; border-radius: 22px; background: rgba(60, 52, 38, 0.32); }
+  #secC-tool .secC-tb { position: absolute; left: 0; top: 0; width: 580px; height: 200px; border-radius: 22px; background: #2e2e35; box-shadow: inset 0 0 0 3px #4a4a54, inset 0 -14px 0 #1d1d22; }
+  #secC-tool .secC-tk { position: absolute; left: 215px; top: 25px; width: 150px; height: 150px; border-radius: 50%; background: #1d1d22; box-shadow: inset 0 0 0 4px #4a4a54, inset 22px 18px 0 -10px #4a4a54; }
+
+  /* ---------- sala de planos ---------- */
+  #secC-root .secC-lb { position: absolute; background: #f6f3ea; outline: 14px solid #1d1d22; box-shadow: 0 0 0 16px #2e2e35, 0 40px 0 -10px rgba(0, 0, 0, 0.4); }
+  #secC-scene { position: absolute; left: 410px; top: 2107.5px; width: 1040px; height: 585px; display: block; }
+  #secC-sbh { position: absolute; left: 1896px; top: 2006px; width: 900px; height: 66px; overflow: hidden; }
+  #secC-sbh b { position: absolute; left: 0; top: 4px; font-weight: 800; font-stretch: 62%; font-size: 56px; line-height: 1; letter-spacing: 0.01em; color: #151519; text-transform: uppercase; white-space: nowrap; }
+  #secC-sbh .secC-mono { position: absolute; left: 318px; top: 26px; font-size: 18px; color: #5c5a54; }
+  #secC-root .secC-pan { position: absolute; width: 320px; height: 180px; background: #fbf9f3; box-shadow: 0 0 0 1px rgba(21, 21, 25, 0.1); }
+  #secC-root .secC-pan svg { position: absolute; left: 0; top: 0; width: 320px; height: 180px; display: block; }
+  #secC-root .secC-cap { position: absolute; width: 320px; height: 24px; overflow: hidden; }
+  #secC-root .secC-cap span { position: absolute; left: 0; top: 4px; font-size: 15px; color: #5c5a54; letter-spacing: 0.1em; }
+  #secC-root .secC-cap i { position: absolute; left: 0; top: 22px; width: 320px; height: 2px; background: #c9c4b8; display: block; transform-origin: 0 50%; }
+  #secC-root .secC-lbl { position: absolute; font-size: 20px; color: #9a978f; }
+  #secC-root .secC-lbl i { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 14px; vertical-align: 1px; }
+  #secC-root .secC-lbl.secC-dk { color: #5c5a54; }
+  #secC-root .secC-crop { position: absolute; width: 44px; height: 44px; color: #4a4a54; }
+  #secC-root .secC-crop::before, #secC-root .secC-crop::after { content: ""; position: absolute; background: currentColor; }
+  #secC-root .secC-crop::before { left: 21px; top: 0; width: 2px; height: 44px; }
+  #secC-root .secC-crop::after { top: 21px; left: 0; height: 2px; width: 44px; }
+  #secC-root .secC-crop b { position: absolute; left: 10px; top: 10px; width: 24px; height: 24px; border: 2px solid currentColor; border-radius: 50%; }
+
+  /* ---------- visor (HUD de cámara, espacio de pantalla) ---------- */
+  #secC-hud { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; pointer-events: none; z-index: 20; }
+  #secC-root .secC-cor { position: absolute; left: 0; top: 0; width: 64px; height: 64px; border: 0 solid #f1eee6; opacity: 0; }
+  #secC-root .secC-thd { position: absolute; left: 0; top: 0; background: #f1eee6; opacity: 0; }
+  #secC-xh { position: absolute; left: 946px; top: 526px; width: 28px; height: 28px; opacity: 0; }
+  #secC-xh::before, #secC-xh::after { content: ""; position: absolute; background: #f1eee6; }
+  #secC-xh::before { left: 13px; top: 0; width: 2px; height: 28px; }
+  #secC-xh::after { top: 13px; left: 0; height: 2px; width: 28px; }
+  #secC-htl { position: absolute; left: 204px; top: 124px; font-size: 20px; color: #f1eee6; background: rgba(21, 21, 25, 0.72); padding: 8px 14px 7px; opacity: 0; }
+  #secC-htl i { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: #f0c94a; margin-right: 12px; vertical-align: 1px; }
+  #secC-htr { position: absolute; left: 1456px; top: 118px; width: 260px; height: 110px; opacity: 0; }
+  #secC-htr b { position: absolute; right: 0; top: 0; font-weight: 900; font-stretch: 125%; font-size: 70px; line-height: 1; letter-spacing: -0.03em; color: #f1eee6; }
+  #secC-htr .secC-mono { position: absolute; right: 2px; top: 78px; font-size: 16px; color: #f1eee6; background: rgba(21, 21, 25, 0.72); padding: 4px 8px; }
+  #secC-name { position: absolute; left: 204px; top: 848px; width: 640px; height: 104px; opacity: 0; }
+  #secC-name .secC-mono { position: absolute; left: 0; top: 0; font-size: 18px; font-weight: 700; color: #151519; background: #f0c94a; padding: 5px 10px 4px; }
+  #secC-nameb { position: absolute; left: 0; top: 34px; height: 70px; background: #151519; padding: 0 18px; font-weight: 800; font-stretch: 62%; font-size: 62px; line-height: 70px; letter-spacing: 0.01em; text-transform: uppercase; color: #f1eee6; white-space: nowrap; transform-origin: 0 50%; }
+  #secC-slots { position: absolute; left: 1052px; top: 836px; width: 668px; height: 118px; opacity: 0; }
+  #secC-root .secC-slot { position: absolute; top: 0; width: 158px; height: 89px; border: 2px dashed rgba(241, 238, 230, 0.55); border-radius: 4px; background: rgba(21, 21, 25, 0.55); }
+  #secC-root .secC-slot svg { position: absolute; left: -2px; top: -2px; width: 158px; height: 89px; display: block; opacity: 0; border-radius: 3px; }
+  #secC-root .secC-slot span { position: absolute; left: 0; top: 96px; font-size: 15px; font-weight: 700; color: #f1eee6; padding: 2px 6px; background: rgba(21, 21, 25, 0.72); }
+  #secC-flash { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; background: #fbf9f3; opacity: 0; z-index: 30; pointer-events: none; }
+  #secC-axwrap #axC { filter: url(#secC-sticker); }
+  #secC-axwrap #axC-shadow ellipse { fill: #3c3426; }
+</style>
+
+<div id="secC-root" data-composition-id="secC" data-width="1920" data-height="1080" data-duration="12">
+  <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+    <filter id="secC-sticker" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+      <feMorphology in="SourceAlpha" operator="dilate" radius="6" result="d" />
+      <feFlood flood-color="#f6f3ea" /><feComposite in2="d" operator="in" result="o" />
+      <feOffset in="d" dy="5" result="sd" /><feFlood flood-color="#151519" flood-opacity=".22" /><feComposite in2="sd" operator="in" result="s" />
+      <feMerge><feMergeNode in="s" /><feMergeNode in="o" /><feMergeNode in="SourceGraphic" /></feMerge>
+    </filter>
+    <filter id="secC-camblur" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB"><feGaussianBlur id="secC-cbx" stdDeviation="0 0" /></filter>
+  </svg>
+
+  <div class="secC-lens" id="secC-lens" data-layout-allow-overflow>
+    <!-- MUNDO (d = 1): todo lo que tiene que encajar -->
+    <div class="secC-plane" id="secC-world" data-layout-allow-overflow>
+      <div id="secC-opal"></div>
+      <div id="secC-ruler"></div>
+      <div class="secC-gel" style="left: -260px; top: 820px; width: 640px; height: 520px; background: #f0c94a; transform: rotate(-4deg)"></div>
+      <div id="secC-rail"></div>
+      <div id="secC-room"></div>
+      <div id="secC-opal2">
+        <div class="secC-mount" style="left: 140px; top: 260px; transform: rotate(-6deg)"><i style="background: #8fd0d6"></i></div>
+        <div class="secC-mount" style="left: 470px; top: 420px; transform: rotate(4deg)"><i style="background: #f0c94a"></i></div>
+        <div class="secC-mount" style="left: 820px; top: 230px; transform: rotate(-2deg)"><i style="background: #f0503f"></i></div>
+        <div class="secC-mount" style="left: 1150px; top: 470px; transform: rotate(7deg)"><i style="background: #4fc47f"></i></div>
+      </div>
+
+      <!-- E3 · DESGLOSE: la página del guion -->
+      <div id="secC-page">
+        <div id="secC-fiber"></div>
+        <div id="secC-pgno">12.</div>
+        <i class="secC-hl" id="secC-hl0" style="background: #f0c94a"></i>
+        <i class="secC-hl" id="secC-hl1" style="background: #f7a198"></i>
+        <i class="secC-hl" id="secC-hl2" style="background: #8fd0d6"></i>
+        <div class="secC-ln secC-b" style="top: 92px">7.  EXT. GASOLINERA - NOCHE</div>
+        <div class="secC-ln" style="top: 168px">Gasolinera desierta. Lucía apura una</div>
+        <div class="secC-ln" style="top: 214px">taza de café frío bajo el neón.</div>
+        <div class="secC-ln" style="top: 260px">Se ajusta el abrigo rojo y mira la</div>
+        <div class="secC-ln" style="top: 306px">carretera. Un coche de los ochenta</div>
+        <div class="secC-ln" style="top: 352px">frena junto al surtidor. Le falta</div>
+        <div class="secC-ln" style="top: 398px">un faro.</div>
+        <div class="secC-ln" style="top: 474px; left: 408px">LUCÍA</div>
+        <div class="secC-ln" style="top: 520px; left: 318px">(sin girarse)</div>
+        <div class="secC-ln" style="top: 566px; left: 264px">Llegas tarde.</div>
+        <div class="secC-ln secC-b" style="top: 648px">8.  INT. COCHE - NOCHE</div>
+        <div class="secC-ln" style="top: 724px">El motor tose. Nadie dice nada.</div>
+        <div class="secC-ln" style="top: 770px">En la radio, una canción vieja.</div>
+        <div id="secC-pen">
+          <i class="secC-penp" id="secC-penSh" style="left: 6px; top: -21px; width: 340px; height: 46px; border-radius: 6px 23px 23px 6px; background: rgba(60, 52, 38, 0.26)"></i>
+          <i class="secC-penp" id="secC-penTip" style="left: 0; top: -15px; width: 40px; height: 30px; clip-path: polygon(0 30%, 100% 0, 100% 100%, 0 70%)"></i>
+          <i class="secC-penp" style="left: 38px; top: -19px; width: 26px; height: 38px; background: #ece8dc; border-radius: 3px"></i>
+          <i class="secC-penp" style="left: 62px; top: -23px; width: 222px; height: 46px; background: #151519; border-radius: 4px"></i>
+          <i class="secC-penp" id="secC-penBand" style="left: 120px; top: -23px; width: 64px; height: 46px"></i>
+          <i class="secC-penp" id="secC-penCap" style="left: 280px; top: -25px; width: 64px; height: 50px; border-radius: 6px 25px 25px 6px"></i>
+          <i class="secC-penp" style="left: 74px; top: -15px; width: 36px; height: 6px; background: #4a4a54; border-radius: 3px"></i>
+        </div>
+      </div>
+
+      <!-- tarjeta de desglose -->
+      <div id="secC-card">
+        <div id="secC-hdr">
+          <span class="secC-mono" style="left: 32px">Desglose · Esc. 7</span>
+          <span class="secC-mono" style="right: 32px; color: #ece8dc">Gasolinera · Noche</span>
+        </div>
+        <div class="secC-sec" style="top: 84px">
+          <i class="secC-secbg" id="secC-bg0" style="background: #f0c94a"></i>
+          <i class="secC-dot" id="secC-dot0" style="background: #f0c94a"></i><span class="secC-sect">Atrezzo</span><span class="secC-cnt" id="secC-cnt0">03</span>
+          <div class="secC-row">
+            <span class="secC-chip secC-old" id="secC-o00" style="width: 150px">Linterna</span>
+            <span class="secC-chip secC-old" id="secC-o01" style="width: 112px">Mapa</span>
+            <span class="secC-chip secC-old" id="secC-o02" style="width: 118px">Termo</span>
+          </div>
+        </div>
+        <div class="secC-sec" style="top: 304px">
+          <i class="secC-secbg" id="secC-bg1" style="background: #f7a198"></i>
+          <i class="secC-dot" id="secC-dot1" style="background: #f7a198"></i><span class="secC-sect">Vestuario</span><span class="secC-cnt" id="secC-cnt1">02</span>
+          <div class="secC-row">
+            <span class="secC-chip secC-old" id="secC-o10" style="width: 150px">Bufanda</span>
+            <span class="secC-chip secC-old" id="secC-o11" style="width: 116px">Botas</span>
+          </div>
+        </div>
+        <div class="secC-sec" style="top: 524px">
+          <i class="secC-secbg" id="secC-bg2" style="background: #8fd0d6"></i>
+          <i class="secC-dot" id="secC-dot2" style="background: #8fd0d6"></i><span class="secC-sect">Vehículos</span><span class="secC-cnt" id="secC-cnt2">01</span>
+          <div class="secC-row">
+            <span class="secC-chip secC-old" id="secC-o20" style="width: 170px">Furgoneta</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- sala de planos: caja de luz pequeña con la transparencia -->
+      <div class="secC-lb" style="left: 380px; top: 2080px; width: 1100px; height: 640px"></div>
+      <svg id="secC-scene" data-layout-ignore viewBox="0 0 1600 900" aria-label="Transparencia de la escena"><g id="secC-scnG"></g></svg>
+      <!-- storyboard sobre la caja de luz grande -->
+      <div class="secC-lb" id="secC-sblb" style="left: 1840px; top: 1990px; width: 1500px; height: 840px"></div>
+      <div id="secC-sbh"><b id="secC-sbt">Storyboard</b><span class="secC-mono" id="secC-sbm">Esc. 7 · Gasolinera · 12 viñetas</span></div>
+      <div id="secC-panels" data-layout-ignore></div>
+
+      <!-- ajolote (rig axC) -->
+      <div id="secC-axwrap">
+<!-- ===== AJOLOTE v2 · rig SVG (ids con prefijo axC-) =====
+     Pegar dentro del root de la composición. #axC se coloca con GSAP x/y = punto entre los pies.
+     Requiere poses.js (window.AxRig). Generado por build/gen.js -->
+<style>
+  #axC { position: absolute; left: -220px; top: -380px; width: 440px; height: 420px; z-index: 30; pointer-events: none; }
+  #axC-svg { display: block; width: 100%; height: 100%; overflow: visible; }
+  #axC-trail { position: absolute; left: 0; top: 0; width: 1px; height: 1px; z-index: 29; pointer-events: none; }
+  .axC-bub { position: absolute; display: block; left: -10px; top: -10px; width: 20px; height: 20px; border-radius: 50%;
+    border: 2.5px solid rgba(236, 232, 220, 0.6); background: rgba(236, 232, 220, 0.07); opacity: 0; }
+</style>
+<div id="axC-trail"><i class="axC-bub"></i><i class="axC-bub"></i><i class="axC-bub"></i><i class="axC-bub"></i><i class="axC-bub"></i><i class="axC-bub"></i><i class="axC-bub"></i><i class="axC-bub"></i><i class="axC-bub"></i><i class="axC-bub"></i><i class="axC-bub"></i><i class="axC-bub"></i><i class="axC-bub"></i><i class="axC-bub"></i><i class="axC-bub"></i><i class="axC-bub"></i></div>
+<div id="axC">
+<svg id="axC-svg" viewBox="-220 -380 440 420" xmlns="http://www.w3.org/2000/svg" aria-label="Ajolote">
+  <defs>
+    <filter id="axC-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.4"/></filter>
+    <filter id="axC-blur" x="-50%" y="-200%" width="200%" height="500%"><feGaussianBlur stdDeviation="5"/></filter>
+    <clipPath id="axC-clip" clipPathUnits="userSpaceOnUse"><rect id="axC-clipRect" x="-3000" y="-3000" width="6000" height="6000"/></clipPath>
+    <clipPath id="axC-headClip"><path d="M0 -314 C82 -314 134 -276 134 -214 C134 -152 78 -124 0 -124 C-78 -124 -134 -152 -134 -214 C-134 -276 -82 -314 0 -314 Z"/></clipPath>
+    <clipPath id="axC-bodyClip"><path d="M0 -152 C50 -152 76 -108 74 -62 C72 -20 46 -2 0 -2 C-46 -2 -72 -20 -74 -62 C-76 -108 -50 -152 0 -152 Z"/></clipPath>
+    <clipPath id="axC-mouthClip"><use href="#axC-mouth"/></clipPath>
+  </defs>
+  <g id="axC-shadow"><ellipse cx="0" cy="4" rx="96" ry="12" fill="#000" opacity="0.38" filter="url(#axC-blur)"/></g>
+  <g id="axC-all" clip-path="url(#axC-clip)">
+  <g id="axC-hop"><g id="axC-tilt">
+    <g id="axC-flip"><g id="axC-squash"><g id="axC-breath">
+      <path id="axC-tail" d="M28.4 -57.5 C29.9 -57.1 34.6 -56 37.7 -55.5 C40.9 -55.1 44.1 -54.7 47.3 -54.8 C50.5 -54.8 53.7 -55.2 56.9 -55.9 C60 -56.6 63 -57.6 66 -58.8 C68.9 -60 71.8 -61.5 74.5 -63.1 C77.3 -64.7 80 -66.5 82.6 -68.3 C85.2 -70.2 87.7 -72.2 90.3 -74.3 C92.8 -76.4 95.3 -78.7 97.7 -80.9 C100.2 -83.2 102.7 -85.6 105.1 -88 C107.5 -90.4 110 -92.8 112.4 -95.3 C114.8 -97.8 117.2 -100.4 119.5 -103 C121.8 -105.5 124 -108.2 126.2 -110.9 C128.3 -113.6 130.3 -116.3 132.2 -119.2 C134 -122.1 135.8 -125 137.2 -128.1 C138.7 -131.2 140 -134.5 140.9 -137.8 C141.8 -141.2 142.5 -144.7 142.8 -148.3 C143.1 -152 143 -155.7 142.5 -159.4 C142 -163.2 139.4 -170.5 140 -170.7 C140.6 -170.8 144.5 -164 146.2 -160.3 C147.9 -156.7 149.2 -152.7 150.1 -148.7 C151 -144.8 151.6 -140.6 151.7 -136.5 C151.9 -132.3 151.7 -128.1 151.1 -124 C150.5 -119.9 149.6 -115.8 148.4 -111.8 C147.2 -107.8 145.7 -103.9 144.1 -100.1 C142.4 -96.3 140.5 -92.7 138.4 -89.1 C136.4 -85.5 134.2 -82 131.9 -78.6 C129.5 -75.2 127.1 -71.9 124.4 -68.7 C121.8 -65.5 119.1 -62.3 116.2 -59.3 C113.3 -56.2 110.3 -53.2 107.1 -50.4 C103.8 -47.6 100.4 -44.9 96.9 -42.4 C93.3 -39.9 89.6 -37.5 85.7 -35.4 C81.8 -33.3 77.7 -31.4 73.5 -29.7 C69.3 -28.1 64.9 -26.8 60.6 -25.7 C56.2 -24.7 51.7 -23.9 47.2 -23.4 C42.7 -22.9 38.1 -22.7 33.6 -22.8 C29 -22.9 22.2 -23.7 20 -23.9 Z" fill="#f5b8c6" stroke="#d0708a" stroke-width="4" stroke-linejoin="round"/>
+      <path id="axC-tailStripe" d="M47.3 -45.3 C49.1 -45.5 54.5 -45.9 58 -46.6 C61.5 -47.3 65 -48.3 68.4 -49.5 C71.8 -50.7 75.1 -52.2 78.3 -53.8 C81.5 -55.5 84.6 -57.3 87.6 -59.3 C90.6 -61.3 93.5 -63.4 96.3 -65.7 C99.2 -68 101.9 -70.4 104.6 -72.9 C107.3 -75.4 109.9 -78 112.5 -80.6 C115 -83.3 117.5 -86 119.9 -88.8 C122.3 -91.7 124.7 -94.5 126.9 -97.5 C129.1 -100.5 131.3 -103.5 133.2 -106.6 C135.1 -109.8 137 -113 138.5 -116.3 C140.1 -119.6 141.5 -123 142.6 -126.5 C143.7 -130 144.5 -133.7 145 -137.3 C145.4 -141 145.3 -146.6 145.4 -148.5" fill="none" stroke="#e98ca3" stroke-width="5" stroke-linecap="round"/>
+      <path d="M0 -152 C50 -152 76 -108 74 -62 C72 -20 46 -2 0 -2 C-46 -2 -72 -20 -74 -62 C-76 -108 -50 -152 0 -152 Z" fill="#f7c1cc" stroke="#d0708a" stroke-width="4.5"/>
+      <g clip-path="url(#axC-bodyClip)">
+        <ellipse cx="0" cy="-50" rx="47" ry="41" fill="#fde3e8"/>
+        <ellipse cx="0" cy="-134" rx="78" ry="26" fill="#eea3b5" opacity="0.6"/>
+        <path d="M-30 -60 Q0 -54 30 -60 M-26 -38 Q0 -32 26 -38" fill="none" stroke="#eea3b5" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+      </g>
+      <g><ellipse cx="-36" cy="-6" rx="22" ry="11.5" fill="#f7c1cc" stroke="#d0708a" stroke-width="4"/><path d="M-44 -9 L-44 -2 M-34 -9 L-34 -1" stroke="#d0708a" stroke-width="2.4" stroke-linecap="round" opacity="0.7"/></g>
+      <g><ellipse cx="36" cy="-6" rx="22" ry="11.5" fill="#f7c1cc" stroke="#d0708a" stroke-width="4"/><path d="M44 -9 L44 -2 M34 -9 L34 -1" stroke="#d0708a" stroke-width="2.4" stroke-linecap="round" opacity="0.7"/></g>
+      <g id="axC-headY"><g id="axC-head"><g id="axC-headBob"><g id="axC-headBobR">
+        <g><g transform="translate(-104 -262) rotate(-146)"><g id="axC-gL1"><g id="axC-gL1w"><path d="M0 -5.8 Q4.9 -14.9 19.4 -15.2 Q17.4 -9.8 18.8 -8 Q23.7 -14.8 38.2 -15.1 Q36.2 -9.3 37.6 -7.3 Q42.5 -10.4 57 -10.6 Q55 -5.9 56.4 -4.3 Q61.3 -5.2 75.8 -5.4 Q73.8 -2.3 75.2 -1.2 L80 0 L75.2 1.2 Q73.8 2.3 75.8 5.4 Q61.3 5.2 56.4 4.3 Q55 5.9 57 10.6 Q42.5 10.4 37.6 7.3 Q36.2 9.3 38.2 15.1 Q23.7 14.8 18.8 8 Q17.4 9.8 19.4 15.2 Q4.9 14.9 0 5.8 Z" fill="#ff6a45" stroke="#d9452f" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 -2.8 Q36 -9.3 68.8 0 Q36 9.3 4 2.8 Z" fill="#ff8a5e" opacity="0.75"/><path d="M6 0 Q40 -1.5 72 0 M21.6 0 L32 -7.2 M21.6 0 L32 7.2 M40.4 0 L50.8 -6.2 M40.4 0 L50.8 6.2 M59.2 0 L69.6 -3.3 M59.2 0 L69.6 3.3" fill="none" stroke="#b8331f" stroke-width="1.7" stroke-linecap="round" opacity="0.55"/></g></g></g><g transform="translate(-121 -224) rotate(-177)"><g id="axC-gL2"><g id="axC-gL2w"><path d="M0 -6.2 Q5.2 -15.9 21 -16.3 Q19 -10.5 20.7 -8.5 Q25.9 -15.7 41.6 -16.1 Q39.6 -9.9 41.4 -7.8 Q46.6 -11.1 62.3 -11.3 Q60.3 -6.3 62 -4.6 Q67.3 -5.6 83 -5.7 Q81 -2.4 82.7 -1.3 L88 0 L82.7 1.3 Q81 2.4 83 5.7 Q67.3 5.6 62 4.6 Q60.3 6.3 62.3 11.3 Q46.6 11.1 41.4 7.8 Q39.6 9.9 41.6 16.1 Q25.9 15.7 20.7 8.5 Q19 10.5 21 16.3 Q5.2 15.9 0 6.2 Z" fill="#ff6a45" stroke="#d9452f" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 -3 Q39.6 -9.9 75.7 0 Q39.6 9.9 4 3 Z" fill="#ff8a5e" opacity="0.75"/><path d="M6 0 Q44 -1.5 79.2 0 M23.8 0 L35.2 -7.7 M23.8 0 L35.2 7.7 M44.5 0 L55.8 -6.6 M44.5 0 L55.8 6.6 M65.1 0 L76.5 -3.5 M65.1 0 L76.5 3.5" fill="none" stroke="#b8331f" stroke-width="1.7" stroke-linecap="round" opacity="0.55"/></g></g></g><g transform="translate(-113 -186) rotate(152)"><g id="axC-gL3"><g id="axC-gL3w"><path d="M0 -5.4 Q4.7 -13.9 18.6 -14.2 Q16.6 -9.1 17.9 -7.5 Q22.5 -13.8 36.5 -14.1 Q34.5 -8.6 35.7 -6.8 Q40.4 -9.7 54.4 -9.9 Q52.4 -5.5 53.6 -4 Q58.2 -4.9 72.2 -5 Q70.2 -2.1 71.4 -1.1 L76 0 L71.4 1.1 Q70.2 2.1 72.2 5 Q58.2 4.9 53.6 4 Q52.4 5.5 54.4 9.9 Q40.4 9.7 35.7 6.8 Q34.5 8.6 36.5 14.1 Q22.5 13.8 17.9 7.5 Q16.6 9.1 18.6 14.2 Q4.7 13.9 0 5.4 Z" fill="#ff6a45" stroke="#d9452f" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 -2.6 Q34.2 -8.7 65.4 0 Q34.2 8.7 4 2.6 Z" fill="#ff8a5e" opacity="0.75"/><path d="M6 0 Q38 -1.5 68.4 0 M20.5 0 L30.4 -6.7 M20.5 0 L30.4 6.7 M38.4 0 L48.2 -5.8 M38.4 0 L48.2 5.8 M56.3 0 L66.1 -3.1 M56.3 0 L66.1 3.1" fill="none" stroke="#b8331f" stroke-width="1.7" stroke-linecap="round" opacity="0.55"/></g></g></g></g>
+        <g transform="scale(-1 1)"><g transform="translate(-104 -262) rotate(-146)"><g id="axC-gR1"><g id="axC-gR1w"><path d="M0 -5.8 Q4.9 -14.9 19.4 -15.2 Q17.4 -9.8 18.8 -8 Q23.7 -14.8 38.2 -15.1 Q36.2 -9.3 37.6 -7.3 Q42.5 -10.4 57 -10.6 Q55 -5.9 56.4 -4.3 Q61.3 -5.2 75.8 -5.4 Q73.8 -2.3 75.2 -1.2 L80 0 L75.2 1.2 Q73.8 2.3 75.8 5.4 Q61.3 5.2 56.4 4.3 Q55 5.9 57 10.6 Q42.5 10.4 37.6 7.3 Q36.2 9.3 38.2 15.1 Q23.7 14.8 18.8 8 Q17.4 9.8 19.4 15.2 Q4.9 14.9 0 5.8 Z" fill="#ff6a45" stroke="#d9452f" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 -2.8 Q36 -9.3 68.8 0 Q36 9.3 4 2.8 Z" fill="#ff8a5e" opacity="0.75"/><path d="M6 0 Q40 -1.5 72 0 M21.6 0 L32 -7.2 M21.6 0 L32 7.2 M40.4 0 L50.8 -6.2 M40.4 0 L50.8 6.2 M59.2 0 L69.6 -3.3 M59.2 0 L69.6 3.3" fill="none" stroke="#b8331f" stroke-width="1.7" stroke-linecap="round" opacity="0.55"/></g></g></g><g transform="translate(-121 -224) rotate(-177)"><g id="axC-gR2"><g id="axC-gR2w"><path d="M0 -6.2 Q5.2 -15.9 21 -16.3 Q19 -10.5 20.7 -8.5 Q25.9 -15.7 41.6 -16.1 Q39.6 -9.9 41.4 -7.8 Q46.6 -11.1 62.3 -11.3 Q60.3 -6.3 62 -4.6 Q67.3 -5.6 83 -5.7 Q81 -2.4 82.7 -1.3 L88 0 L82.7 1.3 Q81 2.4 83 5.7 Q67.3 5.6 62 4.6 Q60.3 6.3 62.3 11.3 Q46.6 11.1 41.4 7.8 Q39.6 9.9 41.6 16.1 Q25.9 15.7 20.7 8.5 Q19 10.5 21 16.3 Q5.2 15.9 0 6.2 Z" fill="#ff6a45" stroke="#d9452f" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 -3 Q39.6 -9.9 75.7 0 Q39.6 9.9 4 3 Z" fill="#ff8a5e" opacity="0.75"/><path d="M6 0 Q44 -1.5 79.2 0 M23.8 0 L35.2 -7.7 M23.8 0 L35.2 7.7 M44.5 0 L55.8 -6.6 M44.5 0 L55.8 6.6 M65.1 0 L76.5 -3.5 M65.1 0 L76.5 3.5" fill="none" stroke="#b8331f" stroke-width="1.7" stroke-linecap="round" opacity="0.55"/></g></g></g><g transform="translate(-113 -186) rotate(152)"><g id="axC-gR3"><g id="axC-gR3w"><path d="M0 -5.4 Q4.7 -13.9 18.6 -14.2 Q16.6 -9.1 17.9 -7.5 Q22.5 -13.8 36.5 -14.1 Q34.5 -8.6 35.7 -6.8 Q40.4 -9.7 54.4 -9.9 Q52.4 -5.5 53.6 -4 Q58.2 -4.9 72.2 -5 Q70.2 -2.1 71.4 -1.1 L76 0 L71.4 1.1 Q70.2 2.1 72.2 5 Q58.2 4.9 53.6 4 Q52.4 5.5 54.4 9.9 Q40.4 9.7 35.7 6.8 Q34.5 8.6 36.5 14.1 Q22.5 13.8 17.9 7.5 Q16.6 9.1 18.6 14.2 Q4.7 13.9 0 5.4 Z" fill="#ff6a45" stroke="#d9452f" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 -2.6 Q34.2 -8.7 65.4 0 Q34.2 8.7 4 2.6 Z" fill="#ff8a5e" opacity="0.75"/><path d="M6 0 Q38 -1.5 68.4 0 M20.5 0 L30.4 -6.7 M20.5 0 L30.4 6.7 M38.4 0 L48.2 -5.8 M38.4 0 L48.2 5.8 M56.3 0 L66.1 -3.1 M56.3 0 L66.1 3.1" fill="none" stroke="#b8331f" stroke-width="1.7" stroke-linecap="round" opacity="0.55"/></g></g></g></g>
+        <path d="M0 -314 C82 -314 134 -276 134 -214 C134 -152 78 -124 0 -124 C-78 -124 -134 -152 -134 -214 C-134 -276 -82 -314 0 -314 Z" fill="#f7c1cc" stroke="#d0708a" stroke-width="4.5"/>
+        <g clip-path="url(#axC-headClip)">
+          <ellipse cx="0" cy="-116" rx="150" ry="36" fill="#eea3b5" opacity="0.55"/>
+          <path d="M-78 -270 C-66 -292 -30 -302 0 -298 C-26 -292 -56 -282 -70 -262 C-74 -258 -80 -262 -78 -270 Z" fill="#fde3e8" opacity="0.9"/>
+          <circle cx="22" cy="-294" r="5" fill="#fde3e8" opacity="0.85"/>
+        </g>
+        <g id="axC-face">
+          <g transform="translate(-84 -176)"><ellipse id="axC-cheekL" rx="17" ry="10" fill="#ff8aa3" opacity="0.55" filter="url(#axC-soft)"/></g>
+          <g transform="translate(84 -176)"><ellipse id="axC-cheekR" rx="17" ry="10" fill="#ff8aa3" opacity="0.55" filter="url(#axC-soft)"/></g>
+          <g transform="translate(-48 -208)"><g id="axC-eyeL"><g id="axC-openL"><g id="axC-blinkL"><g id="axC-lookL"><ellipse rx="11" ry="13" fill="#2a1520"/><g id="axC-hlL"><circle cx="3.8" cy="-5" r="4.2" fill="#fff"/><circle cx="-3.6" cy="4.6" r="1.9" fill="#fff" opacity="0.85"/></g></g></g></g><path id="axC-happyL" opacity="0" d="M-11 4 Q0 -11 11 4" fill="none" stroke="#2a1520" stroke-width="5" stroke-linecap="round"/><path id="axC-sqzL" opacity="0" d="M-8 -8 L6 0 L-8 8" fill="none" stroke="#2a1520" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path id="axC-winkL" opacity="0" d="M-11 -1 Q0 7 11 -1" fill="none" stroke="#2a1520" stroke-width="5" stroke-linecap="round"/></g></g><g transform="translate(48 -208)"><g id="axC-eyeR"><g id="axC-openR"><g id="axC-blinkR"><g id="axC-lookR"><ellipse rx="11" ry="13" fill="#2a1520"/><g id="axC-hlR"><circle cx="3.8" cy="-5" r="4.2" fill="#fff"/><circle cx="-3.6" cy="4.6" r="1.9" fill="#fff" opacity="0.85"/></g></g></g></g><path id="axC-happyR" opacity="0" d="M-11 4 Q0 -11 11 4" fill="none" stroke="#2a1520" stroke-width="5" stroke-linecap="round"/><path id="axC-sqzR" opacity="0" d="M8 -8 L-6 0 L8 8" fill="none" stroke="#2a1520" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path id="axC-winkR" opacity="0" d="M-11 -1 Q0 7 11 -1" fill="none" stroke="#2a1520" stroke-width="5" stroke-linecap="round"/></g></g>
+          <g transform="translate(-48 -238)"><g id="axC-browL"><path id="axC-browLr" d="M-9 2 Q-1 -3 9 0" fill="none" stroke="#c05f7b" stroke-width="4.2" stroke-linecap="round" opacity="0.8"/></g></g><g transform="translate(48 -238) scale(-1 1)"><g id="axC-browR"><path id="axC-browRr" d="M-9 2 Q-1 -3 9 0" fill="none" stroke="#c05f7b" stroke-width="4.2" stroke-linecap="round" opacity="0.8"/></g></g>
+          <path id="axC-mouth" d="M-17 -170 C-11 -162 11 -162 17 -170 C11 -151 -11 -151 -17 -170 Z" fill="#7a1f37" stroke="#7a1f37" stroke-width="2" stroke-linejoin="round"/>
+          <ellipse cx="0" cy="-138" rx="13" ry="9" fill="#ff7f99" clip-path="url(#axC-mouthClip)"/>
+        </g>
+      </g></g></g></g>
+      <g transform="translate(0 -72) scale(1.15)"><g id="axC-clapY"><g id="axC-clap" opacity="0">
+        <rect x="-60" y="-26" width="120" height="68" rx="7" fill="#1b1b20" stroke="#0b0b0d" stroke-width="3"/>
+        <rect x="-60" y="-26" width="120" height="14" rx="3" fill="#ece8dc"/>
+        <path d="M-54 -26 L-42 -26 L-48 -12 L-60 -12 Z M-30 -26 L-18 -26 L-24 -12 L-36 -12 Z M-6 -26 L6 -26 L0 -12 L-12 -12 Z M18 -26 L30 -26 L24 -12 L12 -12 Z M42 -26 L54 -26 L48 -12 L36 -12 Z" fill="#1b1b20"/>
+        <line x1="-52" y1="12" x2="52" y2="12" stroke="#4a4a54" stroke-width="1.5"/>
+        <line x1="0" y1="-6" x2="0" y2="36" stroke="#4a4a54" stroke-width="1.5"/>
+        <text x="-26" y="6" text-anchor="middle" font-family="JB Mono, monospace" font-size="9" fill="#9a978f">ESCENA</text>
+        <text x="26" y="6" text-anchor="middle" font-family="JB Mono, monospace" font-size="9" fill="#9a978f">TOMA</text>
+        <text x="-26" y="31" text-anchor="middle" font-family="Archivo, sans-serif" font-weight="800" font-size="17" fill="#f0c94a">1</text>
+        <text x="26" y="31" text-anchor="middle" font-family="Archivo, sans-serif" font-weight="800" font-size="17" fill="#ece8dc">1</text>
+        <g transform="translate(-60 -28)"><g id="axC-clapStick">
+          <rect x="0" y="-14" width="120" height="14" rx="3" fill="#ece8dc" stroke="#0b0b0d" stroke-width="2"/>
+          <path d="M-6 -14 L6 -14 L12 0 L0 0 Z M18 -14 L30 -14 L36 0 L24 0 Z M42 -14 L54 -14 L60 0 L48 0 Z M66 -14 L78 -14 L84 0 L72 0 Z M90 -14 L102 -14 L108 0 L96 0 Z" fill="#1b1b20"/>
+          <circle cx="5" cy="-1" r="3" fill="#4a4a54"/>
+        </g></g>
+      </g></g></g>
+      <g transform="translate(-66 -106) scale(-1 1) rotate(-9)"><g id="axC-armL"><g id="axC-armLw"><g id="axC-armLs"><g id="axC-fingerL" opacity="0"><path d="M2 44 L3 68" stroke="#d0708a" stroke-width="13" stroke-linecap="round"/><path d="M2 44 L3 68" stroke="#f7c1cc" stroke-width="7.5" stroke-linecap="round"/></g><path d="M-11 -4 C-12 10 -11 22 -10 31 C-15 37 -15 45 -10 48 C-8 50 -4 50 -3 47 C-2 52 3 54 5 50 C7 53 12 51 12 47 C16 46 18 40 14 34 C12 24 12 10 11 -4 C11 -10 -11 -10 -11 -4 Z" fill="#f7c1cc" stroke="#d0708a" stroke-width="4" stroke-linejoin="round"/><path d="M-3 47 C-3 44 -2 42 -1 41 M5 50 C5 46 5 44 5 42" fill="none" stroke="#d0708a" stroke-width="2.2" stroke-linecap="round" opacity="0.75"/></g></g></g></g>
+      <g transform="translate(66 -106) rotate(-9)"><g id="axC-armR"><g id="axC-armRw"><g id="axC-armRs"><g id="axC-fingerR" opacity="0"><path d="M2 44 L3 68" stroke="#d0708a" stroke-width="13" stroke-linecap="round"/><path d="M2 44 L3 68" stroke="#f7c1cc" stroke-width="7.5" stroke-linecap="round"/></g><path d="M-11 -4 C-12 10 -11 22 -10 31 C-15 37 -15 45 -10 48 C-8 50 -4 50 -3 47 C-2 52 3 54 5 50 C7 53 12 51 12 47 C16 46 18 40 14 34 C12 24 12 10 11 -4 C11 -10 -11 -10 -11 -4 Z" fill="#f7c1cc" stroke="#d0708a" stroke-width="4" stroke-linejoin="round"/><path d="M-3 47 C-3 44 -2 42 -1 41 M5 50 C5 46 5 44 5 42" fill="none" stroke="#d0708a" stroke-width="2.2" stroke-linecap="round" opacity="0.75"/></g></g></g></g>
+    </g></g></g>
+    <g id="axC-fx">
+      <g transform="translate(128 -340) scale(1.5)"><g id="axC-fxBangY"><g id="axC-fxBang" opacity="0"><path d="M-7 -34 L7 -34 L4 2 L-4 2 Z" fill="#f0c94a" stroke="#0b0b0d" stroke-width="3" stroke-linejoin="round"/><circle cx="0" cy="13" r="6" fill="#f0c94a" stroke="#0b0b0d" stroke-width="3"/></g></g></g>
+      <g transform="translate(98 -256)"><g id="axC-fxSpark" opacity="0"><path d="M0 -16 Q2 -2 16 0 Q2 2 0 16 Q-2 2 -16 0 Q-2 -2 0 -16 Z" fill="#fff4c4"/></g></g>
+      <g transform="translate(118 -306)"><circle id="axC-th1" r="6" fill="#ece8dc" opacity="0"/></g>
+      <g transform="translate(142 -334)"><circle id="axC-th2" r="9" fill="#ece8dc" opacity="0"/></g>
+      <g transform="translate(174 -366)"><circle id="axC-th3" r="13" fill="#ece8dc" opacity="0"/></g>
+      <g transform="translate(0 -60)"><g id="axC-fxImpact" opacity="0" stroke="#f0c94a" stroke-width="5" stroke-linecap="round" fill="none">
+        <path d="M-84 -40 L-102 -54"/><path d="M-90 -6 L-112 -6"/><path d="M-84 26 L-102 40"/>
+        <path d="M84 -40 L102 -54"/><path d="M90 -6 L112 -6"/><path d="M84 26 L102 40"/>
+      </g></g>
+      <g transform="translate(0 -324) scale(1 0.36)"><g id="axC-fxStars" opacity="0">
+        <path transform="translate(80 0)" d="M0 -13 L3.2 -4.4 L12.4 -4 L5.2 1.7 L7.6 10.5 L0 5.5 L-7.6 10.5 L-5.2 1.7 L-12.4 -4 L-3.2 -4.4 Z" fill="#f0c94a"/>
+        <path transform="translate(-40 69)" d="M0 -11 L2.6 -3.6 L10.5 -3.4 L4.3 1.4 L6.5 8.9 L0 4.5 L-6.5 8.9 L-4.3 1.4 L-10.5 -3.4 L-2.6 -3.6 Z" fill="#ece8dc"/>
+        <path transform="translate(-40 -69)" d="M0 -12 L2.9 -4 L11.4 -3.7 L4.8 1.5 L7.1 9.7 L0 5 L-7.1 9.7 L-4.8 1.5 L-11.4 -3.7 L-2.9 -4 Z" fill="#f0c94a"/>
+      </g></g>
+      <g transform="translate(118 -262)"><g id="axC-fxSweatY"><path id="axC-fxSweat" opacity="0" d="M0 -12 C6 -2 9 3 9 7 C9 12 5 15 0 15 C-5 15 -9 12 -9 7 C-9 3 -6 -2 0 -12 Z" fill="#9cc2ff" stroke="#5b86c9" stroke-width="2"/></g></g>
+      <g transform="translate(0 -10) scale(1.1 0.7)"><g id="axC-fxImpact2" opacity="0" stroke="#f0c94a" stroke-width="5" stroke-linecap="round" fill="none">
+        <path d="M-84 -40 L-102 -54"/><path d="M-90 -6 L-112 -6"/><path d="M-84 26 L-102 40"/>
+        <path d="M84 -40 L102 -54"/><path d="M90 -6 L112 -6"/><path d="M84 26 L102 40"/>
+      </g></g>
+    </g>
+  </g></g>
+  </g>
+</svg>
+</div>
+
+      </div>
+
+      <!-- chips que saltan (por encima de todo) -->
+      <span class="secC-chip secC-fly" id="secC-f0" style="width: 112px; background: #f0c94a">Taza</span>
+      <span class="secC-chip secC-fly" id="secC-f1" style="width: 196px; background: #f7a198">Abrigo rojo</span>
+      <span class="secC-chip secC-fly" id="secC-f2" style="width: 250px; background: #8fd0d6">Coche de los 80</span>
+
+      <div id="secC-stamp" data-layout-allow-overlap>
+        <div class="secC-ink"></div>
+        <b>¡APUNTADO!</b>
+        <span class="secC-mono">Esc. 7 · 3 elementos nuevos</span>
+        <svg width="600" height="150" viewBox="0 0 600 150" id="secC-specks"></svg>
+      </div>
+      <div id="secC-sshadow"></div>
+      <div id="secC-burst"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    </div>
+
+    <!-- PRIMER TÉRMINO (d = 1.3): marcas de mesa que pasan por delante -->
+    <div class="secC-plane" id="secC-fore" data-layout-allow-overflow>
+      <span class="secC-mono secC-lbl secC-dk" id="secC-k1"><i style="background: #f0c94a"></i>VD-02 ▸ Preparar ▸ Desglose</span>
+      <span class="secC-mono secC-lbl" id="secC-k2"><i style="background: #f0c94a"></i>VD-02 ▸ Preparar ▸ Planos</span>
+      <i class="secC-crop" id="secC-x1"><b></b></i>
+      <i class="secC-crop" id="secC-x2"><b></b></i>
+      <i class="secC-crop" id="secC-x3"><b></b></i>
+      <i class="secC-crop" id="secC-x4"><b></b></i>
+    </div>
+  </div>
+
+  <!-- VISOR: las esquinas son la cámara -->
+  <div id="secC-hud">
+    <i class="secC-thd" id="secC-th0"></i><i class="secC-thd" id="secC-th1"></i><i class="secC-thd" id="secC-th2"></i><i class="secC-thd" id="secC-th3"></i>
+    <i class="secC-cor" id="secC-c0" style="border-left-width: 7px; border-top-width: 7px"></i>
+    <i class="secC-cor" id="secC-c1" style="border-right-width: 7px; border-top-width: 7px"></i>
+    <i class="secC-cor" id="secC-c2" style="border-left-width: 7px; border-bottom-width: 7px"></i>
+    <i class="secC-cor" id="secC-c3" style="border-right-width: 7px; border-bottom-width: 7px"></i>
+    <div id="secC-xh"></div>
+    <div class="secC-mono" id="secC-htl"><i></i>Planos · Esc. 7</div>
+    <div id="secC-htr"><b id="secC-code">1A</b><span class="secC-mono" id="secC-codeN">Plano 1 / 4</span></div>
+    <div id="secC-name"><span class="secC-mono" id="secC-abbr">PG</span><div id="secC-nameb">Plano general</div></div>
+    <div id="secC-slots"></div>
+  </div>
+  <div id="secC-flash"></div>
+</div>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById("secC-" + id);
+  const CUES = window.CUES, FPS = 30, DUR = 12, T0 = 24.5;
+  const H = {}; Object.keys(CUES.hits).forEach((k) => (H[k] = CUES.hits[k] - T0));
+
+  /* ---------------- curvas propias vd.* (05 §1.1) ---------------- */
+  function bez(x1, y1, x2, y2) {
+    const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
+    const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+    const sx = (t) => ((ax * t + bx) * t + cx) * t, sy = (t) => ((ay * t + by) * t + cy) * t;
+    const dx = (t) => (3 * ax * t + 2 * bx) * t + cx;
+    return (p) => {
+      if (p <= 0) return 0; if (p >= 1) return 1;
+      let t = p;
+      for (let i = 0; i < 6; i++) { const e = sx(t) - p, d = dx(t); if (Math.abs(e) < 1e-6 || Math.abs(d) < 1e-6) break; t -= e / d; }
+      if (t < 0 || t > 1) { let lo = 0, hi = 1; t = p; for (let i = 0; i < 30; i++) { sx(t) < p ? (lo = t) : (hi = t); t = (lo + hi) / 2; } }
+      return sy(t);
+    };
+  }
+  const springF = (z = 0.42, w = 13) => (p) => (p >= 1 ? 1 : 1 - Math.exp(-z * w * p) * Math.cos(w * Math.sqrt(1 - z * z) * p));
+  if (!window.__vdEases) {
+    const EASE = {
+      "vd.land": bez(0.16, 1, 0.3, 1), "vd.settle": bez(0, 0.65, 0.51, 0.99), "vd.glide": bez(0.7, 0, 0.2, 1),
+      "vd.push": bez(0.33, 0, 0.67, 1), "vd.whip": bez(0.86, 0, 0.12, 1), "vd.dive": bez(0.55, 0, 0.95, 0.55),
+      "vd.exit": bez(0.7, 0, 0.84, 0), "vd.spring": springF(),
+      "vd.fold": (p) => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2),
+    };
+    Object.keys(EASE).forEach((k) => gsap.registerEase(k, EASE[k]));
+    window.__vdEases = true;
+  }
+  const EZ = (n) => gsap.parseEase(n);
+  const eLand = EZ("vd.land"), eGlide = EZ("vd.glide"), eExit = EZ("vd.exit"), eSettle = EZ("vd.settle"), eSpring = EZ("vd.spring"), ePush = EZ("vd.push");
+  const c01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
+  const lerp = (a, b, e) => a + (b - a) * e;
+  const outPow = (p, k) => 1 - Math.pow(1 - c01(p), k);
+  const inPow = (p, k) => Math.pow(c01(p), k);
+  const f1 = (v) => v.toFixed(1), f3 = (v) => v.toFixed(3);
+  function mulberry32(a) { return function () { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  const rnd = mulberry32(20261016);
+
+  /* =================================================================
+     ESCENA "GASOLINERA" (1600×900): una sola geometría que sirve
+     a la transparencia a color, a las miniaturas y al storyboard.
+     ================================================================= */
+  const R = (x, y, w, h, r = 0) => r
+    ? `M${x + r} ${y}H${x + w - r}Q${x + w} ${y} ${x + w} ${y + r}V${y + h - r}Q${x + w} ${y + h} ${x + w - r} ${y + h}H${x + r}Q${x} ${y + h} ${x} ${y + h - r}V${y + r}Q${x} ${y} ${x + r} ${y}Z`
+    : `M${x} ${y}H${x + w}V${y + h}H${x}Z`;
+  const E = (cx, cy, rx, ry) => `M${cx - rx} ${cy}A${rx} ${ry} 0 1 0 ${cx + rx} ${cy}A${rx} ${ry} 0 1 0 ${cx - rx} ${cy}Z`;
+  const Ci = (cx, cy, r) => E(cx, cy, r, r);
+  const INK = "#151519", TONE = "#c3beb2", TONE2 = "#8d887e", RED = "#f0503f";
+  let stars = ""; [[90, 80], [180, 260], [420, 70], [560, 190], [700, 60], [820, 130], [470, 300], [640, 330], [80, 400], [760, 250]].forEach(([x, y], i) => (stars += Ci(x, y, i % 3 ? 2.2 : 3.2)));
+  const dashes = [40, 260, 480, 700, 920, 1140, 1360].map((x) => R(x, 812, 120, 10)).join("");
+  // b: "s" = trazo en el storyboard, "n" = solo color; tone = relleno de rotulador gris en el storyboard
+  const SH = [
+    { d: R(0, 0, 1600, 640), fill: "#1d1d22", b: "n", tone: TONE, to: 0.55 },
+    { d: stars, fill: "#f6f3ea", fo: 0.85, b: "n" },
+    { d: Ci(262, 168, 58), fill: "#f6f3ea", b: "s", tone: "#fbf9f3", to: 1 },
+    { d: "M0 604 Q180 548 380 590 T760 574 T1120 592 T1600 566 L1600 640 L0 640 Z", fill: "#26262b", b: "s", tone: "#aaa498", to: 0.7 },
+    { d: R(0, 640, 1600, 260), fill: "#2e2e35", b: "n" },
+    { d: "M0 640 L1600 640", line: "#2e2e35", lw: 2, b: "s" },
+    { d: dashes, fill: "#9a978f", b: "s" },
+    { d: "M880 640 L1600 640 L1600 900 L760 900 Z", fill: "#f0c94a", fo: 0.26, b: "n", tone: "#e4ddc8", to: 0.9 },
+    { d: "M868 650 L1138 612 L1138 714 L868 666 Z", fill: "#f6f3ea", fo: 0.16, b: "s" },
+    { d: R(880, 150, 720, 56), fill: INK, b: "s", tone: TONE2, to: 0.9 },
+    { d: R(880, 200, 720, 50), fill: "#f0c94a", b: "s", tone: "#e4ddc8", to: 1, txt: 1 },
+    { d: R(880, 250, 720, 12), fill: "#fbf9f3", b: "s" },
+    { d: R(1010, 262, 34, 378) + R(1524, 262, 34, 378), fill: "#3a3a42", b: "s", tone: TONE, to: 0.9 },
+    { d: R(1150, 440, 96, 200, 10), fill: "#ece8dc", b: "s" },
+    { d: R(1150, 420, 96, 26, 6), fill: "#8fd0d6", b: "s", tone: TONE, to: 0.8 },
+    { d: R(1166, 462, 64, 40, 4), fill: INK, b: "s", tone: TONE2, to: 0.9 },
+    { d: "M1246 522 Q1292 540 1274 600 Q1264 630 1292 640", line: INK, lw: 8, b: "s" },
+    // coche de los ochenta (hatchback cuadrado), un solo faro
+    { d: "M220 700 L222 648 Q226 632 246 630 L420 626 L470 560 Q478 548 494 548 L722 548 Q740 548 750 562 L802 626 L852 630 Q870 634 872 652 L874 700 Z", fill: "#8fd0d6", b: "s", tone: "#d6d1c4", to: 1 },
+    { d: "M488 562 L716 562 Q730 562 738 574 L780 622 L440 622 Z", fill: INK, b: "s", tone: TONE2, to: 0.9 },
+    { d: R(598, 562, 10, 60), fill: "#8fd0d6", b: "s" },
+    { d: R(232, 662, 636, 7), fill: INK, fo: 0.45, b: "n" },
+    { d: R(212, 688, 44, 16, 4) + R(838, 688, 44, 16, 4), fill: "#ece8dc", b: "s" },
+    { d: R(848, 644, 20, 22, 4), fill: "#f0c94a", b: "s" },
+    { d: Ci(340, 708, 40) + Ci(752, 708, 40), fill: INK, b: "s", tone: TONE2, to: 0.9 },
+    { d: Ci(340, 708, 15) + Ci(752, 708, 15), fill: "#9a978f", b: "s" },
+    // Lucía (abrigo rojo, taza)
+    { d: R(1309, 680, 18, 84) + R(1335, 680, 18, 84), fill: INK, b: "s", tone: TONE2, to: 0.9, lu: 1 },
+    { d: "M1366 494 Q1392 520 1394 600 L1376 604 Q1372 540 1356 510 Z", fill: "#c63a2f", b: "s", tone: RED, to: 0.75, lu: 1, acc: 1 },
+    { d: "M1292 486 Q1330 474 1368 486 L1394 692 Q1330 704 1266 692 Z", fill: RED, b: "s", tone: RED, to: 0.9, lu: 1, acc: 1 },
+    { d: "M1310 485 L1330 514 L1350 485", line: "#8e2a20", lw: 3, b: "s", lu: 1 },
+    { d: Ci(1334, 560, 4) + Ci(1336, 600, 4) + Ci(1338, 640, 4), fill: "#8e2a20", b: "n", tone: INK, to: 0.8, lu: 1 },
+    { d: R(1320, 452, 20, 36), fill: "#f2cdb5", b: "n", lu: 1 },
+    { d: E(1328, 426, 35, 39), fill: "#f2cdb5", b: "s", lu: 1 },
+    { d: "M1293 418 Q1294 382 1332 380 Q1370 382 1371 428 L1374 470 Q1358 476 1346 468 L1348 432 Q1322 414 1300 426 Z", fill: INK, b: "s", tone: TONE2, to: 0.95, lu: 1 },
+    { d: "M1296 418 Q1289 432 1286 438 Q1287 443 1297 443 Z", fill: "#f2cdb5", b: "s", lu: 1 },
+    { d: E(1306, 430, 3.4, 4.4), fill: INK, b: "n", tone: INK, to: 1, lu: 1 },
+    { d: "M1299 419 Q1306 415 1314 417", line: INK, lw: 2.5, b: "s", lu: 1 },
+    { d: "M1305 451 Q1310 453 1315 450", line: "#8e2a20", lw: 2.4, b: "s", lu: 1 },
+    { d: Ci(1318, 442, 6.5), fill: "#f0503f", fo: 0.28, b: "n", lu: 1 },
+    { d: "M1298 494 Q1280 520 1282 572 Q1286 586 1300 580 L1310 548 L1296 540 Q1300 516 1312 500 Z", fill: "#c63a2f", b: "s", tone: RED, to: 0.75, lu: 1, acc: 1 },
+    { d: "M1275 506 L1305 506 L1302 542 Q1290 548 1278 542 Z", fill: "#f6f3ea", b: "s", lu: 1 },
+    { d: R(1276.5, 518, 27, 9), fill: "#8fd0d6", b: "n", tone: TONE, to: 0.9, lu: 1 },
+    { d: "M1276 514 Q1263 516 1265 526 Q1267 535 1278 533", line: "#f6f3ea", lw: 4, b: "s", lu: 1 },
+    { d: E(1303, 530, 12, 13), fill: "#f2cdb5", b: "s", lu: 1 },
+    { d: "M1284 498 Q1275 486 1286 476 Q1295 466 1286 454 M1297 498 Q1290 488 1298 480", line: "#f6f3ea", lw: 3, lo: 0.8, b: "s", lu: 1 },
+  ];
+  const GAS = '<text x="1240" y="238" text-anchor="middle" font-family="Archivo" font-weight="800" font-size="38" letter-spacing="10" style="font-stretch: 75%">GASOLINA</text>';
+  $("scnG").innerHTML = SH.map((s) => s.line
+    ? `<path d="${s.d}" fill="none" stroke="${s.line}" stroke-width="${s.lw}" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="${s.lo || 1}"/>`
+    : `<path d="${s.d}" fill="${s.fill}" fill-opacity="${s.fo || 1}"/>` + (s.txt ? GAS.replace("<text", `<text fill="${INK}"`) : "")).join("");
+
+  /* ---------------- tamaños de plano (marcos en coords de la escena) ---------------- */
+  const IMG = { x: 410, y: 2107.5, k: 0.65 };                 // la transparencia en el mundo
+  const VIS = { l: 160, t: 90, r: 1760, b: 990 };             // visor en pantalla (1600×900)
+  const FR = {
+    PG: [0, 0, 1600, 900], PM: [1089, 370, 462, 259.875], PP: [1236, 370, 204, 114.75], PD: [1202, 460, 180, 101.25],
+  };
+  const frWorld = (F) => ({ l: IMG.x + F[0] * IMG.k, t: IMG.y + F[1] * IMG.k, r: IMG.x + (F[0] + F[2]) * IMG.k, b: IMG.y + (F[1] + F[3]) * IMG.k });
+  const frCam = (F, k = 1) => { const w = frWorld(F); return { x: (w.l + w.r) / 2, y: (w.t + w.b) / 2, s: (1600 / (w.r - w.l)) * k }; };
+  const SHOTS = [
+    { k: "PG", t: H.shot1, name: "Plano general", code: "1A" },
+    { k: "PM", t: H.shot2, name: "Plano medio", code: "1B" },
+    { k: "PP", t: H.shot3, name: "Primer plano", code: "1C" },
+    { k: "PD", t: H.shot4, name: "Plano detalle", code: "1D" },
+  ];
+  // miniaturas del visor (se rellenan al disparar)
+  $("slots").innerHTML = SHOTS.map((s, i) => `<div class="secC-slot" style="left:${i * 170}px" id="secC-sl${i}"><svg viewBox="${FR[s.k].join(" ")}" preserveAspectRatio="xMidYMid slice" id="secC-slv${i}"><use href="#secC-scnG"/></svg><span class="secC-mono" id="secC-sll${i}">${s.k}</span></div>`).join("");
+
+  /* ---------------- storyboard: 12 viñetas que se dibujan solas ---------------- */
+  const SBX = 1896;
+  const SB = { x: SBX, y: 2080, w: 320, h: 180, dx: 356, dy: 244 };
+  const PAN = [
+    { id: "1A", F: [0, 0, 1600, 900], cap: "PG · Gasolinera", ar: "push" },
+    { id: "1B", F: FR.PM, cap: "PM · Lucía" },
+    { id: "1C", F: FR.PP, cap: "PP · Lucía" },
+    { id: "1D", F: FR.PD, cap: "PD · La taza" },
+    { id: "2A", F: [150, 420, 820, 461.25], cap: "PG · Llega el coche", ar: "pan" },
+    { id: "2B", F: [760, 560, 360, 202.5], cap: "PD · Un solo faro" },
+    { id: "2C", F: [960, 240, 620, 348.75], cap: "PM · Actor invitado", nolu: 1 },
+    { id: "2D", F: [500, 300, 1100, 618.75], cap: "PC · Los dos" },
+    { id: "3A", F: [100, 40, 560, 315], cap: "PD · Luna" },
+    { id: "3B", F: [430, 520, 380, 213.75], cap: "PP · Ventanilla" },
+    { id: "3C", F: [60, 60, 1480, 832.5], cap: "PG · Picado", ar: "tilt" },
+    { id: "3D", F: [1000, 300, 600, 337.5], cap: "PM · Se acerca" },
+  ];
+  const PANS = [];
+  let phtml = "";
+  PAN.forEach((p, i) => {
+    const c = i % 4, r = Math.floor(i / 4), x = SB.x + c * SB.dx, y = SB.y + r * SB.dy;
+    const F = p.F, bw = (1.8 * F[2]) / 320, u = F[2] / 320;
+    let s = "", tones = "";
+    const border = `<path class="secC-sk" pathLength="1" d="${R(F[0] + bw, F[1] + bw, F[2] - 2 * bw, F[3] - 2 * bw)}" fill="none" stroke="${INK}" stroke-width="${2 * bw}"/>`;
+    SH.forEach((sh) => {
+      if (p.nolu && sh.lu) return;
+      if (sh.tone) tones += `<path class="secC-tn${sh.acc ? " secC-acc" : ""}" d="${sh.d}" fill="${sh.tone}" fill-opacity="${sh.to}" opacity="0"/>`;
+      if (sh.txt) tones += GAS.replace("<text", `<text class="secC-tn" opacity="0" fill="${INK}"`);
+      if (sh.b === "s") s += `<path class="secC-sk" pathLength="1" d="${sh.d}" fill="none" stroke="${INK}" stroke-width="${bw * (sh.lw && sh.lw > 4 ? 1.6 : 1)}" stroke-linecap="round" stroke-linejoin="round"/>`;
+    });
+    // notación de cámara
+    const X = (fx) => F[0] + fx * F[2], Y = (fy) => F[1] + fy * F[3];
+    if (p.ar === "push") s += `<path class="secC-sk" pathLength="1" d="M${X(0.66)} ${Y(0.3)}H${X(0.92)}V${Y(0.92)}H${X(0.66)}Z M${X(0.08)} ${Y(0.08)}L${X(0.62)} ${Y(0.27)} M${X(0.62)} ${Y(0.27)}l${-18 * u} ${-2 * u} M${X(0.62)} ${Y(0.27)}l${-9 * u} ${12 * u}" fill="none" stroke="${RED}" stroke-width="${bw * 1.5}" stroke-linecap="round" stroke-dasharray="1"/>`;
+    if (p.ar === "pan") s += `<path class="secC-sk" pathLength="1" d="M${X(0.12)} ${Y(0.12)}H${X(0.84)} M${X(0.84)} ${Y(0.12)}l${-14 * u} ${-9 * u} M${X(0.84)} ${Y(0.12)}l${-14 * u} ${9 * u}" fill="none" stroke="${RED}" stroke-width="${bw * 1.5}" stroke-linecap="round"/>`;
+    if (p.ar === "tilt") s += `<path class="secC-sk" pathLength="1" d="M${X(0.92)} ${Y(0.12)}V${Y(0.8)} M${X(0.92)} ${Y(0.8)}l${-9 * u} ${-14 * u} M${X(0.92)} ${Y(0.8)}l${9 * u} ${-14 * u}" fill="none" stroke="${RED}" stroke-width="${bw * 1.5}" stroke-linecap="round"/>`;
+    phtml += `<div class="secC-pan" style="left:${x}px;top:${y}px" id="secC-p${i}"><svg viewBox="${F.join(" ")}" preserveAspectRatio="xMidYMid slice">${tones}${s}${border}</svg></div>`;
+    phtml += `<div class="secC-cap" style="left:${x}px;top:${y + 190}px" id="secC-cp${i}"><span class="secC-mono">${p.id} · ${p.cap}</span><i></i></div>`;
+    PANS.push({ c, r, x, y, start: H.board - 0.02 + Math.hypot(c, r) * 0.4 });
+  });
+  $("panels").innerHTML = phtml;
+  PANS.forEach((P, i) => {
+    const el = $("p" + i);
+    P.sk = Array.from(el.querySelectorAll(".secC-sk"));
+    P.tn = Array.from(el.querySelectorAll(".secC-tn"));
+    P.cap = $("cp" + i); P.capS = P.cap.querySelector("span"); P.capI = P.cap.querySelector("i");
+    P.sk.forEach((p) => { p.setAttribute("stroke-dasharray", "1 1"); p.style.visibility = "hidden"; });
+    P.last = -1;
+  });
+  const panRect = (i) => ({ l: PANS[i].x, t: PANS[i].y, r: PANS[i].x + SB.w, b: PANS[i].y + SB.h });
+
+  /* manchas del sello (tinta que no agarra) */
+  let sp = ""; for (let i = 0; i < 70; i++) { const x = 12 + rnd() * 576, y = 10 + rnd() * 130, r = 0.8 + rnd() * rnd() * 4.5; sp += `<circle cx="${f1(x)}" cy="${f1(y)}" r="${r.toFixed(2)}"/>`; }
+  for (let i = 0; i < 6; i++) { const x = rnd() * 560, y = 10 + rnd() * 130, w = 20 + rnd() * 60; sp += `<rect x="${f1(x)}" y="${f1(y)}" width="${f1(w)}" height="${(1 + rnd() * 2).toFixed(1)}" rx="1"/>`; }
+  $("specks").innerHTML = `<g fill="#f6f3ea" opacity="0.55">${sp}</g>`;
+
+  /* =================================================================
+     DESGLOSE: subrayados, rotulador y chips
+     ================================================================= */
+  const PG0 = { x: 110, y: 110, a: (-1.4 * Math.PI) / 180 };
+  const pw = (x, y) => ({ x: PG0.x + x * Math.cos(PG0.a) - y * Math.sin(PG0.a), y: PG0.y + x * Math.sin(PG0.a) + y * Math.cos(PG0.a) });
+  const CW = 18; // Courier Prime 30 px: avance 0.6 em
+  const CAT = ["#f0c94a", "#f7a198", "#8fd0d6"];
+  const MK = [
+    { t: H.mark1, d: 0.28, top: 214, col: 0, n: 4 },
+    { t: H.mark2, d: 0.3, top: 260, col: 13, n: 11 },
+    { t: H.mark3, d: 0.36, top: 306, col: 14, n: 20 },
+  ].map((m) => Object.assign(m, { x0: 84 + m.col * CW - 5, w: m.n * CW + 10, y: m.top + 6 }));
+  MK.forEach((m, i) => { const el = $("hl" + i); el.style.width = m.w + "px"; el.style.left = m.x0 + "px"; el.style.top = m.y + "px"; m.el = el; });
+  // chips: de la palabra a la ranura de su sección
+  const CARD = { x: 1180, y: 140 }, SECT = [84, 304, 524];
+  const CH = [{ w: 112 }, { w: 196 }, { w: 250 }].map((c, i) => {
+    const m = MK[i], a = pw(m.x0 + m.w / 2, m.y + 18);
+    const land = m.t + m.d + 0.6;
+    return Object.assign(c, { el: $("f" + i), ax: a.x, ay: a.y, bx: CARD.x + 32 + c.w / 2, by: CARD.y + SECT[i] + 96 + 26, pop: m.t + m.d + 0.02, land });
+  });
+  const OLD = [[150, 112, 118], [150, 116], [170]];
+  OLD.forEach((row, i) => { let x = 0; row.forEach((w, j) => { $("o" + i + j).style.left = x + "px"; x += w + 12; }); });
+  const CNT0 = ["03", "02", "01"], CNT1 = ["04", "03", "02"];
+  const STAMP = { x: 1512, y: 262, rot: -7, t: H.stamp - 0.03 };   // impacto 1 f antes del golpe
+
+  /* ---------------- cámara: función pura de t (05 §2.2) ---------------- */
+  const cPG = frCam(FR.PG), cPM = frCam(FR.PM), cPP = frCam(FR.PP), cPD = frCam(FR.PD);
+  const c1A = { x: SB.x + SB.w / 2, y: SB.y + SB.h / 2, s: 1600 / SB.w };
+  const LBY = 2400, WHIP0 = 4.7, WHIP1 = 5.1;
+  const K = [
+    { t: 0.0, x: 742, y: 506, s: 1.17, r: -0.5 },
+    { t: 3.8, x: 962, y: 540, s: 1.0, r: 0.15, ease: "sine.out" },
+    { t: WHIP0, x: 966, y: 546, s: 1.06, r: 0, ease: "vd.push" },
+    { t: WHIP1, x: 934, y: LBY + 90, s: 1.06, r: 0.6, h: 0, ease: "vd.whip" },         // se pasa 90 px…
+    { t: 5.47, x: 930, y: LBY, s: 1.12, r: 0, ease: "vd.land" },                        // …y recupera
+    { t: H.shot1, x: 930, y: LBY, s: 1.13, r: 0, ease: "none" },
+    { t: H.shot1 + 0.4, x: cPG.x, y: cPG.y, s: cPG.s, r: 0, ease: "vd.land" },
+    { t: H.shot2, x: cPG.x, y: cPG.y, s: cPG.s * 1.012, ease: "vd.push" },
+    { t: H.shot2 + 0.4, x: cPM.x, y: cPM.y, s: cPM.s, ease: "vd.land" },
+    { t: H.shot3, x: cPM.x, y: cPM.y, s: cPM.s * 1.012, ease: "vd.push" },
+    { t: H.shot3 + 0.4, x: cPP.x, y: cPP.y, s: cPP.s, ease: "vd.land" },
+    { t: H.shot4, x: cPP.x, y: cPP.y, s: cPP.s * 1.012, ease: "vd.push" },
+    { t: H.shot4 + 0.4, x: cPD.x, y: cPD.y, s: cPD.s, h: 0.7, ease: "vd.land" },
+    { t: H.board, x: cPD.x, y: cPD.y, s: cPD.s * 1.06, h: 0.7, ease: "vd.push" },
+    { t: H.board, x: c1A.x, y: c1A.y, s: c1A.s, h: 0.7, cut: true },                   // corte bajo el obturador
+    { t: 8.45, x: c1A.x + 10, y: c1A.y + 4, s: c1A.s * 0.93, h: 0.7, ease: "vd.push" },
+    { t: 9.35, x: SBX + 790, y: 2382, s: 2.1, ease: "vd.glide" },
+    { t: 10.0, x: SBX + 860, y: 2410, s: 2.22, ease: "vd.push" },
+    { t: 10.66, x: SBX + 694, y: 2412, s: 1.05, ease: "vd.settle" },
+    { t: 11.75, x: SBX + 706, y: 2412, s: 1.07, ease: "vd.push" },
+    { t: DUR, x: SBX + 706 + 2500, y: 2412, s: 1.07, h: 0, ease: "power3.in" },               // whip de salida: v máx en el último frame
+  ];
+  K.forEach((k) => { if (k.h == null) k.h = 1; });
+  const CUTS = K.filter((k) => k.cut).map((k) => k.t);
+  function cam(t) {
+    let a = null, b = null;
+    for (let k = 1; k < K.length; k++) if (K[k].t > t) { a = K[k - 1]; b = K[k]; break; }
+    if (!b) { const l = K[K.length - 1]; return { x: l.x, y: l.y, s: l.s, r: l.r || 0, h: l.h }; }
+    const p = c01((t - a.t) / (b.t - a.t || 1));
+    const e = EZ(b.ease || "none")(p);
+    const s = Math.exp(lerp(Math.log(a.s), Math.log(b.s), e));
+    const w = Math.abs(Math.log(b.s / a.s)) > 1 ? (1 / a.s - 1 / s) / (1 / a.s - 1 / b.s) : e;
+    return { x: lerp(a.x, b.x, w), y: lerp(a.y, b.y, w), s, r: lerp(a.r || 0, b.r || 0, e), h: lerp(a.h, b.h, e) };
+  }
+  const hand = (t) => ({
+    x: 2.6 * Math.sin(2 * Math.PI * 0.31 * t + 1.3) + 1.1 * Math.sin(2 * Math.PI * 0.77 * t + 0.4),
+    y: 1.9 * Math.sin(2 * Math.PI * 0.23 * t + 2.1) + 0.9 * Math.sin(2 * Math.PI * 0.91 * t + 5.2),
+    r: 0.12 * Math.sin(2 * Math.PI * 0.17 * t + 0.7),
+  });
+  // golpe del sello: punch de zoom (sube 2 f, cae en 8 f) + 2 f de temblor de 6 px
+  const pulse = (u) => (u < 0 ? 0 : u < 0.066 ? u / 0.066 : Math.exp(-(u - 0.066) / 0.12));
+  function camAt(t) {
+    const c = cam(t), n = hand(t), u = t - STAMP.t;
+    const s = c.s * (1 + 0.045 * pulse(u));
+    let jx = 0, jy = 0;
+    if (u >= 0 && u < 0.1) { const k = 1 - u / 0.1; jx = 6 * k * Math.sin(u * 190); jy = 5 * k * Math.cos(u * 230); }
+    return { x: c.x, y: c.y, s, r: c.r + n.r * c.h, hx: n.x * c.h + jx, hy: n.y * c.h + jy };
+  }
+  const toScreen = (c, x, y) => {
+    const rr = (c.r * Math.PI) / 180, dx = (x - c.x) * c.s, dy = (y - c.y) * c.s;
+    return [960 + c.hx + dx * Math.cos(rr) - dy * Math.sin(rr), 540 + c.hy + dx * Math.sin(rr) + dy * Math.cos(rr)];
+  };
+  const projRect = (c, w) => { const a = toScreen(c, w.l, w.t), b = toScreen(c, w.r, w.b); return { l: a[0], t: a[1], r: b[0], b: b[1] }; };
+  // primer término: coordenadas para que caiga en (sx, sy) de pantalla con la cámara k
+  const D_F = 1.3;
+  const foreAt = (sx, sy, k) => { const S = 1 + (k.s - 1) * D_F; return { x: (sx - 960) / S + k.x * D_F, y: (sy - 540) / S + k.y * D_F }; };
+  const kEnd = { x: SBX + 706, y: 2412, s: 1.07 }, kDesk = { x: 962, y: 540, s: 1.0 };
+  [["k1", 64, 1020, kDesk], ["k2", 64, 1024, kEnd], ["x1", 1846, 34, kDesk], ["x2", 1846, 1010, kDesk], ["x3", 1840, 40, kEnd], ["x4", 30, 40, kEnd]].forEach(([id, sx, sy, k]) => {
+    const p = foreAt(sx, sy, k); const el = $(id); el.style.left = f1(p.x) + "px"; el.style.top = f1(p.y) + "px";
+  });
+
+  /* =================================================================
+     render(t): todo lo que no es el ajolote es función pura de t
+     ================================================================= */
+  const world = $("world"), fore = $("fore"), lens = $("lens"), cbx = $("cbx"), flash = $("flash");
+  const pen = $("pen"), penTip = $("penTip"), penCap = $("penCap"), penBand = $("penBand"), penSh = $("penSh");
+  const stamp = $("stamp"), sshadow = $("sshadow"), card = $("card");
+  const BURST = Array.from($("burst").querySelectorAll("i")).map((el, i) => ({ el, a: (-150 + i * 40 + (i % 2) * 12) * Math.PI / 180, l: 0.7 + (i % 3) * 0.2 }));
+  const COR = [0, 1, 2, 3].map((i) => $("c" + i)), THD = [0, 1, 2, 3].map((i) => $("th" + i));
+  const xh = $("xh"), htl = $("htl"), htr = $("htr"), code = $("code"), codeN = $("codeN"), nameW = $("name"), nameB = $("nameb"), abbr = $("abbr"), slots = $("slots");
+  const SLOTS = SHOTS.map((s, i) => ({ el: $("sl" + i), sv: $("slv" + i), lb: $("sll" + i) }));
+  const sbh = $("sbt"), sbm = $("sbm");
+  let lastShot = -2, lastCnt = [-1, -1, -1], lastBlur = "";
+  const memo = {};
+  const setS = (el, k, v) => { const key = el.id + k; if (memo[key] !== v) { el.style[k] = v; memo[key] = v; } };
+
+  // posición del rotulador (coords de página): punta sobre el borde derecho del subrayado
+  function penAt(t) {
+    const a0 = { x: 1320, y: -330 }, end = { x: 1460, y: -420 };
+    const st = (m) => ({ x: m.x0, y: m.y + 20 }), en = (m) => ({ x: m.x0 + m.w, y: m.y + 18 });
+    let x, y, lift = 0, ang = -38;
+    const M0 = MK[0], M1 = MK[1], M2 = MK[2];
+    if (t < M0.t) { const p = eLand(c01((t + 0.15) / (M0.t + 0.15))); x = lerp(a0.x, st(M0).x, p); y = lerp(a0.y, st(M0).y, p) - 40 * Math.sin(Math.PI * p); lift = 1 - p; ang = -38 - 14 * (1 - p); }
+    else {
+      const seg = (m, nx, t0) => { const p = outPow((t - m.t) / m.d, 2); return { x: lerp(st(m).x, en(m).x, p), y: lerp(st(m).y, en(m).y, p) + 1.5 * Math.sin(p * 9) }; };
+      const hop = (m, n, k) => { const ta = m.t + m.d, tb = n.t - 0.02, p = eGlide(c01((t - ta) / (tb - ta))); return { x: lerp(en(m).x, st(n).x, p), y: lerp(en(m).y, st(n).y, p) - 70 * Math.sin(Math.PI * p), lift: Math.sin(Math.PI * p) }; };
+      let q;
+      if (t < M0.t + M0.d) q = seg(M0);
+      else if (t < M1.t) q = hop(M0, M1);
+      else if (t < M1.t + M1.d) q = seg(M1);
+      else if (t < M2.t) q = hop(M1, M2);
+      else if (t < M2.t + M2.d) q = seg(M2);
+      else { const p = eExit(c01((t - M2.t - M2.d - 0.06) / 0.5)); q = { x: lerp(en(M2).x, end.x, p), y: lerp(en(M2).y, end.y, p), lift: p }; ang = -38 - 10 * p; }
+      x = q.x; y = q.y; lift = q.lift || 0;
+    }
+    // color de la punta: cambia a medio vuelo
+    const ci = t < (MK[0].t + MK[0].d + MK[1].t) / 2 ? 0 : t < (MK[1].t + MK[1].d + MK[2].t) / 2 ? 1 : 2;
+    return { x, y, lift, ang, ci };
+  }
+  // chip i: (x, y, rot, escala, sombra)
+  function chipAt(i, t) {
+    const c = CH[i];
+    if (t < c.pop) return null;
+    const u = t - c.pop, LIFT = 0.12, FLY = c.land - c.pop - LIFT;
+    if (u < LIFT) { const p = outPow(u / LIFT, 2); return { x: c.ax, y: c.ay - 34 * p, r: -5 * p, s: lerp(0.78, 1.1, p), sh: p }; }
+    if (t < c.land) {
+      const p = c01((u - LIFT) / FLY), pe = EZ("sine.inOut")(p);
+      const top = Math.min(c.ay - 34, c.by) - 210;
+      const x = lerp(c.ax, c.bx, pe);
+      // parábola de 3 puntos (inicio, vértice, llegada)
+      const y0 = c.ay - 34, y1 = c.by, ym = top;
+      const y = (1 - pe) * (1 - pe) * y0 + 2 * (1 - pe) * pe * (2 * ym - (y0 + y1) / 2) + pe * pe * y1;
+      return { x, y, r: lerp(-5, 7, pe), s: lerp(1.1, 1.06, pe) + 0.32 * Math.sin(Math.PI * p), sh: 1 };
+    }
+    const v = t - c.land, sp = eSpring(c01(v / 0.55));
+    const bump = cardBump(t);
+    return { x: c.bx, y: c.by + bump + 10 * (1 - sp) * Math.exp(-v * 9), r: 7 * (1 - sp), s: 1 + 0.1 * (1 - sp) - 0.08 * Math.exp(-v * 30) * (v < 0.07 ? 1 : 0), sh: Math.max(0, 1 - v / 0.12) };
+  }
+  const cardBump = (t) => { const u = t - STAMP.t; return u < 0 ? 0 : 7 * Math.exp(-u * 10) * Math.cos(u * 26); };
+
+  function render(t) {
+    /* ---------- cámara ---------- */
+    const c = camAt(t);
+    for (const [el, d] of [[world, 1], [fore, D_F]]) {
+      const S = 1 + (c.s - 1) * d;
+      el.style.transform = `translate(${f1(960 + c.hx)}px,${f1(540 + c.hy)}px) rotate(${f3(c.r * d)}deg) scale(${(S).toFixed(5)}) translate(${f1(-c.x * d)}px,${f1(-c.y * d)}px)`;
+    }
+    // desenfoque de cámara: velocidad de pantalla por diferencia central; solo paneos, nunca en cortes
+    const hh = 0.5 / FPS, a0 = cam(Math.max(0, t - hh)), a1 = cam(Math.min(DUR, t + hh));
+    let bx = 0, by = 0;
+    const cutNear = CUTS.some((ct) => ct > t - hh && ct <= t + hh);
+    if (!cutNear && Math.abs(Math.log(a1.s / a0.s)) < 0.03) {
+      const vx = Math.abs(a1.x - a0.x) * c.s, vy = Math.abs(a1.y - a0.y) * c.s;
+      const whip = (t > WHIP0 && t < 5.3) || t > 11.7;      // estela larga solo en los latigazos
+      bx = Math.min(t > 11.7 ? 40 : whip ? 28 : 5, vx * 0.35); by = Math.min(whip ? 28 : 5, vy * 0.35);
+    }
+    const blur = bx + by > 0.6 ? `${bx.toFixed(1)} ${by.toFixed(1)}` : "";
+    if (blur !== lastBlur) { if (blur) { cbx.setAttribute("stdDeviation", blur); lens.style.filter = "url(#secC-camblur)"; } else lens.style.filter = "none"; lastBlur = blur; }
+
+    /* ---------- DESGLOSE (0 – 5.2) ---------- */
+    if (t < 5.3) {
+      MK.forEach((m) => { const p = outPow((t - m.t) / m.d, 2); m.el.style.transform = `scaleX(${f3(p)}) rotate(-0.4deg)`; m.el.style.opacity = t < m.t ? "0" : "1"; });
+      const q = penAt(t), sc = 1 + 0.07 * q.lift;
+      pen.style.transform = `translate(${f1(q.x)}px,${f1(q.y)}px) rotate(${f1(q.ang)}deg) scale(${f3(sc)})`;
+      penSh.style.transform = `translate(${f1(6 + 26 * q.lift)}px,${f1(10 + 34 * q.lift)}px) rotate(${f1(-q.ang * 0.06)}deg)`;
+      penSh.style.opacity = f3(0.55 - 0.25 * q.lift);
+      const col = CAT[q.ci]; setS(penTip, "background", col); setS(penCap, "background", col); setS(penBand, "background", col);
+      CH.forEach((ch, i) => {
+        const on = t >= ch.land ? 1 : 0;
+        if (lastCnt[i] !== on) { $("cnt" + i).textContent = on ? CNT1[i] : CNT0[i]; $("cnt" + i).style.color = on ? CAT[i] : "#9a978f"; lastCnt[i] = on; }
+        const s = chipAt(i, t);
+        if (!s) { setS(ch.el, "opacity", "0"); return; }
+        setS(ch.el, "opacity", "1");
+        ch.el.style.transform = `translate(${f1(s.x - ch.w / 2)}px,${f1(s.y - 26)}px) rotate(${f3(s.r)}deg) scale(${f3(s.s)})`;
+        ch.el.style.boxShadow = `0 ${f1(2 + 22 * s.sh)}px ${f1(4 + 26 * s.sh)}px ${f1(-8 * s.sh)}px rgba(60,52,38,${f3(0.3 + 0.08 * s.sh)})`;
+        // la fila se aparta al aterrizar (y el contador sube una unidad)
+        const v = t - ch.land + 0.06, e = eLand(c01(v / 0.36));
+        OLD[i].forEach((w, j) => { $("o" + i + j).style.transform = `translateX(${f1((ch.w + 12) * e)}px)`; });
+        const g = t - ch.land;
+        $("bg" + i).style.opacity = g < 0 ? "0" : f3(0.2 * Math.exp(-g * 4));
+        $("dot" + i).style.transform = `scale(${f3(1 + (g < 0 ? 0 : 0.7 * Math.exp(-g * 7) * Math.abs(Math.cos(g * 12))))})`;
+      });
+      // sello: cae desde la cámara (escala 1.9 → 1, power4.in), golpe, tinta que se asienta
+      const u = t - STAMP.t, base = `translate(${STAMP.x - 300}px,${STAMP.y - 75}px) rotate(${STAMP.rot}deg)`;
+      if (u < -0.16) { setS(stamp, "opacity", "0"); setS(sshadow, "opacity", "0"); }
+      else {
+        let ss, so = 1;
+        if (u < 0) { const p = c01((u + 0.16) / 0.16); ss = lerp(2.1, 1, inPow(p, 4)); so = c01(p * 4); }
+        else ss = 1 - 0.03 * Math.exp(-u * 25) * Math.cos(u * 40);
+        setS(stamp, "opacity", f3(so));
+        stamp.style.transform = `${base} scale(${f3(ss)})`;
+        const lift = ss - 1;
+        sshadow.style.transform = `translate(${f1(STAMP.x - 300 + 40 * lift)}px,${f1(STAMP.y - 75 + 70 * lift + 6)}px) rotate(${STAMP.rot}deg) scale(${f3(1 + 0.25 * lift)})`;
+        setS(sshadow, "opacity", f3(so * (u < 0 ? 0.6 : 0.85)));
+      }
+      BURST.forEach((b) => {
+        const v = t - STAMP.t;
+        if (v < 0 || v > 0.22) { setS(b.el, "opacity", "0"); return; }
+        const p = v / 0.22, rr = 330 + 110 * outPow(p, 2);
+        setS(b.el, "opacity", "1");
+        b.el.style.transform = `translate(${f1(STAMP.x + Math.cos(b.a) * rr * 1.0)}px,${f1(STAMP.y + Math.sin(b.a) * rr * 0.42)}px) rotate(${f1((b.a * 180) / Math.PI)}deg) scaleX(${f3(b.l * (1 - p))})`;
+      });
+      card.style.transform = `translateY(${f1(cardBump(t))}px)`;
+    }
+
+    /* ---------- VISOR (5.1 – 8.9) ---------- */
+    const hudOn = t >= 5.1 && t < 8.9;
+    if (!hudOn) { COR.forEach((e) => setS(e, "opacity", "0")); THD.forEach((e) => setS(e, "opacity", "0")); [xh, htl, htr, nameW, slots].forEach((e) => setS(e, "opacity", "0")); }
+    else {
+      let rc, op = 1;
+      const pgW = frWorld(FR.PG);
+      if (t < 5.42) { const p = eLand(c01((t - 5.1) / 0.32)); const tg = projRect(c, pgW); rc = { l: lerp(-60, tg.l, p), t: lerp(-60, tg.t, p), r: lerp(1980, tg.r, p), b: lerp(1140, tg.b, p) }; op = c01((t - 5.1) / 0.06); }
+      else if (t < H.board - 0.18) {
+        // el marco salta al tamaño siguiente justo antes del disparo; la cámara lo alcanza después
+        let F = FR.PG;
+        for (let i = 1; i < 4; i++) {
+          const ta = SHOTS[i].t - 0.1;
+          if (t >= SHOTS[i].t) F = FR[SHOTS[i].k];
+          else if (t >= ta) { const A = frWorld(FR[SHOTS[i - 1].k]), B = frWorld(FR[SHOTS[i].k]), p = eLand(c01((t - ta) / 0.1)); rc = projRect(c, { l: lerp(A.l, B.l, p), t: lerp(A.t, B.t, p), r: lerp(A.r, B.r, p), b: lerp(A.b, B.b, p) }); }
+        }
+        if (!rc) rc = projRect(c, frWorld(F));
+      } else if (t < H.board) {
+        const p = eExit(c01((t - (H.board - 0.18)) / 0.16)), A = projRect(c, frWorld(FR.PD)), k = lerp(1, 0.12, p);
+        const cx = (A.l + A.r) / 2, cy = (A.t + A.b) / 2;
+        rc = { l: cx - (cx - A.l) * k, t: cy - (cy - A.t) * k, r: cx + (A.r - cx) * k, b: cy + (A.b - cy) * k };
+      } else {
+        const B = projRect(c, panRect(0)), p = eLand(c01((t - H.board) / 0.22)), k = lerp(0.12, 1, p);
+        const cx = (B.l + B.r) / 2, cy = (B.t + B.b) / 2;
+        rc = { l: cx - (cx - B.l) * k, t: cy - (cy - B.t) * k, r: cx + (B.r - cx) * k, b: cy + (B.b - cy) * k };
+        op = 1 - c01((t - 8.55) / 0.3);
+      }
+      const CS = 64, ins = 0;
+      const pos = [[rc.l - ins, rc.t - ins], [rc.r - CS + ins, rc.t - ins], [rc.l - ins, rc.b - CS + ins], [rc.r - CS + ins, rc.b - CS + ins]];
+      // pulso de enfoque en cada disparo
+      let pz = 0; SHOTS.forEach((s) => { const u = t - s.t; if (u >= 0 && u < 0.3) pz = Math.max(pz, Math.sin((u / 0.3) * Math.PI) * 10); });
+      COR.forEach((e, i) => { const sx = i % 2 ? 1 : -1, sy = i < 2 ? -1 : 1; e.style.transform = `translate(${f1(pos[i][0] + sx * pz)}px,${f1(pos[i][1] + sy * pz)}px)`; setS(e, "opacity", f3(op)); });
+      const hud = t >= 5.56 && t < H.board ? 1 : 0;
+      const w = rc.r - rc.l, h = rc.b - rc.t;
+      [[rc.l + w / 3, rc.t, 1.5, h], [rc.l + (2 * w) / 3, rc.t, 1.5, h], [rc.l, rc.t + h / 3, w, 1.5], [rc.l, rc.t + (2 * h) / 3, w, 1.5]].forEach((g, i) => {
+        THD[i].style.transform = `translate(${f1(g[0])}px,${f1(g[1])}px)`; THD[i].style.width = f1(g[2]) + "px"; THD[i].style.height = f1(g[3]) + "px"; setS(THD[i], "opacity", hud ? "0.2" : "0");
+      });
+      setS(xh, "opacity", hud ? "0.8" : "0");
+      const hin = eLand(c01((t - 5.56) / 0.35));
+      setS(htl, "opacity", hud ? "1" : "0"); htl.style.transform = `translateX(${f1(-40 * (1 - hin))}px)`;
+      setS(htr, "opacity", hud ? "1" : "0");
+      setS(slots, "opacity", hud ? "1" : "0"); slots.style.transform = `translateY(${f1(60 * (1 - hin))}px)`;
+      let si = -1; SHOTS.forEach((s, i) => { if (t >= s.t) si = i; });
+      setS(nameW, "opacity", hud && si >= 0 ? "1" : "0");
+      if (si !== lastShot) {
+        lastShot = si; const s = SHOTS[Math.max(0, si)];
+        code.textContent = s.code; codeN.textContent = `Plano ${Math.max(1, si + 1)} / 4`; nameB.textContent = s.name; abbr.textContent = s.k;
+        SLOTS.forEach((sl, i) => { sl.sv.style.opacity = i <= si ? "1" : "0"; sl.lb.style.background = i === si ? "#f0c94a" : "rgba(21,21,25,.72)"; sl.lb.style.color = i === si ? "#151519" : "#f1eee6"; sl.el.style.borderStyle = i <= si ? "solid" : "dashed"; });
+      }
+      if (si >= 0) {
+        const u = t - SHOTS[si].t, p = outPow(u / 0.22, 4);
+        nameB.style.transform = `scale(${f3(lerp(1.22, 1, p))})`;
+        code.style.transform = `translateY(${f1(-18 * (1 - p))}px)`;
+        SLOTS.forEach((sl, i) => { const v = t - SHOTS[i].t; sl.el.style.transform = v >= 0 && v < 0.4 ? `translateY(${f1(-16 * (1 - eLand(v / 0.4)))}px) scale(${f3(1 + 0.12 * (1 - eLand(v / 0.4)))})` : "none"; });
+      }
+    }
+    /* ---------- obturador ---------- */
+    let fl = 0;
+    [H.shot1, H.shot2, H.shot3, H.shot4, H.board].forEach((h, i) => { const u = t - h; if (u >= 0 && u < 0.14) fl = Math.max(fl, (i === 4 ? 1 : 0.62) * Math.pow(1 - u / 0.14, 1.6)); });
+    setS(flash, "opacity", f3(fl));
+
+    /* ---------- STORYBOARD (8.0 →) ---------- */
+    if (t >= H.board - 0.05) {
+      PANS.forEach((P) => {
+        const u = t - P.start;
+        if (P.done && u > 1.3) return;
+        const n = P.sk.length;
+        P.sk.forEach((el, j) => {
+          const k = j === n - 1 ? 0 : 0.05 + (j / n) * 0.36;            // el marco primero
+          const p = c01((u - k) / (j === n - 1 ? 0.3 : 0.38));
+          const e = eSettle(p);
+          if (p <= 0) { if (el.style.visibility !== "hidden") el.style.visibility = "hidden"; }
+          else { if (el.style.visibility !== "visible") el.style.visibility = "visible"; el.setAttribute("stroke-dashoffset", (1 - e).toFixed(4)); }
+        });
+        P.tn.forEach((el) => { const acc = el.classList.contains("secC-acc"); const p = c01((u - (acc ? 0.78 : 0.62)) / (acc ? 0.12 : 0.3)); el.setAttribute("opacity", f3(p)); });
+        const pc = eLand(c01((u - 0.4) / 0.4));
+        P.capS.style.transform = `translateY(${f1(22 * (1 - pc))}px)`;
+        P.capI.style.transform = `scaleX(${f3(eLand(c01((u - 0.3) / 0.5)))})`;
+        P.done = u > 1.3;
+      });
+      const hu = eLand(c01((t - 10.05) / 0.5));
+      sbh.style.transform = `translateY(${f1(70 * (1 - hu))}px)`;
+      sbm.style.transform = `translateY(${f1(50 * (1 - eLand(c01((t - 10.15) / 0.5))))}px)`;
+    } else {
+      sbh.style.transform = "translateY(70px)"; sbm.style.transform = "translateY(50px)";
+    }
+  }
+
+  /* ---------------- timeline ---------------- */
+  const tl = gsap.timeline({ paused: true });
+  const drv = { t: 0 };
+  // los paneles no tienen estado entre frames salvo "done": se recalculan al hacer seek hacia atrás
+  const renderSafe = (t) => { if (t < (render.lt || 0)) PANS.forEach((P) => (P.done = false)); render.lt = t; render(t); };
+  tl.fromTo(drv, { t: 0 }, { t: DUR, duration: DUR, ease: "none", onUpdate: () => renderSafe(drv.t) }, 0);
+  renderSafe(0);
+
+  /* ---------------- ajolote ---------------- */
+  const ax = AxRig(tl, { prefix: "axC", seed: 47 });
+  const AX1 = { x: 884, y: 1012, s: 0.7 };
+  ax.init(0, AX1);
+  const CLIP = "#axC-clipRect", HOP = "#axC-hop";
+  tl.set(CLIP, { attr: { x: -3000, y: -3000, width: 6000, height: 6000 } }, 0.02);
+  // L07 · «¿Una taza? ¿Un abrigo rojo? ¿Un coche de los ochenta? Apuntado.»
+  const LV = CUES.env.lv;
+  const lip = (g0, g1) => { const i0 = Math.round(g0 * FPS), i1 = Math.round(g1 * FPS); ax.lipsync(LV.slice(i0, i1), FPS, i0 / FPS - T0); };
+  lip(24.5, 27.8);
+  ax.mouth(3.32, "smile", 0.12);
+  // mirada que guía: palabra → chip que vuela → palabra siguiente
+  ax.look(0.28, -5, -4, 0.18);
+  ax.look(CH[0].pop + 0.1, 3, -5, 0.3); ax.look(CH[0].land - 0.05, 5, -3, 0.16);
+  ax.look(MK[1].t - 0.25, -4, -4, 0.18);
+  ax.look(CH[1].pop + 0.1, 3, -4, 0.3); ax.look(CH[1].land - 0.05, 5, -2, 0.16);
+  ax.blink(MK[2].t - 0.34);
+  ax.look(MK[2].t - 0.2, -3, -3, 0.18);
+  ax.look(CH[2].pop + 0.1, 3, -3, 0.3); ax.look(CH[2].land - 0.05, 5, -1, 0.16);
+  ax.gillFlick(CH[0].land, 8, 0.6); ax.gillFlick(CH[1].land, 8, 0.6); ax.gillFlick(CH[2].land, 10, 0.6);
+  // «Apuntado.» → señala arriba y cae el sello
+  ax.point(STAMP.t - 0.5, { dir: "up", hold: 0.3, keep: true });
+  ax.look(STAMP.t - 0.32, 2, -5, 0.12);
+  ax.land(STAMP.t, 0.9);
+  ax.eyes(STAMP.t, "sqz"); ax.mouth(STAMP.t, "grin", 0.06);
+  ax.eyes(STAMP.t + 0.16, "happy");
+  ax.unpoint(STAMP.t + 0.2, { side: "R" });
+
+  // 8.0 · el ajolote, actor dentro de la viñeta 2C (recortado por el marco de la viñeta)
+  const P2C = panRect(6), AXB = { x: P2C.l + 205, y: P2C.t + 168, s: 0.36 };
+  ax.place(H.board, AXB);
+  tl.set(CLIP, { attr: { x: (P2C.l - AXB.x) / AXB.s, y: (P2C.t - AXB.y) / AXB.s, width: SB.w / AXB.s, height: SB.h / AXB.s } }, H.board);
+  tl.set("#axC-shadow", { opacity: 0, svgOrigin: "0 4" }, H.board + 0.02);
+  tl.set(HOP, { y: 470, svgOrigin: "0 0" }, H.board + 0.03);
+  const tIn = PANS[6].start + 0.3;
+  ax.eyes(H.board + 0.04, "open"); ax.mouth(H.board + 0.04, "smile", 0);
+  tl.fromTo(HOP, { y: 470 }, { y: -40, duration: 0.3, ease: "power3.out", svgOrigin: "0 0", immediateRender: false }, tIn);
+  tl.fromTo(HOP, { y: -40 }, { y: 0, duration: 0.16, ease: "power2.in", svgOrigin: "0 0", immediateRender: false }, tIn + 0.3);
+  tl.set("#axC-shadow", { opacity: 1, svgOrigin: "0 4" }, tIn + 0.44);
+  // aterrizaje dentro de la viñeta (squash a mano: no pisa las branquias del saludo)
+  tl.fromTo("#axC-squash", { scaleX: 1, scaleY: 1 }, { scaleX: 1.16, scaleY: 0.84, duration: 0.07, ease: "power2.out", svgOrigin: "0 0", immediateRender: false }, tIn + 0.46);
+  tl.fromTo("#axC-squash", { scaleX: 1.16, scaleY: 0.84 }, { scaleX: 1, scaleY: 1, duration: 0.5, ease: "elastic.out(1.2,0.4)", svgOrigin: "0 0", immediateRender: false }, tIn + 0.53);
+  ax.gillFlick(tIn + 0.05, 14, 0.4);
+  ax.wave(tIn + 0.5, { side: "R", times: 1 });
+  // L09 · «Y el estoribord, sale solo.»
+  lip(34.62, 36.1);
+  ax.mouth(11.62, "grin", 0.1);
+  ax.look(11.42, 5, 0, 0.14);       // mira hacia donde va a irse la cámara
+  ax.base(0, DUR);
+  ax.blinks(0, DUR);
+
+  window.__timelines["secC"] = tl;
+})();
+</script>
+</template>
+</body>
+</html>

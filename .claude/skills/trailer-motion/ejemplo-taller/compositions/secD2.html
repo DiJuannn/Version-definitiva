@@ -1,0 +1,702 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="UTF-8" /><title>secD2 · Plan y hoja de llamada</title></head>
+<body>
+<template id="secD2-template">
+<style>
+  @font-face { font-family: "Archivo"; src: url("assets/fonts/archivo.woff2") format("woff2"); font-weight: 100 900; font-stretch: 62% 125%; }
+  @font-face { font-family: "JB Mono"; src: url("assets/fonts/jbmono.woff2") format("woff2"); font-weight: 100 800; }
+
+  #secD2-root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; background: #0b0b0d; font-family: "Archivo", sans-serif; color: #151519; }
+  #secD2-lens { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; }
+  .secD2-plane { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; }
+  #secD2-flood { position: absolute; left: -3000px; top: -2500px; width: 12000px; height: 7000px; background: #f0c94a; }
+  #secD2-dark { position: absolute; left: -3000px; top: -2500px; width: 12000px; height: 7000px; background: #0b0b0d; opacity: 0; }
+  #secD2-black { position: absolute; inset: 0; background: #0b0b0d; opacity: 0; }
+
+  .secD2-kick { position: absolute; font-family: "JB Mono", monospace; font-weight: 500; font-size: 20px; letter-spacing: 0.2em; text-transform: uppercase; white-space: nowrap; color: #4a3d12; }
+  .secD2-kick i { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 14px; vertical-align: 1px; background: #151519; }
+
+  /* ---------- tarjetas UI (pantallas oscuras sobre el gel) ---------- */
+  .secD2-card { position: absolute; border-radius: 14px; background: #151519; color: #f1eee6; box-shadow: 0 2px 0 rgba(0, 0, 0, 0.25), 0 34px 54px -22px #9c7a1f; }
+  .secD2-hd { position: absolute; left: 0; right: 0; top: 0; height: 66px; border-bottom: 2px solid #2e2e35; }
+  .secD2-hd b { position: absolute; left: 30px; top: 18px; font-weight: 600; font-size: 26px; white-space: nowrap; }
+  .secD2-mono { position: absolute; font-family: "JB Mono", monospace; font-weight: 500; font-size: 15px; letter-spacing: 0.14em; text-transform: uppercase; color: #9a978f; white-space: nowrap; }
+  .secD2-colh { position: absolute; font-weight: 700; font-stretch: 62%; font-size: 34px; line-height: 1; letter-spacing: 0.01em; text-transform: uppercase; white-space: nowrap; color: #f1eee6; }
+  .secD2-bar { position: absolute; height: 4px; border-radius: 2px; background: #2e2e35; overflow: hidden; display: block; }
+  .secD2-bar i { position: absolute; inset: 0; background: #f0c94a; transform-origin: 0 50%; display: block; }
+  .secD2-slot { position: absolute; width: 377px; height: 96px; border-radius: 10px; border: 2px dashed #2e2e35; display: block; }
+  .secD2-blk { position: absolute; width: 377px; height: 96px; border-radius: 10px; background: #1d1d22; overflow: hidden; display: block; }
+  .secD2-blk > u { position: absolute; left: 0; top: 0; bottom: 0; width: 10px; display: block; }
+  .secD2-blk > em { position: absolute; left: 30px; top: 14px; font-family: "JB Mono", monospace; font-style: normal; font-weight: 600; font-size: 15px; letter-spacing: 0.14em; color: #9a978f; white-space: nowrap; }
+  .secD2-blk > b { position: absolute; left: 30px; top: 42px; font-weight: 600; font-size: 27px; white-space: nowrap; color: #f1eee6; }
+  .secD2-blk > s { position: absolute; right: 18px; top: 16px; height: 28px; padding: 0 12px; border-radius: 999px; font-family: "JB Mono", monospace; text-decoration: none; font-weight: 600; font-size: 14px; letter-spacing: 0.12em; line-height: 28px; color: #151519; white-space: nowrap; }
+  #secD2-send { position: absolute; right: 30px; top: 498px; height: 40px; padding: 0 20px; border-radius: 999px; border: 2px solid #f0c94a; font-family: "JB Mono", monospace; font-weight: 600; font-size: 15px; letter-spacing: 0.14em; line-height: 36px; color: #f0c94a; white-space: nowrap; text-transform: uppercase; }
+
+  /* ---------- hoja de llamada / plegado / avión ---------- */
+  #secD2-pw, #secD2-aw { position: absolute; left: 0; top: 0; width: 1px; height: 1px; transform-origin: 0 0; }
+  #secD2-print { position: absolute; left: -150px; top: -200px; width: 300px; height: 400px; }
+  #secD2-fold { position: absolute; left: 0; top: 0; width: 300px; height: 400px; filter: drop-shadow(0 16px 12px rgba(120, 90, 20, 0.5)); }
+  .secD2-pc { position: absolute; left: 0; top: 0; width: 300px; height: 400px; background: #f1eee6; transform-origin: 0 0; overflow: hidden; display: block; }
+  .secD2-pc.bk { background: #e2ddd0; }
+  .secD2-pc > i { position: absolute; inset: 0; background: #3c3426; opacity: 0; display: block; }
+  .secD2-face { position: absolute; left: 0; top: 0; width: 300px; height: 400px; }
+  .secD2-face b { position: absolute; left: 22px; top: 22px; font-weight: 800; font-stretch: 62%; font-size: 36px; line-height: 1; text-transform: uppercase; white-space: nowrap; color: #151519; }
+  .secD2-face em { position: absolute; left: 22px; font-family: "JB Mono", monospace; font-style: normal; font-weight: 500; font-size: 13px; letter-spacing: 0.12em; text-transform: uppercase; white-space: nowrap; color: #5c5a54; }
+  .secD2-face strong { position: absolute; left: 20px; top: 96px; font-weight: 900; font-stretch: 125%; font-size: 58px; line-height: 1; letter-spacing: -0.02em; white-space: nowrap; color: #151519; }
+  .secD2-face s { position: absolute; left: 22px; right: 22px; height: 2px; background: #151519; display: block; }
+  .secD2-face u { position: absolute; right: 20px; top: 20px; width: 46px; height: 30px; border-radius: 6px; background: #f0c94a; text-decoration: none; font-family: "JB Mono", monospace; font-weight: 700; font-size: 14px; line-height: 30px; text-align: center; color: #151519; display: block; }
+  #secD2-planeSvg { position: absolute; left: -210px; top: -90px; width: 420px; height: 180px; overflow: visible; opacity: 0; }
+  .secD2-wind { position: absolute; height: 4px; border-radius: 2px; background: #151519; transform-origin: 100% 50%; display: block; opacity: 0; }
+
+  /* ---------- equipo ---------- */
+  .secD2-av { position: absolute; width: 124px; height: 124px; margin: -62px 0 0 -62px; display: block; }
+  .secD2-av svg { position: absolute; left: 0; top: 0; width: 124px; height: 124px; }
+  .secD2-ring { position: absolute; left: -8px; top: -8px; width: 140px; height: 140px; border-radius: 50%; border: 4px solid #4fc47f; display: block; opacity: 0; }
+  .secD2-wave { position: absolute; left: 0; top: 0; width: 124px; height: 124px; border-radius: 50%; border: 4px solid #4fc47f; display: block; opacity: 0; }
+  .secD2-chk { position: absolute; left: 86px; top: 84px; width: 44px; height: 44px; border-radius: 50%; background: #4fc47f; box-shadow: 0 0 0 4px #151519; display: block; opacity: 0; }
+  .secD2-chk svg { width: 44px; height: 44px; }
+  .secD2-nm { position: absolute; width: 240px; margin-left: -120px; text-align: center; font-weight: 600; font-size: 26px; white-space: nowrap; color: #f1eee6; }
+  .secD2-rl { position: absolute; width: 240px; margin-left: -120px; text-align: center; font-family: "JB Mono", monospace; font-weight: 500; font-size: 14px; letter-spacing: 0.14em; text-transform: uppercase; white-space: nowrap; color: #9a978f; }
+  .secD2-st { position: absolute; width: 240px; margin-left: -120px; text-align: center; font-family: "JB Mono", monospace; font-weight: 600; font-size: 15px; letter-spacing: 0.12em; text-transform: uppercase; white-space: nowrap; }
+  .secD2-mini { position: absolute; left: -13px; top: -16px; width: 26px; height: 32px; border-radius: 2px; background: #f1eee6; box-shadow: 0 6px 8px -4px rgba(0, 0, 0, 0.5); display: block; opacity: 0; }
+  .secD2-mini::before { content: ""; position: absolute; left: 5px; right: 5px; top: 7px; height: 3px; background: #151519; }
+  .secD2-mini::after { content: ""; position: absolute; left: 5px; right: 9px; top: 14px; height: 2px; background: #9a978f; box-shadow: 0 5px 0 #9a978f, 0 10px 0 #9a978f; }
+  #secD2-count { position: absolute; right: 30px; top: 16px; font-weight: 900; font-stretch: 125%; font-size: 30px; line-height: 1; white-space: nowrap; color: #f1eee6; }
+  #secD2-count small { font-family: "JB Mono", monospace; font-weight: 500; font-size: 14px; letter-spacing: 0.14em; color: #9a978f; margin-right: 12px; vertical-align: 5px; }
+
+  /* ---------- cámara de cine + piloto ---------- */
+  #secD2-cine { position: absolute; left: 4130px; top: 470px; width: 360px; height: 510px; display: block; }
+  #secD2-cine svg { width: 360px; height: 510px; overflow: visible; }
+  #secD2-tally { position: absolute; left: 4430px; top: 638px; width: 1px; height: 1px; display: block; }
+  #secD2-tally i { position: absolute; border-radius: 50%; display: block; }
+  #secD2-led { left: -10px; top: -10px; width: 20px; height: 20px; background: #4a4a54; }
+  #secD2-halo1 { left: -24px; top: -24px; width: 48px; height: 48px; background: #f0503f; opacity: 0; }
+  #secD2-halo2 { left: -44px; top: -44px; width: 88px; height: 88px; background: #f0503f; opacity: 0; }
+  #secD2-rec { position: absolute; left: 30px; top: -14px; font-family: "JB Mono", monospace; font-weight: 700; font-size: 24px; letter-spacing: 0.16em; line-height: 28px; color: #f0503f; white-space: nowrap; opacity: 0; }
+
+  /* ---------- primer término ---------- */
+  .secD2-cross { position: absolute; width: 44px; height: 44px; display: block; }
+  .secD2-cross::before, .secD2-cross::after { content: ""; position: absolute; background: #6b5a1c; }
+  .secD2-cross::before { left: 21px; top: 0; width: 2px; height: 44px; }
+  .secD2-cross::after { top: 21px; left: 0; height: 2px; width: 44px; }
+  .secD2-cross b { position: absolute; inset: 11px; border: 2px solid #6b5a1c; border-radius: 50%; display: block; }
+  #axD2-svg { filter: url(#secD2-sticker); }
+</style>
+
+<div id="secD2-root" data-composition-id="secD2" data-width="1920" data-height="1080" data-duration="7.5">
+  <svg width="0" height="0" style="position: absolute">
+    <filter id="secD2-camblur" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB"><feGaussianBlur id="secD2-cbx" stdDeviation="0 0" /></filter>
+    <filter id="secD2-sticker" x="-20%" y="-20%" width="140%" height="140%"><feMorphology in="SourceAlpha" operator="dilate" radius="6" result="d" /><feFlood flood-color="#f6f3ea" /><feComposite in2="d" operator="in" result="o" /><feOffset in="d" dy="5" result="sd" /><feFlood flood-color="#5a4210" flood-opacity=".3" /><feComposite in2="sd" operator="in" result="s" /><feMerge><feMergeNode in="s" /><feMergeNode in="o" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+  </svg>
+  <div id="secD2-lens">
+    <div id="secD2-world" class="secD2-plane" data-layout-allow-overflow>
+      <div id="secD2-flood"></div>
+
+      <!-- estación 6 · plan de rodaje -->
+      <div class="secD2-kick" id="secD2-kick" style="left: 562px; top: 172px"><i></i>06 · Plan de rodaje</div>
+      <div class="secD2-card" id="secD2-plan" style="left: 560px; top: 230px; width: 1240px; height: 560px" data-layout-ignore>
+        <div class="secD2-hd"><b>El último verano</b><span class="secD2-mono" style="right: 30px; top: 25px">3 jornadas · 7 escenas</span></div>
+        <div id="secD2-cols"></div>
+        <span class="secD2-mono" style="left: 30px; top: 510px">Citación J1 · 07:30 · Playa</span>
+        <div id="secD2-send">Enviar hoja de llamada ▸</div>
+      </div>
+
+      <!-- equipo -->
+      <div class="secD2-card" id="secD2-team" style="top: 520px; height: 340px" data-layout-ignore>
+        <div class="secD2-hd"><b>Equipo · Jornada 1</b><span class="secD2-mono" style="left: 330px; top: 25px">Citación 07:30 · Playa</span><div id="secD2-count"><small>Avisados</small><span id="secD2-cn">0/5</span></div></div>
+        <div id="secD2-avs"></div>
+      </div>
+
+      <!-- cámara de cine (silueta en tinta) -->
+      <div id="secD2-cine">
+        <svg viewBox="0 0 360 510">
+          <g fill="#151519">
+            <circle cx="150" cy="70" r="62" /><circle cx="270" cy="88" r="50" />
+            <rect x="100" y="150" width="230" height="140" rx="12" />
+            <rect x="54" y="188" width="48" height="64" rx="5" />
+            <path d="M8 160 L56 184 L56 256 L8 280 Z" />
+            <rect x="328" y="196" width="24" height="32" rx="4" />
+            <rect x="186" y="290" width="68" height="30" rx="4" />
+          </g>
+          <g fill="#2e2e35"><circle cx="150" cy="70" r="18" /><circle cx="270" cy="88" r="15" /></g>
+          <g stroke="#151519" stroke-width="12" stroke-linecap="round"><path d="M220 318 L112 500" /><path d="M220 318 L328 500" /><path d="M220 318 L222 500" /></g>
+          <rect x="124" y="200" width="96" height="30" rx="4" fill="#f1eee6" />
+          <text x="172" y="221" text-anchor="middle" font-family="JB Mono, monospace" font-weight="700" font-size="16" letter-spacing="2" fill="#151519">A-CAM</text>
+        </svg>
+      </div>
+
+      <!-- la hoja de llamada / el avión (sobre la mesa, bajo el apagón) -->
+      <div id="secD2-pw" data-layout-ignore>
+        <i class="secD2-wind" id="secD2-w0" style="left: -470px; top: -34px; width: 230px"></i>
+        <i class="secD2-wind" id="secD2-w1" style="left: -430px; top: 6px; width: 170px"></i>
+        <i class="secD2-wind" id="secD2-w2" style="left: -500px; top: 38px; width: 260px"></i>
+        <div id="secD2-print"><div id="secD2-fold"></div></div>
+        <svg id="secD2-planeSvg" viewBox="-210 -90 420 180">
+          <g id="secD2-planeG">
+            <path d="M210 0 L-188 -40 L-166 -12 Z" fill="#d8d2c3" />
+            <path d="M210 2 L-162 4 L-178 46 Z" fill="#c9c2b1" />
+            <path d="M210 2 L-202 -80 L-162 4 Z" fill="#f1eee6" />
+            <path d="M150 -8 L-120 -60 M110 -4 L-140 -36 M60 -1 L-150 -14" stroke="#d6cfbf" stroke-width="4" stroke-linecap="round" />
+            <path d="M210 2 L-162 4" stroke="#a9a190" stroke-width="2.5" />
+            <text x="-70" y="-26" transform="rotate(-11 -70 -26)" font-family="Archivo, sans-serif" font-weight="800" font-size="17" letter-spacing="1" fill="#9a9282">HOJA DE LLAMADA</text>
+          </g>
+        </svg>
+        <div id="secD2-minis"></div>
+      </div>
+
+      <div id="secD2-dark"></div>
+      <div id="secD2-tally"><i id="secD2-halo2"></i><i id="secD2-halo1"></i><i id="secD2-led"></i><span id="secD2-rec">REC</span></div>
+
+      <!-- el ajolote viaja con el avión (mismo transform), por encima del apagón -->
+      <div id="secD2-aw">
+        <!-- ===== AJOLOTE v2 · rig SVG (ids con prefijo axD2-) =====
+     Pegar dentro del root de la composición. #axD2 se coloca con GSAP x/y = punto entre los pies.
+     Requiere poses.js (window.AxRig). Generado por build/gen.js -->
+<style>
+  #axD2 { position: absolute; left: -220px; top: -380px; width: 440px; height: 420px; z-index: 30; pointer-events: none; }
+  #axD2-svg { display: block; width: 100%; height: 100%; overflow: visible; }
+  #axD2-trail { position: absolute; left: 0; top: 0; width: 1px; height: 1px; z-index: 29; pointer-events: none; }
+  .axD2-bub { position: absolute; display: block; left: -10px; top: -10px; width: 20px; height: 20px; border-radius: 50%;
+    border: 2.5px solid rgba(236, 232, 220, 0.6); background: rgba(236, 232, 220, 0.07); opacity: 0; }
+</style>
+<div id="axD2-trail"><i class="axD2-bub"></i><i class="axD2-bub"></i><i class="axD2-bub"></i><i class="axD2-bub"></i><i class="axD2-bub"></i><i class="axD2-bub"></i><i class="axD2-bub"></i><i class="axD2-bub"></i><i class="axD2-bub"></i><i class="axD2-bub"></i><i class="axD2-bub"></i><i class="axD2-bub"></i><i class="axD2-bub"></i><i class="axD2-bub"></i><i class="axD2-bub"></i><i class="axD2-bub"></i></div>
+<div id="axD2">
+<svg id="axD2-svg" viewBox="-220 -380 440 420" xmlns="http://www.w3.org/2000/svg" aria-label="Ajolote">
+  <defs>
+    <filter id="axD2-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.4"/></filter>
+    <filter id="axD2-blur" x="-50%" y="-200%" width="200%" height="500%"><feGaussianBlur stdDeviation="5"/></filter>
+    <clipPath id="axD2-clip" clipPathUnits="userSpaceOnUse"><rect id="axD2-clipRect" x="-3000" y="-3000" width="6000" height="6000"/></clipPath>
+    <clipPath id="axD2-headClip"><path d="M0 -314 C82 -314 134 -276 134 -214 C134 -152 78 -124 0 -124 C-78 -124 -134 -152 -134 -214 C-134 -276 -82 -314 0 -314 Z"/></clipPath>
+    <clipPath id="axD2-bodyClip"><path d="M0 -152 C50 -152 76 -108 74 -62 C72 -20 46 -2 0 -2 C-46 -2 -72 -20 -74 -62 C-76 -108 -50 -152 0 -152 Z"/></clipPath>
+    <clipPath id="axD2-mouthClip"><use href="#axD2-mouth"/></clipPath>
+  </defs>
+  <g id="axD2-shadow"><ellipse cx="0" cy="4" rx="96" ry="12" fill="#000" opacity="0.38" filter="url(#axD2-blur)"/></g>
+  <g id="axD2-all" clip-path="url(#axD2-clip)">
+  <g id="axD2-hop"><g id="axD2-tilt">
+    <g id="axD2-flip"><g id="axD2-squash"><g id="axD2-breath">
+      <path id="axD2-tail" d="M28.4 -57.5 C29.9 -57.1 34.6 -56 37.7 -55.5 C40.9 -55.1 44.1 -54.7 47.3 -54.8 C50.5 -54.8 53.7 -55.2 56.9 -55.9 C60 -56.6 63 -57.6 66 -58.8 C68.9 -60 71.8 -61.5 74.5 -63.1 C77.3 -64.7 80 -66.5 82.6 -68.3 C85.2 -70.2 87.7 -72.2 90.3 -74.3 C92.8 -76.4 95.3 -78.7 97.7 -80.9 C100.2 -83.2 102.7 -85.6 105.1 -88 C107.5 -90.4 110 -92.8 112.4 -95.3 C114.8 -97.8 117.2 -100.4 119.5 -103 C121.8 -105.5 124 -108.2 126.2 -110.9 C128.3 -113.6 130.3 -116.3 132.2 -119.2 C134 -122.1 135.8 -125 137.2 -128.1 C138.7 -131.2 140 -134.5 140.9 -137.8 C141.8 -141.2 142.5 -144.7 142.8 -148.3 C143.1 -152 143 -155.7 142.5 -159.4 C142 -163.2 139.4 -170.5 140 -170.7 C140.6 -170.8 144.5 -164 146.2 -160.3 C147.9 -156.7 149.2 -152.7 150.1 -148.7 C151 -144.8 151.6 -140.6 151.7 -136.5 C151.9 -132.3 151.7 -128.1 151.1 -124 C150.5 -119.9 149.6 -115.8 148.4 -111.8 C147.2 -107.8 145.7 -103.9 144.1 -100.1 C142.4 -96.3 140.5 -92.7 138.4 -89.1 C136.4 -85.5 134.2 -82 131.9 -78.6 C129.5 -75.2 127.1 -71.9 124.4 -68.7 C121.8 -65.5 119.1 -62.3 116.2 -59.3 C113.3 -56.2 110.3 -53.2 107.1 -50.4 C103.8 -47.6 100.4 -44.9 96.9 -42.4 C93.3 -39.9 89.6 -37.5 85.7 -35.4 C81.8 -33.3 77.7 -31.4 73.5 -29.7 C69.3 -28.1 64.9 -26.8 60.6 -25.7 C56.2 -24.7 51.7 -23.9 47.2 -23.4 C42.7 -22.9 38.1 -22.7 33.6 -22.8 C29 -22.9 22.2 -23.7 20 -23.9 Z" fill="#f5b8c6" stroke="#d0708a" stroke-width="4" stroke-linejoin="round"/>
+      <path id="axD2-tailStripe" d="M47.3 -45.3 C49.1 -45.5 54.5 -45.9 58 -46.6 C61.5 -47.3 65 -48.3 68.4 -49.5 C71.8 -50.7 75.1 -52.2 78.3 -53.8 C81.5 -55.5 84.6 -57.3 87.6 -59.3 C90.6 -61.3 93.5 -63.4 96.3 -65.7 C99.2 -68 101.9 -70.4 104.6 -72.9 C107.3 -75.4 109.9 -78 112.5 -80.6 C115 -83.3 117.5 -86 119.9 -88.8 C122.3 -91.7 124.7 -94.5 126.9 -97.5 C129.1 -100.5 131.3 -103.5 133.2 -106.6 C135.1 -109.8 137 -113 138.5 -116.3 C140.1 -119.6 141.5 -123 142.6 -126.5 C143.7 -130 144.5 -133.7 145 -137.3 C145.4 -141 145.3 -146.6 145.4 -148.5" fill="none" stroke="#e98ca3" stroke-width="5" stroke-linecap="round"/>
+      <path d="M0 -152 C50 -152 76 -108 74 -62 C72 -20 46 -2 0 -2 C-46 -2 -72 -20 -74 -62 C-76 -108 -50 -152 0 -152 Z" fill="#f7c1cc" stroke="#d0708a" stroke-width="4.5"/>
+      <g clip-path="url(#axD2-bodyClip)">
+        <ellipse cx="0" cy="-50" rx="47" ry="41" fill="#fde3e8"/>
+        <ellipse cx="0" cy="-134" rx="78" ry="26" fill="#eea3b5" opacity="0.6"/>
+        <path d="M-30 -60 Q0 -54 30 -60 M-26 -38 Q0 -32 26 -38" fill="none" stroke="#eea3b5" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+      </g>
+      <g><ellipse cx="-36" cy="-6" rx="22" ry="11.5" fill="#f7c1cc" stroke="#d0708a" stroke-width="4"/><path d="M-44 -9 L-44 -2 M-34 -9 L-34 -1" stroke="#d0708a" stroke-width="2.4" stroke-linecap="round" opacity="0.7"/></g>
+      <g><ellipse cx="36" cy="-6" rx="22" ry="11.5" fill="#f7c1cc" stroke="#d0708a" stroke-width="4"/><path d="M44 -9 L44 -2 M34 -9 L34 -1" stroke="#d0708a" stroke-width="2.4" stroke-linecap="round" opacity="0.7"/></g>
+      <g id="axD2-headY"><g id="axD2-head"><g id="axD2-headBob"><g id="axD2-headBobR">
+        <g><g transform="translate(-104 -262) rotate(-146)"><g id="axD2-gL1"><g id="axD2-gL1w"><path d="M0 -5.8 Q4.9 -14.9 19.4 -15.2 Q17.4 -9.8 18.8 -8 Q23.7 -14.8 38.2 -15.1 Q36.2 -9.3 37.6 -7.3 Q42.5 -10.4 57 -10.6 Q55 -5.9 56.4 -4.3 Q61.3 -5.2 75.8 -5.4 Q73.8 -2.3 75.2 -1.2 L80 0 L75.2 1.2 Q73.8 2.3 75.8 5.4 Q61.3 5.2 56.4 4.3 Q55 5.9 57 10.6 Q42.5 10.4 37.6 7.3 Q36.2 9.3 38.2 15.1 Q23.7 14.8 18.8 8 Q17.4 9.8 19.4 15.2 Q4.9 14.9 0 5.8 Z" fill="#ff6a45" stroke="#d9452f" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 -2.8 Q36 -9.3 68.8 0 Q36 9.3 4 2.8 Z" fill="#ff8a5e" opacity="0.75"/><path d="M6 0 Q40 -1.5 72 0 M21.6 0 L32 -7.2 M21.6 0 L32 7.2 M40.4 0 L50.8 -6.2 M40.4 0 L50.8 6.2 M59.2 0 L69.6 -3.3 M59.2 0 L69.6 3.3" fill="none" stroke="#b8331f" stroke-width="1.7" stroke-linecap="round" opacity="0.55"/></g></g></g><g transform="translate(-121 -224) rotate(-177)"><g id="axD2-gL2"><g id="axD2-gL2w"><path d="M0 -6.2 Q5.2 -15.9 21 -16.3 Q19 -10.5 20.7 -8.5 Q25.9 -15.7 41.6 -16.1 Q39.6 -9.9 41.4 -7.8 Q46.6 -11.1 62.3 -11.3 Q60.3 -6.3 62 -4.6 Q67.3 -5.6 83 -5.7 Q81 -2.4 82.7 -1.3 L88 0 L82.7 1.3 Q81 2.4 83 5.7 Q67.3 5.6 62 4.6 Q60.3 6.3 62.3 11.3 Q46.6 11.1 41.4 7.8 Q39.6 9.9 41.6 16.1 Q25.9 15.7 20.7 8.5 Q19 10.5 21 16.3 Q5.2 15.9 0 6.2 Z" fill="#ff6a45" stroke="#d9452f" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 -3 Q39.6 -9.9 75.7 0 Q39.6 9.9 4 3 Z" fill="#ff8a5e" opacity="0.75"/><path d="M6 0 Q44 -1.5 79.2 0 M23.8 0 L35.2 -7.7 M23.8 0 L35.2 7.7 M44.5 0 L55.8 -6.6 M44.5 0 L55.8 6.6 M65.1 0 L76.5 -3.5 M65.1 0 L76.5 3.5" fill="none" stroke="#b8331f" stroke-width="1.7" stroke-linecap="round" opacity="0.55"/></g></g></g><g transform="translate(-113 -186) rotate(152)"><g id="axD2-gL3"><g id="axD2-gL3w"><path d="M0 -5.4 Q4.7 -13.9 18.6 -14.2 Q16.6 -9.1 17.9 -7.5 Q22.5 -13.8 36.5 -14.1 Q34.5 -8.6 35.7 -6.8 Q40.4 -9.7 54.4 -9.9 Q52.4 -5.5 53.6 -4 Q58.2 -4.9 72.2 -5 Q70.2 -2.1 71.4 -1.1 L76 0 L71.4 1.1 Q70.2 2.1 72.2 5 Q58.2 4.9 53.6 4 Q52.4 5.5 54.4 9.9 Q40.4 9.7 35.7 6.8 Q34.5 8.6 36.5 14.1 Q22.5 13.8 17.9 7.5 Q16.6 9.1 18.6 14.2 Q4.7 13.9 0 5.4 Z" fill="#ff6a45" stroke="#d9452f" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 -2.6 Q34.2 -8.7 65.4 0 Q34.2 8.7 4 2.6 Z" fill="#ff8a5e" opacity="0.75"/><path d="M6 0 Q38 -1.5 68.4 0 M20.5 0 L30.4 -6.7 M20.5 0 L30.4 6.7 M38.4 0 L48.2 -5.8 M38.4 0 L48.2 5.8 M56.3 0 L66.1 -3.1 M56.3 0 L66.1 3.1" fill="none" stroke="#b8331f" stroke-width="1.7" stroke-linecap="round" opacity="0.55"/></g></g></g></g>
+        <g transform="scale(-1 1)"><g transform="translate(-104 -262) rotate(-146)"><g id="axD2-gR1"><g id="axD2-gR1w"><path d="M0 -5.8 Q4.9 -14.9 19.4 -15.2 Q17.4 -9.8 18.8 -8 Q23.7 -14.8 38.2 -15.1 Q36.2 -9.3 37.6 -7.3 Q42.5 -10.4 57 -10.6 Q55 -5.9 56.4 -4.3 Q61.3 -5.2 75.8 -5.4 Q73.8 -2.3 75.2 -1.2 L80 0 L75.2 1.2 Q73.8 2.3 75.8 5.4 Q61.3 5.2 56.4 4.3 Q55 5.9 57 10.6 Q42.5 10.4 37.6 7.3 Q36.2 9.3 38.2 15.1 Q23.7 14.8 18.8 8 Q17.4 9.8 19.4 15.2 Q4.9 14.9 0 5.8 Z" fill="#ff6a45" stroke="#d9452f" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 -2.8 Q36 -9.3 68.8 0 Q36 9.3 4 2.8 Z" fill="#ff8a5e" opacity="0.75"/><path d="M6 0 Q40 -1.5 72 0 M21.6 0 L32 -7.2 M21.6 0 L32 7.2 M40.4 0 L50.8 -6.2 M40.4 0 L50.8 6.2 M59.2 0 L69.6 -3.3 M59.2 0 L69.6 3.3" fill="none" stroke="#b8331f" stroke-width="1.7" stroke-linecap="round" opacity="0.55"/></g></g></g><g transform="translate(-121 -224) rotate(-177)"><g id="axD2-gR2"><g id="axD2-gR2w"><path d="M0 -6.2 Q5.2 -15.9 21 -16.3 Q19 -10.5 20.7 -8.5 Q25.9 -15.7 41.6 -16.1 Q39.6 -9.9 41.4 -7.8 Q46.6 -11.1 62.3 -11.3 Q60.3 -6.3 62 -4.6 Q67.3 -5.6 83 -5.7 Q81 -2.4 82.7 -1.3 L88 0 L82.7 1.3 Q81 2.4 83 5.7 Q67.3 5.6 62 4.6 Q60.3 6.3 62.3 11.3 Q46.6 11.1 41.4 7.8 Q39.6 9.9 41.6 16.1 Q25.9 15.7 20.7 8.5 Q19 10.5 21 16.3 Q5.2 15.9 0 6.2 Z" fill="#ff6a45" stroke="#d9452f" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 -3 Q39.6 -9.9 75.7 0 Q39.6 9.9 4 3 Z" fill="#ff8a5e" opacity="0.75"/><path d="M6 0 Q44 -1.5 79.2 0 M23.8 0 L35.2 -7.7 M23.8 0 L35.2 7.7 M44.5 0 L55.8 -6.6 M44.5 0 L55.8 6.6 M65.1 0 L76.5 -3.5 M65.1 0 L76.5 3.5" fill="none" stroke="#b8331f" stroke-width="1.7" stroke-linecap="round" opacity="0.55"/></g></g></g><g transform="translate(-113 -186) rotate(152)"><g id="axD2-gR3"><g id="axD2-gR3w"><path d="M0 -5.4 Q4.7 -13.9 18.6 -14.2 Q16.6 -9.1 17.9 -7.5 Q22.5 -13.8 36.5 -14.1 Q34.5 -8.6 35.7 -6.8 Q40.4 -9.7 54.4 -9.9 Q52.4 -5.5 53.6 -4 Q58.2 -4.9 72.2 -5 Q70.2 -2.1 71.4 -1.1 L76 0 L71.4 1.1 Q70.2 2.1 72.2 5 Q58.2 4.9 53.6 4 Q52.4 5.5 54.4 9.9 Q40.4 9.7 35.7 6.8 Q34.5 8.6 36.5 14.1 Q22.5 13.8 17.9 7.5 Q16.6 9.1 18.6 14.2 Q4.7 13.9 0 5.4 Z" fill="#ff6a45" stroke="#d9452f" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 -2.6 Q34.2 -8.7 65.4 0 Q34.2 8.7 4 2.6 Z" fill="#ff8a5e" opacity="0.75"/><path d="M6 0 Q38 -1.5 68.4 0 M20.5 0 L30.4 -6.7 M20.5 0 L30.4 6.7 M38.4 0 L48.2 -5.8 M38.4 0 L48.2 5.8 M56.3 0 L66.1 -3.1 M56.3 0 L66.1 3.1" fill="none" stroke="#b8331f" stroke-width="1.7" stroke-linecap="round" opacity="0.55"/></g></g></g></g>
+        <path d="M0 -314 C82 -314 134 -276 134 -214 C134 -152 78 -124 0 -124 C-78 -124 -134 -152 -134 -214 C-134 -276 -82 -314 0 -314 Z" fill="#f7c1cc" stroke="#d0708a" stroke-width="4.5"/>
+        <g clip-path="url(#axD2-headClip)">
+          <ellipse cx="0" cy="-116" rx="150" ry="36" fill="#eea3b5" opacity="0.55"/>
+          <path d="M-78 -270 C-66 -292 -30 -302 0 -298 C-26 -292 -56 -282 -70 -262 C-74 -258 -80 -262 -78 -270 Z" fill="#fde3e8" opacity="0.9"/>
+          <circle cx="22" cy="-294" r="5" fill="#fde3e8" opacity="0.85"/>
+        </g>
+        <g id="axD2-face">
+          <g transform="translate(-84 -176)"><ellipse id="axD2-cheekL" rx="17" ry="10" fill="#ff8aa3" opacity="0.55" filter="url(#axD2-soft)"/></g>
+          <g transform="translate(84 -176)"><ellipse id="axD2-cheekR" rx="17" ry="10" fill="#ff8aa3" opacity="0.55" filter="url(#axD2-soft)"/></g>
+          <g transform="translate(-48 -208)"><g id="axD2-eyeL"><g id="axD2-openL"><g id="axD2-blinkL"><g id="axD2-lookL"><ellipse rx="11" ry="13" fill="#2a1520"/><g id="axD2-hlL"><circle cx="3.8" cy="-5" r="4.2" fill="#fff"/><circle cx="-3.6" cy="4.6" r="1.9" fill="#fff" opacity="0.85"/></g></g></g></g><path id="axD2-happyL" opacity="0" d="M-11 4 Q0 -11 11 4" fill="none" stroke="#2a1520" stroke-width="5" stroke-linecap="round"/><path id="axD2-sqzL" opacity="0" d="M-8 -8 L6 0 L-8 8" fill="none" stroke="#2a1520" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path id="axD2-winkL" opacity="0" d="M-11 -1 Q0 7 11 -1" fill="none" stroke="#2a1520" stroke-width="5" stroke-linecap="round"/></g></g><g transform="translate(48 -208)"><g id="axD2-eyeR"><g id="axD2-openR"><g id="axD2-blinkR"><g id="axD2-lookR"><ellipse rx="11" ry="13" fill="#2a1520"/><g id="axD2-hlR"><circle cx="3.8" cy="-5" r="4.2" fill="#fff"/><circle cx="-3.6" cy="4.6" r="1.9" fill="#fff" opacity="0.85"/></g></g></g></g><path id="axD2-happyR" opacity="0" d="M-11 4 Q0 -11 11 4" fill="none" stroke="#2a1520" stroke-width="5" stroke-linecap="round"/><path id="axD2-sqzR" opacity="0" d="M8 -8 L-6 0 L8 8" fill="none" stroke="#2a1520" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path id="axD2-winkR" opacity="0" d="M-11 -1 Q0 7 11 -1" fill="none" stroke="#2a1520" stroke-width="5" stroke-linecap="round"/></g></g>
+          <g transform="translate(-48 -238)"><g id="axD2-browL"><path id="axD2-browLr" d="M-9 2 Q-1 -3 9 0" fill="none" stroke="#c05f7b" stroke-width="4.2" stroke-linecap="round" opacity="0.8"/></g></g><g transform="translate(48 -238) scale(-1 1)"><g id="axD2-browR"><path id="axD2-browRr" d="M-9 2 Q-1 -3 9 0" fill="none" stroke="#c05f7b" stroke-width="4.2" stroke-linecap="round" opacity="0.8"/></g></g>
+          <path id="axD2-mouth" d="M-17 -170 C-11 -162 11 -162 17 -170 C11 -151 -11 -151 -17 -170 Z" fill="#7a1f37" stroke="#7a1f37" stroke-width="2" stroke-linejoin="round"/>
+          <ellipse cx="0" cy="-138" rx="13" ry="9" fill="#ff7f99" clip-path="url(#axD2-mouthClip)"/>
+        </g>
+      </g></g></g></g>
+      <g transform="translate(0 -72) scale(1.15)"><g id="axD2-clapY"><g id="axD2-clap" opacity="0">
+        <rect x="-60" y="-26" width="120" height="68" rx="7" fill="#1b1b20" stroke="#0b0b0d" stroke-width="3"/>
+        <rect x="-60" y="-26" width="120" height="14" rx="3" fill="#ece8dc"/>
+        <path d="M-54 -26 L-42 -26 L-48 -12 L-60 -12 Z M-30 -26 L-18 -26 L-24 -12 L-36 -12 Z M-6 -26 L6 -26 L0 -12 L-12 -12 Z M18 -26 L30 -26 L24 -12 L12 -12 Z M42 -26 L54 -26 L48 -12 L36 -12 Z" fill="#1b1b20"/>
+        <line x1="-52" y1="12" x2="52" y2="12" stroke="#4a4a54" stroke-width="1.5"/>
+        <line x1="0" y1="-6" x2="0" y2="36" stroke="#4a4a54" stroke-width="1.5"/>
+        <text x="-26" y="6" text-anchor="middle" font-family="JB Mono, monospace" font-size="9" fill="#9a978f">ESCENA</text>
+        <text x="26" y="6" text-anchor="middle" font-family="JB Mono, monospace" font-size="9" fill="#9a978f">TOMA</text>
+        <text x="-26" y="31" text-anchor="middle" font-family="Archivo, sans-serif" font-weight="800" font-size="17" fill="#f0c94a">1</text>
+        <text x="26" y="31" text-anchor="middle" font-family="Archivo, sans-serif" font-weight="800" font-size="17" fill="#ece8dc">1</text>
+        <g transform="translate(-60 -28)"><g id="axD2-clapStick">
+          <rect x="0" y="-14" width="120" height="14" rx="3" fill="#ece8dc" stroke="#0b0b0d" stroke-width="2"/>
+          <path d="M-6 -14 L6 -14 L12 0 L0 0 Z M18 -14 L30 -14 L36 0 L24 0 Z M42 -14 L54 -14 L60 0 L48 0 Z M66 -14 L78 -14 L84 0 L72 0 Z M90 -14 L102 -14 L108 0 L96 0 Z" fill="#1b1b20"/>
+          <circle cx="5" cy="-1" r="3" fill="#4a4a54"/>
+        </g></g>
+      </g></g></g>
+      <g transform="translate(-66 -106) scale(-1 1) rotate(-9)"><g id="axD2-armL"><g id="axD2-armLw"><g id="axD2-armLs"><g id="axD2-fingerL" opacity="0"><path d="M2 44 L3 68" stroke="#d0708a" stroke-width="13" stroke-linecap="round"/><path d="M2 44 L3 68" stroke="#f7c1cc" stroke-width="7.5" stroke-linecap="round"/></g><path d="M-11 -4 C-12 10 -11 22 -10 31 C-15 37 -15 45 -10 48 C-8 50 -4 50 -3 47 C-2 52 3 54 5 50 C7 53 12 51 12 47 C16 46 18 40 14 34 C12 24 12 10 11 -4 C11 -10 -11 -10 -11 -4 Z" fill="#f7c1cc" stroke="#d0708a" stroke-width="4" stroke-linejoin="round"/><path d="M-3 47 C-3 44 -2 42 -1 41 M5 50 C5 46 5 44 5 42" fill="none" stroke="#d0708a" stroke-width="2.2" stroke-linecap="round" opacity="0.75"/></g></g></g></g>
+      <g transform="translate(66 -106) rotate(-9)"><g id="axD2-armR"><g id="axD2-armRw"><g id="axD2-armRs"><g id="axD2-fingerR" opacity="0"><path d="M2 44 L3 68" stroke="#d0708a" stroke-width="13" stroke-linecap="round"/><path d="M2 44 L3 68" stroke="#f7c1cc" stroke-width="7.5" stroke-linecap="round"/></g><path d="M-11 -4 C-12 10 -11 22 -10 31 C-15 37 -15 45 -10 48 C-8 50 -4 50 -3 47 C-2 52 3 54 5 50 C7 53 12 51 12 47 C16 46 18 40 14 34 C12 24 12 10 11 -4 C11 -10 -11 -10 -11 -4 Z" fill="#f7c1cc" stroke="#d0708a" stroke-width="4" stroke-linejoin="round"/><path d="M-3 47 C-3 44 -2 42 -1 41 M5 50 C5 46 5 44 5 42" fill="none" stroke="#d0708a" stroke-width="2.2" stroke-linecap="round" opacity="0.75"/></g></g></g></g>
+    </g></g></g>
+    <g id="axD2-fx">
+      <g transform="translate(128 -340) scale(1.5)"><g id="axD2-fxBangY"><g id="axD2-fxBang" opacity="0"><path d="M-7 -34 L7 -34 L4 2 L-4 2 Z" fill="#f0c94a" stroke="#0b0b0d" stroke-width="3" stroke-linejoin="round"/><circle cx="0" cy="13" r="6" fill="#f0c94a" stroke="#0b0b0d" stroke-width="3"/></g></g></g>
+      <g transform="translate(98 -256)"><g id="axD2-fxSpark" opacity="0"><path d="M0 -16 Q2 -2 16 0 Q2 2 0 16 Q-2 2 -16 0 Q-2 -2 0 -16 Z" fill="#fff4c4"/></g></g>
+      <g transform="translate(118 -306)"><circle id="axD2-th1" r="6" fill="#ece8dc" opacity="0"/></g>
+      <g transform="translate(142 -334)"><circle id="axD2-th2" r="9" fill="#ece8dc" opacity="0"/></g>
+      <g transform="translate(174 -366)"><circle id="axD2-th3" r="13" fill="#ece8dc" opacity="0"/></g>
+      <g transform="translate(0 -60)"><g id="axD2-fxImpact" opacity="0" stroke="#f0c94a" stroke-width="5" stroke-linecap="round" fill="none">
+        <path d="M-84 -40 L-102 -54"/><path d="M-90 -6 L-112 -6"/><path d="M-84 26 L-102 40"/>
+        <path d="M84 -40 L102 -54"/><path d="M90 -6 L112 -6"/><path d="M84 26 L102 40"/>
+      </g></g>
+      <g transform="translate(0 -324) scale(1 0.36)"><g id="axD2-fxStars" opacity="0">
+        <path transform="translate(80 0)" d="M0 -13 L3.2 -4.4 L12.4 -4 L5.2 1.7 L7.6 10.5 L0 5.5 L-7.6 10.5 L-5.2 1.7 L-12.4 -4 L-3.2 -4.4 Z" fill="#f0c94a"/>
+        <path transform="translate(-40 69)" d="M0 -11 L2.6 -3.6 L10.5 -3.4 L4.3 1.4 L6.5 8.9 L0 4.5 L-6.5 8.9 L-4.3 1.4 L-10.5 -3.4 L-2.6 -3.6 Z" fill="#ece8dc"/>
+        <path transform="translate(-40 -69)" d="M0 -12 L2.9 -4 L11.4 -3.7 L4.8 1.5 L7.1 9.7 L0 5 L-7.1 9.7 L-4.8 1.5 L-11.4 -3.7 L-2.9 -4 Z" fill="#f0c94a"/>
+      </g></g>
+      <g transform="translate(118 -262)"><g id="axD2-fxSweatY"><path id="axD2-fxSweat" opacity="0" d="M0 -12 C6 -2 9 3 9 7 C9 12 5 15 0 15 C-5 15 -9 12 -9 7 C-9 3 -6 -2 0 -12 Z" fill="#9cc2ff" stroke="#5b86c9" stroke-width="2"/></g></g>
+      <g transform="translate(0 -10) scale(1.1 0.7)"><g id="axD2-fxImpact2" opacity="0" stroke="#f0c94a" stroke-width="5" stroke-linecap="round" fill="none">
+        <path d="M-84 -40 L-102 -54"/><path d="M-90 -6 L-112 -6"/><path d="M-84 26 L-102 40"/>
+        <path d="M84 -40 L102 -54"/><path d="M90 -6 L112 -6"/><path d="M84 26 L102 40"/>
+      </g></g>
+    </g>
+  </g></g>
+  </g>
+</svg>
+</div>
+
+      </div>
+    </div>
+    <div id="secD2-fore" class="secD2-plane" data-layout-allow-overflow></div>
+  </div>
+  <div id="secD2-black"></div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  const DUR = 7.5, T0 = 41.5, FPS = 30, FD = 1.25;
+  const C = window.CUES;
+  const $ = (s) => document.querySelector(s);
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const lerp = (a, b, e) => a + (b - a) * e;
+  const smooth = (a, b, t) => { const u = clamp((t - a) / (b - a), 0, 1); return u * u * (3 - 2 * u); };
+
+  /* ---------- curvas propias vd.* ---------- */
+  if (!window.__vdEases) {
+    const bez = (x1, y1, x2, y2) => {
+      const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
+      const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+      const sx = (t) => ((ax * t + bx) * t + cx) * t, sy = (t) => ((ay * t + by) * t + cy) * t;
+      const dx = (t) => (3 * ax * t + 2 * bx) * t + cx;
+      return (p) => {
+        if (p <= 0) return 0; if (p >= 1) return 1;
+        let t = p;
+        for (let i = 0; i < 6; i++) { const e = sx(t) - p, d = dx(t); if (Math.abs(e) < 1e-6 || Math.abs(d) < 1e-6) break; t -= e / d; }
+        if (t < 0 || t > 1) { let lo = 0, hi = 1; t = p; for (let i = 0; i < 30; i++) { sx(t) < p ? (lo = t) : (hi = t); t = (lo + hi) / 2; } }
+        return sy(t);
+      };
+    };
+    const spring = (z = 0.42, w = 13) => (p) => (p >= 1 ? 1 : 1 - Math.exp(-z * w * p) * Math.cos(w * Math.sqrt(1 - z * z) * p));
+    const E = {
+      "vd.land": bez(0.16, 1, 0.3, 1), "vd.settle": bez(0, 0.65, 0.51, 0.99), "vd.glide": bez(0.7, 0, 0.2, 1),
+      "vd.push": bez(0.33, 0, 0.67, 1), "vd.whip": bez(0.86, 0, 0.12, 1), "vd.dive": bez(0.55, 0, 0.95, 0.55),
+      "vd.exit": bez(0.7, 0, 0.84, 0), "vd.spring": spring(),
+      "vd.fold": (p) => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2),
+    };
+    Object.keys(E).forEach((k) => gsap.registerEase(k, E[k]));
+    window.__vdEases = true;
+  }
+  const eLand = gsap.parseEase("vd.land"), eFold = gsap.parseEase("vd.fold");
+
+  /* =====================================================================
+     GEOMETRÍA DE AUTOR
+     ===================================================================== */
+  const PLAN = { x: 560, y: 230 };
+  const COLX = (j) => 30 + j * 401, SLOTY = (k) => 92 + 70 + k * 112;
+  const JOR = [["Jornada 1", "Lun 14 · Playa"], ["Jornada 2", "Mar 15 · Casa"], ["Jornada 3", "Mié 16 · Costa"]];
+  const TYPE = { EXT: "#8fd0d6", INT: "#f0c94a", NOCHE: "#f7a198" };
+  // orden de llegada (snap a semicorcheas): [columna, hueco, escena, nombre, tipo, dx, dy, giro]
+  const BLK = [
+    [0, 0, "ESC 1", "Playa · amanecer", "EXT", -170, -330, -9],
+    [1, 0, "ESC 2", "Casa abuela", "INT", 70, -360, 7],
+    [2, 0, "ESC 5", "Furgoneta", "EXT", 250, -300, -6],
+    [0, 1, "ESC 3", "Paseo marítimo", "EXT", -330, -160, 11],
+    [1, 1, "ESC 4", "Cocina", "INT", 140, -250, -12],
+    [2, 1, "ESC 6", "Faro · noche", "NOCHE", 340, -200, 8],
+    [0, 2, "ESC 8", "Chiringuito", "INT", -90, -470, 5],
+  ];
+  const SNAP = BLK.map((_, i) => 0.25 + 0.125 * i);
+  const COLN = [3, 2, 2];
+
+  // hoja de llamada y vuelo
+  const W0 = { x: 2040, y: 540 };
+  const V = 1040, TA = 0.3, TL = 2.0, TD = 0.6, T4 = 3.5, YC = 410, YG = 900;
+  function planeX(t) {
+    const tau = t - TL;
+    if (tau <= 0) return W0.x;
+    if (tau < TA) return W0.x + (V * tau * tau) / (2 * TA);
+    if (t <= T4) return W0.x + V * (tau - TA / 2);
+    const x4 = W0.x + V * (T4 - TL - TA / 2), u = Math.min(t - T4, TD);
+    return x4 + V * (u - (u * u) / (2 * TD));
+  }
+  function planeY(t) {
+    if (t <= TL) return W0.y;
+    if (t < 2.45) return lerp(W0.y, YC, gsap.parseEase("sine.inOut")((t - TL) / 0.45));
+    const cruise = (tt) => YC + 9 * Math.sin(2 * Math.PI * 1.4 * (tt - 2.45));
+    if (t < 3.45) return cruise(t);
+    const y0 = cruise(3.45);
+    if (t < 4.1) { const u = (t - 3.45) / 0.65; return lerp(y0, YG, u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2); }
+    if (t < 4.28) return YG - 14 * Math.sin((Math.PI * (t - 4.1)) / 0.18);
+    return YG;
+  }
+  function planeState(t) {
+    const h = 1 / 60, x0 = planeX(t - h), x1 = planeX(t + h), y0 = planeY(t - h), y1 = planeY(t + h);
+    const vx = (x1 - x0) / (2 * h), vy = (y1 - y0) / (2 * h), sp = Math.hypot(vx, vy);
+    const rot = t <= TL ? 0 : clamp((Math.atan2(vy, Math.max(1, vx)) * 180) / Math.PI * 0.7, -16, 16) * Math.min(1, sp / 300);
+    return { x: planeX(t), y: planeY(t), rot, sp };
+  }
+  const PING = [0, 1, 2, 3, 4].map((i) => C.hits.pings - T0 + 0.25 * i); // 2.5 … 3.5
+  const AVX = PING.map((t) => planeX(t));
+  const TEAM = { x: AVX[0] - 128, y: 520, w: AVX[4] - AVX[0] + 256 };
+  const AVY = 160; // centro de avatar (local de la tarjeta)
+
+  /* ---------- marcado generado (antes del timeline) ---------- */
+  let h = "";
+  JOR.forEach(([a, b], j) => {
+    h += `<span class="secD2-colh" style="left:${COLX(j)}px;top:92px">${a}</span>`;
+    h += `<span class="secD2-mono" style="left:${COLX(j) + 160}px;top:102px">${b}</span>`;
+    h += `<i class="secD2-bar" style="left:${COLX(j)}px;top:140px;width:377px"><i id="secD2-bar${j}"></i></i>`;
+    for (let k = 0; k < COLN[j]; k++) h += `<i class="secD2-slot" id="secD2-sl${j}_${k}" style="left:${COLX(j)}px;top:${SLOTY(k)}px"></i>`;
+  });
+  BLK.forEach(([j, k, e, n, ty], i) => {
+    h += `<div class="secD2-blk" id="secD2-b${i}" style="left:${COLX(j)}px;top:${SLOTY(k)}px"><u style="background:${TYPE[ty]}"></u><em>${e}</em><b>${n}</b><s style="background:${TYPE[ty]}">${ty}</s></div>`;
+  });
+  $("#secD2-cols").innerHTML = h;
+
+  const FACE = `<div class="secD2-face"><b>Hoja de llamada</b><u>J1</u><em style="top:66px">Jornada 1 · Lun 14 · Playa</em>` +
+    `<strong>07:30</strong><em style="top:160px">Citación general</em><s style="top:190px"></s>` +
+    [["07:30", "Equipo técnico"], ["08:00", "Reparto"], ["08:30", "ESC 1 · Playa"], ["11:00", "ESC 3 · Paseo"], ["14:00", "Comida"], ["15:30", "ESC 8 · Chiringuito"]]
+      .map(([a, b], r) => `<em style="top:${206 + r * 30}px;color:#151519">${a}  ${b}</em>`).join("") + `</div>`;
+  const PCS = [
+    ["bodyR", "150px 0, 300px 150px, 300px 400px, 150px 400px", 0],
+    ["flapRb", "150px 0, 300px 0, 300px 150px", 1],
+    ["flapRf", "150px 0, 300px 0, 300px 150px", 0],
+    ["bodyL", "0 150px, 150px 0, 150px 400px, 0 400px", 0],
+    ["bodyLb", "0 150px, 150px 0, 150px 400px, 0 400px", 1],
+    ["flapLb", "0 0, 150px 0, 0 150px", 1],
+    ["flapLf", "0 0, 150px 0, 0 150px", 0],
+  ];
+  $("#secD2-fold").innerHTML = PCS.map(([id, poly, bk]) => `<div class="secD2-pc${bk ? " bk" : ""}" id="secD2-${id}" style="clip-path:polygon(${poly})">${bk ? "" : FACE}<i></i></div>`).join("");
+
+  // equipo: retratos planos
+  const AV = [
+    { n: "Ana", r: "Dirección", bg: "#8fd0d6", sk: "#f1c9a5", sh: "#151519", hair: '<path d="M34 58 C30 26 46 18 62 18 C80 18 94 28 90 60 L84 60 C84 40 74 34 62 34 C50 34 40 40 40 60 Z" fill="#2a1d1a"/>', acc: '<g fill="none" stroke="#151519" stroke-width="3"><circle cx="54" cy="57" r="7"/><circle cx="70" cy="57" r="7"/><path d="M61 57 h2"/></g>' },
+    { n: "Leo", r: "Foto", bg: "#f7a198", sk: "#c98e6a", sh: "#f1eee6", hair: '<path d="M38 50 C38 30 50 24 62 24 C74 24 86 30 86 50 Z" fill="#151519"/><path d="M36 46 C40 26 84 26 88 46 L102 50 L36 52 Z" fill="#f0c94a"/>', acc: "" },
+    { n: "Iris", r: "Sonido", bg: "#a7e2bf", sk: "#8d5a3b", sh: "#4a4a54", hair: '<g fill="#151519"><circle cx="46" cy="38" r="12"/><circle cx="62" cy="30" r="13"/><circle cx="78" cy="38" r="12"/><circle cx="40" cy="52" r="9"/><circle cx="84" cy="52" r="9"/></g>', acc: '<path d="M34 58 C34 26 90 26 90 58" fill="none" stroke="#4a4a54" stroke-width="5"/><rect x="28" y="52" width="10" height="18" rx="4" fill="#4a4a54"/><rect x="86" y="52" width="10" height="18" rx="4" fill="#4a4a54"/>' },
+    { n: "Teo", r: "Arte", bg: "#ece8dc", sk: "#f3d2b8", sh: "#e0402f", hair: '<path d="M40 52 C38 36 48 30 62 30 C76 30 86 36 84 52 Z" fill="#6b3b1f"/><path d="M36 38 C40 20 86 18 90 34 C80 30 50 32 36 38 Z" fill="#151519"/><circle cx="66" cy="20" r="4" fill="#151519"/>', acc: "" },
+    { n: "Mar", r: "Producción", bg: "#f0c94a", sk: "#b07a55", sh: "#151519", hair: '<path d="M32 86 C26 40 40 22 62 22 C84 22 98 40 92 86 L82 86 C84 60 80 40 62 40 C44 40 40 60 42 86 Z" fill="#e0402f"/>', acc: '<path d="M86 58 C92 70 84 78 72 78" fill="none" stroke="#4a4a54" stroke-width="3"/><circle cx="71" cy="78" r="3.5" fill="#4a4a54"/>' },
+  ];
+  let ah = "";
+  AV.forEach((a, i) => {
+    const cx = AVX[i] - TEAM.x;
+    ah += `<div class="secD2-av" id="secD2-av${i}" style="left:${cx}px;top:${AVY}px">` +
+      `<svg viewBox="0 0 124 124"><defs><clipPath id="secD2-avc${i}"><circle cx="62" cy="62" r="62"/></clipPath></defs><g clip-path="url(#secD2-avc${i})">` +
+      `<rect width="124" height="124" fill="${a.bg}"/><path d="M12 128 C14 96 34 84 62 84 C90 84 110 96 112 128 Z" fill="${a.sh}"/>` +
+      `<rect x="54" y="70" width="16" height="18" fill="${a.sk}"/><circle cx="62" cy="56" r="24" fill="${a.sk}"/>${a.hair}` +
+      `<circle cx="54" cy="58" r="2.8" fill="#151519"/><circle cx="70" cy="58" r="2.8" fill="#151519"/><path d="M56 67 Q62 72 68 67" fill="none" stroke="#151519" stroke-width="2.6" stroke-linecap="round"/>${a.acc}</g></svg>` +
+      `<i class="secD2-wave" id="secD2-wv${i}"></i><i class="secD2-ring" id="secD2-rg${i}"></i>` +
+      `<i class="secD2-chk" id="secD2-ck${i}"><svg viewBox="0 0 44 44"><path d="M13 23 L19.5 29.5 L31.5 15.5" fill="none" stroke="#151519" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></svg></i></div>` +
+      `<span class="secD2-nm" style="left:${cx}px;top:${AVY + 74}px">${a.n}</span>` +
+      `<span class="secD2-rl" style="left:${cx}px;top:${AVY + 108}px">${a.r}</span>` +
+      `<span class="secD2-st" id="secD2-st${i}" style="left:${cx}px;top:${AVY + 132}px;color:#4fc47f;opacity:0">✓ 07:30</span>`;
+  });
+  $("#secD2-avs").innerHTML = ah;
+  const teamEl = $("#secD2-team");
+  teamEl.style.left = TEAM.x + "px"; teamEl.style.width = TEAM.w + "px";
+  $("#secD2-minis").innerHTML = AV.map((_, i) => `<i class="secD2-mini" id="secD2-mn${i}"></i>`).join("");
+  // primer término: cruces de registro a lo largo del recorrido (parallax)
+  let fh = "";
+  for (let k = 0; k < 11; k++) fh += `<i class="secD2-cross" style="left:${700 + k * 520}px;top:${k % 2 ? 1000 : 60}px"><b></b></i>`;
+  $("#secD2-fore").innerHTML = fh;
+
+  const tl = gsap.timeline({ paused: true });
+
+  /* =====================================================================
+     CÁMARA: función pura de t (+ seguimiento del avión + picado al ojo)
+     ===================================================================== */
+  const AXS = 0.62, FEET_END = { x: 264, y: 60 };
+  const PF = planeState(DUR);
+  // punto dentro de la pupila izquierda, lejos de los brillos (coords del rig: ojo en -48,-208; objetivo -6,-1.5)
+  const EYE = { x: PF.x + FEET_END.x + AXS * (-48 - 6), y: PF.y + FEET_END.y + AXS * (-208 - 1.5) };
+  const K = [
+    { t: 0.0, x: 1050, y: 600, s: 1.22, r: -1.1 },
+    { t: 0.8, x: 1180, y: 536, s: 1.0, r: 0, ease: "power2.out" },
+    { t: 1.55, x: 1560, y: 560, s: 0.95, r: 0.3, ease: "vd.glide" },
+    { t: 4.25, x: 3830, y: 700, s: 1.0, r: 0, ease: "vd.glide" },
+    { t: 5.3, x: 3610, y: 690, s: 0.8, r: 0, ease: "vd.settle" },
+    { t: 6.1, x: EYE.x, y: EYE.y, s: 1.6, r: 0, ease: "vd.glide" },
+    // picado a través del ojo: el zoom crece en log con power2.in (acelera hasta el corte)
+    { t: 7.5, x: EYE.x, y: EYE.y, s: 900, r: 9, ease: "power2.in" },
+  ];
+  function camK(t) {
+    if (t >= K[K.length - 1].t) return Object.assign({}, K[K.length - 1]);
+    let i = 1;
+    for (let k = 1; k < K.length; k++) if (t < K[k].t) { i = k; break; }
+    const a = K[i - 1], b = K[i];
+    const p = clamp((t - a.t) / (b.t - a.t || 1), 0, 1);
+    const e = gsap.parseEase(b.ease || "none")(p);
+    const s = Math.exp(lerp(Math.log(a.s), Math.log(b.s), e));
+    const w = Math.abs(Math.log(b.s / a.s)) > 1 ? (1 / a.s - 1 / s) / (1 / a.s - 1 / b.s) : e;
+    return { x: lerp(a.x, b.x, w), y: lerp(a.y, b.y, w), s, r: lerp(a.r, b.r, e) };
+  }
+  const followW = (t) => smooth(1.85, 2.4, t) * (1 - smooth(3.8, 4.4, t));
+  const pulse = (dt) => (dt < 0 ? 0 : dt < 0.066 ? dt / 0.066 : Math.exp(-(dt - 0.066) * 9));
+  function cam(t) {
+    const c = camK(t), w = followW(t);
+    if (w > 0) {
+      const f = { x: planeX(t) + 160, y: 520, s: 1.0 };
+      c.x = lerp(c.x, f.x, w); c.y = lerp(c.y, f.y, w); c.s = Math.exp(lerp(Math.log(c.s), 0, w)); c.r = lerp(c.r, 0, w);
+    }
+    let k = 0.02 * pulse(t - 2.0);
+    PING.forEach((pt) => (k += 0.008 * pulse(t - pt)));
+    c.s *= 1 + k;
+    return c;
+  }
+  const hand = (t) => ({
+    x: 2.2 * Math.sin(2 * Math.PI * 0.31 * t + 1.3) + 0.9 * Math.sin(2 * Math.PI * 0.77 * t + 0.4),
+    y: 1.6 * Math.sin(2 * Math.PI * 0.23 * t + 2.1) + 0.8 * Math.sin(2 * Math.PI * 0.91 * t + 5.2),
+    r: 0.1 * Math.sin(2 * Math.PI * 0.17 * t + 0.7),
+  });
+  const handW = (t) => 1 - smooth(5.6, 6.2, t); // en el picado, la cámara deja de temblar
+  const world = $("#secD2-world"), forePl = $("#secD2-fore"), lens = $("#secD2-lens"), cbx = $("#secD2-cbx");
+  function applyCamera(t) {
+    const c = cam(t), n = hand(t), hw = handW(t);
+    [[world, 1], [forePl, FD]].forEach(([el, d]) => {
+      const s = 1 + (c.s - 1) * d;
+      el.style.transform = `translate(${(960 + n.x * hw).toFixed(2)}px, ${(540 + n.y * hw).toFixed(2)}px) rotate(${(c.r * d + n.r * hw).toFixed(3)}deg) scale(${s.toFixed(4)}) translate(${(-c.x * d + 960 * (d - 1)).toFixed(3)}px, ${(-c.y * d + 540 * (d - 1)).toFixed(3)}px)`;
+    });
+    const hh = 0.5 / FPS, c0 = cam(Math.max(0, t - hh)), c1 = cam(Math.min(DUR, t + hh));
+    const vx = Math.abs(c1.x - c0.x) * c.s, vy = Math.abs(c1.y - c0.y) * c.s;
+    const pan = Math.abs(Math.log(c1.s / c0.s)) < 0.006 && followW(t) < 0.05;
+    const bx = pan ? Math.min(5, vx * 0.12) : 0, by = pan ? Math.min(5, vy * 0.12) : 0;
+    if (bx + by > 0.8) { cbx.setAttribute("stdDeviation", `${bx.toFixed(2)} ${by.toFixed(2)}`); lens.style.filter = "url(#secD2-camblur)"; }
+    else lens.style.filter = "none";
+  }
+
+  /* =====================================================================
+     1 · los bloques de escena encajan en las jornadas (snap a semicorcheas)
+     ===================================================================== */
+  const blkEls = BLK.map((_, i) => $("#secD2-b" + i));
+  const slotEls = BLK.map(([j, k]) => $(`#secD2-sl${j}_${k}`));
+  const barEls = [0, 1, 2].map((j) => $("#secD2-bar" + j));
+  const ePow2in = (u) => u * u;
+  function renderBlocks(t) {
+    BLK.forEach(([j, k, , , , dx, dy, rr], i) => {
+      const ts = SNAP[i], tr = ts - 0.22;
+      const dr = 6 * Math.sin(2 * Math.PI * 0.6 * t + i * 1.7), drr = 1.4 * Math.sin(2 * Math.PI * 0.45 * t + i);
+      let x, y, r, s, lift;
+      if (t < tr) { x = dx; y = dy + dr; r = rr + drr; s = 1.04; lift = 1; }
+      else if (t < ts) {
+        const u = (t - tr) / 0.22, e = ePow2in(u);
+        x = dx * (1 - e); y = (dy + dr) * (1 - e); r = (rr + drr) * (1 - e); s = 1.04 - 0.04 * e; lift = 1 - e;
+      } else {
+        const u = t - ts; // asiento: 4 px de rebote y escala 0,97 → 1
+        y = u < 0.2 ? 5 * Math.sin((Math.PI * u) / 0.2) * Math.exp(-u * 8) : 0; x = 0; r = 0; s = u < 0.05 ? 1 - 0.6 * u : Math.min(1, 0.97 + (u - 0.05) * 0.3); lift = 0;
+      }
+      const el = blkEls[i];
+      el.style.transform = `translate(${x.toFixed(2)}px, ${y.toFixed(2)}px) rotate(${r.toFixed(2)}deg) scale(${s.toFixed(4)})`;
+      el.style.boxShadow = lift > 0.01 ? `0 ${(4 + 30 * lift).toFixed(1)}px ${(8 + 34 * lift).toFixed(1)}px -10px rgba(10,10,14,${(0.35 + 0.3 * lift).toFixed(2)})` : "0 2px 0 rgba(0,0,0,0.3)";
+      slotEls[i].style.borderColor = t >= ts && t < ts + 0.14 ? "#f0c94a" : "#2e2e35";
+    });
+    [0, 1, 2].forEach((j) => {
+      let n = 0;
+      BLK.forEach(([jj], i) => { if (jj === j) n += clamp((t - SNAP[i]) / 0.18, 0, 1); });
+      barEls[j].style.transform = `scaleX(${(n / COLN[j]).toFixed(4)})`;
+    });
+  }
+  // el botón de enviar se ilumina cuando la jornada 1 queda completa (último snap)
+  const SEND = SNAP[6] + 0.06;
+  tl.fromTo("#secD2-send", { backgroundColor: "rgba(240,201,74,0)", color: "#f0c94a", scale: 1 }, { backgroundColor: "rgba(240,201,74,1)", color: "#151519", scale: 0.93, duration: 0.07, ease: "power2.in" }, SEND);
+  tl.to("#secD2-send", { scale: 1, duration: 0.3, ease: "vd.land" }, SEND + 0.07);
+  tl.fromTo("#secD2-kick", { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.45, ease: "vd.land" }, 0.1);
+
+  /* =====================================================================
+     2 · la hoja sale de la tarjeta, se pliega y se vuelve avión
+     ===================================================================== */
+  const PRINT0 = SEND + 0.04, PRINTD = 0.34;
+  const printEl = $("#secD2-print");
+  const printX = (t) => (1650 - W0.x) * (1 - eLand(clamp((t - PRINT0) / PRINTD, 0, 1)));
+  const F1L = [1.3, 0.18], F1R = [1.34, 0.18], F2 = [1.54, 0.18], TURN = 1.74, SWAP = 1.86;
+  const ang = (t, [a, d]) => Math.PI * eFold(clamp((t - a) / d, 0, 1));
+  const mul = (A, B) => [A[0] * B[0] + A[2] * B[1], A[1] * B[0] + A[3] * B[1], A[0] * B[2] + A[2] * B[3], A[1] * B[2] + A[3] * B[3], A[0] * B[4] + A[2] * B[5] + A[4], A[1] * B[4] + A[3] * B[5] + A[5]];
+  // plegado ortográfico: la componente normal al eje se escala por cos(θ)
+  const foldM = (px, py, nx, ny, cs) => {
+    const k = cs - 1, a = 1 + k * nx * nx, b = k * nx * ny, d = 1 + k * ny * ny;
+    return [a, b, b, d, px - (a * px + b * py), py - (b * px + d * py)];
+  };
+  const S2 = Math.SQRT1_2, ID = [1, 0, 0, 1, 0, 0];
+  const pc = {}; PCS.forEach(([id]) => (pc[id] = { el: $("#secD2-" + id), sh: $("#secD2-" + id + " > i") }));
+  const mstr = (M) => `matrix(${M.map((v) => v.toFixed(5)).join(",")})`;
+  function renderFold(t) {
+    const px = printX(t);
+    printEl.style.transform = `translateX(${px.toFixed(2)}px)`;
+    const L = clamp(1800 - (W0.x - 150 + px), 0, 300);
+    printEl.style.clipPath = t < PRINT0 + PRINTD + 0.02 ? `inset(0 0 0 ${L.toFixed(1)}px)` : "none";
+    const aL = ang(t, F1L), aR = ang(t, F1R), a2 = ang(t, F2);
+    const cL = Math.cos(aL), cR = Math.cos(aR), c2 = Math.cos(a2);
+    const M1L = foldM(150, 0, S2, S2, cL), M1R = foldM(150, 0, -S2, S2, cR), M2 = foldM(150, 0, 1, 0, c2);
+    const set = (id, M, vis, sh) => { const p = pc[id]; p.el.style.transform = mstr(M); p.el.style.opacity = vis ? 1 : 0; p.sh.style.opacity = sh.toFixed(3); };
+    set("bodyR", ID, true, 0);
+    set("flapRf", M1R, cR > 0, 0.28 * Math.sin(aR));
+    set("flapRb", M1R, cR <= 0, 0.2 * Math.sin(aR));
+    set("bodyL", M2, c2 > 0, 0.28 * Math.sin(a2));
+    set("bodyLb", M2, c2 <= 0, 0.2 * Math.sin(a2));
+    set("flapLf", mul(M2, M1L), cL > 0 && c2 > 0, 0.28 * Math.sin(aL));
+    set("flapLb", mul(M2, M1L), cL <= 0 && c2 > 0, 0.2 * Math.sin(aL) + 0.2 * Math.sin(a2));
+  }
+  // la tira plegada gira hasta apuntar a la derecha y se abre en avión
+  tl.fromTo("#secD2-fold", { rotation: 0, x: 0, scale: 1, transformOrigin: "225px 200px" }, { rotation: 90, x: -75, scale: 0.96, transformOrigin: "225px 200px", duration: SWAP - TURN, ease: "power2.inOut" }, TURN);
+  tl.set("#secD2-fold", { opacity: 0 }, SWAP);
+  tl.set("#secD2-planeSvg", { opacity: 1 }, SWAP);
+  tl.fromTo("#secD2-planeG", { scaleY: 0.42, scaleX: 0.94, svgOrigin: "0 0" }, { scaleY: 1, scaleX: 1, svgOrigin: "0 0", duration: 0.24, ease: "vd.land", immediateRender: false }, SWAP);
+  tl.set("#secD2-planeG", { scaleY: 0.42, scaleX: 0.94, svgOrigin: "0 0" }, 0);
+
+  /* =====================================================================
+     3 · el avión reparte la hoja: un ping + check por avatar (corcheas)
+     ===================================================================== */
+  const cnEl = $("#secD2-cn");
+  PING.forEach((pt, i) => {
+    const rel = pt - 0.2, sx = planeX(rel) + 10, sy = planeY(rel) + 34;
+    const av = "#secD2-mn" + i;
+    tl.fromTo(av, { x: sx }, { x: AVX[i], duration: 0.2, ease: "none", immediateRender: false }, rel);
+    tl.fromTo(av, { y: sy }, { y: TEAM.y + AVY - 30, duration: 0.2, ease: "power2.in", immediateRender: false }, rel);
+    tl.fromTo(av, { rotation: -10 }, { rotation: 28, duration: 0.2, ease: "power1.in", immediateRender: false }, rel);
+    tl.fromTo(av, { scale: 1 }, { scale: 0, duration: 0.06, ease: "power2.in", immediateRender: false }, pt);
+    tl.set(av, { opacity: 1 }, rel);
+    tl.set(av, { opacity: 0 }, pt + 0.06);
+    tl.fromTo("#secD2-wv" + i, { scale: 1, opacity: 0.95 }, { scale: 1.9, opacity: 0, duration: 0.42, ease: "power2.out", immediateRender: false }, pt);
+    tl.fromTo("#secD2-rg" + i, { opacity: 0 }, { opacity: 1, duration: 0.06, ease: "none" }, pt);
+    tl.to("#secD2-av" + i, { scale: 1.1, duration: 0.06, ease: "power2.out" }, pt);
+    tl.to("#secD2-av" + i, { scale: 1, duration: 0.3, ease: "vd.land" }, pt + 0.06);
+    tl.set("#secD2-ck" + i, { opacity: 1 }, pt + 0.04);
+    tl.fromTo("#secD2-ck" + i, { scale: 0, rotation: -40 }, { scale: 1, rotation: 0, duration: 0.3, ease: "vd.spring", immediateRender: false }, pt + 0.04);
+    tl.fromTo("#secD2-st" + i, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.22, ease: "vd.land" }, pt + 0.06);
+  });
+
+  /* =====================================================================
+     4 · 47,0: se apaga todo; solo quedan el piloto REC y el ajolote
+     ===================================================================== */
+  const DARK = C.hits.dark - T0; // 5.5
+  [[0, 1], [1, 0.25], [2, 1], [4, 0.55], [6, 1]].forEach(([f, o]) => tl.set("#secD2-dark", { opacity: o }, DARK + f / FPS));
+  tl.set("#secD2-fore", { opacity: 0 }, DARK);
+  tl.set("#axD2-svg", { filter: "none" }, DARK);
+  tl.set("#axD2-cheekL, #axD2-cheekR", { attr: { filter: "none" } }, DARK);
+  tl.set("#axD2-shadow", { opacity: 0, svgOrigin: "0 4" }, DARK + 0.02);
+  // piloto: se enciende y parpadea a negras
+  const ON = DARK + 2 / FPS;
+  for (let t = ON, n = 0; t < DUR; n++, t = DARK + 0.5 * n) {
+    const tOn = Math.max(t, ON), tOff = DARK + 0.5 * n + 0.38;
+    tl.set("#secD2-led", { backgroundColor: "#f0503f" }, tOn);
+    tl.set("#secD2-halo1", { opacity: 0.32 }, tOn); tl.set("#secD2-halo2", { opacity: 0.12 }, tOn); tl.set("#secD2-rec", { opacity: 1 }, tOn);
+    if (tOff < DUR) {
+      tl.set("#secD2-led", { backgroundColor: "#5a1c16" }, tOff);
+      tl.set("#secD2-halo1", { opacity: 0 }, tOff); tl.set("#secD2-halo2", { opacity: 0 }, tOff); tl.set("#secD2-rec", { opacity: 0.35 }, tOff);
+    }
+  }
+  tl.fromTo("#secD2-rec", { x: -10 }, { x: 0, duration: 0.3, ease: "vd.land" }, ON);
+  // negro total exacto en 7,5 (49,0 global)
+  tl.fromTo("#secD2-black", { opacity: 0 }, { opacity: 1, duration: 0.06, ease: "none" }, DUR - 0.1);
+
+  /* =====================================================================
+     AJOLOTE (rig axD2): pegatina sobre el gel; viaja montado en el avión
+     ===================================================================== */
+  const ax = AxRig(tl, { prefix: "axD2", seed: 57 });
+  const R = (id) => "#axD2-" + id;
+  const raw = (id, v, t) => tl.to(R(id), Object.assign({ svgOrigin: "0 0" }, v), t);
+  ax.init(0, { x: 120, y: 300, s: AXS });
+  ax.look(0.05, -5, -2, 0.2); ax.brows(0.08, "up");
+  [0.3, 0.55, 0.8].forEach((t, i) => ax.look(t, -5 + i, -1, 0.12));
+  ax.gillFlick(1.02, 14, 0.6);
+  ax.look(1.04, -4, -2, 0.14);
+  // salta al avión recién plegado; al caer, lo lanza
+  const HOP = 1.6;
+  ax.hopTo(HOP, { x: -20, y: -36, s: AXS, d: 0.3, arc: 120, lean: -1 });
+  // en vuelo: se echa atrás contra el viento, brazos abiertos, branquias peinadas
+  raw("tilt", { rotation: -11, duration: 0.3, ease: "power2.out" }, 2.12);
+  raw("armL", { rotation: -74, duration: 0.3, ease: "back.out(2)" }, 2.06);
+  raw("armR", { rotation: -70, duration: 0.3, ease: "back.out(2)" }, 2.09);
+  ax.gills(2.1, -18, 0.25, "power2.out");
+  ax.look(2.2, 4, 4, 0.18); ax.brows(2.2, "up");
+  ax.eyes(2.95, "happy"); ax.blush(2.95, 1.4);
+  ax.eyes(3.55, "open");
+  // aterriza: inercia hacia delante
+  raw("tilt", { rotation: 13, duration: 0.14, ease: "power2.out" }, 4.08);
+  raw("tilt", { rotation: 0, duration: 0.24, ease: "power2.out" }, 4.22);
+  raw("armL", { rotation: 0, duration: 0.35, ease: "back.out(1.6)" }, 4.1);
+  raw("armR", { rotation: 0, duration: 0.35, ease: "back.out(1.6)" }, 4.12);
+  ax.gillFlick(4.1, 18, 0.8);
+  ax.look(4.12, 0, 0, 0.15);
+  // baja de un salto junto a la cámara de cine
+  ax.hopTo(4.36, { x: FEET_END.x, y: FEET_END.y, s: AXS, d: 0.36, arc: 80, lean: 1 });
+  ax.eyes(4.9, "happy"); ax.blush(4.9, 1.35);
+  ax.eyes(5.36, "open"); ax.blush(5.36, 1);
+  ax.look(5.38, 0, 0, 0.16);
+  ax.brows(DARK + 0.05, "worried", 0.3);
+  ax.brows(6.3, "neutral", 0.4);
+
+  const lip = (key) => {
+    const v = C.vo[key], a = Math.round(v.t * FPS), b = Math.round((v.t + v.d) * FPS);
+    ax.lipsync(C.env.lv.slice(a + 1, b), FPS, (a + 1) / FPS - T0);
+  };
+  lip("L11");
+  ax.mouth(3.45, "grin", 0.12);
+  ax.mouth(5.2, "smile", 0.15);
+  lip("L12");
+  ax.mouth(7.08, "smile", 0.12);
+
+  ax.base(0, DUR);
+  ax.blinks(0, 5.9);
+
+  // para el picado, la cabeza tiene que estar quieta: se recortan respiración/cabeceo y se llevan a neutro
+  const TRIM = 6.0;
+  const yoyoV = (t, st, d, reps, a, b, ease) => {
+    const n = reps + 1, tt = clamp(t - st, 0, n * d);
+    let k = Math.floor(tt / d), u = (tt - k * d) / d;
+    if (k >= n) { k = n - 1; u = 1; }
+    const e = gsap.parseEase(ease)(u);
+    return a + (b - a) * (k % 2 ? 1 - e : e);
+  };
+  const reps = (c) => Math.max(0, Math.floor(DUR / c) - 1);
+  const IDLE = {
+    "axD2-breath": (t) => ({ scaleY: yoyoV(t, 0, 1.15, reps(1.15), 1, 1.035, "sine.inOut"), scaleX: yoyoV(t, 0, 1.15, reps(1.15), 1, 0.986, "sine.inOut") }),
+    "axD2-headBob": (t) => ({ y: yoyoV(t, 0.2, 1.15, reps(1.15) - 1, 0, 3, "sine.inOut") }),
+    "axD2-headBobR": (t) => ({ rotation: yoyoV(t, 0.4, 1.7, reps(1.7) - 1, -1.2, 1.2, "sine.inOut") }),
+  };
+  tl.getChildren(false, true, false).forEach((tw) => {
+    const tg = tw.targets && tw.targets()[0];
+    if (!tg || !IDLE[tg.id]) return;
+    const st = tw.startTime(), en = st + tw.totalDuration();
+    if (st < TRIM && en > TRIM) tw.totalDuration(TRIM - st);
+  });
+  const NEUT = { "axD2-breath": { scaleY: 1, scaleX: 1 }, "axD2-headBob": { y: 0 }, "axD2-headBobR": { rotation: 0 } };
+  Object.keys(IDLE).forEach((id) => {
+    const org = id === "axD2-headBobR" ? "0 -132" : "0 0";
+    tl.fromTo("#" + id, Object.assign({ svgOrigin: org }, IDLE[id](TRIM)), Object.assign({ svgOrigin: org, duration: 0.35, ease: "power2.inOut", immediateRender: false }, NEUT[id]), TRIM);
+  });
+
+  /* =====================================================================
+     CONDUCTOR ÚNICO: cámara, bloques, plegado, avión, contador
+     ===================================================================== */
+  const pw = $("#secD2-pw"), aw = $("#secD2-aw");
+  const winds = [0, 1, 2].map((i) => $("#secD2-w" + i));
+  let lastN = -1;
+  function render(t) {
+    applyCamera(t);
+    renderBlocks(t);
+    renderFold(t);
+    const p = planeState(t);
+    const tr = `translate(${p.x.toFixed(2)}px, ${p.y.toFixed(2)}px) rotate(${p.rot.toFixed(3)}deg)`;
+    pw.style.transform = tr; aw.style.transform = tr;
+    const k = clamp(p.sp / V, 0, 1.2);
+    winds.forEach((w, i) => {
+      const fl = 0.75 + 0.25 * Math.sin(2 * Math.PI * 7 * t + i * 2.1);
+      w.style.transform = `scaleX(${(k * fl).toFixed(3)})`;
+      w.style.opacity = (Math.min(1, k) * 0.55).toFixed(3);
+    });
+    let n = 0; PING.forEach((pt) => { if (t >= pt) n++; });
+    if (n !== lastN) { cnEl.textContent = n + "/5"; cnEl.style.color = n === 5 ? "#4fc47f" : "#f1eee6"; lastN = n; }
+  }
+  const drv = { t: 0 };
+  tl.fromTo(drv, { t: 0 }, { t: DUR, duration: DUR, ease: "none", onUpdate: () => render(drv.t) }, 0);
+  render(0);
+
+  window.__timelines["secD2"] = tl;
+})();
+</script>
+</template>
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <script src="assets/gsap.min.js"></script>
+    <script src="assets/poses.js"></script>
+    <script src="assets/cues.js"></script>
+    <style>
+      @font-face { font-family: "Archivo"; src: url("assets/fonts/archivo.woff2") format("woff2"); font-weight: 100 900; font-stretch: 62% 125%; }
+      @font-face { font-family: "JB Mono"; src: url("assets/fonts/jbmono.woff2") format("woff2"); font-weight: 100 800; }
+      @font-face { font-family: "Courier Prime"; src: url("assets/fonts/courier-400.woff2") format("woff2"); font-weight: 400; }
+      @font-face { font-family: "Courier Prime"; src: url("assets/fonts/courier-700.woff2") format("woff2"); font-weight: 700; }
+      @font-face { font-family: "Permanent Marker"; src: url("assets/fonts/marker.woff2") format("woff2"); font-weight: 400; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 1920px; height: 1080px; overflow: hidden; background: #0b0b0d; }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; background: #0b0b0d; font-family: "Archivo", sans-serif; color: #f1eee6; }
+      .sec { position: absolute; inset: 0; }
+      .it { position: absolute; inset: 0; background: #0b0b0d; display: flex; align-items: center; justify-content: center; z-index: 60; }
+      .it-t {
+        display: block; font-weight: 900; font-stretch: 62%; text-transform: uppercase; color: #f1eee6;
+        font-size: 236px; line-height: 0.86; letter-spacing: -0.02em; word-spacing: 0.14em; white-space: nowrap; text-align: center;
+      }
+      .it-bar { display: block; height: 18px; width: 640px; margin: 34px auto 0; background: #f0c94a; transform-origin: left center; }
+      .it-m { position: absolute; left: 0; right: 0; bottom: 70px; text-align: center; font-family: "JB Mono", monospace; font-size: 22px; letter-spacing: 0.3em; color: #6d6a63; text-transform: uppercase; }
+      #grain {
+        position: absolute; inset: 0; z-index: 90; pointer-events: none; mix-blend-mode: overlay; opacity: 0.28;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='256' height='256'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='7' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='256' height='256' filter='url(%23n)'/></svg>");
+        background-size: 256px 256px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="65.5" data-width="1920" data-height="1080">
+      <audio id="banda" src="assets/audio/banda.wav" data-start="0" data-duration="65.5" data-track-index="9"></audio>
+
+      <div id="secA" class="sec" data-composition-id="secA" data-composition-src="compositions/secA.html" data-start="0" data-duration="9" data-track-index="1"></div>
+      <div id="secB" class="sec" data-composition-id="secB" data-composition-src="compositions/secB.html" data-start="10.5" data-duration="12.5" data-track-index="1"></div>
+      <div id="secC" class="sec" data-composition-id="secC" data-composition-src="compositions/secC.html" data-start="24.5" data-duration="12" data-track-index="1"></div>
+      <div id="secD1" class="sec" data-composition-id="secD1" data-composition-src="compositions/secD1.html" data-start="36.5" data-duration="3.5" data-track-index="1"></div>
+      <div id="secD2" class="sec" data-composition-id="secD2" data-composition-src="compositions/secD2.html" data-start="41.5" data-duration="7.5" data-track-index="1"></div>
+      <div id="secE" class="sec" data-composition-id="secE" data-composition-src="compositions/secE.html" data-start="51" data-duration="14.5" data-track-index="1"></div>
+
+      <!-- intertítulos de tráiler: corte seco de entrada y de salida, en el golpe -->
+      <div id="it1" class="it clip" data-start="9" data-duration="1.5" data-track-index="2">
+        <div id="it1w"><span class="it-t" id="it1t">Del caos…</span></div>
+        <div class="it-m">Versión definitiva · Taller</div>
+      </div>
+      <div id="it2" class="it clip" data-start="23" data-duration="1.5" data-track-index="2">
+        <div id="it2w"><span class="it-t" id="it2t">…al orden…</span><i class="it-bar" id="it2b"></i></div>
+      </div>
+      <div id="it3" class="it clip" data-start="40" data-duration="1.5" data-track-index="2">
+        <div id="it3w"><span class="it-t" id="it3t">…a la magia.</span></div>
+      </div>
+      <div id="it4" class="it clip" data-start="49" data-duration="2" data-track-index="2">
+        <span class="it-t" id="it4a" style="position: absolute">Un día.</span>
+        <span class="it-t" id="it4b" style="position: absolute">Un equipo.</span>
+        <span class="it-t" id="it4c" style="position: absolute">Una toma.</span>
+      </div>
+
+      <div id="grain" data-layout-allow-overflow></div>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      const H = window.CUES.hits, DUR = window.CUES.dur;
+
+      // intertítulo: el tracking se cierra y la palabra se abre (wdth), entra en el golpe
+      const title = (sel, t, hold) => {
+        tl.fromTo(sel, { scaleX: 1.55, opacity: 0 }, { scaleX: 1, opacity: 1, duration: 0.45, ease: "expo.out" }, t);
+        tl.fromTo(sel.slice(0, -1) + "w", { scale: 1 }, { scale: 1.035, duration: hold, ease: "none" }, t);
+      };
+      title("#it1t", H.title1, 1.5);
+      title("#it2t", H.title2, 1.5);
+      tl.fromTo("#it2b", { scaleX: 0 }, { scaleX: 1, duration: 0.5, ease: "expo.out" }, H.title2 + 0.25);
+      title("#it3t", H.title3, 1.5);
+      // brillo especular que recorre «…a la magia.»
+      tl.fromTo("#it3t", { color: "#f1eee6" }, { color: "#f0c94a", duration: 0.5, ease: "power2.inOut", yoyo: true, repeat: 1 }, H.title3 + 0.35);
+      // UN DÍA / UN EQUIPO / UNA TOMA: cada uno más grande, corte seco en el beat
+      [["#it4a", H.card1, 1.0], ["#it4b", H.card2, 1.15], ["#it4c", H.card3, 1.3]].forEach(([sel, t, s], i, arr) => {
+        tl.fromTo(sel, { opacity: 0, scale: s * 1.25 }, { opacity: 1, scale: s, duration: 0.18, ease: "power4.out" }, t);
+        if (i < 2) tl.set(sel, { opacity: 0 }, arr[i + 1][1]);
+      });
+      tl.fromTo("#it4c", { scale: 1.3 }, { scale: 1.42, duration: 1.0, ease: "none", immediateRender: false }, H.card3 + 0.18);
+
+      // grano vivo a 12 fps (8 posiciones fijas)
+      const G = [[0, 0], [-97, 41], [63, -118], [-152, -23], [121, 88], [-38, -160], [177, 12], [-81, 133]];
+      for (let i = 0, t = 0; t < DUR; i++, t = i / 12) tl.set("#grain", { backgroundPosition: `${G[i % 8][0]}px ${G[i % 8][1]}px` }, t);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

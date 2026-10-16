@@ -1,0 +1,848 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="UTF-8" /><title>secB · Guion → Mesa de preparación</title></head>
+<body>
+<template id="secB-template">
+<style>
+  @font-face { font-family: "Archivo"; src: url("assets/fonts/archivo.woff2") format("woff2"); font-weight: 100 900; font-stretch: 62% 125%; }
+  @font-face { font-family: "JB Mono"; src: url("assets/fonts/jbmono.woff2") format("woff2"); font-weight: 100 800; }
+  @font-face { font-family: "Courier Prime"; src: url("assets/fonts/courier-400.woff2") format("woff2"); font-weight: 400; }
+  @font-face { font-family: "Courier Prime"; src: url("assets/fonts/courier-700.woff2") format("woff2"); font-weight: 700; }
+  @font-face { font-family: "Permanent Marker"; src: url("assets/fonts/marker.woff2") format("woff2"); font-weight: 400; }
+
+  #secB-root { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; background: #f6f3ea; font-family: "Archivo", sans-serif; color: #151519; }
+  #secB-lens { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; overflow: hidden; }
+  .secB-plane { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; }
+  .secB-abs { position: absolute; display: block; }
+
+  /* ---------- mesa de luz ---------- */
+  #secB-opal { position: absolute; left: -1600px; top: -1600px; width: 5600px; height: 4800px; background: #f6f3ea; }
+  .secB-gel { position: absolute; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3); overflow: hidden; }
+  .secB-gel .secB-spec { position: absolute; top: -40px; bottom: -40px; left: 18%; width: 9%; background: rgba(255, 255, 255, 0.16); transform: skewX(-18deg); }
+  .secB-gel b { position: absolute; font-family: "Archivo", sans-serif; font-weight: 700; font-stretch: 62%; font-size: 30px; letter-spacing: 0.02em; text-transform: uppercase; line-height: 1; }
+  .secB-gel b small { display: block; font-family: "JB Mono", monospace; font-weight: 500; font-size: 15px; letter-spacing: 0.14em; margin-top: 6px; }
+  #secB-agua { left: -320px; top: 690px; width: 820px; height: 640px; background: #8fd0d6; transform: rotate(-16deg); }
+  #secB-agua b { left: 120px; top: 70px; color: #1f4f55; }
+  .secB-bub { position: absolute; left: 0; top: 0; width: 22px; height: 22px; border-radius: 50%; border: 3px solid #f6f3ea; display: block; opacity: 0; }
+  #secB-flood { position: absolute; left: -1600px; top: 0; width: 5200px; height: 50px; background: #f0c94a; opacity: 0; }
+  #secB-flood i { position: absolute; left: 0; right: 0; display: block; }
+  #secB-redgel { left: 1700px; top: 470px; width: 760px; height: 430px; background: #e23f12; transform: rotate(-9deg); }
+  #secB-redgel b { left: 520px; top: 330px; color: #151519; }
+
+  /* ---------- rótulos ---------- */
+  .secB-kick { position: absolute; font-family: "JB Mono", monospace; font-weight: 500; font-size: 20px; letter-spacing: 0.2em; text-transform: uppercase; white-space: nowrap; color: #5c5a54; }
+  .secB-kick i { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 14px; vertical-align: 1px; }
+  .secB-lab { position: absolute; font-weight: 700; font-stretch: 62%; font-size: 40px; line-height: 1; letter-spacing: 0.01em; text-transform: uppercase; white-space: nowrap; color: #151519; }
+  .secB-num { position: absolute; width: 230px; height: 120px; transform-origin: 0 0; }
+  .secB-num span { position: absolute; left: 0; top: 0; display: block; font-weight: 900; font-stretch: 125%; font-size: 120px; line-height: 1; letter-spacing: -0.02em; transform-origin: 20% 60%; white-space: nowrap; }
+  .secB-lock { position: absolute; display: block; height: 22px; background: #f0c94a; mix-blend-mode: multiply; transform-origin: 0 50%; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.3); }
+  .secB-tally { position: absolute; width: 220px; height: 100px; transform-origin: 50% 0; }
+  .secB-tally i { position: absolute; display: block; width: 5px; height: 34px; border-radius: 3px; background: #151519; transform-origin: 50% 100%; }
+  .secB-tally i.d { width: 50px; height: 5px; transform-origin: 0 50%; }
+  #secB-hero { position: absolute; left: 480px; top: 640px; font-weight: 850; font-stretch: 118%; font-size: 124px; line-height: 0.9; letter-spacing: -0.03em; white-space: nowrap; color: #151519; }
+
+  /* ---------- guion ---------- */
+  #secB-script { position: absolute; left: 300px; top: 70px; width: 720px; height: 940px; }
+  .secB-sheet { position: absolute; left: 0; top: 0; width: 720px; height: 940px; background: #e9e5da; overflow: hidden; font-family: "Courier Prime", monospace; font-size: 27px; line-height: 39.15px; color: #151519; }
+  .secB-under { position: absolute; left: 0; top: 0; width: 720px; height: 940px; transform-origin: 34px 44px; }
+  .secB-under .secB-sheet { background: #e4e0d4; box-shadow: 0 1px 0 rgba(60, 52, 38, 0.3); }
+  .secB-fiber { position: absolute; inset: 0; display: block; pointer-events: none; mix-blend-mode: multiply; opacity: 0.55;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012 .35' numOctaves='3' seed='3'/%3E%3CfeColorMatrix values='0 0 0 0 .55  0 0 0 0 .5  0 0 0 0 .42  0 0 0 .18 0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23f)'/%3E%3C/svg%3E"); }
+  .secB-ln { position: absolute; white-space: pre; display: block; }
+  .secB-ln.b { font-weight: 700; }
+  .secB-w { position: relative; display: inline-block; }
+  .secB-wt { position: relative; }
+  .secB-hl { position: absolute; left: -5px; right: -5px; top: 4px; bottom: 3px; display: block; transform-origin: 0 50%; }
+  .secB-brad { position: absolute; left: 22px; width: 22px; height: 22px; border-radius: 50%; background: #b8a77a; box-shadow: inset 0 -3px 0 #8d7c50, 0 1px 0 rgba(60, 52, 38, 0.4); display: block; }
+  .secB-pno { position: absolute; right: 56px; top: 30px; font-family: "Courier Prime", monospace; font-size: 27px; }
+  #secB-shadow { position: absolute; left: 0; top: 0; width: 720px; height: 940px; background: rgb(60, 52, 38); filter: blur(22px); opacity: 0.3; display: block; }
+  #secB-scan { position: absolute; left: 0; top: 0; width: 720px; height: 50px; background: #f0c94a; mix-blend-mode: multiply; box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.35); display: block; opacity: 0; }
+  #secB-scan i { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: #d6a51e; display: block; }
+  #secB-scan em { position: absolute; top: 0; bottom: 0; left: 16%; width: 7%; background: rgba(255, 255, 255, 0.3); transform: skewX(-18deg); display: block; }
+  .secB-chip { position: absolute; display: block; white-space: pre; font-family: "Courier Prime", monospace; font-size: 27px; line-height: 39.15px; height: 39.15px; padding: 0 6px; color: #151519; opacity: 0;
+    box-shadow: 0 2px 0 rgba(60, 52, 38, 0.18), 0 14px 18px -8px rgba(60, 52, 38, 0.45); }
+  .secB-chip.b { font-weight: 700; }
+
+  /* ---------- plegado ---------- */
+  #secB-stage { position: absolute; left: 300px; top: 70px; width: 720px; height: 940px; perspective: 2200px; perspective-origin: 50% 50%; opacity: 0; transform-origin: 0 0; }
+  .secB-band { position: absolute; left: 0; width: 720px; height: 235px; transform-style: preserve-3d; backface-visibility: hidden; }
+  .secB-clipb { position: absolute; inset: 0; overflow: hidden; background: #e9e5da; }
+  .secB-clipb > .secB-sheet { position: absolute; left: 0; }
+  .secB-shade { position: absolute; inset: 0; background: #3c3426; opacity: 0; display: block; }
+
+  /* ---------- mesa de preparación ---------- */
+  #secB-cardsh { position: absolute; left: 480px; top: 840px; width: 1240px; height: 526px; border-radius: 14px; box-shadow: 0 2px 0 rgba(0, 0, 0, 0.25), 0 34px 54px -22px #9c7a1f; opacity: 0; }
+  #secB-card { position: absolute; left: 480px; top: 840px; width: 1240px; height: 526px; border-radius: 14px; background: #151519; color: #f1eee6; opacity: 0; overflow: hidden; }
+  .secB-sec { position: absolute; left: 0; width: 1240px; }
+  .secB-sec.hd { top: 0; height: 70px; border-bottom: 2px solid #2e2e35; }
+  .secB-sec.ch { top: 70px; height: 52px; border-bottom: 2px solid #2e2e35; }
+  .secB-sec.ft { top: 442px; height: 84px; border-top: 2px solid #2e2e35; }
+  .secB-row { position: absolute; left: 0; width: 1240px; height: 64px; border-bottom: 1px solid #1d1d22; }
+  .secB-rowbg { position: absolute; inset: 0; background: #2a1f1a; opacity: 0; display: block; }
+  .secB-rowc { position: absolute; inset: 0; }
+  .secB-mono { position: absolute; font-family: "JB Mono", monospace; font-weight: 500; font-size: 16px; letter-spacing: 0.2em; text-transform: uppercase; color: #9a978f; white-space: nowrap; line-height: 1; }
+  .secB-rn { position: absolute; left: 26px; top: 19px; font-family: "JB Mono", monospace; font-size: 22px; color: #9a978f; line-height: 1; }
+  .secB-rname { position: absolute; left: 62px; top: 17px; font-weight: 600; font-size: 27px; line-height: 1; white-space: nowrap; }
+  .secB-cell { position: absolute; top: 24px; width: 96px; height: 16px; border-radius: 5px; background: #2e2e35; display: block; overflow: hidden; }
+  .secB-cell i { position: absolute; inset: 0; display: block; transform-origin: 0 50%; border-radius: 5px; }
+  .secB-pill { position: absolute; top: 12px; height: 40px; width: 186px; border-radius: 999px; display: flex; align-items: center; padding: 0 18px; font-family: "JB Mono", monospace; font-size: 17px; letter-spacing: 0.1em; font-weight: 600; text-transform: uppercase; white-space: nowrap; opacity: 0; }
+  .secB-pill.ok { background: #4fc47f; color: #151519; }
+  .secB-pill.warn { background: #f0c94a; color: #151519; }
+  .secB-pill.miss { background: #151519; color: #f0503f; box-shadow: inset 0 0 0 2px #f0503f; }
+  .secB-ping { position: absolute; width: 96px; height: 16px; border-radius: 6px; box-shadow: 0 0 0 3px #f6f3ea; display: block; opacity: 0; }
+  .secB-hstat { position: absolute; top: 25px; white-space: nowrap; font-family: "JB Mono", monospace; font-size: 16px; letter-spacing: 0.2em; color: #9a978f; text-transform: uppercase; line-height: 1; }
+  #secB-bar { position: absolute; left: 300px; top: 37px; width: 690px; height: 10px; border-radius: 5px; background: #2e2e35; overflow: hidden; }
+  #secB-barf { position: absolute; left: 0; top: 0; width: 586px; height: 10px; border-radius: 5px; background: #4fc47f; transform-origin: 0 50%; display: block; }
+  #secB-pct { position: absolute; left: 1030px; top: 14px; width: 190px; text-align: right; font-weight: 900; font-stretch: 125%; font-size: 52px; line-height: 1; color: #4fc47f; }
+  .secB-tape { position: absolute; background: #e8dcb8; color: #151519; padding: 12px 26px 8px; font-family: "Permanent Marker", sans-serif; font-size: 38px; line-height: 1; white-space: nowrap;
+    box-shadow: 0 2px 0 rgba(60, 52, 38, 0.25), 0 10px 16px -8px rgba(80, 60, 10, 0.5);
+    clip-path: polygon(0 4%, 3% 0, 97% 3%, 100% 0, 99% 96%, 96% 100%, 2% 97%, 0 100%); opacity: 0; }
+
+  /* ---------- primer término ---------- */
+  .secB-cross { position: absolute; width: 44px; height: 44px; display: block; }
+  .secB-cross::before, .secB-cross::after { content: ""; position: absolute; background: #4a4a54; }
+  .secB-cross::before { left: 21px; top: 0; width: 2px; height: 44px; }
+  .secB-cross::after { top: 21px; left: 0; height: 2px; width: 44px; }
+  .secB-cross b { position: absolute; inset: 11px; border: 2px solid #4a4a54; border-radius: 50%; display: block; }
+  .secB-ruler { position: absolute; height: 28px; display: block;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='28'%3E%3Cpath d='M1 0v16M11 0v7M21 0v11M31 0v7' stroke='%23151519' stroke-width='2' opacity='.45'/%3E%3C/svg%3E"); background-repeat: repeat-x; }
+  .secB-tc { position: absolute; font-family: "JB Mono", monospace; font-weight: 500; font-size: 18px; letter-spacing: 0.16em; white-space: nowrap; color: #45433d; }
+</style>
+
+<div id="secB-root" data-composition-id="secB" data-width="1920" data-height="1080" data-duration="12.5">
+  <svg width="0" height="0" style="position: absolute">
+    <filter id="secB-camblur" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB"><feGaussianBlur id="secB-cbx" stdDeviation="0 0" /></filter>
+    <filter id="secB-sticker" x="-20%" y="-20%" width="140%" height="140%"><feMorphology in="SourceAlpha" operator="dilate" radius="6" result="d" /><feFlood flood-color="#f6f3ea" /><feComposite in2="d" operator="in" result="o" /><feOffset in="d" dy="5" result="sd" /><feFlood flood-color="#5a4210" flood-opacity=".3" /><feComposite in2="sd" operator="in" result="s" /><feMerge><feMergeNode in="s" /><feMergeNode in="o" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+  </svg>
+  <div id="secB-lens">
+    <div id="secB-world" class="secB-plane" data-layout-allow-overflow>
+      <div id="secB-opal"></div>
+      <div id="secB-agua" class="secB-gel"><i class="secB-spec"></i></div>
+      <div id="secB-bubs"></div>
+      <div id="secB-flood"><i style="top: 0; height: 3px; background: rgba(255, 255, 255, 0.55)"></i><i style="top: 22px; height: 46px; background: rgba(255, 255, 255, 0.16)"></i></div>
+      <div id="secB-redgel" class="secB-gel"><i class="secB-spec"></i><b>Rodar<small>VD-03</small></b></div>
+
+      <!-- estación 1 · recuento -->
+      <div id="secB-st1" data-layout-ignore>
+        <div class="secB-kick" id="secB-k1" style="left: 1180px; top: 150px"><i style="background: #8fd0d6"></i>01 · El guion</div>
+        <div id="secB-cols"></div>
+      </div>
+
+      <!-- estación 2 · mesa de preparación -->
+      <div class="secB-kick" id="secB-k2" style="left: 480px; top: 600px; color: #4a3d12"><i style="background: #151519"></i>02 · Mesa de preparación</div>
+      <div id="secB-hero">Una sola mesa.</div>
+      <div id="secB-cardsh"></div>
+      <div id="secB-card" data-layout-ignore></div>
+
+      <!-- el guion (se lanza, se atrapa, cae) -->
+      <div id="secB-script" data-layout-ignore><i id="secB-shadow"></i></div>
+      <div id="secB-stage" data-layout-ignore></div>
+      <div id="secB-nums" data-layout-ignore></div>
+      <div class="secB-tape" id="secB-tape" style="left: 1300px; top: 826px">¡falta Marco!</div>
+
+      <style>
+  #axB { position: absolute; left: -220px; top: -380px; width: 440px; height: 420px; z-index: 30; pointer-events: none; }
+  #axB-svg { display: block; width: 100%; height: 100%; overflow: visible; }
+</style>
+<div id="axB">
+<svg id="axB-svg" viewBox="-220 -380 440 420" xmlns="http://www.w3.org/2000/svg" aria-label="Ajolote">
+  <defs>
+    <filter id="axB-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.4"/></filter>
+    <filter id="axB-blur" x="-50%" y="-200%" width="200%" height="500%"><feGaussianBlur stdDeviation="5"/></filter>
+    <clipPath id="axB-clip" clipPathUnits="userSpaceOnUse"><rect id="axB-clipRect" x="-3000" y="-3000" width="6000" height="6000"/></clipPath>
+    <clipPath id="axB-headClip"><path d="M0 -314 C82 -314 134 -276 134 -214 C134 -152 78 -124 0 -124 C-78 -124 -134 -152 -134 -214 C-134 -276 -82 -314 0 -314 Z"/></clipPath>
+    <clipPath id="axB-bodyClip"><path d="M0 -152 C50 -152 76 -108 74 -62 C72 -20 46 -2 0 -2 C-46 -2 -72 -20 -74 -62 C-76 -108 -50 -152 0 -152 Z"/></clipPath>
+    <clipPath id="axB-mouthClip"><use href="#axB-mouth"/></clipPath>
+  </defs>
+  <g id="axB-shadow"><ellipse cx="0" cy="4" rx="96" ry="12" fill="#000" opacity="0.38" filter="url(#axB-blur)"/></g>
+  <g id="axB-all" clip-path="url(#axB-clip)">
+  <g id="axB-hop"><g id="axB-tilt">
+    <g id="axB-flip"><g id="axB-squash"><g id="axB-breath">
+      <path id="axB-tail" d="M28.4 -57.5 C29.9 -57.1 34.6 -56 37.7 -55.5 C40.9 -55.1 44.1 -54.7 47.3 -54.8 C50.5 -54.8 53.7 -55.2 56.9 -55.9 C60 -56.6 63 -57.6 66 -58.8 C68.9 -60 71.8 -61.5 74.5 -63.1 C77.3 -64.7 80 -66.5 82.6 -68.3 C85.2 -70.2 87.7 -72.2 90.3 -74.3 C92.8 -76.4 95.3 -78.7 97.7 -80.9 C100.2 -83.2 102.7 -85.6 105.1 -88 C107.5 -90.4 110 -92.8 112.4 -95.3 C114.8 -97.8 117.2 -100.4 119.5 -103 C121.8 -105.5 124 -108.2 126.2 -110.9 C128.3 -113.6 130.3 -116.3 132.2 -119.2 C134 -122.1 135.8 -125 137.2 -128.1 C138.7 -131.2 140 -134.5 140.9 -137.8 C141.8 -141.2 142.5 -144.7 142.8 -148.3 C143.1 -152 143 -155.7 142.5 -159.4 C142 -163.2 139.4 -170.5 140 -170.7 C140.6 -170.8 144.5 -164 146.2 -160.3 C147.9 -156.7 149.2 -152.7 150.1 -148.7 C151 -144.8 151.6 -140.6 151.7 -136.5 C151.9 -132.3 151.7 -128.1 151.1 -124 C150.5 -119.9 149.6 -115.8 148.4 -111.8 C147.2 -107.8 145.7 -103.9 144.1 -100.1 C142.4 -96.3 140.5 -92.7 138.4 -89.1 C136.4 -85.5 134.2 -82 131.9 -78.6 C129.5 -75.2 127.1 -71.9 124.4 -68.7 C121.8 -65.5 119.1 -62.3 116.2 -59.3 C113.3 -56.2 110.3 -53.2 107.1 -50.4 C103.8 -47.6 100.4 -44.9 96.9 -42.4 C93.3 -39.9 89.6 -37.5 85.7 -35.4 C81.8 -33.3 77.7 -31.4 73.5 -29.7 C69.3 -28.1 64.9 -26.8 60.6 -25.7 C56.2 -24.7 51.7 -23.9 47.2 -23.4 C42.7 -22.9 38.1 -22.7 33.6 -22.8 C29 -22.9 22.2 -23.7 20 -23.9 Z" fill="#f5b8c6" stroke="#d0708a" stroke-width="4" stroke-linejoin="round"/>
+      <path id="axB-tailStripe" d="M47.3 -45.3 C49.1 -45.5 54.5 -45.9 58 -46.6 C61.5 -47.3 65 -48.3 68.4 -49.5 C71.8 -50.7 75.1 -52.2 78.3 -53.8 C81.5 -55.5 84.6 -57.3 87.6 -59.3 C90.6 -61.3 93.5 -63.4 96.3 -65.7 C99.2 -68 101.9 -70.4 104.6 -72.9 C107.3 -75.4 109.9 -78 112.5 -80.6 C115 -83.3 117.5 -86 119.9 -88.8 C122.3 -91.7 124.7 -94.5 126.9 -97.5 C129.1 -100.5 131.3 -103.5 133.2 -106.6 C135.1 -109.8 137 -113 138.5 -116.3 C140.1 -119.6 141.5 -123 142.6 -126.5 C143.7 -130 144.5 -133.7 145 -137.3 C145.4 -141 145.3 -146.6 145.4 -148.5" fill="none" stroke="#e98ca3" stroke-width="5" stroke-linecap="round"/>
+      <path d="M0 -152 C50 -152 76 -108 74 -62 C72 -20 46 -2 0 -2 C-46 -2 -72 -20 -74 -62 C-76 -108 -50 -152 0 -152 Z" fill="#f7c1cc" stroke="#d0708a" stroke-width="4.5"/>
+      <g clip-path="url(#axB-bodyClip)">
+        <ellipse cx="0" cy="-50" rx="47" ry="41" fill="#fde3e8"/>
+        <ellipse cx="0" cy="-134" rx="78" ry="26" fill="#eea3b5" opacity="0.6"/>
+        <path d="M-30 -60 Q0 -54 30 -60 M-26 -38 Q0 -32 26 -38" fill="none" stroke="#eea3b5" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+      </g>
+      <g><ellipse cx="-36" cy="-6" rx="22" ry="11.5" fill="#f7c1cc" stroke="#d0708a" stroke-width="4"/><path d="M-44 -9 L-44 -2 M-34 -9 L-34 -1" stroke="#d0708a" stroke-width="2.4" stroke-linecap="round" opacity="0.7"/></g>
+      <g><ellipse cx="36" cy="-6" rx="22" ry="11.5" fill="#f7c1cc" stroke="#d0708a" stroke-width="4"/><path d="M44 -9 L44 -2 M34 -9 L34 -1" stroke="#d0708a" stroke-width="2.4" stroke-linecap="round" opacity="0.7"/></g>
+      <g id="axB-headY"><g id="axB-head"><g id="axB-headBob"><g id="axB-headBobR">
+        <g><g transform="translate(-104 -262) rotate(-146)"><g id="axB-gL1"><g id="axB-gL1w"><path d="M0 -5.8 Q4.9 -14.9 19.4 -15.2 Q17.4 -9.8 18.8 -8 Q23.7 -14.8 38.2 -15.1 Q36.2 -9.3 37.6 -7.3 Q42.5 -10.4 57 -10.6 Q55 -5.9 56.4 -4.3 Q61.3 -5.2 75.8 -5.4 Q73.8 -2.3 75.2 -1.2 L80 0 L75.2 1.2 Q73.8 2.3 75.8 5.4 Q61.3 5.2 56.4 4.3 Q55 5.9 57 10.6 Q42.5 10.4 37.6 7.3 Q36.2 9.3 38.2 15.1 Q23.7 14.8 18.8 8 Q17.4 9.8 19.4 15.2 Q4.9 14.9 0 5.8 Z" fill="#ff6a45" stroke="#d9452f" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 -2.8 Q36 -9.3 68.8 0 Q36 9.3 4 2.8 Z" fill="#ff8a5e" opacity="0.75"/><path d="M6 0 Q40 -1.5 72 0 M21.6 0 L32 -7.2 M21.6 0 L32 7.2 M40.4 0 L50.8 -6.2 M40.4 0 L50.8 6.2 M59.2 0 L69.6 -3.3 M59.2 0 L69.6 3.3" fill="none" stroke="#b8331f" stroke-width="1.7" stroke-linecap="round" opacity="0.55"/></g></g></g><g transform="translate(-121 -224) rotate(-177)"><g id="axB-gL2"><g id="axB-gL2w"><path d="M0 -6.2 Q5.2 -15.9 21 -16.3 Q19 -10.5 20.7 -8.5 Q25.9 -15.7 41.6 -16.1 Q39.6 -9.9 41.4 -7.8 Q46.6 -11.1 62.3 -11.3 Q60.3 -6.3 62 -4.6 Q67.3 -5.6 83 -5.7 Q81 -2.4 82.7 -1.3 L88 0 L82.7 1.3 Q81 2.4 83 5.7 Q67.3 5.6 62 4.6 Q60.3 6.3 62.3 11.3 Q46.6 11.1 41.4 7.8 Q39.6 9.9 41.6 16.1 Q25.9 15.7 20.7 8.5 Q19 10.5 21 16.3 Q5.2 15.9 0 6.2 Z" fill="#ff6a45" stroke="#d9452f" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 -3 Q39.6 -9.9 75.7 0 Q39.6 9.9 4 3 Z" fill="#ff8a5e" opacity="0.75"/><path d="M6 0 Q44 -1.5 79.2 0 M23.8 0 L35.2 -7.7 M23.8 0 L35.2 7.7 M44.5 0 L55.8 -6.6 M44.5 0 L55.8 6.6 M65.1 0 L76.5 -3.5 M65.1 0 L76.5 3.5" fill="none" stroke="#b8331f" stroke-width="1.7" stroke-linecap="round" opacity="0.55"/></g></g></g><g transform="translate(-113 -186) rotate(152)"><g id="axB-gL3"><g id="axB-gL3w"><path d="M0 -5.4 Q4.7 -13.9 18.6 -14.2 Q16.6 -9.1 17.9 -7.5 Q22.5 -13.8 36.5 -14.1 Q34.5 -8.6 35.7 -6.8 Q40.4 -9.7 54.4 -9.9 Q52.4 -5.5 53.6 -4 Q58.2 -4.9 72.2 -5 Q70.2 -2.1 71.4 -1.1 L76 0 L71.4 1.1 Q70.2 2.1 72.2 5 Q58.2 4.9 53.6 4 Q52.4 5.5 54.4 9.9 Q40.4 9.7 35.7 6.8 Q34.5 8.6 36.5 14.1 Q22.5 13.8 17.9 7.5 Q16.6 9.1 18.6 14.2 Q4.7 13.9 0 5.4 Z" fill="#ff6a45" stroke="#d9452f" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 -2.6 Q34.2 -8.7 65.4 0 Q34.2 8.7 4 2.6 Z" fill="#ff8a5e" opacity="0.75"/><path d="M6 0 Q38 -1.5 68.4 0 M20.5 0 L30.4 -6.7 M20.5 0 L30.4 6.7 M38.4 0 L48.2 -5.8 M38.4 0 L48.2 5.8 M56.3 0 L66.1 -3.1 M56.3 0 L66.1 3.1" fill="none" stroke="#b8331f" stroke-width="1.7" stroke-linecap="round" opacity="0.55"/></g></g></g></g>
+        <g transform="scale(-1 1)"><g transform="translate(-104 -262) rotate(-146)"><g id="axB-gR1"><g id="axB-gR1w"><path d="M0 -5.8 Q4.9 -14.9 19.4 -15.2 Q17.4 -9.8 18.8 -8 Q23.7 -14.8 38.2 -15.1 Q36.2 -9.3 37.6 -7.3 Q42.5 -10.4 57 -10.6 Q55 -5.9 56.4 -4.3 Q61.3 -5.2 75.8 -5.4 Q73.8 -2.3 75.2 -1.2 L80 0 L75.2 1.2 Q73.8 2.3 75.8 5.4 Q61.3 5.2 56.4 4.3 Q55 5.9 57 10.6 Q42.5 10.4 37.6 7.3 Q36.2 9.3 38.2 15.1 Q23.7 14.8 18.8 8 Q17.4 9.8 19.4 15.2 Q4.9 14.9 0 5.8 Z" fill="#ff6a45" stroke="#d9452f" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 -2.8 Q36 -9.3 68.8 0 Q36 9.3 4 2.8 Z" fill="#ff8a5e" opacity="0.75"/><path d="M6 0 Q40 -1.5 72 0 M21.6 0 L32 -7.2 M21.6 0 L32 7.2 M40.4 0 L50.8 -6.2 M40.4 0 L50.8 6.2 M59.2 0 L69.6 -3.3 M59.2 0 L69.6 3.3" fill="none" stroke="#b8331f" stroke-width="1.7" stroke-linecap="round" opacity="0.55"/></g></g></g><g transform="translate(-121 -224) rotate(-177)"><g id="axB-gR2"><g id="axB-gR2w"><path d="M0 -6.2 Q5.2 -15.9 21 -16.3 Q19 -10.5 20.7 -8.5 Q25.9 -15.7 41.6 -16.1 Q39.6 -9.9 41.4 -7.8 Q46.6 -11.1 62.3 -11.3 Q60.3 -6.3 62 -4.6 Q67.3 -5.6 83 -5.7 Q81 -2.4 82.7 -1.3 L88 0 L82.7 1.3 Q81 2.4 83 5.7 Q67.3 5.6 62 4.6 Q60.3 6.3 62.3 11.3 Q46.6 11.1 41.4 7.8 Q39.6 9.9 41.6 16.1 Q25.9 15.7 20.7 8.5 Q19 10.5 21 16.3 Q5.2 15.9 0 6.2 Z" fill="#ff6a45" stroke="#d9452f" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 -3 Q39.6 -9.9 75.7 0 Q39.6 9.9 4 3 Z" fill="#ff8a5e" opacity="0.75"/><path d="M6 0 Q44 -1.5 79.2 0 M23.8 0 L35.2 -7.7 M23.8 0 L35.2 7.7 M44.5 0 L55.8 -6.6 M44.5 0 L55.8 6.6 M65.1 0 L76.5 -3.5 M65.1 0 L76.5 3.5" fill="none" stroke="#b8331f" stroke-width="1.7" stroke-linecap="round" opacity="0.55"/></g></g></g><g transform="translate(-113 -186) rotate(152)"><g id="axB-gR3"><g id="axB-gR3w"><path d="M0 -5.4 Q4.7 -13.9 18.6 -14.2 Q16.6 -9.1 17.9 -7.5 Q22.5 -13.8 36.5 -14.1 Q34.5 -8.6 35.7 -6.8 Q40.4 -9.7 54.4 -9.9 Q52.4 -5.5 53.6 -4 Q58.2 -4.9 72.2 -5 Q70.2 -2.1 71.4 -1.1 L76 0 L71.4 1.1 Q70.2 2.1 72.2 5 Q58.2 4.9 53.6 4 Q52.4 5.5 54.4 9.9 Q40.4 9.7 35.7 6.8 Q34.5 8.6 36.5 14.1 Q22.5 13.8 17.9 7.5 Q16.6 9.1 18.6 14.2 Q4.7 13.9 0 5.4 Z" fill="#ff6a45" stroke="#d9452f" stroke-width="2.6" stroke-linejoin="round"/><path d="M4 -2.6 Q34.2 -8.7 65.4 0 Q34.2 8.7 4 2.6 Z" fill="#ff8a5e" opacity="0.75"/><path d="M6 0 Q38 -1.5 68.4 0 M20.5 0 L30.4 -6.7 M20.5 0 L30.4 6.7 M38.4 0 L48.2 -5.8 M38.4 0 L48.2 5.8 M56.3 0 L66.1 -3.1 M56.3 0 L66.1 3.1" fill="none" stroke="#b8331f" stroke-width="1.7" stroke-linecap="round" opacity="0.55"/></g></g></g></g>
+        <path d="M0 -314 C82 -314 134 -276 134 -214 C134 -152 78 -124 0 -124 C-78 -124 -134 -152 -134 -214 C-134 -276 -82 -314 0 -314 Z" fill="#f7c1cc" stroke="#d0708a" stroke-width="4.5"/>
+        <g clip-path="url(#axB-headClip)">
+          <ellipse cx="0" cy="-116" rx="150" ry="36" fill="#eea3b5" opacity="0.55"/>
+          <path d="M-78 -270 C-66 -292 -30 -302 0 -298 C-26 -292 -56 -282 -70 -262 C-74 -258 -80 -262 -78 -270 Z" fill="#fde3e8" opacity="0.9"/>
+          <circle cx="22" cy="-294" r="5" fill="#fde3e8" opacity="0.85"/>
+        </g>
+        <g id="axB-face">
+          <g transform="translate(-84 -176)"><ellipse id="axB-cheekL" rx="17" ry="10" fill="#ff8aa3" opacity="0.55" filter="url(#axB-soft)"/></g>
+          <g transform="translate(84 -176)"><ellipse id="axB-cheekR" rx="17" ry="10" fill="#ff8aa3" opacity="0.55" filter="url(#axB-soft)"/></g>
+          <g transform="translate(-48 -208)"><g id="axB-eyeL"><g id="axB-openL"><g id="axB-blinkL"><g id="axB-lookL"><ellipse rx="11" ry="13" fill="#2a1520"/><g id="axB-hlL"><circle cx="3.8" cy="-5" r="4.2" fill="#fff"/><circle cx="-3.6" cy="4.6" r="1.9" fill="#fff" opacity="0.85"/></g></g></g></g><path id="axB-happyL" opacity="0" d="M-11 4 Q0 -11 11 4" fill="none" stroke="#2a1520" stroke-width="5" stroke-linecap="round"/><path id="axB-sqzL" opacity="0" d="M-8 -8 L6 0 L-8 8" fill="none" stroke="#2a1520" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path id="axB-winkL" opacity="0" d="M-11 -1 Q0 7 11 -1" fill="none" stroke="#2a1520" stroke-width="5" stroke-linecap="round"/></g></g><g transform="translate(48 -208)"><g id="axB-eyeR"><g id="axB-openR"><g id="axB-blinkR"><g id="axB-lookR"><ellipse rx="11" ry="13" fill="#2a1520"/><g id="axB-hlR"><circle cx="3.8" cy="-5" r="4.2" fill="#fff"/><circle cx="-3.6" cy="4.6" r="1.9" fill="#fff" opacity="0.85"/></g></g></g></g><path id="axB-happyR" opacity="0" d="M-11 4 Q0 -11 11 4" fill="none" stroke="#2a1520" stroke-width="5" stroke-linecap="round"/><path id="axB-sqzR" opacity="0" d="M8 -8 L-6 0 L8 8" fill="none" stroke="#2a1520" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path id="axB-winkR" opacity="0" d="M-11 -1 Q0 7 11 -1" fill="none" stroke="#2a1520" stroke-width="5" stroke-linecap="round"/></g></g>
+          <g transform="translate(-48 -238)"><g id="axB-browL"><path id="axB-browLr" d="M-9 2 Q-1 -3 9 0" fill="none" stroke="#c05f7b" stroke-width="4.2" stroke-linecap="round" opacity="0.8"/></g></g><g transform="translate(48 -238) scale(-1 1)"><g id="axB-browR"><path id="axB-browRr" d="M-9 2 Q-1 -3 9 0" fill="none" stroke="#c05f7b" stroke-width="4.2" stroke-linecap="round" opacity="0.8"/></g></g>
+          <path id="axB-mouth" d="M-17 -170 C-11 -162 11 -162 17 -170 C11 -151 -11 -151 -17 -170 Z" fill="#7a1f37" stroke="#7a1f37" stroke-width="2" stroke-linejoin="round"/>
+          <ellipse cx="0" cy="-138" rx="13" ry="9" fill="#ff7f99" clip-path="url(#axB-mouthClip)"/>
+        </g>
+      </g></g></g></g>
+      <g transform="translate(0 -72) scale(1.15)"><g id="axB-clapY"><g id="axB-clap" opacity="0">
+        <rect x="-60" y="-26" width="120" height="68" rx="7" fill="#1b1b20" stroke="#0b0b0d" stroke-width="3"/>
+        <rect x="-60" y="-26" width="120" height="14" rx="3" fill="#ece8dc"/>
+        <path d="M-54 -26 L-42 -26 L-48 -12 L-60 -12 Z M-30 -26 L-18 -26 L-24 -12 L-36 -12 Z M-6 -26 L6 -26 L0 -12 L-12 -12 Z M18 -26 L30 -26 L24 -12 L12 -12 Z M42 -26 L54 -26 L48 -12 L36 -12 Z" fill="#1b1b20"/>
+        <line x1="-52" y1="12" x2="52" y2="12" stroke="#4a4a54" stroke-width="1.5"/>
+        <line x1="0" y1="-6" x2="0" y2="36" stroke="#4a4a54" stroke-width="1.5"/>
+        <text x="-26" y="6" text-anchor="middle" font-family="JB Mono, monospace" font-size="9" fill="#9a978f">ESCENA</text>
+        <text x="26" y="6" text-anchor="middle" font-family="JB Mono, monospace" font-size="9" fill="#9a978f">TOMA</text>
+        <text x="-26" y="31" text-anchor="middle" font-family="Archivo, sans-serif" font-weight="800" font-size="17" fill="#f0c94a">1</text>
+        <text x="26" y="31" text-anchor="middle" font-family="Archivo, sans-serif" font-weight="800" font-size="17" fill="#ece8dc">1</text>
+        <g transform="translate(-60 -28)"><g id="axB-clapStick">
+          <rect x="0" y="-14" width="120" height="14" rx="3" fill="#ece8dc" stroke="#0b0b0d" stroke-width="2"/>
+          <path d="M-6 -14 L6 -14 L12 0 L0 0 Z M18 -14 L30 -14 L36 0 L24 0 Z M42 -14 L54 -14 L60 0 L48 0 Z M66 -14 L78 -14 L84 0 L72 0 Z M90 -14 L102 -14 L108 0 L96 0 Z" fill="#1b1b20"/>
+          <circle cx="5" cy="-1" r="3" fill="#4a4a54"/>
+        </g></g>
+      </g></g></g>
+      <g transform="translate(-66 -106) scale(-1 1) rotate(-9)"><g id="axB-armL"><g id="axB-armLw"><g id="axB-armLs"><g id="axB-fingerL" opacity="0"><path d="M2 44 L3 68" stroke="#d0708a" stroke-width="13" stroke-linecap="round"/><path d="M2 44 L3 68" stroke="#f7c1cc" stroke-width="7.5" stroke-linecap="round"/></g><path d="M-11 -4 C-12 10 -11 22 -10 31 C-15 37 -15 45 -10 48 C-8 50 -4 50 -3 47 C-2 52 3 54 5 50 C7 53 12 51 12 47 C16 46 18 40 14 34 C12 24 12 10 11 -4 C11 -10 -11 -10 -11 -4 Z" fill="#f7c1cc" stroke="#d0708a" stroke-width="4" stroke-linejoin="round"/><path d="M-3 47 C-3 44 -2 42 -1 41 M5 50 C5 46 5 44 5 42" fill="none" stroke="#d0708a" stroke-width="2.2" stroke-linecap="round" opacity="0.75"/></g></g></g></g>
+      <g transform="translate(66 -106) rotate(-9)"><g id="axB-armR"><g id="axB-armRw"><g id="axB-armRs"><g id="axB-fingerR" opacity="0"><path d="M2 44 L3 68" stroke="#d0708a" stroke-width="13" stroke-linecap="round"/><path d="M2 44 L3 68" stroke="#f7c1cc" stroke-width="7.5" stroke-linecap="round"/></g><path d="M-11 -4 C-12 10 -11 22 -10 31 C-15 37 -15 45 -10 48 C-8 50 -4 50 -3 47 C-2 52 3 54 5 50 C7 53 12 51 12 47 C16 46 18 40 14 34 C12 24 12 10 11 -4 C11 -10 -11 -10 -11 -4 Z" fill="#f7c1cc" stroke="#d0708a" stroke-width="4" stroke-linejoin="round"/><path d="M-3 47 C-3 44 -2 42 -1 41 M5 50 C5 46 5 44 5 42" fill="none" stroke="#d0708a" stroke-width="2.2" stroke-linecap="round" opacity="0.75"/></g></g></g></g>
+    </g></g></g>
+    <g id="axB-fx">
+      <g transform="translate(128 -340) scale(1.5)"><g id="axB-fxBangY"><g id="axB-fxBang" opacity="0"><path d="M-7 -34 L7 -34 L4 2 L-4 2 Z" fill="#f0c94a" stroke="#0b0b0d" stroke-width="3" stroke-linejoin="round"/><circle cx="0" cy="13" r="6" fill="#f0c94a" stroke="#0b0b0d" stroke-width="3"/></g></g></g>
+      <g transform="translate(98 -256)"><g id="axB-fxSpark" opacity="0"><path d="M0 -16 Q2 -2 16 0 Q2 2 0 16 Q-2 2 -16 0 Q-2 -2 0 -16 Z" fill="#fff4c4"/></g></g>
+      <g transform="translate(118 -306)"><circle id="axB-th1" r="6" fill="#ece8dc" opacity="0"/></g>
+      <g transform="translate(142 -334)"><circle id="axB-th2" r="9" fill="#ece8dc" opacity="0"/></g>
+      <g transform="translate(174 -366)"><circle id="axB-th3" r="13" fill="#ece8dc" opacity="0"/></g>
+      <g transform="translate(0 -60)"><g id="axB-fxImpact" opacity="0" stroke="#f0c94a" stroke-width="5" stroke-linecap="round" fill="none">
+        <path d="M-84 -40 L-102 -54"/><path d="M-90 -6 L-112 -6"/><path d="M-84 26 L-102 40"/>
+        <path d="M84 -40 L102 -54"/><path d="M90 -6 L112 -6"/><path d="M84 26 L102 40"/>
+      </g></g>
+      <g transform="translate(0 -324) scale(1 0.36)"><g id="axB-fxStars" opacity="0">
+        <path transform="translate(80 0)" d="M0 -13 L3.2 -4.4 L12.4 -4 L5.2 1.7 L7.6 10.5 L0 5.5 L-7.6 10.5 L-5.2 1.7 L-12.4 -4 L-3.2 -4.4 Z" fill="#f0c94a"/>
+        <path transform="translate(-40 69)" d="M0 -11 L2.6 -3.6 L10.5 -3.4 L4.3 1.4 L6.5 8.9 L0 4.5 L-6.5 8.9 L-4.3 1.4 L-10.5 -3.4 L-2.6 -3.6 Z" fill="#ece8dc"/>
+        <path transform="translate(-40 -69)" d="M0 -12 L2.9 -4 L11.4 -3.7 L4.8 1.5 L7.1 9.7 L0 5 L-7.1 9.7 L-4.8 1.5 L-11.4 -3.7 L-2.9 -4 Z" fill="#f0c94a"/>
+      </g></g>
+      <g transform="translate(118 -262)"><g id="axB-fxSweatY"><path id="axB-fxSweat" opacity="0" d="M0 -12 C6 -2 9 3 9 7 C9 12 5 15 0 15 C-5 15 -9 12 -9 7 C-9 3 -6 -2 0 -12 Z" fill="#9cc2ff" stroke="#5b86c9" stroke-width="2"/></g></g>
+      <g transform="translate(0 -10) scale(1.1 0.7)"><g id="axB-fxImpact2" opacity="0" stroke="#f0c94a" stroke-width="5" stroke-linecap="round" fill="none">
+        <path d="M-84 -40 L-102 -54"/><path d="M-90 -6 L-112 -6"/><path d="M-84 26 L-102 40"/>
+        <path d="M84 -40 L102 -54"/><path d="M90 -6 L112 -6"/><path d="M84 26 L102 40"/>
+      </g></g>
+    </g>
+  </g></g>
+  </g>
+</svg>
+</div>
+
+    </div>
+    <div id="secB-fore" class="secB-plane" data-layout-allow-overflow></div>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  const DUR = 12.5, T0 = 10.5, FPS = 30;
+  const C = window.CUES;
+  const $ = (s) => document.querySelector(s);
+  const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+  const lerp = (a, b, e) => a + (b - a) * e;
+
+  /* ---------- curvas propias vd.* ---------- */
+  if (!window.__vdEases) {
+    const bez = (x1, y1, x2, y2) => {
+      const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
+      const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+      const sx = (t) => ((ax * t + bx) * t + cx) * t, sy = (t) => ((ay * t + by) * t + cy) * t;
+      const dx = (t) => (3 * ax * t + 2 * bx) * t + cx;
+      return (p) => {
+        if (p <= 0) return 0; if (p >= 1) return 1;
+        let t = p;
+        for (let i = 0; i < 6; i++) { const e = sx(t) - p, d = dx(t); if (Math.abs(e) < 1e-6 || Math.abs(d) < 1e-6) break; t -= e / d; }
+        if (t < 0 || t > 1) { let lo = 0, hi = 1; t = p; for (let i = 0; i < 30; i++) { sx(t) < p ? (lo = t) : (hi = t); t = (lo + hi) / 2; } }
+        return sy(t);
+      };
+    };
+    const spring = (z = 0.42, w = 13) => (p) => (p >= 1 ? 1 : 1 - Math.exp(-z * w * p) * Math.cos(w * Math.sqrt(1 - z * z) * p));
+    const E = {
+      "vd.land": bez(0.16, 1, 0.3, 1), "vd.settle": bez(0, 0.65, 0.51, 0.99), "vd.glide": bez(0.7, 0, 0.2, 1),
+      "vd.push": bez(0.33, 0, 0.67, 1), "vd.whip": bez(0.86, 0, 0.12, 1), "vd.dive": bez(0.55, 0, 0.95, 0.55),
+      "vd.exit": bez(0.7, 0, 0.84, 0), "vd.spring": spring(),
+      "vd.fold": (p) => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2),
+    };
+    Object.keys(E).forEach((k) => gsap.registerEase(k, E[k]));
+    window.__vdEases = true;
+  }
+  function mulberry(seed) {
+    return function () { seed |= 0; seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  }
+  const rnd = mulberry(20261016);
+
+  /* =====================================================================
+     GUION: geometría de autor (Courier Prime = monoespaciada, 0.6 em)
+     ===================================================================== */
+  const CW = 16.2, LH = 39.15, PT = 64, PL = 70, PW = 720, PH = 940;
+  const HL = { esc: "#f0c94a", per: "#a7e2bf", lug: "#8fd0d6" };
+  // [línea, sangría (columnas), texto, negrita]; las palabras que se despegan van entre {tipo|texto}
+  const LINES = [
+    [0, 10, "EL ÚLTIMO VERANO", 1],
+    [2, 0, "{esc|1. EXT. PLAYA — AMANECER}", 1],
+    [3, 0, "{per|LUCÍA} (17) camina por la orilla", 0],
+    [4, 0, "con el abrigo rojo de su madre.", 0],
+    [5, 0, "{per|MARCO} la sigue a distancia.", 0],
+    [7, 12, "LUCÍA", 0],
+    [8, 6, "No pienso volver.", 0],
+    [10, 0, "{esc|2. INT. CASA ABUELA — NOCHE}", 1],
+    [11, 0, "La {per|ABUELA} fríe algo que huele a", 0],
+    [12, 0, "domingo. {per|TEO} pone la mesa.", 0],
+    [14, 0, "{esc|3. EXT. FURGONETA — DÍA}", 1],
+    [15, 0, "MARCO arranca. El motor tose", 0],
+    [16, 0, "dos veces. Nadie dice adiós.", 0],
+    [18, 22, "CORTE A:", 0],
+  ];
+  // lugares que "se separan" del encabezado (mitosis): [línea, columna, texto]
+  const PLACES = [[2, 8, "PLAYA"], [10, 8, "CASA ABUELA"], [14, 8, "FURGONETA"]];
+
+  const WORDS = []; // palabras visibles que se despegan (orden de lectura)
+  function pageHTML(final, withIds) {
+    let h = `<div class="secB-sheet"><i class="secB-fiber"></i><span class="secB-pno">1.</span><i class="secB-brad" style="top: 120px"></i><i class="secB-brad" style="top: 800px"></i>`;
+    let wi = 0;
+    LINES.forEach(([ln, ind, txt, b]) => {
+      let col = ind, out = "";
+      const re = /\{(\w+)\|([^}]+)\}|([^{]+)/g; let m;
+      while ((m = re.exec(txt))) {
+        if (m[3]) { out += m[3]; col += [...m[3]].length; continue; }
+        const type = m[1], word = m[2], n = [...word].length;
+        if (withIds && !final) WORDS.push({ type, word, line: ln, col, n, bold: b, k: wi });
+        const ghost = final ? ' style="color: rgba(21, 21, 25, 0.3)"' : "";
+        const hl = `<i class="secB-hl"${withIds ? ` id="secB-hl${wi}"` : ""} style="background: ${HL[type]};${final ? "" : " transform: scaleX(0)"}"></i>`;
+        out += `<span class="secB-w"${withIds ? ` id="secB-w${wi}"` : ""}${ghost}>${hl}<span class="secB-wt">${word}</span></span>`;
+        col += n; wi++;
+      }
+      h += `<div class="secB-ln${b ? " b" : ""}" style="top: ${PT + ln * LH}px; left: ${PL + ind * CW}px">${out}</div>`;
+    });
+    if (final) h += `<i class="secB-abs" style="left: 0; top: ${PT + 18.3 * LH - 6}px; width: 720px; height: 50px; background: #f0c94a; mix-blend-mode: multiply"></i>`;
+    return h + "</div>";
+  }
+  // el "scaleX(0)" inicial del subrayado lo pone GSAP, no el CSS: se quita del HTML y se fija en el timeline
+  const livePage = pageHTML(false, true).replace(/ transform: scaleX\(0\)/g, "");
+
+  // hojas de debajo (el resto del guion): texto sembrado
+  const FILL = ["Sale al porche. El viento mueve", "las sábanas tendidas.", "MARCO", "¿Has visto las llaves?", "Silencio. Solo el mar.", "La furgoneta no arranca.", "TEO", "Te lo dije.", "Lucía cierra los ojos.", "Un perro ladra a lo lejos.", "ABUELA (O.S.)", "¡A comer!"];
+  function underHTML(k) {
+    let h = `<div class="secB-sheet"><i class="secB-fiber"></i><span class="secB-pno">${k + 2}.</span>`;
+    for (let l = 1; l < 21; l++) {
+      if (rnd() < 0.28) continue;
+      const s = FILL[Math.floor(rnd() * FILL.length)];
+      h += `<div class="secB-ln" style="top: ${PT + l * LH}px; left: ${PL + (s === s.toUpperCase() ? 12 * CW : 0)}px; opacity: 0.85">${s}</div>`;
+    }
+    return h + "</div>";
+  }
+  const NU = 9;
+  let unders = "";
+  for (let k = NU - 1; k >= 0; k--) unders += `<div class="secB-under" id="secB-u${k}">${underHTML(k)}</div>`;
+  $("#secB-script").insertAdjacentHTML("beforeend", unders + `<div id="secB-p1" class="secB-abs" style="left: 0; top: 0; width: 720px; height: 940px">${livePage}<i id="secB-scan"><em></em><i></i></i></div><div id="secB-chips"></div>`);
+
+  /* ---------- transformación de reposo del folio (rotación −2.2° alrededor de la esquina inf. dcha.) ---------- */
+  const ROT = -2.2 * Math.PI / 180, O = { x: 300, y: 70 }, P = { x: PW, y: PH };
+  const toWorld = (lx, ly) => { const dx = lx - P.x, dy = ly - P.y; return { x: O.x + P.x + dx * Math.cos(ROT) - dy * Math.sin(ROT), y: O.y + P.y + dx * Math.sin(ROT) + dy * Math.cos(ROT) }; };
+  const toLocal = (wx, wy) => { const dx = wx - O.x - P.x, dy = wy - O.y - P.y; return { x: P.x + dx * Math.cos(-ROT) - dy * Math.sin(-ROT), y: P.y + dx * Math.sin(-ROT) + dy * Math.cos(-ROT) }; };
+
+  /* =====================================================================
+     COLUMNAS: ESCENAS / PERSONAJES / LUGARES (contadores + palotes)
+     ===================================================================== */
+  const COLS = [
+    { key: "esc", name: "Escenas", x: 1180, fin: 24 },
+    { key: "per", name: "Personajes", x: 1430, fin: 9 },
+    { key: "lug", name: "Lugares", x: 1680, fin: 6 },
+  ];
+  const NUM_Y = 300, LAB_Y = 250, TAL_Y = 452;
+  let colsH = "", numsH = "";
+  COLS.forEach((c, j) => {
+    colsH += `<div class="secB-lab" id="secB-lab${j}" style="left: ${c.x}px; top: ${LAB_Y}px">${c.name}</div>`;
+    let marks = "";
+    for (let i = 0; i < c.fin; i++) {
+      const g = Math.floor(i / 5), s = i % 5, gx = (g % 3) * 74, gy = Math.floor(g / 3) * 52;
+      marks += s < 4 ? `<i id="secB-m${j}_${i}" style="left: ${gx + s * 12}px; top: ${gy}px"></i>` : `<i class="d" id="secB-m${j}_${i}" style="left: ${gx - 6}px; top: ${gy + 24}px"></i>`;
+    }
+    colsH += `<i class="secB-lock" id="secB-lk${j}" style="left: ${c.x - 4}px; top: ${NUM_Y + 98}px; width: ${j ? 120 : 210}px"></i>`;
+    colsH += `<div class="secB-tally" id="secB-tal${j}" style="left: ${c.x + 4}px; top: ${TAL_Y}px">${marks}</div>`;
+    numsH += `<div class="secB-num" id="secB-num${j}" style="left: ${c.x}px; top: ${NUM_Y}px"><span id="secB-nv${j}">0</span></div>`;
+  });
+  $("#secB-cols").innerHTML = colsH;
+  $("#secB-nums").innerHTML = numsH;
+  const numCenter = (j) => ({ x: COLS[j].x + 60, y: NUM_Y + 62 });
+
+  /* =====================================================================
+     MESA DE PREPARACIÓN (tarjeta)
+     ===================================================================== */
+  const CARD = { x: 480, y: 840, w: 1240, h: 526 }, ROW0 = 122, RH = 64;
+  const CELL_X = (c) => 520 + c * 124; // relativo a la tarjeta
+  const ROWS = [
+    ["1", "Playa", "ggggg", "ok", "Listo"],
+    ["2", "Casa abuela", "ggggy", "warn", "Casi"],
+    ["3", "Furgoneta", "gggRg", "miss", "Falta actor"],
+    ["4", "Faro", "ggygg", "warn", "Casi"],
+    ["5", "Carretera", "ggggg", "ok", "Listo"],
+  ];
+  const RED = { r: 2, c: 3 };
+  const COLN = ["Guion", "Desglose", "Planos", "Reparto", "Lugar"];
+  const HSTAT = [[26, 0, "Escenas"], [300, 1, "Personajes"], [640, 2, "Lugares"]]; // x del número, columna, rótulo
+  let card = `<div class="secB-sec hd" id="secB-hd">` + HSTAT.map(([x, j, n]) => `<span class="secB-hstat" style="left: ${x + 92}px">${n}</span>`).join("") + `<span class="secB-hstat" style="left: 940px; color: #6d6a63">El último verano · v.def</span></div>`;
+  card += `<div class="secB-sec ch" id="secB-ch"><span class="secB-mono" style="left: 26px; top: 18px">Escena</span>` + COLN.map((n, c) => `<span class="secB-mono" style="left: ${CELL_X(c) + 48}px; top: 18px; transform: translateX(-50%); letter-spacing: 0.14em">${n}</span>`).join("") + `<span class="secB-mono" style="left: 318px; top: 18px">Estado</span></div>`;
+  ROWS.forEach(([n, name, st, pc, pt], r) => {
+    let cells = "";
+    [...st].forEach((s, c) => {
+      const col = s === "g" ? "#4fc47f" : s === "y" ? "#f0c94a" : "#f0503f";
+      cells += `<i class="secB-cell" style="left: ${CELL_X(c)}px"><i id="secB-c${r}${c}" style="background: ${col}"></i></i>`;
+    });
+    card += `<div class="secB-row" id="secB-r${r}" style="top: ${ROW0 + r * RH}px"><i class="secB-rowbg" id="secB-rbg${r}"></i><div class="secB-rowc" id="secB-rc${r}"><span class="secB-rn">${n}</span><span class="secB-rname">${name}</span>${cells}</div><span class="secB-pill ${pc}" id="secB-pill${r}" style="left: 300px">${pt}</span></div>`;
+  });
+  card += `<i class="secB-ping" id="secB-ping" style="left: ${CELL_X(RED.c)}px; top: ${ROW0 + RED.r * RH + 24}px"></i><i class="secB-ping" id="secB-ping2" style="left: ${CELL_X(RED.c)}px; top: ${ROW0 + RED.r * RH + 24}px; box-shadow: 0 0 0 3px #f0503f"></i>`;
+  card += `<div class="secB-sec ft" id="secB-ft"><span class="secB-rname" style="left: 26px; top: 28px">Preparado</span><i id="secB-bar"><i id="secB-barf"></i></i><span id="secB-pct">0%</span></div>`;
+  $("#secB-card").innerHTML = card;
+  // el pill vive dentro de la fila: su x relativa a la fila
+  
+
+  /* =====================================================================
+     PLEGADO EN ACORDEÓN (bandas anidadas con recortes del mismo folio)
+     ===================================================================== */
+  const NB = 4, BH = PH / NB, finalPage = pageHTML(true, false);
+  let bands = "";
+  for (let i = NB - 1; i >= 0; i--) bands = `<div class="secB-band" id="secB-b${i}" style="top: ${i ? BH : 0}px"><div class="secB-clipb" id="secB-cb${i}"><div class="secB-sheetwrap" style="position: absolute; left: 0; top: ${-i * BH}px; width: 720px; height: 940px" id="secB-sw${i}">${finalPage}</div><i class="secB-shade" id="secB-sh${i}"></i></div>${bands}</div>`;
+  $("#secB-stage").innerHTML = bands;
+
+  /* ---------- burbujas del gel agua ---------- */
+  const BUBS = [[120, 1120, 0.7, 0.0], [210, 1180, 1.0, 0.45], [70, 1240, 0.8, 0.2], [300, 1210, 0.6, 0.75], [160, 1290, 0.9, 0.6]];
+  $("#secB-bubs").innerHTML = BUBS.map((_, i) => `<i class="secB-bub" id="secB-bb${i}"></i>`).join("");
+
+  /* ---------- primer término (parallax 1.25): cruces, regla, código ---------- */
+  const FD = 1.25;
+  const fp = (sx, sy, cx, cy) => ({ x: sx - 960 + FD * cx, y: sy - 540 + FD * cy }); // pos. de autor que cae en (sx,sy) con la cámara en (cx,cy) y s=1
+  const fore = [];
+  [[60, 60], [1816, 60], [60, 976], [1816, 976]].forEach(([sx, sy]) => { const p = fp(sx, sy, 960, 540); fore.push(`<i class="secB-cross" style="left: ${p.x}px; top: ${p.y}px"><b></b></i>`); });
+  [[60, 60], [1816, 60], [1816, 976]].forEach(([sx, sy]) => { const p = fp(sx, sy, 1100, 1050); fore.push(`<i class="secB-cross" style="left: ${p.x}px; top: ${p.y}px"><b></b></i>`); });
+  { const p = fp(0, 14, 960, 540); fore.push(`<i class="secB-ruler" style="left: ${p.x - 600}px; top: ${p.y}px; width: 3400px"></i>`); }
+  { const p = fp(130, 1028, 960, 540); fore.push(`<span class="secB-tc" id="secB-tc1" style="left: ${p.x}px; top: ${p.y}px">VD-01 ▸ ESCRIBIR · 00:00:10:15</span>`); }
+  { const p = fp(130, 1028, 1100, 1050); fore.push(`<span class="secB-tc" id="secB-tc2" style="left: ${p.x}px; top: ${p.y}px; color: #4a3d12">VD-02 ▸ PREPARAR · 00:00:18:00</span>`); }
+  $("#secB-fore").innerHTML = fore.join("");
+
+  /* =====================================================================
+     LÍNEA DE TIEMPO
+     ===================================================================== */
+  const tl = gsap.timeline({ paused: true });
+
+  /* ---------- CÁMARA: función pura de t ---------- */
+  const ST2 = { x: 1100, y: 1050 };
+  const K = [
+    { t: 0.0, x: 905, y: 585, s: 0.86, r: -1.3 },
+    { t: 1.45, x: 960, y: 540, s: 1.0, r: 0, ease: "vd.land" },
+    { t: 4.6, x: 1004, y: 549, s: 1.03, r: 0.2, ease: "vd.push" },
+    { t: 7.55, x: 990, y: 546, s: 1.045, r: 0, ease: "vd.push" },
+    { t: 8.0, x: 985, y: 575, s: 1.03, r: -0.2, ease: "vd.push" },
+    { t: 8.8, x: ST2.x, y: ST2.y, s: 1.0, r: 0.3, ease: "vd.glide" },
+    { t: 10.45, x: ST2.x + 12, y: ST2.y + 6, s: 1.025, r: 0, ease: "vd.push" },
+    { t: 11.7, x: 1455, y: 1150, s: 1.34, r: -0.6, ease: "vd.glide" },
+    { t: 12.5, x: 1462, y: 1151, s: 1.38, r: -0.7, ease: "vd.push" },
+  ];
+  function cam(t) {
+    if (t >= K[K.length - 1].t) return Object.assign({}, K[K.length - 1]);
+    let i = 1;
+    for (let k = 1; k < K.length; k++) if (t < K[k].t) { i = k; break; }
+    const a = K[i - 1], b = K[i];
+    const p = clamp((t - a.t) / (b.t - a.t || 1), 0, 1);
+    const e = gsap.parseEase(b.ease || "none")(p);
+    const s = Math.exp(lerp(Math.log(a.s), Math.log(b.s), e));
+    return { x: lerp(a.x, b.x, e), y: lerp(a.y, b.y, e), s, r: lerp(a.r, b.r, e) };
+  }
+  const pulse = (dt) => (dt < 0 ? 0 : dt < 0.066 ? dt / 0.066 : Math.exp(-(dt - 0.066) * 9));
+  const hand = (t) => ({
+    x: 2.2 * Math.sin(2 * Math.PI * 0.31 * t + 1.3) + 0.9 * Math.sin(2 * Math.PI * 0.77 * t + 0.4),
+    y: 1.6 * Math.sin(2 * Math.PI * 0.23 * t + 2.1) + 0.8 * Math.sin(2 * Math.PI * 0.91 * t + 5.2),
+    r: 0.1 * Math.sin(2 * Math.PI * 0.17 * t + 0.7),
+  });
+  const camAt = (t) => { const c = cam(t); c.s *= 1 + 0.022 * pulse(t - 1.43) + 0.03 * pulse(t - 10.5); return c; };
+  const world = $("#secB-world"), forePl = $("#secB-fore"), lens = $("#secB-lens"), cbx = $("#secB-cbx");
+  function applyCamera(t) {
+    const c = camAt(t), n = hand(t);
+    [[world, 1], [forePl, FD]].forEach(([el, d]) => {
+      const s = 1 + (c.s - 1) * d;
+      el.style.transform = `translate(${(960 + n.x).toFixed(2)}px, ${(540 + n.y).toFixed(2)}px) rotate(${(c.r * d + n.r).toFixed(3)}deg) scale(${s.toFixed(4)}) translate(${(-c.x * d).toFixed(2)}px, ${(-c.y * d).toFixed(2)}px)`;
+    });
+    const h = 0.5 / FPS, c0 = camAt(Math.max(0, t - h)), c1 = camAt(Math.min(DUR, t + h));
+    const vx = Math.abs(c1.x - c0.x) * c.s, vy = Math.abs(c1.y - c0.y) * c.s;
+    const pan = Math.abs(Math.log(c1.s / c0.s)) < 0.006;
+    const bx = pan ? Math.min(24, vx * 0.35) : 0, by = pan ? Math.min(24, vy * 0.35) : 0;
+    if (bx + by > 0.8) { cbx.setAttribute("stdDeviation", `${bx.toFixed(2)} ${by.toFixed(2)}`); lens.style.filter = "url(#secB-camblur)"; }
+    else lens.style.filter = "none";
+  }
+
+  /* ---------- 1 · el guion vuela, el ajolote lo atrapa por la esquina y lo deja caer ---------- */
+  const SC = "#secB-script";
+  const CATCH = 0.75, LAND = 1.43;
+  tl.fromTo(SC, { x: -560, y: -960, rotation: -38, scale: 1.3, transformOrigin: "100% 100%" }, { x: 338, y: -237, rotation: -14, scale: 1.12, duration: CATCH, ease: "power1.out" }, 0);
+  tl.to(SC, { y: -143, duration: 0.25, ease: "power2.in" }, CATCH);
+  tl.to(SC, { x: 352, duration: 0.1, ease: "power2.out" }, CATCH);
+  tl.to(SC, { rotation: -7, duration: 0.3, ease: "sine.inOut" }, CATCH);
+  tl.to(SC, { x: 0, duration: LAND - 1.05, ease: "power2.inOut" }, 1.05);
+  tl.to(SC, { y: 0, duration: LAND - 1.05, ease: "power2.in" }, 1.0);
+  tl.to(SC, { rotation: -2.2, duration: LAND - 1.05, ease: "sine.inOut" }, 1.05);
+  tl.to(SC, { scale: 1, duration: LAND - 1.05, ease: "power2.in" }, 1.05);
+  // sombra: alta y difusa en el aire, pegada al aterrizar
+  tl.fromTo("#secB-shadow", { x: 70, y: 110, opacity: 0.13 }, { x: 46, y: 70, opacity: 0.16, duration: 1.0, ease: "none" }, 0);
+  tl.to("#secB-shadow", { x: 0, y: 8, opacity: 0.34, duration: LAND - 1.0, ease: "power2.in" }, 1.0);
+  tl.to("#secB-shadow", { y: 5, opacity: 0.3, duration: 0.3, ease: "power2.out" }, LAND);
+
+  /* ---------- 2 · escáner (gel amarillo) ---------- */
+  const SCAN0 = 1.5, SCAN1 = 2.62, scanLine0 = -1.6, scanLine1 = 18.3; // tiempo / línea
+  const scanY = (ln) => PT + ln * LH - 6;
+  const scanT = (ln) => SCAN0 + ((ln - scanLine0) / (scanLine1 - scanLine0)) * (SCAN1 - SCAN0);
+  tl.fromTo("#secB-scan", { opacity: 0 }, { opacity: 1, duration: 0.08, ease: "none" }, SCAN0 - 0.04);
+  tl.fromTo("#secB-scan", { y: scanY(scanLine0) }, { y: scanY(scanLine1), duration: SCAN1 - SCAN0, ease: "none" }, SCAN0);
+  // rótulos de la estación 1 aparecen con el primer barrido (la máquina empieza a leer)
+  tl.fromTo("#secB-k1", { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.4, ease: "vd.land" }, 1.45);
+  COLS.forEach((c, j) => {
+    tl.fromTo("#secB-lab" + j, { y: 26, opacity: 0 }, { y: 0, opacity: 1, duration: 0.42, ease: "vd.land" }, 1.55 + j * 0.07);
+    tl.fromTo("#secB-nv" + j, { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "none" }, 1.6 + j * 0.07);
+  });
+
+  /* ---------- 3 · las palabras se despegan y vuelan a su columna ---------- */
+  const LANDS = { esc: [], per: [], lug: [] };
+  const COLIDX = { esc: 0, per: 1, lug: 2 };
+  let chipsH = "";
+  const flights = [];
+  // palabras visibles (incluye la mitosis lugar ← encabezado)
+  const vis = [];
+  WORDS.forEach((w) => {
+    vis.push({ type: w.type, word: w.word, line: w.line, col: w.col, n: w.n, bold: w.bold, k: w.k });
+    if (w.type === "esc") { const pl = PLACES.find((p) => p[0] === w.line); vis.push({ type: "lug", word: pl[2], line: pl[0], col: pl[1], n: [...pl[2]].length, bold: 1, k: -1, mitosis: true }); }
+  });
+  vis.forEach((w, i) => {
+    const land = 2.1 + 0.09 * i;
+    const peel = scanT(w.line + 0.4) + (w.mitosis ? 0.05 : 0);
+    const id = "secB-ch" + i;
+    const left = PL + w.col * CW - 6, top = PT + w.line * LH, wid = w.n * CW + 12;
+    chipsH += `<span class="secB-chip${w.bold ? " b" : ""}" id="${id}" style="left: ${left}px; top: ${top}px; background: ${HL[w.type]}">${w.word}</span>`;
+    flights.push({ id, peel, land, sx: left + wid / 2, sy: top + LH / 2, type: w.type, k: w.k, lift: true, s0: 1 });
+  });
+  // palabras del resto del guion: salen del canto de las hojas que se abanican
+  const FLICK = [2.95, 3.22, 3.45, 3.64, 3.8, 3.95, 4.18, 4.6, 5.25];
+  const MORE = {
+    esc: ["4. INT. FURGONETA — NOCHE", "5. EXT. FARO — ATARDECER", "6. EXT. CARRETERA — DÍA", "7. INT. ESTACIÓN — NOCHE", "8. EXT. PLAYA — NOCHE", "9. INT. CASA ABUELA — DÍA", "10. EXT. FARO — NOCHE", "11. INT. FURGONETA — DÍA", "12. EXT. CARRETERA — NOCHE", "13. INT. FARO — DÍA", "14. EXT. ESTACIÓN — DÍA", "15. INT. CASA ABUELA — NOCHE", "16. EXT. PLAYA — DÍA", "17. INT. FURGONETA — AMANECER", "18. EXT. FARO — DÍA", "19. EXT. CARRETERA — ATARDECER", "20. INT. ESTACIÓN — DÍA", "21. EXT. PLAYA — ATARDECER", "22. INT. CASA ABUELA — DÍA", "23. EXT. ESTACIÓN — NOCHE", "24. EXT. PLAYA — AMANECER"],
+    per: ["NURIA", "PADRE", "SARA", "EL FARERO", "ÓSCAR"],
+    lug: ["FARO", "CARRETERA", "ESTACIÓN"],
+  };
+  const PLAN = [["esc", 4], ["esc", 5], ["esc", 4], ["esc", 4], ["esc", 4, "per", 1], ["per", 2], ["per", 2, "lug", 1], ["lug", 1], ["lug", 1]];
+  const mi = { esc: 0, per: 0, lug: 0 };
+  let ri = 0;
+  PLAN.forEach((pl, k) => {
+    const list = [];
+    for (let q = 0; q < pl.length; q += 2) for (let z = 0; z < pl[q + 1]; z++) list.push(pl[q]);
+    list.forEach((type, j) => {
+      const word = MORE[type][mi[type]++];
+      const eject = FLICK[k] + 0.03 + j * 0.035;
+      const dur = type === "lug" && k >= 7 ? 0.46 : 0.34 + rnd() * 0.06;
+      const id = "secB-xc" + ri++;
+      const sy = 150 + rnd() * 640, sx = 742;
+      chipsH += `<span class="secB-chip${type === "esc" ? " b" : ""}" id="${id}" style="left: ${sx}px; top: ${sy}px; background: ${HL[type]}">${word}</span>`;
+      flights.push({ id, peel: eject, land: eject + dur, sx: sx + ([...word].length * CW + 12) / 2, sy: sy + LH / 2, type, lift: false, s0: 0.5, k: -1 });
+    });
+  });
+  $("#secB-chips").innerHTML = chipsH;
+  flights.forEach((f) => {
+    LANDS[f.type].push(f.land);
+    const tgW = numCenter(COLIDX[f.type]), tg = toLocal(tgW.x, tgW.y);
+    const dx = tg.x - f.sx, dy = tg.y - f.sy;
+    const t0 = f.lift ? f.peel + 0.1 : f.peel, d = f.land - t0;
+    const el = "#" + f.id;
+    if (f.lift) {
+      // la palabra se marca con el gel y se despega (clon exacto encima)
+      if (f.k >= 0) {
+        tl.fromTo("#secB-hl" + f.k, { scaleX: 0 }, { scaleX: 1, duration: 0.16, ease: "power2.out" }, f.peel - 0.14);
+        tl.fromTo("#secB-w" + f.k, { color: "rgba(21, 21, 25, 1)" }, { color: "rgba(21, 21, 25, 0.3)", duration: 0.12, ease: "none" }, f.peel);
+      }
+      tl.fromTo(el, { opacity: 0 }, { opacity: 1, duration: 0.01, ease: "none" }, f.peel);
+      tl.fromTo(el, { scale: 1, y: 0, rotation: 0 }, { scale: 1.1, y: -8, rotation: (rnd() - 0.5) * 6, duration: 0.1, ease: "power2.out" }, f.peel);
+    } else {
+      tl.fromTo(el, { opacity: 0, scale: 0.35 }, { opacity: 1, scale: f.s0, duration: 0.08, ease: "power2.out" }, f.peel);
+    }
+    const arc = 60 + Math.abs(dx) * 0.12;
+    const yTop = Math.min(0, dy) - arc;
+    tl.fromTo(el, { x: 0 }, { x: dx, duration: d, ease: "power1.inOut", immediateRender: false }, t0);
+    tl.fromTo(el, { y: f.lift ? -8 : 0 }, { y: yTop, duration: d * 0.5, ease: "power2.out", immediateRender: false }, t0);
+    tl.fromTo(el, { y: yTop }, { y: dy, duration: d * 0.5, ease: "power2.in", immediateRender: false }, t0 + d * 0.5);
+    tl.fromTo(el, { scale: f.lift ? 1.1 : f.s0 }, { scale: 0.42, duration: d, ease: "power1.in", immediateRender: false }, t0);
+    tl.fromTo(el, { rotation: 0 }, { rotation: 2.2 + (rnd() - 0.5) * 18, duration: d, ease: "sine.inOut", immediateRender: false }, t0);
+    tl.fromTo(el, { opacity: 1 }, { opacity: 0, duration: 0.07, ease: "none", immediateRender: false }, f.land - 0.07);
+  });
+  Object.values(LANDS).forEach((a) => a.sort((p, q) => p - q));
+
+  // hojas de debajo: abanico (pulgar que hojea el guion)
+  FLICK.forEach((t, k) => {
+    const a = -(6 + (k % 3) * 2.2);
+    tl.fromTo("#secB-u" + k, { rotation: 0 }, { rotation: a, duration: 0.07, ease: "power2.out", immediateRender: k === 0 }, t);
+    tl.to("#secB-u" + k, { rotation: 0, duration: 0.17, ease: "power2.in" }, t + 0.07);
+  });
+  // la pila de hojas asoma con un pequeño desfase (grosor del guion) y se cuadra antes de plegar
+  for (let k = 0; k < NU; k++) {
+    tl.fromTo("#secB-u" + k, { x: 2 + (k + 1) * 3.2, y: (k + 1) * 3.6 }, { x: 0, y: 0, duration: 0.3, ease: "vd.land", immediateRender: true }, 7.12 + (NU - k) * 0.012);
+  }
+
+  // cada contador "se cierra" con una lámina de gel bajo el número al llegar a su total
+  COLS.forEach((c, j) => {
+    const tEnd = LANDS[c.key][LANDS[c.key].length - 1];
+    tl.fromTo("#secB-lk" + j, { scaleX: 0 }, { scaleX: 1, duration: 0.3, ease: "power2.out" }, tEnd + 0.02);
+    tl.fromTo("#secB-lk" + j, { opacity: 1 }, { opacity: 0, duration: 0.2, ease: "none" }, 7.12 + j * 0.04);
+  });
+
+  /* ---------- 4 · recogida antes del plegado ---------- */
+  COLS.forEach((c, j) => {
+    tl.fromTo("#secB-tal" + j, { scaleY: 1, opacity: 1 }, { scaleY: 0, opacity: 0, duration: 0.22, ease: "power2.in" }, 7.1 + j * 0.04);
+    tl.fromTo("#secB-lab" + j, { clipPath: "inset(0 0% 0 0)" }, { clipPath: "inset(0 100% 0 0)", duration: 0.25, ease: "vd.exit" }, 7.18 + j * 0.04);
+  });
+  tl.fromTo("#secB-k1", { clipPath: "inset(0 0% 0 0)" }, { clipPath: "inset(0 100% 0 0)", duration: 0.25, ease: "vd.exit", immediateRender: false }, 7.15);
+
+  /* ---------- 5 · inundación de gel amarillo (nace del escáner aparcado) ---------- */
+  const scanWorld = toWorld(360, scanY(scanLine1) + 25);
+  // el gel del escáner se derrama: primero se alarga a lo ancho de la mesa, luego inunda
+  const FL0 = 7.3;
+  tl.set("#secB-flood", { y: scanWorld.y - 25, rotation: -2.2, transformOrigin: "2260px 25px" }, 0);
+  tl.fromTo("#secB-flood", { opacity: 0 }, { opacity: 1, duration: 0.01, ease: "none" }, FL0);
+  tl.fromTo("#secB-flood", { scaleX: 0.14 }, { scaleX: 1, duration: 0.2, ease: "power2.in" }, FL0);
+  tl.fromTo("#secB-flood", { height: 50, y: scanWorld.y - 25 }, { height: 4600, y: -1700, duration: 0.6, ease: "power3.inOut" }, FL0 + 0.15);
+  tl.to("#secB-shadow", { opacity: 0, duration: 0.2, ease: "none" }, FL0 + 0.05);
+
+  /* ---------- 6 · plegado en acordeón → fila 0 de la tabla ---------- */
+  const FOLD = 7.5;
+  // cambio invisible: el folio real se sustituye por el escenario de bandas en el mismo sitio
+  const restX = -35.56, restY = 28.34; // rotación −2.2° alrededor de la esquina, expresada con origen 0 0
+  tl.set("#secB-stage", { opacity: 1, x: restX, y: restY, rotation: -2.2, scaleX: 1, scaleY: 1, transformOrigin: "0% 0%" }, FOLD);
+  tl.set(SC, { opacity: 0 }, FOLD);
+  for (let i = 1; i < NB; i++) {
+    const ang = (i % 2 ? -1 : 1) * 172, d = FOLD + 0.02 + (NB - 1 - i) * 0.06;
+    tl.fromTo("#secB-b" + i, { rotationX: 0 }, { rotationX: ang, transformOrigin: "50% 0%", duration: 0.52, ease: "vd.fold" }, d);
+    tl.fromTo("#secB-sh" + i, { opacity: 0 }, { opacity: i % 2 ? 0.45 : 0.15, duration: 0.52, ease: "vd.fold" }, d);
+  }
+  const TF = 8.0, TFD = 0.55;
+  const R0 = { x: CARD.x, y: CARD.y + ROW0 };
+  tl.fromTo("#secB-stage", { x: restX, y: restY, rotation: -2.2, scaleX: 1, scaleY: 1 }, { x: R0.x - 300, y: R0.y - 70, rotation: 0, scaleX: CARD.w / PW, scaleY: RH / BH, duration: TFD, ease: "vd.glide", immediateRender: false }, TF);
+  // FIX del prototipo: el fondo de cada banda vira a tinta MIENTRAS el folio se funde encima → nunca hay un frame de tira vacía
+  for (let i = 0; i < NB; i++) {
+    tl.fromTo("#secB-cb" + i, { backgroundColor: "#e9e5da" }, { backgroundColor: "#151519", duration: 0.3, ease: "none" }, TF + 0.18);
+    tl.fromTo("#secB-sw" + i, { opacity: 1 }, { opacity: 0, duration: 0.3, ease: "none" }, TF + 0.18);
+    tl.fromTo("#secB-sh" + i, { opacity: i ? (i % 2 ? 0.45 : 0.15) : 0 }, { opacity: 0, duration: 0.24, ease: "none", immediateRender: false }, TF + 0.2);
+  }
+  const SWAP = TF + TFD;
+  tl.set("#secB-stage", { opacity: 0 }, SWAP);
+  // la tarjeta nace exactamente con la geometría de la tira (recorte = fila 0) y se abre
+  tl.fromTo("#secB-card", { opacity: 0 }, { opacity: 1, duration: 0.01, ease: "none" }, SWAP - 0.005);
+  tl.fromTo("#secB-card", { clipPath: `inset(${ROW0}px 0px ${CARD.h - ROW0 - RH}px 0px round 0px)` }, { clipPath: "inset(0px 0px 0px 0px round 14px)", duration: 0.42, ease: "vd.land" }, SWAP);
+  tl.fromTo("#secB-cardsh", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "none" }, SWAP + 0.1);
+  ROWS.forEach((_, r) => {
+    if (r) tl.fromTo("#secB-r" + r, { y: -r * RH }, { y: 0, duration: 0.42, ease: "vd.land" }, SWAP + 0.02 * r);
+    tl.fromTo("#secB-rc" + r, { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "none" }, SWAP + 0.08 + r * 0.03);
+  });
+  tl.fromTo("#secB-hd", { y: ROW0 - 0 }, { y: 0, duration: 0.42, ease: "vd.land" }, SWAP);
+  tl.fromTo("#secB-ch", { y: ROW0 - 70 }, { y: 0, duration: 0.42, ease: "vd.land" }, SWAP);
+  tl.fromTo("#secB-ft", { y: -(442 - ROW0) }, { y: 0, duration: 0.46, ease: "vd.land" }, SWAP + 0.04);
+  tl.fromTo(["#secB-hd", "#secB-ch", "#secB-ft"], { opacity: 0 }, { opacity: 1, duration: 0.16, ease: "none" }, SWAP + 0.06);
+
+  /* ---------- 7 · los contadores viajan a la cabecera de la tabla ---------- */
+  COLS.forEach((c, j) => {
+    const hx = CARD.x + HSTAT[j][0], hy = CARD.y + 12;
+    tl.fromTo("#secB-num" + j, { x: 0, y: 0, scale: 1 }, { x: hx - c.x, y: hy - NUM_Y, scale: 0.4, duration: 1.05, ease: "vd.glide" }, 7.8 + j * 0.06);
+    tl.fromTo("#secB-nv" + j, { color: "#151519" }, { color: "#f0c94a", duration: 0.18, ease: "none" }, 8.62 + j * 0.06);
+  });
+
+  tl.fromTo("#secB-tc1", { opacity: 1 }, { opacity: 0, duration: 0.1, ease: "none" }, 7.7);
+  tl.fromTo("#secB-tc2", { opacity: 0 }, { opacity: 1, duration: 0.1, ease: "none" }, 8.5);
+
+  /* ---------- 8 · ola de luz desde la celda que falta ---------- */
+  const WAVE0 = 8.75;
+  tl.fromTo("#secB-ping", { scale: 1, opacity: 0 }, { keyframes: [{ opacity: 0.9, scale: 1.1, duration: 0.06 }, { opacity: 0, scale: 2.6, duration: 0.5, ease: "power2.out" }] }, WAVE0);
+  ROWS.forEach(([, , st], r) => {
+    let maxd = 0;
+    [...st].forEach((s, c) => {
+      const d = Math.hypot(r - RED.r, c - RED.c);
+      if (s === "R") return;
+      maxd = Math.max(maxd, d);
+      tl.fromTo(`#secB-c${r}${c}`, { scaleX: 0 }, { scaleX: 1, duration: 0.3, ease: "vd.land" }, WAVE0 - 0.02 + d * 0.25);
+    });
+    if (r !== RED.r) tl.fromTo("#secB-pill" + r, { scale: 0.7, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.34, ease: "vd.land" }, WAVE0 + 0.08 + maxd * 0.25);
+  });
+  tl.fromTo("#secB-c" + RED.r + RED.c, { scaleX: 0 }, { scaleX: 0, duration: 0.01 }, 0.02);
+  tl.fromTo("#secB-barf", { scaleX: 0 }, { scaleX: 1, duration: 1.1, ease: "vd.settle" }, 8.95);
+  // titular: la palabra "se abre" como la luz al encenderse
+  // el gel rojo de la fase siguiente asoma empujado por la inundación
+  tl.fromTo("#secB-redgel", { x: 640, y: -260 }, { x: 0, y: 0, duration: 0.7, ease: "vd.land" }, 8.35);
+  tl.fromTo("#secB-k2", { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.45, ease: "vd.land" }, 8.6);
+  tl.fromTo("#secB-hero", { fontStretch: "62%", y: 34, opacity: 0 }, { fontStretch: "118%", y: 0, opacity: 1, duration: 0.6, ease: "expo.out" }, 8.8);
+
+  /* ---------- 9 · ¡la celda se queda roja! ---------- */
+  const REDT = 10.5;
+  tl.fromTo("#secB-c" + RED.r + RED.c, { scaleX: 0 }, { scaleX: 1, duration: 0.12, ease: "power3.out", immediateRender: false }, REDT);
+  tl.fromTo("#secB-r" + RED.r, { x: 0 }, { keyframes: [{ x: -7, duration: 0.04 }, { x: 6, duration: 0.05 }, { x: -4, duration: 0.05 }, { x: 2, duration: 0.05 }, { x: 0, duration: 0.06 }] }, REDT);
+  tl.fromTo("#secB-rbg" + RED.r, { opacity: 0 }, { opacity: 1, duration: 0.2, ease: "none" }, REDT);
+  tl.fromTo("#secB-pill" + RED.r, { scale: 1.4, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.36, ease: "vd.land" }, REDT + 0.04);
+  tl.fromTo("#secB-ping2", { scale: 1, opacity: 0 }, { keyframes: [{ opacity: 1, scale: 1.1, duration: 0.05 }, { opacity: 0, scale: 2.4, duration: 0.45, ease: "power2.out" }] }, REDT);
+  // cinta a rotulador, pegada de golpe con el guiño
+  const TAPE = 11.94;
+  tl.fromTo("#secB-tape", { opacity: 0, scale: 1.45, rotation: -12, y: -30 }, { opacity: 1, scale: 1, rotation: -4, y: 0, duration: 0.14, ease: "power4.in" }, TAPE);
+  tl.to("#secB-tape", { keyframes: [{ scale: 1.03, duration: 0.05 }, { scale: 1, duration: 0.2, ease: "power2.out" }] }, TAPE + 0.14);
+
+  /* =====================================================================
+     AJOLOTE (rig axB)
+     ===================================================================== */
+  const ax = AxRig(tl, { prefix: "axB", seed: 23 });
+  const AX = "#axB";
+  const R = (id) => "#axB-" + id;
+  const raw = (id, v, t) => tl.to(R(id), Object.assign({ svgOrigin: "0 0" }, v), t);
+  const AXS = 0.85, FEET = { x: 1500, y: 1004 };
+  ax.init(0, { x: FEET.x, y: FEET.y, s: AXS });
+  // "dame": brazos arriba, mirada al guion que llega
+  raw("armL", { rotation: -128, duration: 0.3, ease: "back.out(2)" }, 0.04);
+  raw("armR", { rotation: -40, duration: 0.3, ease: "back.out(2)" }, 0.06);
+  raw("armLs", { scaleY: 1.3, duration: 0.3, ease: "back.out(2.5)" }, 0.04);
+  ax.look(0.05, -5, -4, 0.2);
+  ax.brows(0.05, "up");
+  // salto para atraparlo
+  raw("squash", { scaleX: 1.16, scaleY: 0.84, duration: 0.12, ease: "power2.out" }, 0.33);
+  raw("squash", { scaleX: 0.9, scaleY: 1.12, duration: 0.18, ease: "power2.out" }, 0.45);
+  raw("hop", { y: -112, duration: 0.3, ease: "power2.out" }, 0.45);
+  raw("tilt", { rotation: -8, duration: 0.3, ease: "power2.out" }, 0.45);
+  raw("shadow", { scaleX: 0.6, opacity: 0.4, duration: 0.3, ease: "power2.out" }, 0.45);
+  // ¡atrapado!: el peso tira de él
+  raw("squash", { scaleX: 1.08, scaleY: 0.93, duration: 0.06, ease: "power2.out" }, CATCH);
+  raw("hop", { y: 0, duration: 0.25, ease: "power2.in" }, CATCH);
+  raw("shadow", { scaleX: 1, opacity: 1, duration: 0.25, ease: "power2.in" }, CATCH);
+  ax.eyes(CATCH, "sqz"); ax.brows(CATCH, "angry", 0.1);
+  raw("squash", { scaleX: 1.22, scaleY: 0.8, duration: 0.06, ease: "power2.out" }, 1.0);
+  raw("squash", { scaleX: 1, scaleY: 1, duration: 0.55, ease: "vd.spring" }, 1.06);
+  raw("tilt", { rotation: 0, duration: 0.5, ease: "vd.spring" }, 1.0);
+  ax.gillFlick(1.0, 16, 0.8);
+  // lo suelta
+  raw("armL", { rotation: 0, duration: 0.4, ease: "back.out(1.8)" }, 1.06);
+  raw("armR", { rotation: 0, duration: 0.4, ease: "back.out(1.8)" }, 1.08);
+  raw("armLs", { scaleY: 1, duration: 0.3, ease: "power2.inOut" }, 1.06);
+  ax.eyes(1.08, "open"); ax.brows(1.1, "neutral");
+  ax.look(1.1, -5, 2, 0.2);
+  ax.gillFlick(LAND, 9, 0.7);
+  ax.expr(1.5, "happy", 0.14);
+  // sigue al escáner y a las palabras
+  ax.look(1.62, -5, 3, 0.25);
+  ax.eyes(2.0, "open");
+  ax.look(2.08, 3, -5, 0.22);
+  ax.look(2.6, -4, 0, 0.2);
+  [2.95, 3.64, 4.6, 5.25].forEach((t) => ax.gillFlick(t + 0.02, 8, 0.6));
+  ax.look(4.3, 3, -5, 0.22);
+  ax.look(5.4, -3, 0, 0.2);
+  ax.look(5.95, 0, 0, 0.2);
+  ax.expr(5.98, "happy", 0.16); ax.blush(5.98, 1.3);
+  let tt = ax.hopTo(6.06, { x: FEET.x, y: FEET.y, s: AXS, d: 0.42, arc: 46, lean: 1 });
+  ax.expr(6.85, "neutral", 0.15); ax.blush(6.85, 1);
+  ax.look(6.9, 5, 0, 0.15);
+  ax.hopTo(6.98, { x: 2260, y: 960, s: AXS, d: 0.62, arc: 130, lean: 1 });
+
+  // --- estación 2: se asoma por el borde derecho de la tabla, señala y guiña ---
+  const EDGE = CARD.x + CARD.w, FY = 1236, S2 = 1.0;
+  ax.place(9.42, { x: EDGE, y: FY, s: S2 });
+  tl.set(AX, { clipPath: "polygon(-3000px -3000px, 220px -3000px, 220px 3000px, -3000px 3000px)" }, 9.42);
+  tl.set("#axB-svg", { filter: "url(#secB-sticker)" }, 9.42);
+  tl.set(R("hop"), { x: 320, y: 0, svgOrigin: "0 0" }, 9.43);
+  tl.set(R("tilt"), { rotation: 0, svgOrigin: "0 0" }, 9.43);
+  tl.set(R("shadow"), { opacity: 0, svgOrigin: "0 4" }, 9.43);
+  raw("hop", { x: 96, duration: 0.55, ease: "power2.out" }, 9.6);
+  raw("tilt", { rotation: -22, duration: 0.55, ease: "power2.out" }, 9.6);
+  ax.brows(9.6, "up"); ax.mouth(9.6, "o", 0.08);
+  ax.look(9.95, -5, 0, 0.18); ax.look(10.2, -5, 3, 0.16);
+  raw("hop", { x: 70, duration: 0.24, ease: "back.out(2.4)" }, 10.12);
+  raw("tilt", { rotation: -27, duration: 0.24, ease: "back.out(2.4)" }, 10.12);
+  ax.gillFlick(10.12, 14, 0.7);
+  // sale de detrás del borde de un saltito y señala la celda (mirada antes que gesto)
+  const PT0 = 10.4;
+  ax.look(PT0 - 0.02, -5, 1, 0.14);
+  raw("squash", { scaleX: 1.12, scaleY: 0.88, duration: 0.08, ease: "power2.in" }, PT0);
+  raw("squash", { scaleX: 1, scaleY: 1, duration: 0.5, ease: "vd.spring" }, PT0 + 0.08);
+  raw("hop", { x: -24, duration: 0.26, ease: "power3.out" }, PT0 + 0.06);
+  tl.to(R("hop"), { y: -26, svgOrigin: "0 0", duration: 0.14, ease: "power2.out" }, PT0 + 0.06);
+  tl.to(R("hop"), { y: 0, svgOrigin: "0 0", duration: 0.16, ease: "power2.in" }, PT0 + 0.2);
+  raw("tilt", { rotation: -6, duration: 0.4, ease: "back.out(2)" }, PT0 + 0.06);
+  tl.to(AX, { clipPath: "polygon(-3000px -3000px, 700px -3000px, 700px 3000px, -3000px 3000px)", duration: 0.3, ease: "power2.out" }, PT0 + 0.06);
+  tl.set(R("shadow"), { opacity: 1, svgOrigin: "0 4" }, PT0 + 0.3);
+  raw("armL", { rotation: 14, duration: 0.1, ease: "power2.in" }, PT0 + 0.1);
+  raw("armL", { rotation: -100, duration: 0.28, ease: "back.out(2.6)" }, PT0 + 0.2);
+  raw("armLs", { scaleY: 1.42, duration: 0.28, ease: "back.out(2.5)" }, PT0 + 0.2);
+  tl.set(R("fingerL"), { opacity: 1, svgOrigin: "0 0" }, PT0 + 0.26);
+  tl.fromTo(R("fingerL"), { scale: 0.3, svgOrigin: "0 0" }, { scale: 1, svgOrigin: "0 0", duration: 0.2, ease: "back.out(3)", immediateRender: false }, PT0 + 0.26);
+  raw("armLw", { rotation: -9, duration: 0.1, ease: "power2.out" }, PT0 + 0.54);
+  raw("armLw", { rotation: 0, duration: 0.32, ease: "elastic.out(1,0.4)" }, PT0 + 0.64);
+  raw("armLw", { rotation: -7, duration: 0.1, ease: "power2.out" }, 11.42);
+  raw("armLw", { rotation: 0, duration: 0.32, ease: "elastic.out(1,0.4)" }, 11.52);
+  ax.brows(PT0 + 0.2, "up");
+  ax.gillFlick(PT0 + 0.36, 12, 0.7);
+  const WINK = 12.0;
+  ax.look(WINK - 0.02, 0, 0, 0.14);
+  raw("head", { rotation: 9, duration: 0.3, ease: "back.out(2.5)" }, WINK);
+  raw("squash", { scaleX: 1.05, scaleY: 0.95, duration: 0.1, ease: "power2.out" }, WINK);
+  raw("squash", { scaleX: 1, scaleY: 1, duration: 0.38, ease: "elastic.out(1,0.45)" }, WINK + 0.1);
+  ax.eyes(WINK + 0.1, { L: "open", R: "wink" });
+  ax.brows(WINK + 0.1, "sly", 0.12);
+  ax.blush(WINK + 0.1, 1.5, 0.2);
+  tl.set(R("fxSpark"), { opacity: 1, svgOrigin: "0 0" }, WINK + 0.16);
+  tl.fromTo(R("fxSpark"), { scale: 0, rotation: -45, svgOrigin: "0 0" }, { scale: 1.15, rotation: 0, svgOrigin: "0 0", duration: 0.24, ease: "back.out(3)", immediateRender: false }, WINK + 0.16);
+
+  // labios con la voz (solo en tramos de habla)
+  const lip = (key) => {
+    const v = C.vo[key], a = Math.round(v.t * FPS), b = Math.round((v.t + v.d) * FPS);
+    ax.lipsync(C.env.lv.slice(a + 1, b), FPS, (a + 1) / FPS - T0);
+  };
+  lip("L03"); ax.mouth(1.36, "grin", 0.12);
+  lip("L04"); ax.mouth(5.92, "smile", 0.1);
+  lip("L06"); ax.mouth(WINK + 0.1, "smirk", 0.1);
+
+  ax.base(0, DUR);
+  ax.blinks(0, 11.7);
+
+  /* =====================================================================
+     CONDUCTOR ÚNICO: cámara + contadores + palotes + burbujas + código
+     ===================================================================== */
+  const numEls = COLS.map((_, j) => $("#secB-nv" + j));
+  const marks = COLS.map((c, j) => Array.from({ length: c.fin }, (_, i) => $(`#secB-m${j}_${i}`)));
+  const pct = $("#secB-pct"), tc1 = $("#secB-tc1"), tc2 = $("#secB-tc2");
+  const bubEls = BUBS.map((_, i) => $("#secB-bb" + i));
+  const last = [-1, -1, -1, -1];
+  const tcode = (tg) => { const f = Math.floor(tg * 30 + 1e-6), ss = Math.floor(f / 30), ff = f % 30; return `00:00:${String(ss).padStart(2, "0")}:${String(ff).padStart(2, "0")}`; };
+  const pctE = gsap.parseEase("vd.settle");
+  function render(t) {
+    applyCamera(t);
+    COLS.forEach((c, j) => {
+      const L = LANDS[c.key];
+      let n = 0, lt = -9;
+      for (let i = 0; i < L.length; i++) if (L[i] <= t + 1e-6) { n++; lt = L[i]; }
+      if (n !== last[j]) { numEls[j].textContent = String(n); last[j] = n; }
+      const k = 1 + 0.12 * pulse(t - lt);
+      numEls[j].style.transform = `scale(${k.toFixed(4)})`;
+      marks[j].forEach((m, i) => {
+        const a = i < L.length ? clamp((t - L[i]) / 0.07, 0, 1) : 0;
+        m.style.transform = (i % 5 === 4 ? "rotate(-26deg) scaleX(" : "scaleY(") + a.toFixed(3) + ")";
+      });
+    });
+    const pv = Math.round(85 * pctE(clamp((t - 8.95) / 1.1, 0, 1)));
+    if (pv !== last[3]) { pct.textContent = pv + "%"; last[3] = pv; }
+    tc1.textContent = "VD-01 ▸ ESCRIBIR · " + tcode(T0 + t);
+    tc2.textContent = "VD-02 ▸ PREPARAR · " + tcode(T0 + t);
+    BUBS.forEach(([bx, by, sp, ph], i) => {
+      const cyc = 2.6 / sp, u = ((t + ph * cyc) % cyc) / cyc;
+      const y = by - u * 300, x = bx + 7 * Math.sin(2 * Math.PI * (1.3 * t * sp + ph * 3));
+      const o = u < 0.12 ? u / 0.12 : u > 0.75 ? Math.max(0, (1 - u) / 0.25) : 1;
+      bubEls[i].style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) scale(${(0.6 + 0.5 * sp).toFixed(2)})`;
+      bubEls[i].style.opacity = (o * 0.9).toFixed(3);
+    });
+  }
+  const drv = { t: 0 };
+  tl.fromTo(drv, { t: 0 }, { t: DUR, duration: DUR, ease: "none", onUpdate: () => render(drv.t) }, 0);
+  render(0);
+
+  window.__timelines["secB"] = tl;
+})();
+</script>
+</template>
+</body>
+</html>

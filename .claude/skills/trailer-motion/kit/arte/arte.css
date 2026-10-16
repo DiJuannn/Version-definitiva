@@ -1,0 +1,218 @@
+/* =========================================================
+   VERSIÓN DEFINITIVA · TRÁILER v2 — Dirección de arte "MESA DE LUZ"
+   Sistema listo para copiar en la composición HyperFrames.
+   Regla: NADA de radial-gradient/linear-gradient decorativo.
+   La luz se expresa con superficies planas, geles de borde duro,
+   sombras tintadas, grano SVG y objetos retroiluminados.
+   ========================================================= */
+
+@font-face { font-family: "Archivo"; src: url("fonts/archivo.woff2") format("woff2"); font-weight: 100 900; font-stretch: 62% 125%; }
+@font-face { font-family: "JB Mono"; src: url("fonts/jbmono.woff2") format("woff2"); font-weight: 100 800; }
+@font-face { font-family: "Courier Prime"; src: url("fonts/courier-400.woff2") format("woff2"); font-weight: 400; }
+@font-face { font-family: "Courier Prime"; src: url("fonts/courier-700.woff2") format("woff2"); font-weight: 700; }
+@font-face { font-family: "Marker"; src: url("fonts/marker.woff2") format("woff2"); font-weight: 400; }
+
+:root {
+  /* --- Sala de montaje (oscuros de marca) --- */
+  --ink-0: #0b0b0d;   /* sala apagada / fuera de la mesa */
+  --ink-1: #151519;   /* tablero de la mesa, tarjetas UI */
+  --ink-2: #1d1d22;   /* marco de la caja de luz, filas UI */
+  --ink-3: #2e2e35;   /* bordes, separadores */
+  --ink-4: #4a4a54;   /* trazos apagados */
+  --mute:  #9a978f;   /* texto secundario sobre oscuro (6.2:1 sobre ink-1) */
+  --mute-l:#5c5a54;   /* texto secundario sobre opal (6.2:1) */
+
+  /* --- Caja de luz --- */
+  --opal:  #f6f3ea;   /* metacrilato opal encendido (la "luz") */
+  --opal-band: #fbf9f3; /* banda de tubo fluorescente (diferencia 2%) */
+  --paper: #f1eee6;   /* papel de guion fuera de la mesa */
+  --paper-lit: #e9e5da; /* papel sobre la mesa encendida (se ve un pelín más gris) */
+  --paper-ink: #151519;
+
+  /* --- Geles por fase (planos, borde duro) --- */
+  --gel-escribir: #ece8dc;
+  --gel-preparar: #f0c94a;
+  --gel-rodar:    #f0503f;
+  --gel-entregar: #4fc47f;
+  --gel-agua:     #8fd0d6;  /* gel "agua" del ajolote (Steel Blue) — solo acento, nunca fondo de texto claro */
+
+  /* mezclas reales (multiply) cuando dos geles se solapan */
+  --mix-pr: #e23f12;  /* preparar × rodar */
+  --mix-pe: #4a9a25;  /* preparar × entregar */
+  --mix-re: #4a3d1f;  /* rodar × entregar */
+
+  /* sombras tintadas: color del gel × ~0.55, nunca negro puro */
+  --sh-opal:     rgba(60, 52, 38, .28);
+  --sh-preparar: #9c7a1f;
+  --sh-rodar:    #8e2a20;
+  --sh-entregar: #2b7a4a;
+
+  /* --- Ajolote --- */
+  --axo-skin: #f7c1cc;
+  --axo-skin-2: #f3aebd;
+  --axo-belly: #fbd5dc;
+  --axo-gill: #ff6440;
+  --axo-vein: #c8361f;
+  --axo-cheek: #ff8fa3;
+  --axo-eye: #1e1418;
+
+  /* --- Tipografía --- */
+  --f-sans: "Archivo", system-ui, sans-serif;
+  --f-mono: "JB Mono", ui-monospace, monospace;
+  --f-script: "Courier Prime", "Courier New", monospace;
+  --f-hand: "Marker", "Archivo", sans-serif;
+
+  /* --- Radios / trazos UI --- */
+  --r-card: 14px; --r-row: 8px; --r-pill: 999px;
+  --stroke: 2px; --stroke-icon: 2.5px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--ink-0); }
+.frame { position: relative; width: 1920px; height: 1080px; overflow: hidden; font-family: var(--f-sans); color: var(--opal); }
+.abs { position: absolute; }
+
+/* =========================================================
+   TIPOGRAFÍA (Archivo variable: wdth + wght)
+   ========================================================= */
+.t-slam   { font-weight: 900; font-stretch: 125%; font-size: 220px; line-height: .86; letter-spacing: -.035em; }   /* ¡ACCIÓN! */
+.t-hero   { font-weight: 850; font-stretch: 118%; font-size: 140px; line-height: .9;  letter-spacing: -.03em; }
+.t-head   { font-weight: 800; font-stretch: 112%; font-size: 84px;  line-height: .95; letter-spacing: -.02em; }
+.t-cond   { font-weight: 700; font-stretch: 62%;  font-size: 44px;  line-height: 1;   letter-spacing: .01em; text-transform: uppercase; } /* rótulos de gel */
+.t-body   { font-weight: 500; font-stretch: 100%; font-size: 30px;  line-height: 1.25; }
+.t-ui     { font-weight: 600; font-stretch: 100%; font-size: 26px;  line-height: 1.2; }
+.t-mono   { font-family: var(--f-mono); font-weight: 500; font-size: 20px; letter-spacing: .12em; text-transform: uppercase; }
+.t-mono-l { font-family: var(--f-mono); font-weight: 600; font-size: 26px; letter-spacing: .04em; }
+.t-hand   { font-family: var(--f-hand); font-size: 40px; line-height: 1; }
+
+/* =========================================================
+   GRANO (SVG feTurbulence, sin degradados)
+   Animar con GSAP: background-position por pasos (ver doc).
+   ========================================================= */
+.grain {
+  position: absolute; inset: -60px; pointer-events: none; z-index: 90;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='256' height='256'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='256' height='256' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 256px 256px;
+  mix-blend-mode: overlay; opacity: .32;
+}
+.grain.on-dark { opacity: .22; mix-blend-mode: soft-light; }
+/* motas de polvo (puntos sueltos) — capa de celuloide opcional */
+.dust { position: absolute; inset: 0; pointer-events: none; z-index: 91; opacity: .5; }
+
+/* fibra de papel (anisótropa) */
+.paper-fiber {
+  position: absolute; inset: 0; pointer-events: none; mix-blend-mode: multiply; opacity: .55;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012 .35' numOctaves='3' seed='3'/%3E%3CfeColorMatrix values='0 0 0 0 .55  0 0 0 0 .5  0 0 0 0 .42  0 0 0 .18 0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23f)'/%3E%3C/svg%3E");
+}
+
+/* =========================================================
+   CAJA DE LUZ (el "fondo" del tráiler)
+   ========================================================= */
+.desk { position: absolute; inset: 0; background: var(--ink-1); }                 /* tablero de la mesa */
+.lightbox {                                                                        /* metacrilato encendido con marco */
+  position: absolute; background: var(--opal);
+  outline: 18px solid var(--ink-2); outline-offset: 0;
+  box-shadow: 0 0 0 19px var(--ink-3), 0 40px 0 -10px rgba(0,0,0,.35);
+}
+/* bandas de tubo: rectángulos planos 2% más claros + blur estático (cacheable) */
+.tubes { position: absolute; inset: 0; overflow: hidden; }
+.tubes i { position: absolute; left: 0; right: 0; height: 120px; background: var(--opal-band); filter: blur(46px); }
+/* flood: la mesa entera teñida por un gel (escena de fase) */
+.flood { position: absolute; inset: 0; }
+.flood.preparar { background: var(--gel-preparar); }
+.flood.rodar    { background: var(--gel-rodar); }
+.flood.entregar { background: var(--gel-entregar); }
+.flood.escribir { background: var(--opal); }
+
+/* marcas de registro y regla (datos de la mesa) */
+.crop { position: absolute; width: 44px; height: 44px; }
+.crop::before, .crop::after { content: ""; position: absolute; background: currentColor; }
+.crop::before { left: 21px; top: 0; width: 2px; height: 44px; }
+.crop::after  { top: 21px; left: 0; height: 2px; width: 44px; }
+.crop b { position: absolute; inset: 10px; border: 2px solid currentColor; border-radius: 50%; }
+.ruler { position: absolute; height: 28px; color: currentColor;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='28'%3E%3Cpath d='M1 0v16M11 0v7M21 0v11M31 0v7' stroke='%23151519' stroke-width='2' opacity='.45'/%3E%3C/svg%3E");
+  background-repeat: repeat-x; }
+
+/* =========================================================
+   GELES (láminas translúcidas de borde duro)
+   ========================================================= */
+.gel {
+  position: absolute; mix-blend-mode: multiply;
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,.28);   /* canto pulido */
+}
+.gel::after {                                         /* reflejo especular plano (no degradado) */
+  content: ""; position: absolute; top: 0; bottom: 0; left: 18%; width: 9%;
+  background: rgba(255,255,255,.16); transform: skewX(-18deg);
+}
+.gel.preparar { background: var(--gel-preparar); }
+.gel.rodar    { background: var(--gel-rodar); }
+.gel.entregar { background: var(--gel-entregar); }
+.gel.escribir { background: var(--gel-escribir); }
+.gel.agua     { background: var(--gel-agua); }
+/* rótulo impreso en la esquina del gel (como en un muestrario Rosco/Lee) */
+.gel .lbl { position: absolute; left: 22px; bottom: 18px; color: var(--ink-1); mix-blend-mode: normal; }
+.gel .lbl small { display: block; font-family: var(--f-mono); font-size: 18px; letter-spacing: .12em; opacity: .75; }
+
+/* =========================================================
+   PAPEL DE GUION (retroiluminado)
+   ========================================================= */
+.page {
+  position: absolute; background: var(--paper-lit); color: var(--paper-ink);
+  font-family: var(--f-script); font-size: 27px; line-height: 1.45;
+  box-shadow: 0 2px 0 var(--sh-opal), 0 24px 40px -18px var(--sh-opal);
+  overflow: hidden;
+}
+.page .slug { font-weight: 700; text-transform: uppercase; position: relative; display: inline-block; }
+.page .char { margin-left: 34%; text-transform: uppercase; margin-top: 22px; }
+.page .dlg  { margin: 0 18% 0 20%; }
+/* subrayado-gel: la lámina se "posa" (scaleX 0→1) */
+.hl { position: relative; z-index: 0; padding: 0 6px; margin: 0 -6px; }
+.hl::before { content: ""; position: absolute; inset: 2px 0; z-index: -1; mix-blend-mode: multiply; transform-origin: left; transform: scaleX(var(--s, 1)); }
+.hl.y::before { background: var(--gel-preparar); }
+.hl.r::before { background: #f7a198; }   /* gel rodar al 55% sobre papel: legible 9.8:1 */
+.hl.g::before { background: #a7e2bf; }
+.hl.b::before { background: var(--gel-agua); }
+
+/* cinta de carrocero (anotaciones a rotulador) */
+.tape {
+  position: absolute; background: #e8dcb8; color: var(--ink-1); padding: 10px 22px 8px;
+  font-family: var(--f-hand); font-size: 34px; line-height: 1;
+  box-shadow: 0 2px 0 rgba(60,52,38,.25);
+  clip-path: polygon(0 4%, 3% 0, 97% 3%, 100% 0, 99% 96%, 96% 100%, 2% 97%, 0 100%);
+}
+
+/* =========================================================
+   UI SIMULADA (simplificada, iconográfica)
+   ========================================================= */
+.card { position: absolute; background: var(--ink-1); color: var(--paper); border-radius: var(--r-card);
+  box-shadow: 0 2px 0 rgba(0,0,0,.25), 0 30px 50px -24px var(--tint, rgba(0,0,0,.5)); }
+.card .hdr { display: flex; align-items: center; gap: 14px; padding: 22px 26px; border-bottom: var(--stroke) solid var(--ink-3); }
+.dot { width: 14px; height: 14px; border-radius: 50%; display: inline-block; flex: none; }
+.row { display: grid; align-items: center; gap: 14px; padding: 0 26px; height: 64px; border-bottom: 1px solid var(--ink-2); }
+.row:last-child { border-bottom: 0; }
+.pill { display: inline-flex; align-items: center; gap: 10px; height: 40px; padding: 0 18px; border-radius: var(--r-pill);
+  font-family: var(--f-mono); font-size: 18px; letter-spacing: .08em; text-transform: uppercase; font-weight: 600; }
+.pill.ok   { background: var(--gel-entregar); color: var(--ink-1); }
+.pill.warn { background: var(--gel-preparar); color: var(--ink-1); }
+.pill.miss { background: transparent; color: var(--gel-rodar); box-shadow: inset 0 0 0 2px var(--gel-rodar); }
+.seg { display: flex; gap: 6px; }
+.seg i { width: 46px; height: 14px; border-radius: 4px; background: var(--ink-3); display: block; }
+.seg i.y { background: var(--gel-preparar); } .seg i.g { background: var(--gel-entregar); } .seg i.r { background: var(--gel-rodar); }
+.ico { width: 34px; height: 34px; fill: none; stroke: currentColor; stroke-width: var(--stroke-icon); stroke-linecap: round; stroke-linejoin: round; }
+
+/* =========================================================
+   CELULOIDE (solo en momentos puntuales: apertura, ¡acción!, cierre)
+   ========================================================= */
+.perfs { position: absolute; top: 0; bottom: 0; width: 64px; background: var(--ink-0);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='54'%3E%3Crect x='18' y='12' width='28' height='30' rx='5' fill='%23f6f3ea' opacity='.9'/%3E%3C/svg%3E");
+  background-repeat: repeat-y; }
+.edge-code { position: absolute; font-family: var(--f-mono); font-size: 16px; letter-spacing: .3em; color: var(--gel-preparar); writing-mode: vertical-rl; }
+
+/* celda de estado alineada a columna */
+.cellbar { display: flex; justify-content: center; }
+.cellbar i { width: 96px; height: 16px; border-radius: 5px; background: var(--ink-3); display: block; }
+.cellbar i.y { background: var(--gel-preparar); } .cellbar i.g { background: var(--gel-entregar); } .cellbar i.r { background: var(--gel-rodar); }
+
+/* ajolote "recorte/pegatina": borde opal 6px + sombra dura tintada (SVG filter #sticker) */
+.axo.sticker svg { filter: url(#sticker); }
