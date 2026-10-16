@@ -13,8 +13,8 @@ import { cleanHexColor, cleanName, hexColorFor } from "@/components/canvas/prese
 import { saveScreenplayUpdate } from "@/lib/actions/screenplays";
 import {
   BLOCK_LABELS,
-  BLOCK_SHORTCUTS,
   BLOCK_TYPES,
+  shortcutLabel,
   ENTER_NEXT,
   TAB_NEXT,
   isBlockType,
@@ -23,8 +23,8 @@ import {
 } from "@/lib/screenplay/blocks";
 import { layoutScreenplay, pageStarts } from "@/lib/screenplay/layout";
 import {
-  PLACEHOLDERS,
   ScreenplayBehaviour,
+  placeholderFor,
   ensureSceneIdsTr,
   screenplayNodes,
   setActBreaks,
@@ -128,7 +128,7 @@ export default function ScreenplayEditor({
       ...screenplayNodes,
       ScreenplayBehaviour,
       Placeholder.configure({
-        placeholder: ({ node }) => (isBlockType(node.type.name) ? PLACEHOLDERS[node.type.name] : ""),
+        placeholder: placeholderFor, // gv2:motor — «Lo que dice LUCÍA…»
       }),
       Collaboration.configure({ document: ydoc }),
       CollaborationCaret.configure({ provider, user: { name: userName, color: myColor, userId } }),
@@ -141,7 +141,9 @@ export default function ScreenplayEditor({
         "aria-label": "Guion",
       },
     },
-  });
+    // gv2:motor — con dependencias, TipTap no vuelve a aplicar las opciones
+    // (y a repintar todo el documento) en cada render del componente.
+  }, [ydoc, provider]);
 
   // ------------------------------------------------------------ guardado
 
@@ -268,7 +270,12 @@ export default function ScreenplayEditor({
         if (!u) return;
         list.push({ clientId, name: cleanName(u.name), color: cleanHexColor(u.color), userId: String(u.userId ?? clientId) });
       });
-      setPeers([...new Map(list.map((p) => [p.userId, p])).values()]);
+      // gv2:motor — awareness avisa en cada movimiento del cursor: solo se
+      // actualiza si cambia quién está (si no, todo el editor se repintaba
+      // en cada tecla).
+      const next = [...new Map(list.map((p) => [p.userId, p])).values()];
+      const sig = (ps: Peer[]) => ps.map((p) => `${p.clientId}:${p.userId}:${p.name}:${p.color}`).join("|");
+      setPeers((prev) => (sig(prev) === sig(next) ? prev : next));
     };
     read();
     provider.awareness.on("change", read);
@@ -963,7 +970,8 @@ export default function ScreenplayEditor({
               {!current.type && <option value="">—</option>}
               {BLOCK_TYPES.map((t) => (
                 <option key={t} value={t}>
-                  {BLOCK_LABELS[t]} · {mod}+{BLOCK_SHORTCUTS[t]}
+                  {/* gv2:motor — Ctrl+Alt+n */}
+                  {BLOCK_LABELS[t]} · {shortcutLabel(t, isMac())}
                 </option>
               ))}
             </select>
