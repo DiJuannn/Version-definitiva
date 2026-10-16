@@ -18,10 +18,11 @@ import {
   updateSceneMeta,
   useWorkspace,
 } from "@/components/screenplay/workspace";
+import { screenTime } from "@/components/screenplay/editor-chrome";
 
-// Panel derecho del guion: la escena donde está el cursor. De qué va, quién
-// sale, sus referencias (las tuyas y las que propone la IA) y preguntas
-// para cuando no sabes cómo seguir.
+// «Esta escena» (antes «Notas»): la escena donde está el cursor. De qué va,
+// quién sale, sus referencias (las tuyas y las que propone la IA) y preguntas
+// para cuando no sabes cómo seguir. Sin jerga: «≈ 45 s» y no «6/8 pág.».
 export function ScenePanel() {
   const { screenplayId, maps, scenes, currentSid, userName, openCharacter, autoRefs, setAutoRefs, autoBusy } = useWorkspace();
   const refs = useYMap<Reference>(maps.refs);
@@ -46,18 +47,24 @@ export function ScenePanel() {
   return (
     <div className="space-y-8 text-[14px]">
       <section>
-        <p className="sp-label">{scene ? `Escena ${scene.number} · ${formatEighths(scene.eighths)} pág.` : "Antes de la primera escena"}</p>
+        <p className="sp-label" title={scene ? `${formatEighths(scene.eighths)} de página` : undefined}>
+          {scene ? `Escena ${scene.number} · ${screenTime(scene.eighths)} en pantalla` : "Antes de la primera escena"}
+        </p>
+        {scene && (
+          <p className="mt-1 font-[family-name:var(--font-courier)] text-[13px] leading-snug font-bold uppercase">{scene.heading || "Sin lugar ni hora"}</p>
+        )}
         {scene ? (
           <>
             <InlineText
               label="De qué va la escena"
               value={meta[scene.sid]?.synopsis ?? ""}
               onSave={(v) => updateSceneMeta(maps, scene.sid, { synopsis: v })}
-              placeholder="De qué va esta escena, en una frase"
+              placeholder="¿De qué va esta escena? Una frase: «Lucía decide robar la bici»"
               className="mt-2 text-[14.5px] leading-relaxed"
             />
             {scene.present.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-1.5">
+              <div className="mt-3 flex flex-wrap items-center gap-1.5">
+                <span className="mr-0.5 text-[12px] text-muted">Salen:</span>
                 {scene.present.map((n) => (
                   <button
                     key={n}
@@ -72,20 +79,22 @@ export function ScenePanel() {
             )}
           </>
         ) : (
-          <p className="mt-2 leading-relaxed text-muted">Escribe un encabezado («INT.» o «EXT.») y aquí verás todo lo de esa escena.</p>
+          <p className="mt-2 leading-relaxed text-muted">
+            Cada escena empieza con <b className="text-fg">Lugar y hora</b>: escribe «int.» (dentro) o «ext.» (fuera) al principio de una línea, y aquí verás todo lo de esa escena.
+          </p>
         )}
       </section>
 
       {doubts.length > 0 && (
         <section>
-          <h3 className="sp-label">Dudas de la revisión · {doubts.length}</h3>
+          <h3 className="sp-label">Dudas que vio el Asistente · {doubts.length}</h3>
           <ul className="mt-2 space-y-2.5">
             {doubts.map((d) => (
               <li key={d.id} className="border-l-2 border-dashed border-[var(--ai)] pl-3 leading-relaxed">
                 <span className="text-[12px] text-muted">{REVIEW_KINDS[d.kind]}</span>
                 <p>{d.text}</p>
                 <button type="button" onClick={() => resolve(d.id)} className="text-[12.5px] text-muted hover:text-fg">
-                  Resuelta
+                  Ya está resuelta
                 </button>
               </li>
             ))}
@@ -102,6 +111,9 @@ export function ScenePanel() {
             </button>
           )}
         </div>
+        {mine.length === 0 && suggestions.length === 0 && !adding && (
+          <p className="mt-1.5 text-[13px] leading-snug text-muted">Películas, fotos, canciones… lo que te inspire para esta escena.</p>
+        )}
         {adding && (
           <div className="mt-3">
             <ReferenceForm anchor={anchor} onDone={() => setAdding(false)} />

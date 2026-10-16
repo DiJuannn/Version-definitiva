@@ -11,17 +11,8 @@ import * as Y from "yjs";
 import { createClient } from "@/lib/supabase/client";
 import { cleanHexColor, cleanName, hexColorFor } from "@/components/canvas/presence";
 import { saveScreenplayUpdate } from "@/lib/actions/screenplays";
-import {
-  BLOCK_LABELS,
-  BLOCK_TYPES,
-  shortcutLabel,
-  ENTER_NEXT,
-  TAB_NEXT,
-  isBlockType,
-  type BlockType,
-  type ScreenplayBlock,
-} from "@/lib/screenplay/blocks";
-import { layoutScreenplay, pageStarts } from "@/lib/screenplay/layout";
+import { isBlockType, type BlockType, type ScreenplayBlock } from "@/lib/screenplay/blocks";
+import { layoutScreenplay, pageStarts, scriptLength } from "@/lib/screenplay/layout";
 import {
   ScreenplayBehaviour,
   placeholderFor,
@@ -57,6 +48,29 @@ import { OpeningsPanel, StartHelp } from "@/components/screenplay/StartHelp";
 import { CharacterDrawer } from "@/components/screenplay/CharacterDrawer";
 import { AssistantDrawer } from "@/components/screenplay/AssistantDrawer";
 import { SettingsDialog, type SettingsProps } from "@/components/screenplay/SettingsDialog";
+import { Sheet } from "@/components/ui/Sheet";
+import { useMediaQuery } from "@/components/ui/use-media-query";
+import {
+  ExportMenu,
+  KeyHints,
+  KeyboardBar,
+  LineTypeMenu,
+  PanelTabs,
+  PanelsMenu,
+  SaveDot,
+  SceneMenu,
+} from "@/components/screenplay/EditorToolbar";
+import {
+  exportItems,
+  isPanelId,
+  isSidePanel,
+  panelInfo,
+  saveIndicator,
+  sceneScrollTop,
+  type ExportItem,
+  type PanelId,
+  type SaveState,
+} from "@/components/screenplay/editor-chrome";
 import {
   REMOTE_ORIGIN,
   SupabaseYjsProvider,
@@ -77,7 +91,6 @@ type Props = {
   linkedProject: { id: string; name: string } | null;
 };
 
-type SaveState = "saved" | "dirty" | "saving" | "error";
 type Peer = { clientId: number; name: string; color: string; userId: string };
 
 const SAVE_DEBOUNCE_MS = 1200;
@@ -139,6 +152,9 @@ export default function ScreenplayEditor({
         spellcheck: "true",
         lang: "es",
         "aria-label": "Guion",
+        "aria-multiline": "true",
+        // M11: Tab cambia el tipo de línea; así se sabe cómo salir.
+        "aria-describedby": "sp-editor-help",
       },
     },
     // gv2:motor — con dependencias, TipTap no vuelve a aplicar las opciones
@@ -242,18 +258,38 @@ export default function ScreenplayEditor({
     };
   }, [save, saveState]);
 
-  // Exportar siempre lo último: se guarda antes de abrir el PDF/Fountain.
-  useEffect(() => {
-    const onExport = async (e: Event) => {
-      const href = (e as CustomEvent<string>).detail;
+  // Exportar siempre lo último: se guarda antes. El PDF se abre en otra
+  // pestaña (se abre ya, en el clic, para que el navegador no la bloquee); el
+  // Fountain se descarga aquí mismo, sin dejar una pestaña en blanco (M5).
+  const exportScript = useCallback(
+    async (item: ExportItem) => {
+      if (item.mode === "download") {
+        await save();
+        // La respuesta es «attachment»: se descarga con su nombre y la página
+        // no se mueve.
+        const a = document.createElement("a");
+        a.href = item.href;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        return;
+      }
       const w = window.open("about:blank", "_blank");
       await save();
-      if (w) w.location.href = href;
-      else window.location.href = href;
+      if (w) w.location.href = item.href;
+      else window.location.href = item.href;
+    },
+    [save],
+  );
+  useEffect(() => {
+    // Otras piezas (el Asistente, la Idea…) pueden pedir exportar con el evento.
+    const onExport = (e: Event) => {
+      const href = (e as CustomEvent<string>).detail;
+      void exportScript({ id: "pdf-a4", label: "", detail: "", href, mode: href.includes("/fountain") ? "download" : "tab" });
     };
     window.addEventListener("screenplay:export", onExport);
     return () => window.removeEventListener("screenplay:export", onExport);
-  }, [save]);
+  }, [exportScript]);
 
   // ------------------------------------------------------------ conexión y personas
 
@@ -288,7 +324,7 @@ export default function ScreenplayEditor({
   const current = useEditorState({
     editor,
     selector: ({ editor: e }) => {
-      if (!e) return { type: null as BlockType | null, sid: null as string | null };
+      if (!e) return { type: null as BlockType | null, sid: null as string | null, empty: true };
       const { $from } = e.state.selection;
       const name = $from.depth >= 1 ? $from.node(1).type.name : $from.parent.type.name;
       // Escena actual: el último encabezado antes del cursor.
@@ -301,9 +337,9 @@ export default function ScreenplayEditor({
           break;
         }
       }
-      return { type: isBlockType(name) ? name : null, sid };
+      return { type: isBlockType(name) ? name : null, sid, empty: $from.parent.textContent.length === 0 };
     },
-  }) ?? { type: null, sid: null };
+  }) ?? { type: null, sid: null, empty: true };
 
   const [blocks, setBlocks] = useState<ScreenplayBlock[]>([]);
   const [pageCount, setPageCount] = useState(0);
@@ -334,6 +370,8 @@ export default function ScreenplayEditor({
   }, [editor]);
 
   const scenes = useMemo(() => scenesFromBlocks(blocks, "A4", { untitled: true }), [blocks]);
+  // M6: la misma medida que el PDF y que «Rodaje».
+  const length = useMemo(() => scriptLength(blocks), [blocks]);
   const isEmpty = editor !== null && !blocks.some((b) => b.text.trim());
   const characters = useMemo(() => characterNames(blocks), [blocks]);
   const maps = useMemo(() => storyMaps(ydoc), [ydoc]);
@@ -366,16 +404,16 @@ export default function ScreenplayEditor({
 
   const [step, setStepState] = useState<Step>(isStep(initialStep) ? initialStep : "guion");
 
-  // Junto a la página, un solo panel a la vez (o ninguno): Estructura, Ideas
-  // sueltas o Notas de la escena. Por defecto, solo la página. Se recuerda
+  // Junto a la página, un solo panel a la vez (o ninguno): Tu historia, Ideas
+  // sueltas, Esta escena o Rodaje. Por defecto, solo la página. Se recuerda
   // cómo se dejó, y Ctrl/⌘ + «.» lo muestra u oculta.
-  type Panel = RailTab | "notas" | "radiografia";
+  type Panel = PanelId;
   const [panel, setPanelState] = useState<Panel | null>(initialStep === "escaleta" ? "estructura" : null);
   const lastPanel = useRef<Panel>("estructura");
   useEffect(() => {
     try {
       const saved = localStorage.getItem("sp-panel");
-      const valid = saved === "estructura" || saved === "ideas" || saved === "notas" || saved === "radiografia";
+      const valid = isPanelId(saved);
       if (valid) lastPanel.current = saved;
       // En pantallas estrechas el panel tapa la página: no se reabre solo.
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -416,8 +454,11 @@ export default function ScreenplayEditor({
   const railOpen = panel === "estructura" || panel === "ideas";
   const railTab: RailTab = panel === "ideas" ? "ideas" : "estructura";
   const notesOpen = panel === "notas";
-  const radioOpen = panel === "radiografia";
-  const sideOpen = notesOpen || radioOpen;
+  // B6: «Esta escena» y «Rodaje» van en columna solo en pantallas anchas; en
+  // las demás, como hoja inferior (antes quedaban al final del guion).
+  const wide = useMediaQuery("(min-width: 1280px)");
+  const sideOpen = isSidePanel(panel) && wide;
+  const sheetPanel = isSidePanel(panel) && !wide ? panel : null;
   const openRail = useCallback((tab: RailTab) => setPanel(tab), [setPanel]);
   const [openingsOpen, setOpeningsOpen] = useState(false);
   const openOpenings = useCallback(() => setOpeningsOpen(true), []);
@@ -431,9 +472,8 @@ export default function ScreenplayEditor({
 
   const [characterOpen, setCharacterOpen] = useState<string | null>(null);
   const [assistantOpen, setAssistantOpen] = useState(false);
-  // Modo foco: la página sola. La lista de escenas se abre como menú y las
-  // notas de la escena como columna, solo cuando se piden (y se recuerda).
-  const [scenesOpen, setScenesOpen] = useState(false);
+  // Modo foco: la página sola. La lista de escenas se abre como menú y los
+  // paneles junto a la página, solo cuando se piden (y se recuerda).
   const [settingsOpen, setSettingsOpen] = useState(false);
   const openCharacter = useCallback((name: string) => {
     setAssistantOpen(false);
@@ -458,6 +498,8 @@ export default function ScreenplayEditor({
     [editor],
   );
 
+  const headerRef = useRef<HTMLElement>(null);
+  const toolbarRef = useRef<HTMLDivElement>(null);
   const goToScene = useCallback(
     (sid: string) => {
       if (!editor) return;
@@ -465,9 +507,15 @@ export default function ScreenplayEditor({
       requestAnimationFrame(() => {
         const pos = scenePos(sid);
         if (pos === null) return;
-        editor.chain().focus().setTextSelection(pos + 1).run();
+        editor.chain().focus(undefined, { scrollIntoView: false }).setTextSelection(pos + 1).run();
         const dom = editor.view.nodeDOM(pos);
-        if (dom instanceof HTMLElement) dom.scrollIntoView({ block: "center", behavior: "smooth" });
+        if (!(dom instanceof HTMLElement)) return;
+        // M1: el encabezado arriba, justo debajo de la cabecera y la barra
+        // fijas (no pegado al borde de abajo ni tapado por ellas).
+        const chromeBottom = toolbarRef.current?.getBoundingClientRect().bottom ?? headerRef.current?.getBoundingClientRect().bottom ?? 0;
+        const top = sceneScrollTop({ elementTop: dom.getBoundingClientRect().top, scrollY: window.scrollY, chromeBottom });
+        const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        window.scrollTo({ top, behavior: reduce ? "auto" : "smooth" });
       });
     },
     [editor, scenePos],
@@ -714,45 +762,54 @@ export default function ScreenplayEditor({
     autoBusy,
   };
 
-  const setType = useCallback(
-    (type: BlockType) => {
-      editor?.chain().focus().setNode(type).run();
-    },
-    [editor],
-  );
-
-  const mod = isMac() ? "⌘" : "Ctrl";
-  const status =
-    connection === "offline"
-      ? { label: "Sin conexión", tone: "text-warn" }
-      : saveState === "error"
-        ? { label: saveError ?? "Error al guardar", tone: "text-danger" }
-        : saveState === "saving"
-          ? { label: "Guardando…", tone: "text-muted" }
-          : saveState === "dirty"
-            ? { label: "Sin guardar", tone: "text-muted" }
-            : { label: "Guardado", tone: "text-muted" };
+  const mac = isMac();
+  const mod = mac ? "⌘" : "Ctrl";
+  const status = saveIndicator(saveState, connection, saveError);
+  const prodNote =
+    linkedProject && prodSync !== "idle"
+      ? prodSync === "syncing"
+        ? "pasando al proyecto…"
+        : prodSync === "ok"
+          ? "proyecto al día"
+          : "proyecto sin actualizar"
+      : null;
   const stepIndex = STEPS.findIndex((s) => s.id === step);
-  const exportTo = (href: string) => window.dispatchEvent(new CustomEvent("screenplay:export", { detail: href }));
+  const exports = useMemo(() => exportItems(screenplayId, length.printedPages), [length.printedPages, screenplayId]);
+  // P8: en el móvil, la barra cabe en una fila (escena · tipo de línea · ···).
+  const narrow = useMediaQuery("(max-width: 767px)");
+  // B7: encima del teclado del móvil (sin Tab), una barra con los tipos.
+  const touchKeyboard = useMediaQuery("(max-width: 767px), (pointer: coarse) and (max-width: 1279px)");
+  const openSettings = useCallback(() => setSettingsOpen(true), []);
+  const sidePanel = notesOpen ? <ScenePanel /> : <Radiography production={production} onOpenSettings={openSettings} />;
 
   return (
     <WorkspaceProvider value={workspace}>
-      <header className="sp-chrome sticky top-0 z-30 border-b border-[var(--line)]">
-        <div className="flex h-16 items-center gap-2 px-3 sm:gap-4 sm:px-4 lg:px-7">
+      <header ref={headerRef} className="sp-chrome sticky top-0 z-30 border-b border-[var(--line)]">
+        <div className="flex h-14 items-center gap-2 px-3 sm:h-16 sm:gap-4 sm:px-4 lg:px-7">
           <Link href="/app/guiones" className="flex shrink-0 items-center gap-2.5 text-muted hover:text-fg" title="Volver a Guiones">
             <AjoloteLogo className="h-5 w-auto text-fg" />
             <span className="font-mono text-[11px] tracking-[0.2em] uppercase">
               ←<span className="hidden sm:inline"> Guiones</span>
             </span>
           </Link>
-          <button
-            type="button"
-            onClick={() => setSettingsOpen(true)}
-            title="Ajustes del guion"
-            className="hidden min-w-0 truncate text-[17px] font-black tracking-tight hover:text-[var(--accent)] md:block"
-          >
-            {title}
-          </button>
+          <div className="hidden min-w-0 items-center gap-1.5 md:flex">
+            <button
+              type="button"
+              onClick={openSettings}
+              className="min-w-0 truncate text-[17px] font-black tracking-tight hover:text-[var(--accent)]"
+            >
+              {title}
+            </button>
+            <button
+              type="button"
+              onClick={openSettings}
+              aria-label="Ajustes del guion"
+              title="Ajustes del guion: título, formato, autoría y proyecto vinculado"
+              className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-[15px] text-muted hover:bg-white/5 hover:text-fg"
+            >
+              ⚙
+            </button>
+          </div>
 
           <nav aria-label="Pasos del guion" className="mx-auto flex items-center gap-1">
             {STEPS.map((s, i) => (
@@ -772,7 +829,7 @@ export default function ScreenplayEditor({
             ))}
           </nav>
 
-          <div className="flex shrink-0 items-center gap-2 text-[13px] sm:gap-3">
+          <div className="flex shrink-0 items-center gap-1.5 text-[13px] sm:gap-3">
             <ul className="hidden -space-x-1.5 sm:flex" aria-label="Escribiendo ahora">
               <li
                 title={`${userName} (tú)`}
@@ -792,50 +849,36 @@ export default function ScreenplayEditor({
                 </li>
               ))}
             </ul>
-            <span className={`hidden items-center gap-1.5 lg:flex ${status.tone}`} role="status" aria-live="polite">
-              <span className="h-1.5 w-1.5 rounded-full bg-current" />
-              {status.label}
-              {linkedProject && prodSync !== "idle" && (
-                <span className={prodSync === "error" ? "text-warn" : "text-muted"} title={`Proyecto vinculado: ${linkedProject.name}`}>
-                  · {prodSync === "syncing" ? "pasando al proyecto…" : prodSync === "ok" ? "proyecto al día" : "proyecto sin actualizar"}
+            <span
+              className={`hidden items-center gap-1.5 lg:flex ${status.tone === "error" ? "text-danger" : status.tone === "warn" ? "text-warn" : "text-muted"}`}
+              role="status"
+              aria-live="polite"
+              title={status.label}
+            >
+              <span className={`h-1.5 w-1.5 rounded-full ${status.tone === "ok" ? "bg-[var(--success)]" : "bg-current"}`} />
+              {status.tone === "error" ? status.label : status.short}
+              {prodNote && (
+                <span className={prodSync === "error" ? "text-warn" : "text-muted"} title={`Proyecto vinculado: ${linkedProject?.name}`}>
+                  · {prodNote}
                 </span>
               )}
             </span>
-            <details className="relative">
-              <summary className="sp-btn cursor-pointer list-none" aria-label="Exportar">
-                <span aria-hidden className="sm:hidden">⤓</span>
-                <span className="hidden sm:inline">Exportar</span>
-              </summary>
-              <div className="absolute right-0 z-40 mt-1 w-44 overflow-hidden rounded-lg border border-[var(--line)] bg-[#131313] py-1 shadow-lg">
-                {(
-                  [
-                    ["PDF (A4)", `/api/pdf/guion/${screenplayId}?size=A4`],
-                    ["PDF (Carta)", `/api/pdf/guion/${screenplayId}?size=LETTER`],
-                    ["Fountain", `/api/guiones/${screenplayId}/fountain`],
-                  ] as const
-                ).map(([label, href]) => (
-                  <button
-                    key={href}
-                    type="button"
-                    onClick={(e) => {
-                      (e.currentTarget.closest("details") as HTMLDetailsElement).open = false;
-                      exportTo(href);
-                    }}
-                    className="block w-full px-3.5 py-2 text-left hover:bg-white/5"
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </details>
-            <button type="button" onClick={() => (assistantOpen ? setAssistantOpen(false) : openAssistant())} className="sp-ai-btn">
+            {/* M12: en móvil y tableta, el punto de guardado (al tocarlo dice qué pasa). */}
+            <div className="lg:hidden">
+              <SaveDot label={status.label} short={status.short} tone={status.tone} extra={prodNote && linkedProject ? `${linkedProject.name}: ${prodNote}` : null} />
+            </div>
+            <ExportMenu items={exports} onExport={(it) => void exportScript(it)} />
+            {/* gv2:ayudas — botón «?» de atajos (ShortcutsSheet, Ctrl+/): va aquí, antes del Asistente. */}
+            {/* /gv2:ayudas */}
+            <button type="button" onClick={() => (assistantOpen ? setAssistantOpen(false) : openAssistant())} className="sp-ai-btn h-8 !py-0">
               <span className="hidden sm:inline">Asistente IA</span>
               <span className="sm:hidden">IA</span>
               {pendingCount > 0 && <span className="rounded-full bg-[var(--ai)] px-1.5 text-[11px] text-white">{pendingCount}</span>}
             </button>
           </div>
         </div>
-        {syncNote && <p className="border-t border-[var(--line)] px-7 py-1.5 text-[12.5px] text-[var(--ai)]">{syncNote}</p>}
+        {syncNote && <p className="border-t border-[var(--line)] px-4 py-1.5 text-[12.5px] text-[var(--ai)] lg:px-7">{syncNote}</p>}
+        {status.tone === "error" && <p className="border-t border-[var(--line)] px-4 py-1.5 text-[12.5px] text-danger lg:hidden">{status.label}</p>}
       </header>
 
       {step === "idea" && (
@@ -850,18 +893,18 @@ export default function ScreenplayEditor({
         className={
           step === "guion"
             ? `sp-enter grid gap-6 px-4 pb-24 lg:px-7 ${
-                railOpen ? "xl:grid-cols-[300px_minmax(0,1fr)]" : sideOpen ? "xl:grid-cols-[minmax(0,1fr)_320px]" : ""
+                railOpen ? "xl:grid-cols-[300px_minmax(0,1fr)]" : sideOpen ? "xl:grid-cols-[minmax(0,1fr)_340px]" : ""
               }`
             : "hidden"
         }
       >
         {railOpen && (
-          <button type="button" aria-label="Cerrar el panel" onClick={() => setPanel(null)} className="fixed inset-x-0 top-16 bottom-0 z-30 bg-black/30 xl:hidden" />
+          <button type="button" aria-label="Cerrar el panel" onClick={() => setPanel(null)} className="fixed inset-x-0 top-14 bottom-0 z-30 bg-black/30 sm:top-16 xl:hidden" />
         )}
         {railOpen && (
           <aside
-            aria-label="La historia"
-            className="fixed top-16 bottom-0 left-0 z-40 w-[min(320px,88vw)] bg-[#f5f5f3] shadow-[20px_0_40px_-20px_rgba(0,0,0,0.3)] xl:sticky xl:z-10 xl:h-[calc(100vh-4rem)] xl:w-auto xl:shadow-none"
+            aria-label={panelInfo(railTab).label}
+            className="fixed top-14 bottom-0 left-0 z-40 w-[min(320px,88vw)] bg-[#f5f5f3] shadow-[20px_0_40px_-20px_rgba(0,0,0,0.3)] sm:top-16 xl:sticky xl:z-10 xl:h-[calc(100vh-4rem)] xl:w-auto xl:shadow-none"
           >
             <div className="h-full border-r border-[var(--line)] xl:-ml-7 xl:pl-3">
               <StoryRail tab={railTab} onClose={() => setPanel(null)} />
@@ -869,146 +912,78 @@ export default function ScreenplayEditor({
           </aside>
         )}
         <div className="min-w-0">
-          <div className="sticky top-16 z-20 flex flex-wrap items-center gap-3 border-b border-[var(--line)] bg-[#f5f5f3]/95 py-2 backdrop-blur">
+          <div
+            ref={toolbarRef}
+            className="@container sticky top-14 z-20 -mx-4 flex items-center gap-2 border-b border-[var(--line)] bg-[#f5f5f3]/95 px-4 py-2 backdrop-blur sm:top-16 sm:gap-3 lg:mx-0 lg:px-0"
+          >
             {/* Qué se ve junto a la página: uno a la vez, o solo la página. */}
-            <div
-              role="group"
-              aria-label="Paneles junto a la página"
-              title={`Mostrar u ocultar el panel: ${mod} + .`}
-              className="inline-flex overflow-hidden rounded-md border border-[var(--line)] bg-white text-[13px]"
-            >
-              {(
-                [
-                  ["estructura", "Estructura"],
-                  ["ideas", "Ideas sueltas"],
-                  ["notas", "Notas"],
-                  ["radiografia", "Radiografía"],
-                ] as const
-              ).map(([id, label], i) => (
-                <button
-                  key={id}
-                  type="button"
-                  aria-pressed={panel === id}
-                  onClick={() => togglePanel(id)}
-                  className={`px-2.5 py-1 transition-colors ${i ? "border-l border-[var(--line)]" : ""} ${
-                    panel === id ? "bg-[#1c1b19] text-white" : "text-muted hover:text-fg"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
+            {narrow ? null : <PanelTabs panel={panel} onToggle={togglePanel} mod={mod} />}
             {/* Escenas: un menú, no una columna fija. */}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setScenesOpen((v) => !v)}
-                aria-expanded={scenesOpen}
-                className="flex items-center gap-2 rounded-md border border-[var(--line)] bg-white px-2.5 py-1 text-[13px] hover:border-[var(--accent)]"
-              >
-                {scenes.length === 0 ? (
-                  "Sin escenas"
-                ) : (
-                  <>
-                    <span className="font-semibold">
-                      Escena {scenes.find((s) => s.sid === current.sid)?.number ?? "—"}
-                    </span>
-                    <span className="text-muted">de {scenes.length}</span>
-                    {doubtScenes.size > 0 && (
-                      <span title={`${doubtScenes.size} escenas con dudas`} className="h-1.5 w-1.5 rounded-full bg-[var(--ai)]" />
-                    )}
-                  </>
-                )}
-                <span aria-hidden className="text-[10px] text-muted">▾</span>
-              </button>
-              {scenesOpen && (
-                <div className="absolute left-0 z-40 mt-1.5 w-[22rem] max-w-[calc(100vw-2rem)] rounded-xl bg-white p-1.5 shadow-[0_0_0_1px_var(--line),0_18px_40px_-16px_rgba(0,0,0,0.35)]">
-                  {scenes.length === 0 ? (
-                    <p className="p-3 text-[13px] leading-relaxed text-muted">
-                      Escribe «int.» o «ext.» al principio de una línea para empezar una escena.
-                    </p>
-                  ) : (
-                    <ol className="max-h-[60vh] overflow-y-auto">
-                      {scenes.map((s) => (
-                        <li key={s.sid}>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              goToScene(s.sid);
-                              setScenesOpen(false);
-                            }}
-                            aria-current={s.sid === current.sid}
-                            className={`flex w-full gap-2 rounded-lg px-2.5 py-1.5 text-left text-[12.5px] leading-snug transition-colors ${
-                              s.sid === current.sid ? "bg-[var(--accent)]/10 text-fg" : "text-muted hover:bg-black/[0.04] hover:text-fg"
-                            }`}
-                          >
-                            <span className="w-5 shrink-0 text-right font-[family-name:var(--font-courier)] font-bold text-[var(--accent)]">{s.number}</span>
-                            <span className="line-clamp-2 flex-1 font-[family-name:var(--font-courier)]">{s.heading || "Sin encabezado"}</span>
-                            {doubtScenes.has(s.sid) && (
-                              <span title="Tiene dudas de la revisión" className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--ai)]" />
-                            )}
-                            {sceneRefs.get(s.sid) ? (
-                              <span title={`${sceneRefs.get(s.sid)} referencias`} className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent)]" />
-                            ) : null}
-                          </button>
-                        </li>
-                      ))}
-                    </ol>
-                  )}
-                </div>
-              )}
-            </div>
-            <label className="sr-only" htmlFor="sp-block-type">
-              Tipo de línea
-            </label>
-            <select
-              id="sp-block-type"
-              value={current.type ?? ""}
-              onChange={(e) => isBlockType(e.target.value) && setType(e.target.value)}
-              className="rounded-md border border-[var(--line)] bg-white px-2 py-1 text-[13px] outline-none"
-            >
-              {!current.type && <option value="">—</option>}
-              {BLOCK_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {/* gv2:motor — Ctrl+Alt+n */}
-                  {BLOCK_LABELS[t]} · {shortcutLabel(t, isMac())}
-                </option>
-              ))}
-            </select>
+            <SceneMenu scenes={scenes} currentSid={current.sid} doubtScenes={doubtScenes} sceneRefs={sceneRefs} onGo={goToScene} compact={narrow} />
+            <LineTypeMenu editor={editor} type={current.type} mac={mac} compact={narrow} />
             {current.type && (
-              <span className="hidden text-[12.5px] text-muted md:inline">
-                <kbd className="sp-kbd">Tab</kbd> {BLOCK_LABELS[TAB_NEXT[current.type]]}
-                <span className="mx-2 text-[var(--line)]">|</span>
-                <kbd className="sp-kbd">Enter</kbd> {BLOCK_LABELS[ENTER_NEXT[current.type]]}
+              <span className="hidden @min-[1040px]:inline">
+                <KeyHints type={current.type} empty={current.empty} />
               </span>
             )}
-            <span className="ml-auto text-[12.5px] text-muted">
-              <span className="font-semibold text-fg">{pageCount}</span> {pageCount === 1 ? "página" : "páginas"} · ≈{pageCount} min
+            <span className="ml-auto hidden text-[12.5px] whitespace-nowrap text-muted @min-[620px]:inline" title="Medido como el PDF: 1 página ≈ 1 minuto en pantalla">
+              {length.label}
             </span>
+            {narrow && (
+              <span className="ml-auto">
+                <PanelsMenu panel={panel} onToggle={togglePanel} onSettings={openSettings} />
+              </span>
+            )}
           </div>
-          <div className="sp-desk" onMouseDown={() => scenesOpen && setScenesOpen(false)}>
-            <div className={`sp-paper ${isEmpty ? "sp-paper-empty" : ""}`}>
+          {/* gv2:ayudas — NextStep («¿Y ahora qué?»): tarjeta junto al papel. Su montaje va aquí. */}
+          {/* /gv2:ayudas */}
+          <div className="sp-desk">
+            <div className={`sp-paper relative ${isEmpty ? "sp-paper-empty" : ""}`}>
               <EditorContent editor={editor} />
+              {/* gv2:ayudas — LineGuide (guía de la línea, al margen del papel, con coordsAtPos): va aquí. */}
+              {/* /gv2:ayudas */}
               {isEmpty && <StartHelp onWrite={() => editor?.chain().focus("start").run()} />}
             </div>
           </div>
+          <p id="sp-editor-help" className="sr-only">
+            Guion. Enter crea la línea siguiente; Tab cambia el tipo de la línea actual. Para salir del guion con el teclado, pulsa Esc y luego Tab.
+          </p>
           {/* gv2:tira — «Tu historia», acoplada abajo de la columna del guion */}
           <StoryBar production={production} format={settings.format} />
           {/* /gv2:tira */}
         </div>
 
         {sideOpen && (
-          <aside className="pt-6">
+          <aside aria-label={panelInfo(notesOpen ? "notas" : "radiografia").label} className="pt-6">
             <div className="xl:sticky xl:top-24 xl:max-h-[calc(100vh-7rem)] xl:overflow-y-auto xl:pr-1">
-              {notesOpen ? <ScenePanel /> : <Radiography production={production} />}
+              <div className="mb-5 flex items-start gap-3">
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-[15px] leading-tight font-bold">{panelInfo(notesOpen ? "notas" : "radiografia").label}</h2>
+                  <p className="mt-0.5 text-[12.5px] leading-snug text-muted">{panelInfo(notesOpen ? "notas" : "radiografia").description}</p>
+                </div>
+                <button type="button" onClick={() => setPanel(null)} aria-label="Cerrar el panel" title="Cerrar el panel" className="-mt-0.5 text-[17px] leading-none text-muted hover:text-fg">
+                  ×
+                </button>
+              </div>
+              {sidePanel}
             </div>
           </aside>
         )}
       </div>
 
+      {/* B6: en pantallas estrechas, «Esta escena» y «Rodaje» como hoja inferior. */}
+      {sheetPanel && step === "guion" && (
+        <Sheet title={panelInfo(sheetPanel).label} subtitle={panelInfo(sheetPanel).description} onClose={() => setPanel(null)}>
+          {sidePanel}
+        </Sheet>
+      )}
+      {touchKeyboard && step === "guion" && !sheetPanel && <KeyboardBar editor={editor} type={current.type} />}
+
       {openingsOpen && <OpeningsPanel onClose={() => setOpeningsOpen(false)} />}
       {characterOpen && <CharacterDrawer name={characterOpen} onClose={() => setCharacterOpen(null)} />}
       {assistantOpen && <AssistantDrawer onClose={() => setAssistantOpen(false)} />}
+      {/* gv2:ayudas — ShortcutsSheet y demás hojas de ayuda: se montan aquí. */}
+      {/* /gv2:ayudas */}
       <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} settings={settings} />
     </WorkspaceProvider>
   );
