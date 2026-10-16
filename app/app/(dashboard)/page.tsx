@@ -5,7 +5,10 @@ import { CalendarEventType, TaskStatus } from "@/lib/generated/prisma";
 import { NewProjectWizard } from "@/components/NewProjectWizard";
 import { NewProjectPanel } from "@/components/NewProjectPanel";
 import { ProjectPoster } from "@/components/ProjectPoster";
-import { ShootSlate } from "@/components/ShootSlate";
+import { Clapperboard } from "@/components/Clapperboard";
+import { getScheduleData } from "@/lib/schedule-data";
+import { computeDayTimeline, dayWarnings, formatDuration, formatHHMM, sunriseMinutes } from "@/lib/schedule-plan";
+import { liveForecast, REST_MIN_HOURS } from "@/lib/live-day";
 import { FilmStrip, PHASE_COLORS } from "@/components/FilmStrip";
 import { COVER_SHADOW } from "@/components/screenplay/cover-shadow";
 import { courierPrime } from "@/lib/screenplay/font";
@@ -19,18 +22,6 @@ const EVENT_LABELS: Record<CalendarEventType, string> = {
   DELIVERY: "Entrega",
   OTHER: "Evento",
 };
-// Color de cada cosa de la agenda, con los de las fases: rodaje en rojo,
-// preparación en amarillo, entregas y plazos en verde.
-const EVENT_COLOR: Record<string, string> = {
-  Rodaje: "var(--phase-3)",
-  Ensayo: "var(--phase-2)",
-  Reunión: "var(--phase-2)",
-  Plazo: "var(--phase-4)",
-  Entrega: "var(--phase-4)",
-  Evento: "var(--phase-1)",
-  Tarea: "var(--phase-1)",
-};
-
 function greeting(hour: number): string {
   if (hour < 6) return "Buenas noches";
   if (hour < 12) return "Buenos días";
@@ -78,7 +69,7 @@ export default async function DashboardPage() {
         date: true,
         callTime: true,
         projectId: true,
-        project: { select: { name: true } },
+        project: { select: { name: true, director: true } },
         callSheet: { select: { generalCallTime: true } },
         scenes: { orderBy: { order: "asc" }, select: { scene: { select: { number: true, location: { select: { name: true } } } } } },
         _count: { select: { shots: true } },
@@ -137,6 +128,48 @@ export default async function DashboardPage() {
     : 0;
   const dayCount = nextShoot ? await prisma.shootingDay.count({ where: { projectId: nextShoot.projectId } }) : 0;
 
+  // El día del próximo rodaje con su orden: fin previsto, avisos (luz,
+  // jornada larga), descanso del reparto antes del día siguiente y la hoja.
+  const schedule = nextShoot ? await getScheduleData(nextShoot.projectId) : null;
+  const sDayIdx = schedule && nextShoot ? schedule.days.findIndex((d) => d.id === nextShoot.id) : -1;
+  const sDay = schedule && sDayIdx >= 0 ? schedule.days[sDayIdx] : null;
+  const timelineOf = (d: NonNullable<typeof sDay>) =>
+    computeDayTimeline({ date: new Date(d.dateISO), callTime: d.callTime, prepMin: d.prepMin, blocks: d.blocks, lat: d.lat, lng: d.lng });
+  const tl = sDay ? timelineOf(sDay) : null;
+  const hasWork = Boolean(sDay?.blocks.some((b) => b.shots.length > 0 || b.scene));
+  const nextDay = schedule && sDay ? schedule.days[sDayIdx + 1] : undefined;
+  const consecutive = nextDay && sDay && daysBetween(new Date(sDay.dateISO), new Date(nextDay.dateISO)) === 1 ? nextDay : null;
+  const forecast =
+    tl && schedule && hasWork
+      ? liveForecast({ timeline: tl, now: null, workdayHours: schedule.workdayHours, next: consecutive ? { timeline: timelineOf(consecutive) } : null })
+      : null;
+  type Alert = { tone: "warn" | "ok" | "danger"; text: string; detail?: string; href?: string; cta?: string };
+  const alerts: Alert[] = [];
+  if (sDay && schedule && nextShoot) {
+    const base = `/app/${nextShoot.projectId}`;
+    for (const r of forecast?.rest.slice(0, 1) ?? []) {
+      const who = schedule.characters[r.characterId];
+      alerts.push({
+        tone: "warn",
+        text: `${who?.actor ?? who?.name ?? "Alguien del reparto"} tiene ${formatDuration(Math.max(0, r.restMinutes))} de descanso entre jornadas`,
+        detail: `convenio: ${REST_MIN_HOURS} h`,
+        href: `${base}/plan-de-rodaje?dia=${sDay.id}`,
+        cta: "Ver el plan",
+      });
+    }
+    if (tl && hasWork) {
+      for (const w of dayWarnings(tl, { workdayHours: schedule.workdayHours, hasShots: true }).slice(0, 2)) {
+        alerts.push({ tone: w.tone, text: w.text, detail: w.detail, href: `${base}/plan-de-rodaje?dia=${sDay.id}`, cta: "Ver el plan" });
+      }
+    }
+    if (!sDay.sheet.exists) alerts.push({ tone: "warn", text: "Falta la hoja de llamada", href: `${base}/call-sheets/${sDay.id}`, cta: "Prepararla" });
+    else if (sDay.sheet.outdated) alerts.push({ tone: "warn", text: "La hoja de llamada no recoge el último cambio del plan", href: `${base}/call-sheets/${sDay.id}`, cta: "Revisarla" });
+    else if (sDay.sheet.shared) alerts.push({ tone: "ok", text: "Hoja de llamada enviada al equipo", href: `${base}/call-sheets/${sDay.id}` });
+    else alerts.push({ tone: "warn", text: "Hoja de llamada hecha, sin enviar", href: `${base}/call-sheets/${sDay.id}`, cta: "Enviarla" });
+  }
+  if (overdue) alerts.push({ tone: "danger", text: overdue === 1 ? "1 tarea vencida" : `${overdue} tareas vencidas`, href: "/app/tareas", cta: "Ver tareas" });
+  const sunrise = sDay ? sunriseMinutes(new Date(sDay.dateISO), sDay.lat ?? undefined, sDay.lng ?? undefined) : null;
+
   // La frase de arriba: lo más importante que viene.
   const lead = projects[0];
   const headline =
@@ -151,12 +184,7 @@ export default async function DashboardPage() {
   const subline =
     nextIn !== null && nextIn <= 14 && nextShoot
       ? [
-          `${shootProject}, ${nextShoot.date.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", timeZone: "Europe/Madrid" })}`,
-          callTime ? ` a las ${callTime}` : "",
-          place ? ` en ${place.toLowerCase()}` : "",
-          ".",
-          nextShoot.callSheet ? "" : " Falta la hoja de llamada.",
-          overdue ? ` Y ${overdue === 1 ? "hay 1 tarea vencida" : `hay ${overdue} tareas vencidas`}.` : "",
+          nextShoot.date.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long", timeZone: "Europe/Madrid" }),
         ].join("")
       : `${progress[0].label}.${overdue ? ` ${overdue === 1 ? "Hay 1 tarea vencida" : `Hay ${overdue} tareas vencidas`}.` : ""}`;
 
@@ -176,32 +204,79 @@ export default async function DashboardPage() {
     <div className={`pb-12 ${courierPrime.variable}`}>
       {/* ------------------------------------------------ qué toca */}
       <section className="taller-ink relative -mt-8 mx-[calc(50%-50vw)] border-b border-line bg-bg px-[calc(50vw-50%)] text-fg sm:-mt-12">
-        <div className="grid gap-10 py-12 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end lg:gap-16">
+        <div className="grid gap-10 py-12 lg:grid-cols-[minmax(0,1fr)_400px] lg:items-center lg:gap-16">
           <div className="min-w-0">
-            <p className="font-mono text-[11px] tracking-[0.18em] text-accent uppercase">
-              {greeting(now.getHours())}
-              {profile.fullName ? `, ${profile.fullName.split(" ")[0]}` : ""} ·{" "}
-              {now.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long", timeZone: "Europe/Madrid" })}
+            <p className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[11px] tracking-[0.18em] text-muted uppercase">
+              <span>
+                {greeting(now.getHours())}
+                {profile.fullName ? `, ${profile.fullName.split(" ")[0]}` : ""}
+              </span>
+              {nextShoot && nextIn !== null && nextIn <= 14 && (
+                <>
+                  <span aria-hidden>·</span>
+                  <span className="text-fg">{shootProject}</span>
+                  <span aria-hidden>·</span>
+                  <span className="flex items-center gap-1.5 text-[var(--phase-3)]">
+                    <span aria-hidden className="h-2 w-2 rounded-full bg-current" />
+                    Rodar · día {dayIndex + 1} de {dayCount}
+                  </span>
+                </>
+              )}
             </p>
-            <h1 className="poster-title mt-3 text-[64px] sm:text-[96px]">
+            <h1 className="poster-title mt-3 text-[64px] sm:text-[112px]">
               {headline[0]}
               <br />
               <span style={{ color: nextIn !== null && nextIn <= 14 ? "var(--phase-3)" : PHASE_COLORS[progress[0].stage - 1] }}>
                 {headline[1]}
               </span>
             </h1>
-            <p className="mt-5 max-w-2xl font-sans text-[17px] leading-relaxed text-fg/80 first-letter:uppercase">{subline}</p>
+            <p className="mt-4 max-w-2xl font-sans text-[26px] leading-tight font-light text-fg first-letter:uppercase sm:text-[30px]">{subline}</p>
+            {nextShoot && nextIn !== null && nextIn <= 14 && (place || sunrise !== null) && (
+              <p className="mt-2 font-mono text-[12.5px] text-muted">
+                {place && <>◎ {place}</>}
+                {place && sunrise !== null && " · "}
+                {sunrise !== null && `amanecer ${formatHHMM(sunrise)}`}
+                {tl?.sunset != null && ` · puesta ${formatHHMM(tl.sunset)}`}
+              </p>
+            )}
+            {alerts.length > 0 && (
+              <ul className="mt-6 max-w-[38rem] space-y-2">
+                {alerts.slice(0, 3).map((a) => (
+                  <li
+                    key={a.text}
+                    className={`flex items-center gap-3 rounded-[var(--r-md)] border px-3.5 py-2.5 font-sans text-[14.5px] ${
+                      a.tone === "ok" ? "border-line bg-ink-1" : a.tone === "danger" ? "border-danger/50 bg-ink-1" : "border-warn/50 bg-ink-1"
+                    }`}
+                  >
+                    <span
+                      aria-hidden
+                      className={`grid h-6 w-6 shrink-0 place-items-center rounded-[var(--r-xs)] text-[13px] font-bold text-ink-0 ${
+                        a.tone === "ok" ? "bg-success" : a.tone === "danger" ? "bg-danger" : "bg-warn"
+                      }`}
+                    >
+                      {a.tone === "ok" ? "✓" : "!"}
+                    </span>
+                    <span className="min-w-0 flex-1 leading-snug">
+                      {a.text}
+                      {a.detail && <span className="text-muted"> ({a.detail})</span>}
+                    </span>
+                    {a.href && a.cta && (
+                      <Link href={a.href} className="shrink-0 text-[13px] font-semibold text-fg underline decoration-line underline-offset-4 hover:decoration-fg">
+                        {a.cta}
+                      </Link>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
             <p className="mt-6 flex flex-wrap gap-3">
               {nextShoot && nextIn !== null && nextIn <= 14 ? (
                 <>
-                  <Link
-                    href={nextShoot.callSheet ? `/app/${nextShoot.projectId}/plan-de-rodaje?dia=${nextShoot.id}` : `/app/${nextShoot.projectId}/call-sheets/${nextShoot.id}`}
-                    className="btn btn-primary"
-                  >
-                    {nextShoot.callSheet ? "Ver el orden de rodaje →" : "Preparar la hoja de llamada →"}
+                  <Link href={`/app/${nextShoot.projectId}/plan-de-rodaje/directo?dia=${nextShoot.id}`} className="btn btn-primary">
+                    {nextIn === 0 ? "Abrir el día de rodaje" : "Ver el día de rodaje"}
                   </Link>
-                  <Link href={`/app/${nextShoot.projectId}`} className="btn btn-outline">
-                    Ir al proyecto
+                  <Link href={`/app/${nextShoot.projectId}/call-sheets/${nextShoot.id}`} className="btn btn-outline">
+                    Hoja de llamada
                   </Link>
                 </>
               ) : (
@@ -212,13 +287,21 @@ export default async function DashboardPage() {
             </p>
           </div>
           {nextShoot ? (
-            <ShootSlate
-              eyebrow={`${nextShoot.project.name} · día ${dayIndex + 1} de ${dayCount}`}
-              date={nextShoot.date}
-              callTime={callTime}
-              scenes={nextShoot.scenes.map((s) => s.scene.number).join(" · ")}
+            <Clapperboard
+              production={nextShoot.project.name}
+              day={dayIndex + 1}
+              dayCount={dayCount}
+              scenes={nextShoot.scenes.length}
               shots={nextShoot._count.shots}
-              warning={nextShoot.callSheet ? null : "Falta la hoja de llamada"}
+              callTime={callTime}
+              place={place ?? null}
+              director={nextShoot.project.director}
+              live={{ href: `/app/${nextShoot.projectId}/plan-de-rodaje/directo?dia=${nextShoot.id}`, on: nextIn === 0 }}
+              meta={[
+                `${nextShoot.scenes.length} ${nextShoot.scenes.length === 1 ? "escena" : "escenas"}`,
+                `${nextShoot._count.shots} planos`,
+                ...(tl && hasWork ? [`fin previsto ${formatHHMM(tl.wrap)}`, `${formatDuration(tl.workMinutes)} de jornada`] : []),
+              ]}
             />
           ) : (
             <aside className="rounded-md border border-dashed border-line p-6">
@@ -240,33 +323,49 @@ export default async function DashboardPage() {
             Agenda →
           </Link>
         </div>
-        <ol className="mt-5 grid grid-cols-2 border-t border-line sm:grid-cols-4 lg:grid-cols-7">
-          {week.map(({ date, items }, i) => (
-            <li key={i} className="min-h-28 border-b border-line py-3.5 pr-3 lg:border-r lg:border-b-0 lg:pl-3.5 lg:first:pl-0 lg:last:border-r-0">
-              <p className={`poster-title text-[30px] ${i === 0 ? "text-accent" : ""}`}>
-                {date.getDate()}
-                <span className="ml-1.5 font-mono text-[10px] font-normal tracking-[0.14em] text-muted">
-                  {date.toLocaleDateString("es-ES", { weekday: "short", timeZone: "Europe/Madrid" }).replace(".", "").toUpperCase()}
-                  {i === 0 ? " · HOY" : ""}
-                </span>
-              </p>
-              {items.slice(0, 3).map((it) => (
-                <Link
-                  key={it.id}
-                  href={it.href}
-                  className="mt-2.5 block border-l-[3px] pl-2 font-sans text-[13px] leading-snug font-semibold hover:text-accent"
-                  style={{ borderColor: EVENT_COLOR[it.kind] ?? "var(--phase-1)" }}
-                >
-                  {it.title}
-                  <span className="block text-[11.5px] font-normal text-muted">
-                    {it.kind}
-                    {it.sub ? ` · ${it.sub}` : ""}
-                  </span>
-                </Link>
-              ))}
-            </li>
-          ))}
-        </ol>
+        {/* La semana como un trozo de película: un fotograma por día. Los días
+            con algo son copia positiva (papel), el de rodaje lleva la gelatina
+            roja y los libres quedan en negativo. */}
+        <div className="mt-5 overflow-x-auto rounded-[var(--r-sm)] bg-[#2b211c] px-2.5 py-4">
+          <div aria-hidden className="mx-0.5 mb-2 h-2 min-w-[980px] bg-[repeating-linear-gradient(90deg,#0b0b0d_0_9px,transparent_9px_20px)] lg:min-w-0" />
+          <ol className="grid min-w-[980px] grid-cols-7 gap-2 lg:min-w-0">
+            {week.map(({ date, items }, i) => {
+              const shoot = items.some((it) => it.kind === "Rodaje");
+              const tone = shoot ? "bg-[var(--phase-3)] text-ink-0" : items.length ? "bg-[#ece8dc] text-[#1c1b19]" : "bg-ink-0 text-fg";
+              return (
+                <li key={i} className={`relative flex min-h-36 flex-col rounded-[3px] p-3 ${tone} ${i === 0 ? "ring-2 ring-fg ring-offset-2 ring-offset-[#2b211c]" : ""}`}>
+                  <p className="flex items-baseline justify-between gap-2">
+                    <span className="font-mono text-[10.5px] tracking-[0.14em] uppercase opacity-70">
+                      {date.toLocaleDateString("es-ES", { weekday: "short", timeZone: "Europe/Madrid" }).replace(".", "")}
+                    </span>
+                    <span className="poster-title text-[30px]">{date.getDate()}</span>
+                  </p>
+                  {i === 0 && (
+                    <span className="mt-1 w-fit rounded-[2px] bg-fg px-1.5 py-px font-mono text-[10px] font-semibold tracking-[0.12em] text-ink-0">
+                      HOY
+                    </span>
+                  )}
+                  <div className="mt-auto space-y-2 pt-3">
+                    {items.length === 0 ? (
+                      <p className="font-mono text-[11px] opacity-50">— libre</p>
+                    ) : (
+                      items.slice(0, 2).map((it) => (
+                        <Link key={it.id} href={it.href} className="block font-sans text-[13px] leading-snug font-semibold hover:underline">
+                          {it.kind === "Rodaje" ? `Rodaje · ${it.title}` : it.title}
+                          <span className="block text-[11.5px] font-normal opacity-75">
+                            {it.kind === "Rodaje" ? (it.sub ?? "") : `${it.kind}${it.sub ? ` · ${it.sub}` : ""}`}
+                          </span>
+                        </Link>
+                      ))
+                    )}
+                    {items.length > 2 && <p className="font-mono text-[10.5px] opacity-60">+{items.length - 2} más</p>}
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+          <div aria-hidden className="mx-0.5 mt-2 h-2 min-w-[980px] bg-[repeating-linear-gradient(90deg,#0b0b0d_0_9px,transparent_9px_20px)] lg:min-w-0" />
+        </div>
       </section>
 
       {/* ------------------------------------------------ cartelera */}

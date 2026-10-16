@@ -1307,3 +1307,19 @@ body:has(.sp-light) > div[aria-hidden].fixed {
   font-stretch: 78%;
   letter-spacing: 0;
 }
+
+/* La claqueta de Inicio se cierra una vez al entrar: el palo baja de
+   abierto a cerrado en 12 fotogramas y se queda entreabierto. */
+@keyframes clap {
+  0% { transform: rotate(-16deg); }
+  55% { transform: rotate(0deg); }
+  70% { transform: rotate(-3deg); }
+  100% { transform: rotate(-5deg); }
+}
+.clap-stick {
+  transform: rotate(-5deg);
+  animation: clap var(--dur-reveal) var(--e-out) calc(var(--f) * 6) backwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .clap-stick { animation: none; }
+}
