@@ -646,7 +646,7 @@ function Board(props: Props) {
           sub: s.heading,
           type: "scene" as const,
           label: s.number,
-          onBoard: sceneCardBy.has(s.id),
+          onBoard: cards.some((x) => x.type === "scene" && (x.refId === s.id || x.label?.toLowerCase() === s.number.toLowerCase())),
         }))
       : projectTab === "characters"
         ? lookup.characters.map((c) => ({
