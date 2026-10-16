@@ -86,3 +86,55 @@ export async function deleteCrewMemberCore(projectId: string, crewMemberId: stri
     where: { id: crewMemberId, projectId },
   });
 }
+
+const norm = (s: string) =>
+  s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().replace(/\s+/g, " ").trim();
+
+// Desglose sobre el texto de la escena: marcar «claqueta» como atrezzo en la
+// escena 3. Si ya existe un elemento con ese nombre y categoría en el
+// proyecto, se reutiliza (el mismo objeto en varias escenas es una sola cosa
+// que conseguir); si no, se crea.
+export async function markElementInSceneCore(
+  projectId: string,
+  sceneId: string,
+  input: { name: string; category: string },
+): Promise<{ id: string } | null> {
+  const name = input.name.trim().replace(/\s+/g, " ").slice(0, 120);
+  if (!name || !VALID_CATEGORIES.has(input.category)) return null;
+  const scene = await prisma.scene.findFirst({ where: { id: sceneId, projectId }, select: { id: true } });
+  if (!scene) return null;
+
+  const category = input.category as BreakdownCategory;
+  const candidates = await prisma.breakdownElement.findMany({
+    where: { projectId, category },
+    select: { id: true, name: true },
+  });
+  const element =
+    candidates.find((c) => norm(c.name) === norm(name)) ??
+    (await prisma.breakdownElement.create({ data: { projectId, category, name }, select: { id: true, name: true } }));
+
+  await prisma.sceneBreakdownElement.upsert({
+    where: { sceneId_breakdownElementId: { sceneId, breakdownElementId: element.id } },
+    create: { sceneId, breakdownElementId: element.id },
+    update: {},
+  });
+  return { id: element.id };
+}
+
+export async function linkElementToSceneCore(projectId: string, sceneId: string, elementId: string, on: boolean) {
+  const [scene, element] = await Promise.all([
+    prisma.scene.findFirst({ where: { id: sceneId, projectId }, select: { id: true } }),
+    prisma.breakdownElement.findFirst({ where: { id: elementId, projectId }, select: { id: true } }),
+  ]);
+  if (!scene || !element) return false;
+  if (on) {
+    await prisma.sceneBreakdownElement.upsert({
+      where: { sceneId_breakdownElementId: { sceneId, breakdownElementId: elementId } },
+      create: { sceneId, breakdownElementId: elementId },
+      update: {},
+    });
+  } else {
+    await prisma.sceneBreakdownElement.deleteMany({ where: { sceneId, breakdownElementId: elementId } });
+  }
+  return true;
+}

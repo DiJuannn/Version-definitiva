@@ -55,6 +55,15 @@ export function formatDuration(minutes: number): string {
 // coordenadas — algoritmo de la NOAA, precisión de un par de minutos, de
 // sobra para avisar de "esto es de noche y aún hay luz".
 export function sunsetMinutes(date: Date, lat = 40.4168, lng = -3.7038): number | null {
+  return sunMinutes(date, lat, lng, "set");
+}
+
+// Salida del sol, con el mismo cálculo.
+export function sunriseMinutes(date: Date, lat = 40.4168, lng = -3.7038): number | null {
+  return sunMinutes(date, lat, lng, "rise");
+}
+
+function sunMinutes(date: Date, lat: number, lng: number, which: "rise" | "set"): number | null {
   const rad = Math.PI / 180;
   const start = Date.UTC(date.getUTCFullYear(), 0, 0);
   const dayOfYear = Math.floor((Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()) - start) / 86400000);
@@ -68,7 +77,7 @@ export function sunsetMinutes(date: Date, lat = 40.4168, lng = -3.7038): number 
   const cosH = Math.cos(90.833 * rad) / (Math.cos(lat * rad) * Math.cos(decl)) - Math.tan(lat * rad) * Math.tan(decl);
   if (cosH < -1 || cosH > 1) return null;
   const ha = Math.acos(cosH) / rad;
-  const utcMinutes = 720 - 4 * (lng - ha) - eqTime;
+  const utcMinutes = 720 - 4 * (which === "set" ? lng - ha : lng + ha) - eqTime;
   // Hora de Madrid: +2 en horario de verano (último domingo de marzo a último de octubre), +1 el resto.
   const y = date.getUTCFullYear();
   const lastSunday = (month: number) => {

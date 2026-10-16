@@ -19,19 +19,21 @@ import {
   type Suggestion,
 } from "@/lib/screenplay/story";
 
-// Los tres pasos del guion. Ninguno es obligatorio: se puede empezar por
-// cualquiera y saltar de uno a otro cuando se quiera.
-export type Step = "idea" | "escaleta" | "guion";
+// Dos pasos: la Idea (lo que hay antes del guion) y el Guion (la página, con
+// la estructura y las ideas sueltas al lado). Ninguno es obligatorio.
+export type Step = "idea" | "guion";
 
 export const STEPS: { id: Step; label: string }[] = [
   { id: "idea", label: "Idea" },
-  { id: "escaleta", label: "Escaleta" },
   { id: "guion", label: "Guion" },
 ];
 
+// «escaleta» era el paso intermedio: los enlaces viejos abren el Guion.
 export function isStep(v: unknown): v is Step {
-  return v === "idea" || v === "escaleta" || v === "guion";
+  return v === "idea" || v === "guion";
 }
+
+export type RailTab = "estructura" | "ideas";
 
 export type Workspace = {
   screenplayId: string;
@@ -46,7 +48,14 @@ export type Workspace = {
   linkedProject: { id: string; name: string } | null;
   goToScene: (sid: string) => void;
   moveScene: (sid: string, toIndex: number) => void;
-  addScene: (heading: string, synopsis: string, beforeSid: string | null) => void;
+  // Escena nueva (encabezado, y la idea de la que sale como nota) delante de
+  // `beforeSid` o al final. Devuelve su sid.
+  addScene: (heading: string, synopsis: string, beforeSid: string | null, note?: string) => string | null;
+  // Una nota al final de la escena en la que está el cursor.
+  insertNote: (text: string) => boolean;
+  pageCount: number;
+  openRail: (tab: RailTab) => void;
+  openOpenings: () => void;
   flushSave: () => Promise<boolean>;
   setStep: (s: Step) => void;
   openCharacter: (name: string) => void;

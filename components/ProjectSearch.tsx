@@ -3,12 +3,54 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { searchProject } from "@/lib/actions/search";
+import { openScenePeek } from "@/components/ScenePeek";
+import { getPaletteContext, type PaletteContext } from "@/lib/actions/palette";
 import { FESTIVALS } from "@/lib/festivals";
 import { HIT_GROUP_LABELS, hitPath, type SearchHit } from "@/lib/search-hits";
 import { matchTools, wordsMatch } from "@/lib/tool-search";
 import { TOOL_GROUPS } from "@/lib/tool-groups";
 
-type Row = { key: string; group: string; title: string; subtitle?: string | null; href: string };
+// `peek`: una escena se abre en su ficha rápida, sin salir de donde estás.
+type Row = { key: string; group: string; title: string; subtitle?: string | null; href: string; peek?: string };
+
+const fmtDay = (iso: string) =>
+  new Date(iso).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "short", timeZone: "Europe/Madrid" });
+
+// «Lo que toca»: acciones según cómo va el proyecto (la próxima jornada, la
+// primera escena sin desglosar o sin planos) y las de siempre.
+function paletteActions(base: string, ctx: PaletteContext | null): Row[] {
+  const rows: Row[] = [];
+  const day = ctx?.nextDay;
+  if (day) {
+    rows.push({
+      key: "a-day",
+      group: "Lo que toca",
+      title: `Orden de rodaje del día ${day.index}`,
+      subtitle: fmtDay(day.date),
+      href: `${base}/plan-de-rodaje?dia=${day.id}`,
+    });
+    rows.push({
+      key: "a-sheet",
+      group: "Lo que toca",
+      title: day.hasSheet ? `Hoja de llamada del día ${day.index}` : `Preparar la hoja de llamada del día ${day.index}`,
+      subtitle: day.hasSheet ? "Revisarla o compartirla" : "Todavía no está hecha",
+      href: `${base}/call-sheets/${day.id}`,
+    });
+  }
+  const unbroken = ctx?.scenes.find((sc) => !sc.broken);
+  if (unbroken)
+    rows.push({ key: "a-desg", group: "Lo que toca", title: `Desglosar la escena ${unbroken.number}`, subtitle: unbroken.slug, href: `${base}/desglose?escena=${unbroken.id}` });
+  const unplanned = ctx?.scenes.find((sc) => !sc.planned);
+  if (unplanned)
+    rows.push({ key: "a-plan", group: "Lo que toca", title: `Planificar la escena ${unplanned.number}`, subtitle: unplanned.slug, href: `${base}/shot-list?escena=${unplanned.id}` });
+  rows.push(
+    { key: "a-tec", group: "Acciones", title: "Imprimir el guion técnico", subtitle: "Planos, encuadre, audio y duración", href: `${base}/shot-list?vista=tecnico` },
+    { key: "a-cons", group: "Acciones", title: "Ver lo que hay que conseguir", subtitle: "Todo lo desglosado, por categorías", href: `${base}/desglose?vista=lista` },
+    { key: "a-claq", group: "Acciones", title: "Abrir la claqueta", subtitle: "Para apuntar tomas en el rodaje", href: `${base}/claqueta` },
+    { key: "a-task", group: "Acciones", title: "Ver las tareas del proyecto", subtitle: "Lo pendiente, por fecha", href: `${base}/tareas` },
+  );
+  return rows;
+}
 
 const CHIP =
   "flex min-h-10 items-center gap-1.5 px-0.5 pb-2.5 pt-1 font-mono text-[11px] tracking-widest uppercase transition-colors text-muted hover:text-fg";
@@ -47,6 +89,19 @@ export function ProjectSearch({ projectId }: { projectId: string }) {
     if (open) inputRef.current?.focus();
   }, [open]);
 
+  // Al abrir: lo que toca y las escenas (para saltar a una por su número).
+  const [ctx, setCtx] = useState<PaletteContext | null>(null);
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    getPaletteContext(projectId)
+      .then((c) => !cancelled && setCtx(c))
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [open, projectId]);
+
   // Contenido del proyecto: tras una pausa al teclear, y descartando respuestas viejas.
   useEffect(() => {
     if (!open) return;
@@ -72,7 +127,19 @@ export function ProjectSearch({ projectId }: { projectId: string }) {
 
   const q = query.trim();
   const rows = useMemo<Row[]>(() => {
-    if (q.length < 2) return [];
+    const actions = paletteActions(base, ctx);
+    if (!q) return actions;
+    // Un número (o «esc 4») salta a esa escena.
+    const num = /^(?:esc(?:ena)?\.?\s*)?(\d+[a-z]?)$/i.exec(q)?.[1]?.toLowerCase();
+    const sceneRows: Row[] = num
+      ? (ctx?.scenes ?? [])
+          .filter((sc) => sc.number.toLowerCase().startsWith(num))
+          .sort((a, b) => Number(b.number.toLowerCase() === num) - Number(a.number.toLowerCase() === num))
+          .slice(0, 5)
+          .map((sc) => ({ key: `n-${sc.id}`, group: "Escenas", title: `Escena ${sc.number}`, subtitle: sc.slug, href: `${base}/guion/${sc.id}`, peek: sc.id }))
+      : [];
+    if (q.length < 2) return sceneRows;
+    const matchingActions = actions.filter((a) => wordsMatch(`${a.title} ${a.subtitle ?? ""}`, q)).map((a) => ({ ...a, group: "Acciones" }));
     const tools = matchTools(
       TOOL_GROUPS.flatMap((g) => g.tools),
       q,
@@ -98,14 +165,16 @@ export function ProjectSearch({ projectId }: { projectId: string }) {
       title: h.title,
       subtitle: h.subtitle,
       href: `${base}/${hitPath(h)}`,
+      peek: h.kind === "scene" ? h.id : undefined,
     }));
-    return [...tools, ...content, ...festivals];
-  }, [q, found, base]);
-  const waiting = q.length >= 2 && found.q !== q;
+    return [...sceneRows, ...matchingActions, ...tools, ...content.filter((c) => !sceneRows.some((r) => r.peek === c.peek && c.peek)), ...festivals];
+  }, [q, found, base, ctx]);
+  const waiting = q.length >= 2 && found.q !== q && !/^(?:esc(?:ena)?\.?\s*)?\d+[a-z]?$/i.test(q);
 
   function go(row: Row) {
     setOpen(false);
-    router.push(row.href);
+    if (row.peek) openScenePeek(row.peek);
+    else router.push(row.href);
   }
 
   function onInputKey(e: React.KeyboardEvent) {
@@ -144,7 +213,7 @@ export function ProjectSearch({ projectId }: { projectId: string }) {
             if (e.target === e.currentTarget) setOpen(false);
           }}
         >
-          <div role="dialog" aria-modal="true" aria-label="Buscar en el proyecto" className="w-full max-w-xl border border-accent/50 bg-bg shadow-2xl shadow-black/70">
+          <div role="dialog" aria-modal="true" aria-label="Buscar en el proyecto" className="w-full max-w-xl overflow-hidden rounded-xl border border-line bg-bg shadow-2xl shadow-black/70">
             <div className="flex items-center gap-3 border-b border-line px-4">
               <input
                 ref={inputRef}
@@ -154,22 +223,17 @@ export function ProjectSearch({ projectId }: { projectId: string }) {
                   setActive(0);
                 }}
                 onKeyDown={onInputKey}
-                placeholder="Busca una herramienta, una escena, un personaje…"
+                placeholder="Qué quieres hacer: una herramienta, una escena (4), un personaje…"
                 aria-label="Buscar"
-                className="min-w-0 flex-1 bg-transparent py-4 font-sans text-base outline-none placeholder:text-muted"
+                className="min-w-0 flex-1 bg-transparent py-4 font-sans text-base outline-none placeholder:text-muted focus-visible:outline-none"
               />
               <button type="button" onClick={() => setOpen(false)} className="font-mono text-[10px] tracking-widest text-muted uppercase hover:text-fg">
                 Esc
               </button>
             </div>
 
-            <div className="max-h-[55vh] overflow-y-auto" role="listbox" aria-label="Resultados">
-              {q.length < 2 ? (
-                <p className="px-4 py-6 font-sans text-sm text-muted">
-                  Escribe al menos dos letras. Prueba con «presupuesto», «hoja de llamada», el nombre de un personaje o de un
-                  sitio.
-                </p>
-              ) : rows.length === 0 ? (
+            <div className="max-h-[55vh] overflow-y-auto pb-2" role="listbox" aria-label="Resultados">
+              {rows.length === 0 ? (
                 <p className="px-4 py-6 font-sans text-sm text-muted">
                   {searching || waiting ? "Buscando…" : `No encuentro nada para «${q}».`}
                 </p>
@@ -177,7 +241,7 @@ export function ProjectSearch({ projectId }: { projectId: string }) {
                 rows.map((row, i) => (
                   <div key={row.key}>
                     {(i === 0 || rows[i - 1].group !== row.group) && (
-                      <p className="px-4 pt-3 pb-1 font-mono text-[10px] tracking-widest text-accent uppercase">{row.group}</p>
+                      <p className="px-4 pt-3 pb-1 font-mono text-[10px] tracking-widest text-muted uppercase">{row.group}</p>
                     )}
                     <button
                       type="button"
@@ -185,18 +249,29 @@ export function ProjectSearch({ projectId }: { projectId: string }) {
                       aria-selected={i === active}
                       onMouseEnter={() => setActive(i)}
                       onClick={() => go(row)}
-                      className={`block w-full border-l-2 px-4 py-2.5 text-left transition-colors ${
-                        i === active ? "border-accent bg-accent/10" : "border-transparent"
+                      className={`mx-2 flex w-[calc(100%-1rem)] items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors ${
+                        i === active ? "bg-accent/12" : ""
                       }`}
                     >
-                      <span className="block font-display text-sm font-bold">{row.title}</span>
-                      {row.subtitle && <span className="block truncate font-mono text-xs text-muted">{row.subtitle}</span>}
+                      <span className="min-w-0 flex-1">
+                        <span className="block font-sans text-[14.5px] font-semibold">{row.title}</span>
+                        {row.subtitle && <span className="block truncate font-sans text-[12.5px] text-muted">{row.subtitle}</span>}
+                      </span>
+                      {i === active && (
+                        <span className="shrink-0 font-mono text-[10px] tracking-widest text-muted uppercase">{row.peek ? "↵ ficha" : "↵ abrir"}</span>
+                      )}
                     </button>
                   </div>
                 ))
               )}
               {waiting && rows.length > 0 && <p className="px-4 py-2 font-mono text-[10px] text-muted">Buscando más…</p>}
             </div>
+            <p className="flex flex-wrap gap-x-4 border-t border-line px-4 py-2 font-mono text-[10px] tracking-widest text-muted uppercase">
+              <span>↑↓ elegir</span>
+              <span>↵ abrir</span>
+              <span>4 → escena 4</span>
+              <span className="ml-auto">Ctrl/⌘ K</span>
+            </p>
           </div>
         </div>
       )}

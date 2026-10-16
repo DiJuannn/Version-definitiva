@@ -249,12 +249,23 @@ async function runImport(
   // claqueta y las localizaciones de la organización. Los personajes que
   // vuelvan a salir con el mismo nombre recuperan a su actor.
   const actorByCharacter = new Map<string, string>();
+  // La ficha de Taller y la del guion vinculado también vuelven con el nombre.
+  const sheetByCharacter = new Map<string, { sheet: Prisma.InputJsonValue | undefined; profile: Prisma.InputJsonValue | undefined; screenplayId: string | null }>();
   if (replace) {
     const previous = await db.character.findMany({
-      where: { projectId, actorId: { not: null } },
-      select: { name: true, actorId: true },
+      where: { projectId },
+      select: { name: true, actorId: true, sheet: true, profile: true, screenplayId: true },
     });
-    for (const c of previous) if (c.actorId) actorByCharacter.set(c.name.trim().toLowerCase(), c.actorId);
+    for (const c of previous) {
+      const key = c.name.trim().toLowerCase();
+      if (c.actorId) actorByCharacter.set(key, c.actorId);
+      if (c.sheet || c.profile || c.screenplayId)
+        sheetByCharacter.set(key, {
+          sheet: (c.sheet ?? undefined) as Prisma.InputJsonValue | undefined,
+          profile: (c.profile ?? undefined) as Prisma.InputJsonValue | undefined,
+          screenplayId: c.screenplayId,
+        });
+    }
 
     // Copia automática de lo que se va a borrar (se puede restaurar desde Guion).
     await createScriptBackup(db, projectId, "script-replace");
@@ -287,6 +298,7 @@ async function runImport(
         name: character.name,
         notes: cleanText(character.notes),
         actorId: actorByCharacter.get(key) ?? null,
+        ...sheetByCharacter.get(key),
       },
     });
     characterIdByName.set(key, created.id);
@@ -387,19 +399,18 @@ async function runImport(
         ).id;
     if (!existingSceneId) existingSceneIdByNumber.set(scene.number, sceneId);
 
-    // Igual que al editar una escena a mano: se borran los vínculos
-    // anteriores y se vuelven a crear con la propuesta nueva, en vez de
-    // acumularlos.
-    await db.sceneCharacter.deleteMany({ where: { sceneId } });
+    // Volver a importar suma lo que trae el guion, sin quitar lo que se marcó
+    // a mano en el desglose (personajes añadidos, objetos, vestuario…).
     if (characterIds.length > 0) {
       await db.sceneCharacter.createMany({
         data: characterIds.map((characterId) => ({ sceneId, characterId })),
+        skipDuplicates: true,
       });
     }
-    await db.sceneBreakdownElement.deleteMany({ where: { sceneId } });
     if (propIds.length > 0) {
       await db.sceneBreakdownElement.createMany({
         data: propIds.map((breakdownElementId) => ({ sceneId, breakdownElementId })),
+        skipDuplicates: true,
       });
     }
   }

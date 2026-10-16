@@ -60,7 +60,7 @@ export function isUnlocked(access: Record<string, ToolAccess>, href: string): bo
 }
 
 export const STAGES = [
-  { id: 1, label: "Idea", hint: "Guion y personajes" },
+  { id: 1, label: "Escribir", hint: "Guion y personajes" },
   { id: 2, label: "Preparar", hint: "Plan, presupuesto y equipo" },
   { id: 3, label: "Rodar", hint: "Hojas de llamada y tomas" },
   { id: 4, label: "Entregar", hint: "Dossier y festivales" },

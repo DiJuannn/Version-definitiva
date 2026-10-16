@@ -50,6 +50,8 @@ type BackupScene = {
   productionNotes: string | null;
   order: number;
   storyOrder: number | null;
+  // Copias antiguas no lo traen.
+  scriptSid?: string | null;
   characterIds: string[];
   breakdown: { id: string; condition: string | null }[];
   crewIds: string[];
@@ -60,7 +62,16 @@ type BackupScene = {
 
 export type ScriptBackupData = {
   v: 1;
-  characters: { id: string; name: string; notes: string | null; actorId: string | null }[];
+  characters: {
+    id: string;
+    name: string;
+    notes: string | null;
+    actorId: string | null;
+    // Fichas (copias antiguas no las traen).
+    sheet?: unknown;
+    profile?: unknown;
+    screenplayId?: string | null;
+  }[];
   breakdown: { id: string; category: string; name: string; notes: string | null }[];
   scenes: BackupScene[];
 };
@@ -108,7 +119,15 @@ export async function createScriptBackup(
 
   const data: ScriptBackupData = {
     v: 1,
-    characters: characters.map((c) => ({ id: c.id, name: c.name, notes: c.notes, actorId: c.actorId })),
+    characters: characters.map((c) => ({
+      id: c.id,
+      name: c.name,
+      notes: c.notes,
+      actorId: c.actorId,
+      sheet: c.sheet,
+      profile: c.profile,
+      screenplayId: c.screenplayId,
+    })),
     breakdown: breakdown.map((b) => ({ id: b.id, category: b.category, name: b.name, notes: b.notes })),
     scenes: scenes.map((s) => ({
       id: s.id,
@@ -123,6 +142,7 @@ export async function createScriptBackup(
       productionNotes: s.productionNotes,
       order: s.order,
       storyOrder: s.storyOrder,
+      scriptSid: s.scriptSid,
       characterIds: s.characters.map((c) => c.characterId),
       breakdown: s.breakdownElements.map((b) => ({ id: b.breakdownElementId, condition: b.condition })),
       crewIds: s.crewMembers.map((c) => c.crewMemberId),
@@ -203,6 +223,8 @@ export async function restoreScriptBackupCore(
       await createScriptBackup(tx, projectId, "before-restore", backupId);
       await wipeScriptContent(tx, projectId);
 
+      const linkedScripts = await tx.screenplay.findMany({ where: { projectId }, select: { id: true } });
+      const screenplayIds = new Set(linkedScripts.map((x) => x.id));
       const [actors, locations, crew, days] = await Promise.all([
         tx.actor.findMany({ where: { projectId }, select: { id: true } }),
         tx.location.findMany({ where: { organizationId }, select: { id: true } }),
@@ -224,6 +246,9 @@ export async function restoreScriptBackupCore(
           name: c.name,
           notes: c.notes,
           actorId: c.actorId && actorIds.has(c.actorId) ? c.actorId : null,
+          sheet: (c.sheet ?? undefined) as Prisma.InputJsonValue | undefined,
+          profile: (c.profile ?? undefined) as Prisma.InputJsonValue | undefined,
+          screenplayId: c.screenplayId && screenplayIds.has(c.screenplayId) ? c.screenplayId : null,
         })),
       });
       await tx.breakdownElement.createMany({
@@ -252,6 +277,7 @@ export async function restoreScriptBackupCore(
           productionNotes: s.productionNotes,
           order: s.order,
           storyOrder: s.storyOrder,
+          scriptSid: s.scriptSid ?? null,
         })),
       });
 

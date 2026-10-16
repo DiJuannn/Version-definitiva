@@ -11,7 +11,11 @@ import { SCREENPLAY_FORMAT_LABELS } from "@/lib/screenplay-core";
 import {
   aiConfigured,
   askQuestions,
+  findStructure,
+  proposeOpenings,
   reviewScript,
+  type BeatProposal,
+  type OpeningProposal,
   hasEnoughText,
   readStory,
   suggestReferences,
@@ -132,4 +136,28 @@ export async function reviewScriptAction(id: string): Promise<{ ok: true; review
     return { ok: false, error: "La IA no ha devuelto dudas esta vez. Inténtalo de nuevo." };
   }
   return { ok: true, review: { items: res.value, at: Date.now() } };
+}
+
+// Ideas sueltas → tres maneras de abrir la película con ellas.
+export async function proposeOpeningsAction(id: string): Promise<{ ok: true; openings: OpeningProposal[] } | Fail> {
+  const res = await run(id, ({ doc, ctx }) => proposeOpenings(doc, ctx));
+  if (!res.ok) return res;
+  if (!res.value.length) {
+    await refund(id);
+    return { ok: false, error: "La IA no ha devuelto aperturas esta vez. Inténtalo de nuevo." };
+  }
+  return { ok: true, openings: res.value };
+}
+
+// Dónde están el detonante, los giros, el punto medio y el clímax en lo escrito.
+export async function findStructureAction(
+  id: string,
+): Promise<{ ok: true; beats: BeatProposal[]; note: string } | Fail> {
+  const res = await run(id, ({ doc, ctx }) => findStructure(doc, ctx));
+  if (!res.ok) return res;
+  if (!res.value.beats.length) {
+    await refund(id);
+    return { ok: false, error: "La IA no ha encontrado la estructura esta vez. Inténtalo de nuevo." };
+  }
+  return { ok: true, ...res.value };
 }

@@ -4,6 +4,7 @@ import { getProjectForCurrentUser } from "@/lib/project-access";
 import { DeleteButton } from "@/components/DeleteButton";
 import { createCrewMember, deleteCrewMember } from "@/lib/actions/breakdown";
 import { PageHeader } from "@/components/PageHeader";
+import { TOOL_GUIDES } from "@/lib/tool-guides";
 import { SubmitButton } from "@/components/SubmitButton";
 import { FormField } from "@/components/FormField";
 import { CloseOnSaved, FormModal, ModalCancel } from "@/components/gestion/FormModal";
@@ -103,7 +104,8 @@ export default async function EquipoPage({
   return (
     <div className="pb-16">
       <PageHeader
-        eyebrow="Preproducción"
+        guide={TOOL_GUIDES["equipo"]}
+        eyebrow="Preparar"
         title="Equipo técnico"
         description="Quién hace qué en el rodaje, por departamentos, y cómo localizar a cada persona."
         actions={

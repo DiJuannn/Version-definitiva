@@ -5,10 +5,12 @@ import { getProjectForCurrentUser } from "@/lib/project-access";
 import { EmptyState } from "@/components/EmptyState";
 import { LinkPendingHint } from "@/components/LinkPendingHint";
 import { PageHeader } from "@/components/PageHeader";
+import { TOOL_GUIDES } from "@/lib/tool-guides";
 import { ScopeToggle } from "@/components/ScopeToggle";
 import { LocationsLibrary } from "@/components/LocationsLibrary";
 import { LocationsMapClient } from "@/components/LocationsMapClient";
 import { NextTool, Notice, Notices, StatusLine } from "@/components/gestion/ToolStatus";
+import { SceneChip } from "@/components/ScenePeek";
 import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
 
 // Dos vistas de la misma herramienta sin salir del proyecto: las
@@ -85,7 +87,9 @@ export default async function ProjectLocationsPage({
 
   const sceneLine = (scene: (typeof scenes)[number]) => (
     <li key={scene.id} className="flex items-baseline gap-3 py-1.5">
-      <span className="w-8 shrink-0 text-right font-display text-sm font-black tabular-nums">{scene.number}</span>
+      <SceneChip sceneId={scene.id} number={scene.number} className="w-8 shrink-0 justify-end">
+        <span className="font-display text-sm font-black tabular-nums">{scene.number}</span>
+      </SceneChip>
       <span className="w-[6.5rem] shrink-0 font-mono text-[10px] tracking-wider text-muted uppercase">
         {INT_EXT_LABELS[scene.intExt]} · {DAY_PART_LABELS[scene.dayPart]}
       </span>
@@ -96,7 +100,8 @@ export default async function ProjectLocationsPage({
   return (
     <div className="pb-16">
       <PageHeader
-        eyebrow="Gestión"
+        guide={TOOL_GUIDES["localizaciones"]}
+        eyebrow="Preparar"
         title="Localizaciones"
         description={
           library
@@ -118,6 +123,7 @@ export default async function ProjectLocationsPage({
       ) : scenes.length === 0 ? (
         <EmptyState
           title="Todavía no hay escenas"
+          preview="escenas"
           description="Las localizaciones se asignan a cada escena desde Guion. Empieza por el guion."
           actionLabel="Ir a Guion"
           actionHref={`/app/${projectId}/guion`}

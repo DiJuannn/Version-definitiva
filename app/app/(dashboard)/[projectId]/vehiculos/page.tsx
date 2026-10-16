@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
+import { TOOL_GUIDES } from "@/lib/tool-guides";
 import { ScopeToggle } from "@/components/ScopeToggle";
 import { VehiclesFleet } from "@/components/VehiclesFleet";
 import { NextTool, StatusLine } from "@/components/gestion/ToolStatus";
@@ -62,7 +63,8 @@ export default async function ProjectVehiclesPage({
   return (
     <div className="pb-16">
       <PageHeader
-        eyebrow="Gestión"
+        guide={TOOL_GUIDES["vehiculos"]}
+        eyebrow="Rodar"
         title="Vehículos"
         description={
           fleet
@@ -84,6 +86,7 @@ export default async function ProjectVehiclesPage({
       ) : days.length === 0 ? (
         <EmptyState
           title="Todavía no hay días de rodaje"
+          preview="jornadas"
           description="Los vehículos se reservan para cada día desde Plan de rodaje. Crea primero los días."
           actionLabel="Ir a Plan de rodaje"
           actionHref={`/app/${projectId}/plan-de-rodaje`}

@@ -24,6 +24,12 @@ import {
   type ReviewKind,
   type StoryReading,
   type Suggestion,
+  BEATS,
+  LOOSE_KINDS,
+  OPENINGS,
+  type BeatKey,
+  type LooseIdea,
+  type OpeningKey,
 } from "@/lib/screenplay/story";
 
 export const SCREENPLAY_AI_MODEL = "mistral-small-latest";
@@ -45,7 +51,7 @@ function scriptText(blocks: ScreenplayBlock[]): string {
   const full = toFountain(blocks);
   if (full.length <= FULL_TEXT_MAX) return full;
   // Guion largo: encabezado, quién habla y el arranque de cada escena.
-  const scenes = scenesFromBlocks(blocks);
+  const scenes = scenesFromBlocks(blocks, "A4", { untitled: true });
   return scenes
     .map((s) => {
       const body = blocks
@@ -65,7 +71,7 @@ function scriptText(blocks: ScreenplayBlock[]): string {
 // escena o un personaje y la IA necesita saber qué pasa en todo el guion.
 function outlineText(doc: Y.Doc, blocks: ScreenplayBlock[]): string {
   const meta = storyMaps(doc).scenes;
-  return scenesFromBlocks(blocks)
+  return scenesFromBlocks(blocks, "A4", { untitled: true })
     .map((s) => {
       const synopsis = meta.get(s.sid)?.synopsis?.trim();
       const start = blocks
@@ -82,7 +88,7 @@ function outlineText(doc: Y.Doc, blocks: ScreenplayBlock[]): string {
 // Una escena entera con la anterior y la siguiente, para que la IA sepa de
 // dónde viene y a dónde va.
 function sceneWithNeighbours(blocks: ScreenplayBlock[], sid: string): { number: number; text: string } | null {
-  const scenes = scenesFromBlocks(blocks);
+  const scenes = scenesFromBlocks(blocks, "A4", { untitled: true });
   const i = scenes.findIndex((s) => s.sid === sid);
   if (i === -1) return null;
   const part = (k: number, label: string) => {
@@ -301,8 +307,10 @@ export function hasEnoughText(doc: Y.Doc): boolean {
   const script = blocksFromYDoc(doc)
     .filter((b) => b.type !== "note")
     .reduce((n, b) => n + count(b.text), 0);
-  const dev = [...storyMaps(doc).dev.values()].reduce((n, v) => n + (typeof v === "string" ? count(v) : 0), 0);
-  return script + dev >= 30;
+  const maps = storyMaps(doc);
+  const dev = [...maps.dev.values()].reduce((n, v) => n + (typeof v === "string" ? count(v) : 0), 0);
+  const loose = [...maps.loose.values()].reduce((n, v) => n + (typeof v?.text === "string" ? count(v.text) : 0), 0);
+  return script + dev + loose >= 30;
 }
 
 // ------------------------------------------------------------------ 2. referencias
@@ -351,7 +359,7 @@ export type SuggestScope =
 
 export async function suggestReferences(doc: Y.Doc, ctx: Context, scope: SuggestScope): Promise<Suggestion[]> {
   const blocks = blocksFromYDoc(doc);
-  const scenes = scenesFromBlocks(blocks);
+  const scenes = scenesFromBlocks(blocks, "A4", { untitled: true });
   const existing = readReferences(doc).map((r) => `- ${r.title}${r.year ? ` (${r.year})` : ""}`);
 
   let focus = "FOCO: la historia completa.";
@@ -426,7 +434,7 @@ Reglas:
 
 export async function askQuestions(doc: Y.Doc, ctx: Context, sid: string | null): Promise<{ scope: string; items: string[] }> {
   const blocks = blocksFromYDoc(doc);
-  const scenes = scenesFromBlocks(blocks);
+  const scenes = scenesFromBlocks(blocks, "A4", { untitled: true });
   const scene = sid ? scenes.find((s) => s.sid === sid) : undefined;
   const around = scene ? sceneWithNeighbours(blocks, scene.sid) : null;
   const focus = scene && around
@@ -485,7 +493,7 @@ Reglas:
 
 export async function reviewScript(doc: Y.Doc, ctx: Context): Promise<ReviewItem[]> {
   const blocks = blocksFromYDoc(doc);
-  const scenes = scenesFromBlocks(blocks);
+  const scenes = scenesFromBlocks(blocks, "A4", { untitled: true });
   const user = [
     header(ctx),
     devText(doc),
@@ -507,4 +515,139 @@ export async function reviewScript(doc: Y.Doc, ctx: Context): Promise<ReviewItem
     })
     .filter((d) => d.text)
     .slice(0, 12);
+}
+
+
+// ------------------------------------------------------------------ 6. ideas sueltas: cómo empezar
+
+export type OpeningProposal = { way: OpeningKey; ideaId: string | null; why: string };
+
+function looseList(doc: Y.Doc): LooseIdea[] {
+  return [...storyMaps(doc).loose.values()].filter((l) => l && typeof l.text === "string" && l.text.trim()).sort((a, b) => a.at - b.at);
+}
+
+const OPENINGS_SCHEMA = {
+  type: "object",
+  properties: {
+    aperturas: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          forma: { type: "string", enum: OPENINGS.map((o) => o.key) },
+          idea: { type: "integer" },
+          porque: { type: "string" },
+        },
+        required: ["forma", "idea", "porque"],
+      },
+    },
+  },
+  required: ["aperturas"],
+};
+
+const OPENINGS_SYSTEM = `Eres asesor de guion. Quien escribe tiene ideas sueltas (imágenes, momentos, diálogos, personajes, un final) y no sabe con qué empezar su película.
+
+${GUARDRAIL}
+
+Instrucciones:
+- Propón exactamente 3 maneras distintas de abrir la película usando SUS ideas sueltas. No inventes escenas nuevas.
+- "forma" es una de: ${OPENINGS.map((o) => `"${o.key}" (${o.label.toLowerCase()})`).join(", ")}.
+- "idea" es el número de la idea suelta con la que abrirías (de la lista numerada). Usa 0 solo si ninguna encaja.
+- "porque": 1-2 frases sobre qué consigue esa apertura con esta historia (qué plantea, qué pregunta abre al público). No redactes la escena ni propongas diálogos.
+- Si hay guion o desarrollo escrito, tenlo en cuenta.
+- Escribe en español. Responde solo con el JSON pedido.`;
+
+export async function proposeOpenings(doc: Y.Doc, ctx: Context): Promise<OpeningProposal[]> {
+  const ideas = looseList(doc);
+  const blocks = blocksFromYDoc(doc);
+  const user = [
+    header(ctx),
+    devText(doc),
+    `IDEAS SUELTAS:\n${ideas.map((l, i) => `${i + 1}. [${LOOSE_KINDS[l.kind]?.label ?? "Idea"}] ${l.text.slice(0, 400)}`).join("\n") || "(ninguna)"}`,
+    scenesFromBlocks(blocks, "A4", { untitled: true }).length ? `LO QUE YA HAY ESCRITO (escena a escena):\n${outlineText(doc, blocks)}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+  const raw = await callJson("aperturas", OPENINGS_SYSTEM, user, OPENINGS_SCHEMA, 0.5);
+  const ways = new Set<string>(OPENINGS.map((o) => o.key));
+  return (Array.isArray(raw.aperturas) ? raw.aperturas : [])
+    .map((a) => {
+      const o = (a ?? {}) as Record<string, unknown>;
+      const n = typeof o.idea === "number" ? Math.round(o.idea) : Number(o.idea);
+      return {
+        way: (typeof o.forma === "string" && ways.has(o.forma) ? o.forma : "accion") as OpeningKey,
+        ideaId: Number.isFinite(n) && n >= 1 && n <= ideas.length ? ideas[n - 1].id : null,
+        why: str(o.porque, 400),
+      };
+    })
+    .filter((a) => a.why)
+    .slice(0, 3);
+}
+
+// ------------------------------------------------------------------ 7. dónde están los actos
+
+export type BeatProposal = { beat: BeatKey; sid: string | null; scene: number | null; why: string };
+
+const STRUCTURE_SCHEMA = {
+  type: "object",
+  properties: {
+    momentos: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          momento: { type: "string", enum: BEATS.map((b) => b.key) },
+          escena: { type: "integer" },
+          porque: { type: "string" },
+        },
+        required: ["momento", "escena", "porque"],
+      },
+    },
+    observacion: { type: "string" },
+  },
+  required: ["momentos", "observacion"],
+};
+
+const STRUCTURE_SYSTEM = `Eres analista de guion. Lees un guion (puede estar a medio escribir) y señalas dónde están los momentos de una estructura en tres actos.
+
+${GUARDRAIL}
+
+Momentos:
+${BEATS.map((b) => `- "${b.key}" (${b.label}): ${b.hint}`).join("\n")}
+
+Instrucciones:
+- Para cada momento, di en qué número de escena está YA en el guion. Si todavía no está escrito o no se reconoce, usa 0 y explica qué falta para que exista (sin redactarlo).
+- "porque": 1-2 frases, citando lo que pasa en esa escena.
+- "observacion": 1-3 frases sobre cómo se reparten los actos (si alguno es muy largo o muy corto). Observa, no reescribas.
+- Escribe en español. Responde solo con el JSON pedido.`;
+
+export async function findStructure(doc: Y.Doc, ctx: Context): Promise<{ beats: BeatProposal[]; note: string }> {
+  const blocks = blocksFromYDoc(doc);
+  const scenes = scenesFromBlocks(blocks, "A4", { untitled: true });
+  const user = [
+    header(ctx),
+    devText(doc),
+    readingText(readReading(doc)),
+    `LISTA DE ESCENAS:\n${scenes.map((s) => `${s.number}. ${s.heading}`).join("\n")}`,
+    `GUION:\n${scriptText(blocks)}`,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+  const raw = await callJson("estructura", STRUCTURE_SYSTEM, user, STRUCTURE_SCHEMA, 0.2);
+  const keys = new Set<string>(BEATS.map((b) => b.key));
+  const seen = new Set<string>();
+  const beats = (Array.isArray(raw.momentos) ? raw.momentos : [])
+    .map((m) => {
+      const o = (m ?? {}) as Record<string, unknown>;
+      const n = typeof o.escena === "number" ? Math.round(o.escena) : Number(o.escena);
+      const scene = Number.isFinite(n) && n > 0 ? scenes.find((s) => s.number === n) ?? null : null;
+      return {
+        beat: (typeof o.momento === "string" ? o.momento : "") as BeatKey,
+        sid: scene?.sid ?? null,
+        scene: scene?.number ?? null,
+        why: str(o.porque, 400),
+      };
+    })
+    .filter((b) => keys.has(b.beat) && b.why && !seen.has(b.beat) && seen.add(b.beat));
+  return { beats, note: str(raw.observacion, 600) };
 }

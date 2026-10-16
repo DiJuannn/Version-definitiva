@@ -293,6 +293,9 @@ model Project {
   director       String?
   producer       String?
   durationLabel  String?
+  // Imagen del cartel del proyecto (Inicio y portada). Sin ella, el cartel
+  // es solo tipográfico.
+  coverUrl       String?
   status         ProjectStatus @default(DEVELOPMENT)
   startDate      DateTime?
   endDate        DateTime?

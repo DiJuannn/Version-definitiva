@@ -2,14 +2,25 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
-import { createShot } from "@/lib/actions/shots";
 import { analyzeShotList } from "@/lib/actions/shot-list-import";
 import { EmptyState } from "@/components/EmptyState";
 import { PdfLink } from "@/components/PdfLink";
 import { PageHeader } from "@/components/PageHeader";
-import { SubmitButton } from "@/components/SubmitButton";
+import { TOOL_GUIDES } from "@/lib/tool-guides";
+import { SceneToolSwitch } from "@/components/preproduccion/SceneToolSwitch";
+import { RefStrip } from "@/components/moodboard/RefStrip";
+import { getVisualRefs, refsFor } from "@/lib/visual-refs";
+import { ShotBuilder } from "@/components/preproduccion/ShotBuilder";
+import { courierPrime } from "@/lib/screenplay/font";
+import { getScenesText } from "@/lib/scene-text";
+import { PlanosTabs } from "@/components/preproduccion/PlanosTabs";
+import { TechnicalScript, type TechnicalScene } from "@/components/preproduccion/TechnicalScript";
+import { PrintButton } from "@/components/PrintButton";
 import { ShotListUploadForm } from "@/components/ShotListUploadForm";
 import { NextTool, SceneSlug } from "@/components/preproduccion/SceneSlug";
+import { SceneChip } from "@/components/ScenePeek";
+import { SceneProgress } from "@/components/SceneProgress";
+import { getSceneStatuses, EMPTY_STATUS } from "@/lib/scene-status";
 import {
   AngleIcon,
   MovementIcon,
@@ -31,10 +42,13 @@ export const maxDuration = 60;
 
 export default async function ShotListPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ projectId: string }>;
+  searchParams: Promise<{ escena?: string; vista?: string }>;
 }) {
   const { projectId } = await params;
+  const { escena, vista } = await searchParams;
 
   const project = await getProjectForCurrentUser(projectId);
   if (!project) notFound();
@@ -44,12 +58,14 @@ export default async function ShotListPage({
     orderBy: [{ order: "asc" }, { number: "asc" }],
     include: {
       location: { select: { name: true } },
+      characters: { select: { character: { select: { id: true, name: true } } }, orderBy: { character: { name: "asc" } } },
       shots: {
         orderBy: [{ order: "asc" }, { number: "asc" }],
         include: { _count: { select: { storyboard: true } } },
       },
     },
   });
+  const statuses = await getSceneStatuses(projectId);
   const shotCount = scenes.reduce((n, s) => n + s.shots.length, 0);
   const scenesWithShots = scenes.filter((s) => s.shots.length > 0).length;
   const missing = scenes.filter((s) => s.shots.length === 0);
@@ -57,18 +73,200 @@ export default async function ShotListPage({
   const plannedCount = scenes.reduce((n, s) => n + s.shots.filter((sh) => sh.shootingDayId).length, 0);
   const uploadAction = analyzeShotList.bind(null, projectId);
   const missingText =
-    missing.length === 1
+    missing.length === 0
+      ? ""
+      : missing.length === 1
       ? `falta la ${missing[0].number}`
       : `faltan la ${missing
           .slice(0, -1)
           .map((s) => s.number)
           .join(", ")} y la ${missing[missing.length - 1].number}`;
 
+  // Planificar una escena: el texto a un lado y el constructor de planos al otro.
+  const planning = escena ? scenes.find((s) => s.id === escena) : undefined;
+  const visuals = planning ? await getVisualRefs(projectId) : [];
+  if (planning) {
+    const index = scenes.indexOf(planning);
+    const texts = await getScenesText(projectId, [planning]);
+    const text = texts.get(planning.id);
+    const nextNumber =
+      Math.max(0, ...planning.shots.map((sh) => Number.parseInt(sh.number, 10)).filter(Number.isFinite)) + 1;
+    // Las réplicas de la escena (personaje + diálogo) para el audio de cada plano.
+    const dialogueLines: { character: string; text: string }[] = [];
+    let speaker = "";
+    for (const b of text?.blocks ?? []) {
+      if (b.type === "character") speaker = b.text.replace(/\s*\(.*\)\s*$/, "").trim().toUpperCase();
+      else if (b.type === "dialogue" && speaker) dialogueLines.push({ character: speaker, text: b.text.replace(/\s+/g, " ").trim() });
+    }
+    const prev = scenes[index - 1];
+    const next = scenes[index + 1];
+    const href = (id: string) => `/app/${projectId}/shot-list?escena=${id}`;
+    return (
+      <div className={`pb-16 ${courierPrime.variable}`}>
+        <PageHeader
+          backHref={`/app/${projectId}/shot-list`}
+          backLabel="← Lista de planos"
+          eyebrow={`Planificar · escena ${index + 1} de ${scenes.length}`}
+          title={`Escena ${planning.number}`}
+          description={
+            <>
+              <SceneSlug intExt={planning.intExt} dayPart={planning.dayPart} location={planning.location?.name} />
+              <span className="ml-2">
+                · {planning.shots.length} {planning.shots.length === 1 ? "plano" : "planos"}
+                {planning.characters.length > 0 && ` · ${planning.characters.map((c) => c.character.name).join(", ")}`}
+              </span>
+            </>
+          }
+          actions={
+            <>
+              {prev && (
+                <Link href={href(prev.id)} className="link-action">
+                  ← Escena {prev.number}
+                </Link>
+              )}
+              {next && (
+                <Link href={href(next.id)} className="btn btn-outline btn-sm">
+                  Escena {next.number} →
+                </Link>
+              )}
+            </>
+          }
+        />
+        <div className="mt-6">
+          <SceneToolSwitch projectId={projectId} sceneId={planning.id} active="planos" />
+        </div>
+        {(() => {
+          const looks = refsFor(visuals, { sceneId: planning.id }, ["luz", "encuadre"]);
+          return looks.length > 0 ? (
+            <div className="mt-6">
+              <RefStrip refs={looks} projectId={projectId} title="Cómo se ve esta escena · del moodboard" />
+            </div>
+          ) : null;
+        })()}
+        <div className="mt-6 grid gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
+          <div className="space-y-8 lg:sticky lg:top-28 lg:self-start">
+            <section aria-labelledby="pl-texto">
+              <h2 id="pl-texto" className="eyebrow">La escena</h2>
+              <div className="paper mt-3 max-h-[46vh] overflow-y-auto px-6 py-5 font-[family-name:var(--font-courier)] text-[13.5px] leading-[1.55]">
+                {text && text.blocks.length > 0 ? (
+                  text.blocks.map((b, i) => (
+                    <p
+                      key={i}
+                      className={`whitespace-pre-wrap ${
+                        b.type === "character" ? "mt-3 ml-[30%] uppercase" : b.type === "dialogue" ? "mx-[14%]" : b.type === "parenthetical" ? "ml-[24%]" : "mt-3 first:mt-0"
+                      }`}
+                    >
+                      {b.text}
+                    </p>
+                  ))
+                ) : (
+                  <p className="font-sans text-sm text-muted">Esta escena no tiene texto todavía.</p>
+                )}
+              </div>
+            </section>
+            <section aria-labelledby="pl-planos">
+              <h2 id="pl-planos" className="eyebrow">Planos de la escena · {planning.shots.length}</h2>
+              {planning.shots.length === 0 ? (
+                <p className="mt-3 font-sans text-sm text-muted">Aún ninguno. Empieza por una cobertura →</p>
+              ) : (
+                <ol className="mt-3 divide-y divide-line">
+                  {planning.shots.map((sh) => (
+                    <li key={sh.id}>
+                      <Link href={`/app/${projectId}/shot-list/${sh.id}`} className="group flex items-center gap-3 py-2">
+                        <ShotFrame size={sh.shotSize} className="h-9 w-16 shrink-0" />
+                        <span className="w-10 font-mono text-[12px] font-semibold">
+                          {planning.number}.{sh.number}
+                        </span>
+                        <span className="min-w-0 flex-1 truncate font-sans text-sm group-hover:text-accent">
+                          {sh.description ?? <span className="text-muted">Sin descripción</span>}
+                        </span>
+                        <span className="font-sans text-[12px] text-muted">{[sh.angle, sh.movement].filter(Boolean).join(" · ")}</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </section>
+          </div>
+          <ShotBuilder
+            key={planning.id}
+            projectId={projectId}
+            sceneId={planning.id}
+            sceneNumber={planning.number}
+            place={planning.location?.name ?? null}
+            characters={planning.characters.map((c) => c.character)}
+            nextNumber={nextNumber}
+            lines={dialogueLines}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // El guion técnico: todo el guion seguido, con los planos de cada escena.
+  if (vista === "tecnico") {
+    const frames = await prisma.storyboardFrame.findMany({
+      where: { shot: { scene: { projectId } } },
+      orderBy: { order: "asc" },
+      select: { shotId: true, imageUrl: true },
+    });
+    const firstFrame = new Map<string, { imageUrl: string | null }[]>();
+    for (const f of frames) if (f.imageUrl && !firstFrame.has(f.shotId)) firstFrame.set(f.shotId, [{ imageUrl: f.imageUrl }]);
+    const technical: TechnicalScene[] = scenes.map((s) => ({
+      id: s.id,
+      number: s.number,
+      intExt: s.intExt,
+      dayPart: s.dayPart,
+      location: s.location,
+      summary: s.description,
+      characters: s.characters.map((c) => c.character.name),
+      shots: s.shots.map((sh) => ({ ...sh, storyboard: firstFrame.get(sh.id) ?? [] })),
+    }));
+    return (
+      <div className={`print-doc pb-16 ${courierPrime.variable}`}>
+        <div className="print-hide">
+          <PageHeader
+            eyebrow="Preparar"
+            title="Guion técnico"
+            guide={TOOL_GUIDES["tecnico"]}
+            description="La película plano a plano: qué se ve, con qué encuadre y cámara, qué se oye y cuánto dura. Es el documento que lleva dirección al rodaje."
+            actions={scenes.length > 0 ? <PrintButton label="Imprimir" /> : undefined}
+          />
+          <PlanosTabs projectId={projectId} active="tecnico" />
+        </div>
+        <h1 className="mb-4 hidden font-[family-name:var(--font-courier)] text-xl font-bold uppercase print:block">
+          {project.name} · Guion técnico
+        </h1>
+        {scenes.length === 0 ? (
+          <EmptyState
+            title="Todavía no hay escenas"
+          preview="planos"
+            description="El guion técnico se arma con las escenas del guion y sus planos."
+            actionLabel="Ir a Guion"
+            actionHref={`/app/${projectId}/guion`}
+          />
+        ) : (
+          <>
+            {missing.length > 0 && (
+              <p className="print-hide mt-6 border-l-2 border-warn py-0.5 pl-4 font-sans text-[15px]">
+                <strong className="font-semibold">
+                  {scenesWithShots} de {scenes.length} escenas tienen planos · {missingText}.
+                </strong>
+              </p>
+            )}
+            <TechnicalScript projectId={projectId} scenes={technical} />
+          </>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="pb-16">
       <PageHeader
-        eyebrow="Preproducción"
-        title="Lista de planos"
+        eyebrow="Preparar"
+        title="Planos"
+        guide={TOOL_GUIDES["planos"]}
         description="Cómo se va a rodar cada escena, plano a plano: encuadre, ángulo y movimiento. ¿Ya tienes el guion técnico? Impórtalo y la IA propone los planos."
         actions={
           <>
@@ -77,10 +275,12 @@ export default async function ShotListPage({
           </>
         }
       />
+      <PlanosTabs projectId={projectId} active="lista" />
 
       {scenes.length === 0 ? (
         <EmptyState
           title="Todavía no hay escenas"
+          preview="planos"
           description="Los planos cuelgan de las escenas. Créalas en Guion, o importa el guion técnico y se crearán junto con sus planos."
           actionLabel="Ir a Guion"
           actionHref={`/app/${projectId}/guion`}
@@ -117,20 +317,22 @@ export default async function ShotListPage({
                 </strong>{" "}
                 <span className="text-muted">Sin planos no se puede repartir la escena en el plan de rodaje.</span>
               </span>
-              <a href={`#esc-${missing[0].id}`} className="eyebrow text-accent hover:underline">
+              <Link href={`/app/${projectId}/shot-list?escena=${missing[0].id}`} className="eyebrow text-accent hover:underline">
                 Planificar la {missing[0].number} →
-              </a>
+              </Link>
             </p>
           )}
 
           <div className="mt-10 space-y-12">
             {scenes.map((scene) => {
-              const createAction = createShot.bind(null, projectId, scene.id);
               return (
                 <section key={scene.id} aria-labelledby={`esc-${scene.id}-t`} id={`esc-${scene.id}`} className="scroll-mt-32">
                   <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-1 pb-3">
                     <h2 id={`esc-${scene.id}-t`} className="flex min-w-0 items-baseline gap-4">
-                      <span className="font-display text-3xl leading-none font-black tabular-nums">{scene.number}</span>
+                      <SceneChip sceneId={scene.id} number={scene.number} className="self-center">
+                        <span className="font-display text-3xl leading-none font-black tabular-nums">{scene.number}</span>
+                        <SceneProgress status={statuses.get(scene.id) ?? EMPTY_STATUS} size={18} />
+                      </SceneChip>
                       <SceneSlug
                         intExt={scene.intExt}
                         dayPart={scene.dayPart}
@@ -225,34 +427,11 @@ export default async function ShotListPage({
                       </ul>
                     )}
 
-                    <details className={`group/add px-4 py-4 sm:px-6 print:hidden ${scene.shots.length > 0 ? "border-t border-line" : ""}`}>
-                      <summary className="link-action cursor-pointer list-none text-accent hover:text-accent [&::-webkit-details-marker]:hidden">
-                        <span aria-hidden className="mr-1.5 inline-block transition-transform group-open/add:rotate-45">
-                          +
-                        </span>
-                        Añadir plano a la escena {scene.number}
-                      </summary>
-                      <form
-                        action={createAction}
-                        className="mt-3 grid gap-3 sm:grid-cols-[6rem_9rem_minmax(0,1fr)_auto] sm:items-end"
-                      >
-                        <label className="flex flex-col gap-1.5">
-                          <span className="eyebrow text-muted">Nº plano</span>
-                          <input name="number" required placeholder={String(scene.shots.length + 1)} className="field" />
-                        </label>
-                        <label className="flex flex-col gap-1.5">
-                          <span className="eyebrow text-muted">Tamaño</span>
-                          <input name="shotSize" placeholder="PG, PM, PP…" className="field" />
-                        </label>
-                        <label className="flex flex-col gap-1.5">
-                          <span className="eyebrow text-muted">Descripción</span>
-                          <input name="description" placeholder="Qué se ve en el plano" className="field" />
-                        </label>
-                        <SubmitButton pendingLabel="Añadiendo…" savedLabel="✓ Añadido" className="btn btn-secondary">
-                          Añadir
-                        </SubmitButton>
-                      </form>
-                    </details>
+                    <div className={`px-4 py-3.5 sm:px-6 print:hidden ${scene.shots.length > 0 ? "border-t border-line" : ""}`}>
+                      <Link href={`/app/${projectId}/shot-list?escena=${scene.id}`} className="link-action !px-0 text-accent hover:!text-accent">
+                        + {scene.shots.length ? "Añadir planos" : "Planificar"} a la escena {scene.number}
+                      </Link>
+                    </div>
                   </div>
                 </section>
               );

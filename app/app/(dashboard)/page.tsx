@@ -1,39 +1,28 @@
 import Link from "next/link";
-import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { getCurrentProfile } from "@/lib/current-user";
-import { CalendarEventType, ProjectStatus, TaskStatus } from "@/lib/generated/prisma";
-import { AjoloteLogo } from "@/components/AjoloteLogo";
-import { ClaquetaIcon } from "@/components/ToolIcons";
-import { StatusPill } from "@/components/StatusPill";
-import { DashboardReveal, DashboardStagger } from "@/components/DashboardMotion";
-import { deleteProject } from "@/lib/actions/projects";
-import { DeleteProjectButton } from "@/components/DeleteProjectButton";
-import { ProjectShareButton } from "@/components/ProjectShareButton";
+import { CalendarEventType, TaskStatus } from "@/lib/generated/prisma";
 import { NewProjectWizard } from "@/components/NewProjectWizard";
 import { NewProjectPanel } from "@/components/NewProjectPanel";
-import { LinkPendingHint } from "@/components/LinkPendingHint";
-import { TaskCheck } from "@/components/TaskCheck";
-import { getProjectOverview } from "@/lib/project-roadmap";
-import { getProjectsProgress } from "@/lib/projects-progress";
-import { isPro } from "@/lib/plan";
-import { getProjectFacts } from "@/lib/tool-access";
-import { computeStage } from "@/lib/tool-rules";
-import { ProjectStageTrack } from "@/components/ProjectStageTrack";
-import { FREE_ACTIVE_PROJECTS_LIMIT } from "@/lib/limits";
+import { ProjectPoster } from "@/components/ProjectPoster";
+import { Clapperboard } from "@/components/Clapperboard";
+import { getScheduleData } from "@/lib/schedule-data";
+import { computeDayTimeline, dayWarnings, formatDuration, formatHHMM, sunriseMinutes } from "@/lib/schedule-plan";
+import { liveForecast, REST_MIN_HOURS } from "@/lib/live-day";
+import { getProjectReadiness } from "@/lib/project-readiness";
+import { FilmStrip, PHASE_COLORS } from "@/components/FilmStrip";
+import { COVER_SHADOW } from "@/components/screenplay/cover-shadow";
+import { courierPrime } from "@/lib/screenplay/font";
+import { getProjectProgress } from "@/lib/project-progress";
+import { PHASES } from "@/lib/project-phases";
 
-function currency(value: number) {
-  return value.toLocaleString("es-ES", { style: "currency", currency: "EUR", maximumFractionDigits: 0 });
-}
-
-const CALENDAR_EVENT_LABELS: Record<CalendarEventType, string> = {
+const EVENT_LABELS: Record<CalendarEventType, string> = {
   REHEARSAL: "Ensayo",
   MEETING: "Reunión",
-  DEADLINE: "Fecha límite",
+  DEADLINE: "Plazo",
   DELIVERY: "Entrega",
   OTHER: "Evento",
 };
-
 function greeting(hour: number): string {
   if (hour < 6) return "Buenas noches";
   if (hour < 12) return "Buenos días";
@@ -41,650 +30,429 @@ function greeting(hour: number): string {
   return "Buenas noches";
 }
 
-function daysUntil(date: Date, now: Date): number {
-  return Math.round(
-    (new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime() -
-      new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()) /
-      (24 * 60 * 60 * 1000),
-  );
-}
-
-function relativeDay(date: Date, now: Date): string {
-  const days = daysUntil(date, now);
-  if (days === 0) return "Hoy";
-  if (days === 1) return "Mañana";
-  return `En ${days} días`;
-}
+const dayStart = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+const daysBetween = (a: Date, b: Date) => Math.round((dayStart(b).getTime() - dayStart(a).getTime()) / 86_400_000);
 
 function relativeTime(date: Date): string {
-  const diffMin = Math.round((Date.now() - date.getTime()) / 60000);
-  if (diffMin < 1) return "ahora mismo";
-  if (diffMin < 60) return `hace ${diffMin} min`;
-  const diffHours = Math.round(diffMin / 60);
-  if (diffHours < 24) return `hace ${diffHours} h`;
-  const diffDays = Math.round(diffHours / 24);
-  if (diffDays === 1) return "ayer";
-  if (diffDays < 7) return `hace ${diffDays} días`;
-  return date.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
+  const min = Math.round((Date.now() - date.getTime()) / 60000);
+  if (min < 60) return min <= 1 ? "Ahora mismo" : `Hace ${min} min`;
+  const h = Math.round(min / 60);
+  if (h < 24) return `Hace ${h} h`;
+  const d = Math.round(h / 24);
+  return d === 1 ? "Ayer" : `Hace ${d} días`;
 }
 
-type AttentionItem = { id: string; tone: "warn" | "danger"; text: string; href: string };
-
+// Inicio: lo primero es qué toca (una frase grande y la claqueta del próximo
+// rodaje), luego la semana, tus proyectos como una cartelera (cada uno con su
+// cartel y su tira de película) y los guiones que tienes sobre la mesa.
 export default async function DashboardPage() {
   const profile = await getCurrentProfile();
   if (!profile) return null;
 
   const organizationId = profile.organizationId;
   const now = new Date();
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const inOneWeek = new Date(startOfToday.getTime() + 7 * 24 * 60 * 60 * 1000);
-  const twoWeeksOut = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
-  const activeProject = { organizationId, status: { not: ProjectStatus.FINISHED } };
+  const today = dayStart(now);
+  const weekEnd = new Date(today.getTime() + 7 * 86_400_000);
+  const visible = { OR: [{ organizationId }, { shares: { some: { userId: profile.id } } }] };
 
-  const [
-    recentProjects,
-    lastVisitedProject,
-    activeProjectsCount,
-    nextShoot,
-    upcomingShootingDays,
-    shootsWithoutSheet,
-    overdueTasks,
-    pendingTasks,
-    calendarEvents,
-    budgetCategories,
-    activity,
-    origin,
-  ] = await Promise.all([
+  const [projects, nextShoot, weekDays, events, tasks, overdue, screenplays] = await Promise.all([
     prisma.project.findMany({
-      where: { OR: [{ organizationId }, { shares: { some: { userId: profile.id } } }] },
+      where: { ...visible, status: { not: "FINISHED" } },
       orderBy: { updatedAt: "desc" },
-      take: 6,
-      select: {
-        id: true,
-        name: true,
-        status: true,
-        budgetTarget: true,
-        organizationId: true,
-        organization: { select: { name: true } },
-        createdBy: { select: { fullName: true, email: true } },
-        shares: {
-          orderBy: { createdAt: "desc" },
-          select: { id: true, token: true, acceptedAt: true, user: { select: { email: true } } },
-        },
-      },
+      take: 8,
+      select: { id: true, name: true, coverUrl: true, type: true },
     }),
-    // "Continuar" refleja el último proyecto en el que estuviste de verdad
-    // (getProjectForCurrentUser lo apunta al entrar en cualquier página).
-    profile.lastVisitedProjectId
-      ? prisma.project.findFirst({
-          where: {
-            id: profile.lastVisitedProjectId,
-            OR: [{ organizationId }, { shares: { some: { userId: profile.id } } }],
-          },
-          select: { id: true, name: true, budgetTarget: true },
-        })
-      : Promise.resolve(null),
-    prisma.project.count({ where: activeProject }),
     prisma.shootingDay.findFirst({
-      where: { project: { organizationId }, date: { gte: startOfToday } },
+      where: { project: { organizationId }, date: { gte: today } },
       orderBy: { date: "asc" },
       select: {
         id: true,
         date: true,
+        callTime: true,
         projectId: true,
-        project: { select: { name: true } },
-        callSheet: { select: { id: true } },
-        _count: { select: { scenes: true } },
+        project: { select: { name: true, director: true } },
+        callSheet: { select: { generalCallTime: true } },
+        scenes: { orderBy: { order: "asc" }, select: { scene: { select: { number: true, location: { select: { name: true } } } } } },
+        _count: { select: { shots: true } },
       },
     }),
     prisma.shootingDay.findMany({
-      where: { project: { organizationId }, date: { gte: startOfToday } },
-      orderBy: { date: "asc" },
-      take: 5,
-      select: { id: true, date: true, projectId: true, project: { select: { name: true } } },
-    }),
-    prisma.shootingDay.findMany({
-      where: {
-        project: activeProject,
-        date: { gte: startOfToday, lte: inOneWeek },
-        callSheet: null,
-      },
-      orderBy: { date: "asc" },
-      take: 3,
-      select: { id: true, date: true, projectId: true, project: { select: { name: true } } },
-    }),
-    prisma.task.findMany({
-      where: { organizationId, status: { not: TaskStatus.DONE }, dueDate: { lt: startOfToday } },
-      orderBy: { dueDate: "asc" },
-      take: 4,
-      select: { id: true, title: true, dueDate: true, project: { select: { name: true } } },
-    }),
-    prisma.task.findMany({
-      where: { organizationId, status: { not: TaskStatus.DONE } },
-      orderBy: [{ dueDate: "asc" }, { createdAt: "desc" }],
-      take: 6,
-      select: { id: true, title: true, dueDate: true, project: { select: { name: true } } },
+      where: { project: { organizationId }, date: { gte: today, lt: weekEnd } },
+      select: { id: true, date: true, callTime: true, projectId: true, project: { select: { name: true } } },
     }),
     prisma.calendarEvent.findMany({
-      where: { organizationId, date: { gte: now, lte: twoWeeksOut } },
-      orderBy: { date: "asc" },
-      select: {
-        id: true,
-        title: true,
-        type: true,
-        date: true,
-        project: { select: { name: true } },
-      },
+      where: { organizationId, date: { gte: today, lt: weekEnd } },
+      select: { id: true, title: true, type: true, date: true, project: { select: { name: true } } },
     }),
-    // Solo las cifras de los proyectos activos: previsto (cantidad × precio
-    // × IVA) y gasto real (lo que se ha marcado como gastado).
-    prisma.budgetCategory.findMany({
-      where: { project: activeProject },
-      select: {
-        items: {
-          select: { quantity: true, unitPrice: true, taxRate: true, actualAmount: true },
-        },
-      },
+    prisma.task.findMany({
+      where: { organizationId, status: { not: TaskStatus.DONE }, dueDate: { gte: today, lt: weekEnd } },
+      select: { id: true, title: true, dueDate: true, project: { select: { name: true } } },
     }),
-    prisma.activityLog.findMany({
-      where: { project: { organizationId } },
-      orderBy: { createdAt: "desc" },
+    prisma.task.count({ where: { organizationId, status: { not: TaskStatus.DONE }, dueDate: { lt: today } } }),
+    prisma.screenplay.findMany({
+      where: { organizationId },
+      orderBy: { updatedAt: "desc" },
       take: 6,
-      select: {
-        id: true,
-        summary: true,
-        createdAt: true,
-        project: { select: { id: true, name: true } },
-        user: { select: { fullName: true, email: true } },
-      },
+      select: { id: true, title: true, author: true, pageCount: true, sceneCount: true, updatedAt: true },
     }),
-    headers().then((h) => h.get("origin") ?? ""),
   ]);
 
-  let budgetPlanned = 0;
-  let budgetActual = 0;
-  for (const category of budgetCategories) {
-    for (const item of category.items) {
-      budgetPlanned +=
-        Number(item.quantity) * Number(item.unitPrice) * (1 + Number(item.taxRate) / 100);
-      if (item.actualAmount !== null) budgetActual += Number(item.actualAmount);
-    }
+  if (projects.length === 0) {
+    return (
+      <div className="pb-8">
+        <p className="eyebrow text-accent">
+          {greeting(now.getHours())}
+          {profile.fullName ? `, ${profile.fullName.split(" ")[0]}` : ""}
+        </p>
+        <h1 className="poster-title mt-3 text-[64px] sm:text-[96px]">
+          Tu primer
+          <br />
+          <span className="text-[var(--phase-2)]">proyecto</span>
+        </h1>
+        <p className="mt-5 max-w-xl font-sans text-[17px] leading-relaxed text-fg/80">
+          Un corto, un largo, un videoclip… Todo en Taller —guion, plan de rodaje, presupuesto— cuelga de un proyecto. Tres
+          preguntas y entras; te guiamos paso a paso.
+        </p>
+        <div className="paper mt-10 max-w-xl p-8">
+          <NewProjectWizard />
+        </div>
+      </div>
+    );
   }
 
-  const upcomingEvents = [
-    ...calendarEvents.map((event) => ({
-      id: `event-${event.id}`,
-      title: event.title,
-      typeLabel: CALENDAR_EVENT_LABELS[event.type],
-      date: event.date,
-      projectName: event.project?.name ?? null,
-      href: "/app/calendario",
-    })),
-    ...upcomingShootingDays.map((day) => ({
-      id: `day-${day.id}`,
-      title: day.project.name,
-      typeLabel: "Rodaje",
-      date: day.date,
-      projectName: null as string | null,
-      href: `/app/${day.projectId}/plan-de-rodaje/${day.id}`,
-    })),
-  ]
-    .sort((a, b) => a.date.getTime() - b.date.getTime())
-    .slice(0, 6);
+  const progress = await Promise.all(projects.map((p) => getProjectProgress(p.id)));
+  const nextIn = nextShoot ? daysBetween(today, nextShoot.date) : null;
+  const shootProject = nextShoot?.project.name;
+  const place = nextShoot?.scenes.map((s) => s.scene.location?.name).find(Boolean);
+  const dayIndex = nextShoot
+    ? await prisma.shootingDay.count({ where: { projectId: nextShoot.projectId, date: { lt: nextShoot.date } } })
+    : 0;
+  const dayCount = nextShoot ? await prisma.shootingDay.count({ where: { projectId: nextShoot.projectId } }) : 0;
 
-  const attention: AttentionItem[] = [
-    ...shootsWithoutSheet.map((day) => {
-      const n = daysUntil(day.date, now);
-      return {
-        id: `sheet-${day.id}`,
-        tone: "warn" as const,
-        text: `${day.project.name}: rodaje ${n === 0 ? "hoy" : n === 1 ? "mañana" : `en ${n} días`} sin hoja de llamada`,
-        href: `/app/${day.projectId}/call-sheets/${day.id}`,
-      };
-    }),
-    ...overdueTasks.map((task) => ({
-      id: `task-${task.id}`,
-      tone: "danger" as const,
-      text: `Tarea vencida: ${task.title}${task.project ? ` (${task.project.name})` : ""}`,
-      href: `/app/tareas/${task.id}`,
-    })),
-  ];
+  // El día del próximo rodaje con su orden: fin previsto, avisos (luz,
+  // jornada larga), descanso del reparto antes del día siguiente y la hoja.
+  const [schedule, prep] = nextShoot ? await Promise.all([getScheduleData(nextShoot.projectId), getProjectReadiness(nextShoot.projectId)]) : [null, null];
+  const sDayIdx = schedule && nextShoot ? schedule.days.findIndex((d) => d.id === nextShoot.id) : -1;
+  const sDay = schedule && sDayIdx >= 0 ? schedule.days[sDayIdx] : null;
+  const timelineOf = (d: NonNullable<typeof sDay>) =>
+    computeDayTimeline({ date: new Date(d.dateISO), callTime: d.callTime, prepMin: d.prepMin, blocks: d.blocks, lat: d.lat, lng: d.lng });
+  const tl = sDay ? timelineOf(sDay) : null;
+  const hasWork = Boolean(sDay?.blocks.some((b) => b.shots.length > 0 || b.scene));
+  const nextDay = schedule && sDay ? schedule.days[sDayIdx + 1] : undefined;
+  const consecutive = nextDay && sDay && daysBetween(new Date(sDay.dateISO), new Date(nextDay.dateISO)) === 1 ? nextDay : null;
+  const forecast =
+    tl && schedule && hasWork
+      ? liveForecast({ timeline: tl, now: null, workdayHours: schedule.workdayHours, next: consecutive ? { timeline: timelineOf(consecutive) } : null })
+      : null;
+  type Alert = { tone: "warn" | "ok" | "danger"; text: string; detail?: string; href?: string; cta?: string };
+  const alerts: Alert[] = [];
+  if (sDay && schedule && nextShoot) {
+    const base = `/app/${nextShoot.projectId}`;
+    for (const r of forecast?.rest.slice(0, 1) ?? []) {
+      const who = schedule.characters[r.characterId];
+      alerts.push({
+        tone: "warn",
+        text: `${who?.actor ?? who?.name ?? "Alguien del reparto"} tiene ${formatDuration(Math.max(0, r.restMinutes))} de descanso entre jornadas`,
+        detail: `convenio: ${REST_MIN_HOURS} h`,
+        href: `${base}/plan-de-rodaje?dia=${sDay.id}`,
+        cta: "Ver el plan",
+      });
+    }
+    if (tl && hasWork) {
+      for (const w of dayWarnings(tl, { workdayHours: schedule.workdayHours, hasShots: true }).slice(0, 2)) {
+        alerts.push({ tone: w.tone, text: w.text, detail: w.detail, href: `${base}/plan-de-rodaje?dia=${sDay.id}`, cta: "Ver el plan" });
+      }
+    }
+    if (!sDay.sheet.exists) alerts.push({ tone: "warn", text: "Falta la hoja de llamada", href: `${base}/call-sheets/${sDay.id}`, cta: "Prepararla" });
+    else if (sDay.sheet.outdated) alerts.push({ tone: "warn", text: "La hoja de llamada no recoge el último cambio del plan", href: `${base}/call-sheets/${sDay.id}`, cta: "Revisarla" });
+    else if (sDay.sheet.shared) alerts.push({ tone: "ok", text: "Hoja de llamada enviada al equipo", href: `${base}/call-sheets/${sDay.id}` });
+    else alerts.push({ tone: "warn", text: "Hoja de llamada hecha, sin enviar", href: `${base}/call-sheets/${sDay.id}`, cta: "Enviarla" });
+  }
+  if (prep && nextIn !== 0) {
+    const t = prep.todos[0];
+    if (t) alerts.unshift({ tone: "warn", text: `Lo que más frena: ${t.title.charAt(0).toLowerCase()}${t.title.slice(1)}`, href: t.href, cta: t.cta });
+  }
+  if (overdue) alerts.push({ tone: "danger", text: overdue === 1 ? "1 tarea vencida" : `${overdue} tareas vencidas`, href: "/app/tareas", cta: "Ver tareas" });
+  const sunrise = sDay ? sunriseMinutes(new Date(sDay.dateISO), sDay.lat ?? undefined, sDay.lng ?? undefined) : null;
 
-  const heroProject = lastVisitedProject ?? recentProjects[0] ?? null;
-  const [heroOverview, progress, stages] = await Promise.all([
-    heroProject
-      ? getProjectOverview(
-          heroProject.id,
-          heroProject.budgetTarget !== null ? Number(heroProject.budgetTarget) : null,
-        )
-      : Promise.resolve(null),
-    getProjectsProgress(recentProjects.map((p) => p.id)),
-    // Solo lectura: la etapa de cada proyecto, para la vía de etapas de su tarjeta.
-    Promise.all(recentProjects.map(async (p) => [p.id, computeStage(await getProjectFacts(p.id))] as const)).then(
-      (rows) => Object.fromEntries(rows) as Record<string, 1 | 2 | 3 | 4>,
-    ),
-  ]);
-  const heroRequired = heroOverview?.steps.filter((s) => s.required) ?? [];
-  const heroDone = heroRequired.filter((s) => s.isDone).length;
-  const heroCurrent = heroRequired.find((s) => !s.isDone) ?? null;
-  const heroPct =
-    heroRequired.length > 0 ? Math.round((heroDone / heroRequired.length) * 100) : 0;
+  // La frase de arriba: lo más importante que viene.
+  const lead = projects[0];
+  const headline =
+    nextIn !== null && nextIn <= 14
+      ? nextIn === 0
+        ? ["Hoy", "se rueda"]
+        : nextIn === 1
+          ? ["Rodáis", "mañana"]
+          : ["Rodáis", `en ${nextIn} días`]
+      : ["Seguimos con", lead.name];
+  const callTime = nextShoot?.callTime ?? nextShoot?.callSheet?.generalCallTime ?? null;
+  const subline =
+    nextIn !== null && nextIn <= 14 && nextShoot
+      ? [
+          nextShoot.date.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long", timeZone: "Europe/Madrid" }),
+        ].join("")
+      : `${progress[0].label}.${overdue ? ` ${overdue === 1 ? "Hay 1 tarea vencida" : `Hay ${overdue} tareas vencidas`}.` : ""}`;
 
-  const claquetaHref = heroProject ? `/app/${heroProject.id}/claqueta` : "/app/claqueta";
-  const H2 = "font-display text-xl font-black tracking-tight";
+  // La semana: rodajes, eventos y tareas con fecha, día a día.
+  const week = Array.from({ length: 7 }, (_, i) => {
+    const date = new Date(today.getTime() + i * 86_400_000);
+    const same = (d: Date) => daysBetween(date, d) === 0;
+    const items = [
+      ...weekDays.filter((d) => same(d.date)).map((d) => ({ id: d.id, kind: "Rodaje", title: d.project.name, sub: d.callTime ? `Citación ${d.callTime}` : null, href: `/app/${d.projectId}/plan-de-rodaje?dia=${d.id}` })),
+      ...events.filter((e) => same(e.date)).map((e) => ({ id: e.id, kind: EVENT_LABELS[e.type], title: e.title, sub: e.project?.name ?? null, href: "/app/calendario" })),
+      ...tasks.filter((t) => t.dueDate && same(t.dueDate)).map((t) => ({ id: t.id, kind: "Tarea", title: t.title, sub: t.project?.name ?? null, href: `/app/tareas/${t.id}` })),
+    ];
+    return { date, items };
+  });
 
-  // De arriba abajo: saludo y cifras → lo que estabas haciendo (una losa grande con el próximo
-  // rodaje al lado) → avisos → tus proyectos (losas) → la semana (tareas, fechas y actividad).
-  // Todo sobre la mesa; el papel solo aparece cuando hay un formulario (el primer proyecto).
   return (
-    <div className="pb-8">
-      <header className="flex flex-wrap items-end justify-between gap-x-10 gap-y-6">
-        <div className="flex items-center gap-4">
-          <AjoloteLogo className="h-12 w-auto shrink-0 sm:h-14" priority />
-          <div>
-            <p className="eyebrow text-accent">{greeting(now.getHours())}</p>
-            <h1 className="mt-1 font-display text-2xl font-black tracking-tight sm:text-3xl">
-              {profile.organization.name}
-            </h1>
-          </div>
-        </div>
-        {heroProject && (
-          <dl className="flex flex-wrap items-end gap-x-8 gap-y-3">
-            <div>
-              <dt className="eyebrow">Proyectos activos</dt>
-              <dd className="mt-1 font-display text-2xl font-black tabular-nums">{activeProjectsCount}</dd>
-            </div>
-            <div className="border-l border-line pl-8">
-              <dt className="eyebrow">Gastado</dt>
-              <dd className="mt-1 font-display text-2xl font-black tabular-nums">
-                {currency(budgetActual)}
-                <span className="ml-1.5 font-sans text-xs font-normal text-muted">de {currency(budgetPlanned)}</span>
-              </dd>
-            </div>
-            {!isPro(profile.organization.plan) && (
-              <div className="border-l border-line pl-8">
-                <dt className="eyebrow">Plan gratuito</dt>
-                <dd className="mt-1 font-sans text-sm">
-                  {activeProjectsCount} de {FREE_ACTIVE_PROJECTS_LIMIT} proyectos ·{" "}
-                  <Link href="/app/organizacion" className="text-accent hover:underline">
-                    Ver PRO
-                  </Link>
-                </dd>
-              </div>
-            )}
-          </dl>
-        )}
-      </header>
-
-      {!heroProject ? (
-        <DashboardReveal className="sheet mx-auto mt-12 max-w-xl p-8 sm:p-10">
-          <p className="eyebrow text-center text-accent">Empieza aquí</p>
-          <h2 className="mt-2 text-center font-display text-2xl font-black tracking-tight sm:text-3xl">
-            Crea tu primer proyecto
-          </h2>
-          <p className="mx-auto mt-3 max-w-sm text-center font-sans text-sm leading-relaxed text-muted">
-            Todo en Taller —guion, presupuesto, plan de rodaje— cuelga de un proyecto. Te hacemos tres
-            preguntas rápidas y entras: te guiaremos paso a paso.
-          </p>
-          <div className="mt-8 border-t border-line pt-8">
-            <NewProjectWizard />
-          </div>
-        </DashboardReveal>
-      ) : (
-        <>
-          <DashboardReveal className="mt-10">
-            <div className="grid items-start gap-x-10 gap-y-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-              {/* Continuar: lo más importante de la pantalla, y lo único en papel (es el paso actual). */}
-              <div className="paper p-6 sm:p-8">
-                <p className="eyebrow text-accent">Continuar donde lo dejaste</p>
-                <h2 className="mt-2 truncate font-display text-3xl font-black tracking-tight sm:text-4xl">
-                  {heroProject.name}
-                </h2>
-                {heroCurrent ? (
-                  <div className="mt-5 border-l-2 border-accent pl-4">
-                    <p className="eyebrow">Siguiente paso</p>
-                    <p className="mt-1 font-display text-xl font-bold tracking-tight">{heroCurrent.title}</p>
-                    <p className="mt-1 max-w-lg font-sans text-sm leading-relaxed text-muted">
-                      {heroCurrent.instruction} <span className="text-fg">{heroCurrent.detail}.</span>
-                    </p>
-                  </div>
-                ) : (
-                  <p className="mt-3 font-sans text-[15px] text-muted">Listo para rodar: lo esencial está hecho.</p>
-                )}
-                <div className="mt-5 flex max-w-md items-center gap-3">
-                  <div className="h-1 flex-1 overflow-hidden rounded-full bg-line" aria-hidden>
-                    <div
-                      className="h-full rounded-full bg-accent transition-[width] duration-700"
-                      style={{ width: `${heroPct}%` }}
-                    />
-                  </div>
-                  <span className="shrink-0 font-mono text-[11px] text-muted">
-                    {heroDone}/{heroRequired.length} esenciales
-                  </span>
-                </div>
-                <div className="mt-6 flex flex-wrap items-center gap-4">
-                  <Link href={heroCurrent?.href ?? `/app/${heroProject.id}`} className="btn btn-primary">
-                    {heroCurrent ? `${heroCurrent.ctaLabel} →` : "Continuar →"}
-                    <LinkPendingHint />
-                  </Link>
-                  {heroCurrent && (
-                    <Link href={`/app/${heroProject.id}`} className="link-action">
-                      Abrir el proyecto
-                    </Link>
-                  )}
-                </div>
-              </div>
-
-              {/* Próximo rodaje, al lado: la otra cosa que hay que saber al entrar. */}
-              <div className="border-t border-line pt-6 lg:border-t-0 lg:border-l lg:pt-2 lg:pl-10">
-                <p className="eyebrow">Próximo rodaje</p>
-                {nextShoot ? (
-                  <>
-                    <p className="mt-2 font-display text-3xl font-black tracking-tight">
-                      {relativeDay(nextShoot.date, now)}
-                    </p>
-                    <p className="mt-1 font-sans text-sm text-muted first-letter:uppercase">
-                      {nextShoot.date.toLocaleDateString("es-ES", {
-                        weekday: "long",
-                        day: "numeric",
-                        month: "long",
-                      })}{" "}
-                      ·{" "}
-                      <Link
-                        href={`/app/${nextShoot.projectId}`}
-                        className="text-fg underline decoration-line underline-offset-4 hover:decoration-accent"
-                      >
-                        {nextShoot.project.name}
-                      </Link>
-                    </p>
-                    <p className="mt-1 font-sans text-sm">
-                      {nextShoot._count.scenes} escena{nextShoot._count.scenes === 1 ? "" : "s"} ·{" "}
-                      <span className={nextShoot.callSheet ? "text-success" : "text-warn"}>
-                        {nextShoot.callSheet ? "hoja de llamada lista" : "sin hoja de llamada"}
-                      </span>
-                    </p>
-                    <div className="mt-5 flex flex-wrap items-center gap-3">
-                      <Link
-                        href={`/app/${nextShoot.projectId}/call-sheets/${nextShoot.id}`}
-                        className="btn btn-outline btn-sm"
-                      >
-                        {nextShoot.callSheet ? "Ver la hoja de llamada" : "Crear la hoja de llamada"}
-                        <LinkPendingHint />
-                      </Link>
-                      <Link
-                        href={`/app/${nextShoot.projectId}/plan-de-rodaje/${nextShoot.id}`}
-                        className="link-action"
-                      >
-                        Ver el día
-                      </Link>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <p className="mt-2 font-display text-2xl font-black tracking-tight text-muted">Sin fecha</p>
-                    <p className="mt-2 max-w-xs font-sans text-sm leading-relaxed text-muted">
-                      Cuando repartas las escenas en días de rodaje, aquí verás cuándo es el próximo y si su
-                      hoja de llamada está lista.
-                    </p>
-                    <Link href={`/app/${heroProject.id}/plan-de-rodaje`} className="link-action mt-3 !px-0 !text-accent">
-                      Planificar un rodaje →
-                    </Link>
-                  </>
-                )}
-              </div>
-            </div>
-          </DashboardReveal>
-
-          {/* Avisos: una línea con barra de color por cada cosa; si no hay, una sola línea tranquila. */}
-          {attention.length === 0 ? (
-            <p className="mt-5 flex items-center gap-2 font-sans text-sm text-muted">
-              <span aria-hidden className="text-success">
-                ✓
+    <div className={`pb-12 ${courierPrime.variable}`}>
+      {/* ------------------------------------------------ qué toca */}
+      <section className="taller-ink relative -mt-8 mx-[calc(50%-50vw)] border-b border-line bg-bg px-[calc(50vw-50%)] text-fg sm:-mt-12">
+        <div className="grid gap-10 py-12 lg:grid-cols-[minmax(0,1fr)_400px] lg:items-center lg:gap-16">
+          <div className="min-w-0">
+            <p className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[11px] tracking-[0.18em] text-muted uppercase">
+              <span>
+                {greeting(now.getHours())}
+                {profile.fullName ? `, ${profile.fullName.split(" ")[0]}` : ""}
               </span>
-              Todo en orden: sin tareas vencidas ni rodajes próximos sin hoja de llamada.
+              {nextShoot && nextIn !== null && nextIn <= 14 && (
+                <>
+                  <span aria-hidden>·</span>
+                  <span className="text-fg">{shootProject}</span>
+                  <span aria-hidden>·</span>
+                  <span className="flex items-center gap-1.5 text-[var(--phase-3)]">
+                    <span aria-hidden className="h-2 w-2 rounded-full bg-current" />
+                    Rodar · día {dayIndex + 1} de {dayCount}
+                  </span>
+                </>
+              )}
             </p>
-          ) : (
-            <section aria-label="Requiere atención" className="mt-6">
-              <p className="eyebrow">Requiere atención</p>
-              <ul className="mt-3 space-y-2">
-                {attention.map((item) => (
-                  <li key={item.id}>
-                    <Link
-                      href={item.href}
-                      className={`group flex items-center justify-between gap-3 border-l-2 py-1.5 pl-3 font-sans text-sm ${
-                        item.tone === "danger" ? "border-danger" : "border-warn"
+            <h1 className="poster-title mt-3 text-[64px] sm:text-[112px]">
+              {headline[0]}
+              <br />
+              <span style={{ color: nextIn !== null && nextIn <= 14 ? "var(--phase-3)" : PHASE_COLORS[progress[0].stage - 1] }}>
+                {headline[1]}
+              </span>
+            </h1>
+            <p className="mt-4 max-w-2xl font-sans text-[26px] leading-tight font-light text-fg first-letter:uppercase sm:text-[30px]">{subline}</p>
+            {nextShoot && nextIn !== null && nextIn <= 14 && (place || sunrise !== null) && (
+              <p className="mt-2 font-mono text-[12.5px] text-muted">
+                {place && <>◎ {place}</>}
+                {place && sunrise !== null && " · "}
+                {sunrise !== null && `amanecer ${formatHHMM(sunrise)}`}
+                {tl?.sunset != null && ` · puesta ${formatHHMM(tl.sunset)}`}
+              </p>
+            )}
+            {alerts.length > 0 && (
+              <ul className="mt-6 max-w-[38rem] space-y-2">
+                {alerts.slice(0, 3).map((a) => (
+                  <li
+                    key={a.text}
+                    className={`flex items-center gap-3 rounded-[var(--r-md)] border px-3.5 py-2.5 font-sans text-[14.5px] ${
+                      a.tone === "ok" ? "border-line bg-ink-1" : a.tone === "danger" ? "border-danger/50 bg-ink-1" : "border-warn/50 bg-ink-1"
+                    }`}
+                  >
+                    <span
+                      aria-hidden
+                      className={`grid h-6 w-6 shrink-0 place-items-center rounded-[var(--r-xs)] text-[13px] font-bold text-ink-0 ${
+                        a.tone === "ok" ? "bg-success" : a.tone === "danger" ? "bg-danger" : "bg-warn"
                       }`}
                     >
-                      <span className="transition-colors group-hover:text-accent">{item.text}</span>
-                      <span aria-hidden className="text-muted group-hover:text-accent">
-                        →
-                      </span>
-                    </Link>
+                      {a.tone === "ok" ? "✓" : "!"}
+                    </span>
+                    <span className="min-w-0 flex-1 leading-snug">
+                      {a.text}
+                      {a.detail && <span className="text-muted"> ({a.detail})</span>}
+                    </span>
+                    {a.href && a.cta && (
+                      <Link href={a.href} className="shrink-0 text-[13px] font-semibold text-fg underline decoration-line underline-offset-4 hover:decoration-fg">
+                        {a.cta}
+                      </Link>
+                    )}
                   </li>
                 ))}
               </ul>
-            </section>
-          )}
-        </>
-      )}
-
-      {/* Siempre visible, incluso sin proyectos todavía — quien es nuevo
-          también tiene que poder entrar a la Claqueta, y de ahí se le
-          ofrece crear su primer proyecto (ver /app/claqueta). */}
-      <div className="relative mt-6 flex items-center gap-3 border-y border-line py-3">
-        <Link href={claquetaHref} className="group flex min-w-0 flex-1 items-center gap-3">
-          <ClaquetaIcon className="h-5 w-5 shrink-0 text-accent" />
-          <span className="min-w-0 font-sans text-sm">
-            <span className="font-semibold transition-colors group-hover:text-accent">Claqueta digital</span>
-            <span className="text-muted"> · {heroProject ? heroProject.name : "elige o crea un proyecto"}</span>
-          </span>
-        </Link>
-        <Link href={claquetaHref} className="link-action shrink-0">
-          Abrir →
-          <LinkPendingHint />
-        </Link>
-        {recentProjects.length > 1 && (
-          <details className="group/menu shrink-0">
-            <summary
-              aria-label="Abrir la claqueta de otro proyecto"
-              className="flex min-h-9 min-w-9 cursor-pointer list-none items-center justify-center rounded-full text-muted hover:bg-fg/5 hover:text-accent [&::-webkit-details-marker]:hidden"
-            >
-              ▾
-            </summary>
-            <div className="sheet absolute top-full right-0 z-20 mt-1 w-64 py-1.5">
-              <p className="px-4 py-1.5 font-sans text-xs text-muted">Abrir la claqueta de otro proyecto</p>
-              {recentProjects.map((project) => (
-                <Link
-                  key={project.id}
-                  href={`/app/${project.id}/claqueta`}
-                  className="block px-4 py-2 font-sans text-sm transition-colors hover:bg-bg hover:text-accent"
-                >
-                  {project.name}
-                </Link>
-              ))}
-            </div>
-          </details>
-        )}
-      </div>
-
-      {recentProjects.length > 0 && (
-        <DashboardReveal className="mt-14" delay={0.1}>
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <h2 className={H2}>Tus proyectos</h2>
-            <div className="flex items-center gap-4">
-              <Link href="/app/proyectos" className="link-action">
-                Ver todos →
-              </Link>
-              <NewProjectPanel className="btn btn-outline btn-sm" />
-            </div>
-          </div>
-          <DashboardStagger className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {recentProjects.map((project) => {
-              const isOwnProject = project.organizationId === organizationId;
-              const ownerLabel =
-                project.createdBy?.fullName ?? project.createdBy?.email ?? project.organization.name;
-              const p = progress[project.id];
-              return (
-                <div
-                  key={project.id}
-                  className="tile group relative transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_0_0_1px_var(--accent)]"
-                >
-                  <Link href={`/app/${project.id}`} className="block p-5 pr-20">
-                    <p className="truncate font-display text-lg font-black tracking-tight transition-colors group-hover:text-accent">
-                      {project.name}
-                    </p>
-                    <div className="mt-2 flex flex-wrap items-center gap-2">
-                      <StatusPill status={project.status} />
-                      {!isOwnProject && (
-                        <span className="font-sans text-xs text-muted">· de {ownerLabel}</span>
-                      )}
-                    </div>
-                    {stages[project.id] && <ProjectStageTrack stage={stages[project.id]} className="mt-5" />}
-                    {p && (
-                      <p className="mt-3 font-sans text-xs text-muted">
-                        {p.done} de {p.total} pasos esenciales
-                      </p>
-                    )}
-                  </Link>
-                  {isOwnProject && (
-                    <div className="absolute top-3 right-3 flex items-center">
-                      <ProjectShareButton
-                        projectId={project.id}
-                        origin={origin}
-                        shares={project.shares.map((s) => ({
-                          id: s.id,
-                          token: s.token,
-                          acceptedAt: s.acceptedAt ? s.acceptedAt.toISOString() : null,
-                          userEmail: s.user?.email ?? null,
-                        }))}
-                      />
-                      <DeleteProjectButton
-                        projectName={project.name}
-                        action={deleteProject.bind(null, project.id)}
-                      />
-                    </div>
+            )}
+            <p className="mt-6 flex flex-wrap gap-3">
+              {nextShoot && nextIn !== null && nextIn <= 14 ? (
+                <>
+                  {nextIn === 0 ? (
+                    <Link href={`/app/${nextShoot.projectId}/plan-de-rodaje/directo?dia=${nextShoot.id}`} className="btn btn-primary">
+                      Abrir el día de rodaje
+                    </Link>
+                  ) : (
+                    <Link href={`/app/${nextShoot.projectId}`} className="btn btn-primary">
+                      Seguir preparando
+                    </Link>
                   )}
-                </div>
+                  <Link href={`/app/${nextShoot.projectId}/call-sheets/${nextShoot.id}`} className="btn btn-outline">
+                    Hoja de llamada
+                  </Link>
+                </>
+              ) : (
+                <Link href={`/app/${lead.id}`} className="btn btn-primary">
+                  Continuar con {lead.name} →
+                </Link>
+              )}
+            </p>
+          </div>
+          {nextShoot ? (
+            <Clapperboard
+              production={nextShoot.project.name}
+              day={dayIndex + 1}
+              dayCount={dayCount}
+              scenes={nextShoot.scenes.length}
+              shots={nextShoot._count.shots}
+              callTime={callTime}
+              place={place ?? null}
+              director={nextShoot.project.director}
+              live={{ href: `/app/${nextShoot.projectId}/plan-de-rodaje/directo?dia=${nextShoot.id}`, on: nextIn === 0 }}
+              meta={[
+                `${nextShoot.scenes.length} ${nextShoot.scenes.length === 1 ? "escena" : "escenas"}`,
+                `${nextShoot._count.shots} planos`,
+                ...(tl && hasWork ? [`fin previsto ${formatHHMM(tl.wrap)}`, `${formatDuration(tl.workMinutes)} de jornada`] : []),
+              ]}
+            />
+          ) : (
+            <aside className="rounded-md border border-dashed border-line p-6">
+              <p className="eyebrow">Próximo rodaje</p>
+              <p className="poster-title mt-2 text-[34px] text-muted">Sin fecha</p>
+              <p className="mt-2 font-sans text-sm text-muted">Cuando un proyecto tenga jornadas, aquí verás la claqueta del próximo día.</p>
+            </aside>
+          )}
+        </div>
+      </section>
+
+      {/* ------------------------------------------------ esta semana */}
+      <section aria-labelledby="semana" className="mt-14">
+        <div className="flex items-baseline gap-4">
+          <h2 id="semana" className="poster-sub text-[32px]">
+            Esta semana
+          </h2>
+          <Link href="/app/calendario" className="eyebrow ml-auto hover:text-fg">
+            Agenda →
+          </Link>
+        </div>
+        {/* La semana como un trozo de película: un fotograma por día. Los días
+            con algo son copia positiva (papel), el de rodaje lleva la gelatina
+            roja y los libres quedan en negativo. */}
+        <div className="mt-5 overflow-x-auto rounded-[var(--r-sm)] bg-[#2b211c] px-2.5 py-4">
+          <div aria-hidden className="mx-0.5 mb-2 h-2 min-w-[980px] bg-[repeating-linear-gradient(90deg,#0b0b0d_0_9px,transparent_9px_20px)] lg:min-w-0" />
+          <ol className="grid min-w-[980px] grid-cols-7 gap-2 lg:min-w-0">
+            {week.map(({ date, items }, i) => {
+              const shoot = items.some((it) => it.kind === "Rodaje");
+              const tone = shoot ? "bg-[var(--phase-3)] text-ink-0" : items.length ? "bg-[#ece8dc] text-[#1c1b19]" : "bg-ink-0 text-fg";
+              return (
+                <li key={i} className={`relative flex min-h-36 flex-col rounded-[3px] p-3 ${tone} ${i === 0 ? "ring-2 ring-fg ring-offset-2 ring-offset-[#2b211c]" : ""}`}>
+                  <p className="flex items-baseline justify-between gap-2">
+                    <span className="font-mono text-[10.5px] tracking-[0.14em] uppercase opacity-70">
+                      {date.toLocaleDateString("es-ES", { weekday: "short", timeZone: "Europe/Madrid" }).replace(".", "")}
+                    </span>
+                    <span className="poster-title text-[30px]">{date.getDate()}</span>
+                  </p>
+                  {i === 0 && (
+                    <span className="mt-1 w-fit rounded-[2px] bg-fg px-1.5 py-px font-mono text-[10px] font-semibold tracking-[0.12em] text-ink-0">
+                      HOY
+                    </span>
+                  )}
+                  <div className="mt-auto space-y-2 pt-3">
+                    {items.length === 0 ? (
+                      <p className="font-mono text-[11px] opacity-50">— libre</p>
+                    ) : (
+                      items.slice(0, 2).map((it) => (
+                        <Link key={it.id} href={it.href} className="block font-sans text-[13px] leading-snug font-semibold hover:underline">
+                          {it.kind === "Rodaje" ? `Rodaje · ${it.title}` : it.title}
+                          <span className="block text-[11.5px] font-normal opacity-75">
+                            {it.kind === "Rodaje" ? (it.sub ?? "") : `${it.kind}${it.sub ? ` · ${it.sub}` : ""}`}
+                          </span>
+                        </Link>
+                      ))
+                    )}
+                    {items.length > 2 && <p className="font-mono text-[10.5px] opacity-60">+{items.length - 2} más</p>}
+                  </div>
+                </li>
               );
             })}
-          </DashboardStagger>
-        </DashboardReveal>
-      )}
+          </ol>
+          <div aria-hidden className="mx-0.5 mt-2 h-2 min-w-[980px] bg-[repeating-linear-gradient(90deg,#0b0b0d_0_9px,transparent_9px_20px)] lg:min-w-0" />
+        </div>
+      </section>
 
-      {/* La semana: tres columnas de filas sobre la mesa. */}
-      <DashboardReveal
-        className="mt-14 grid gap-x-12 gap-y-12 border-t border-line pt-10 md:grid-cols-2 xl:grid-cols-3"
-        delay={0.15}
-      >
-        <section aria-labelledby="home-tasks">
-          <div className="flex items-baseline justify-between gap-3">
-            <h2 id="home-tasks" className={H2}>
-              Tareas pendientes
+      {/* ------------------------------------------------ cartelera */}
+      <section aria-labelledby="proyectos" className="mt-16">
+        <div className="flex items-baseline gap-4">
+          <h2 id="proyectos" className="poster-sub text-[32px]">
+            Tus proyectos
+          </h2>
+          <Link href="/app/proyectos" className="eyebrow ml-auto hover:text-fg">
+            Ver todos →
+          </Link>
+        </div>
+        <ul className="mt-6 grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-5">
+          {projects.map((p, i) => {
+            const pr = progress[i];
+            return (
+              <li key={p.id}>
+                <Link href={`/app/${p.id}`} className="group block">
+                  <div className="transition duration-300 group-hover:-translate-y-1">
+                    <ProjectPoster name={p.name} coverUrl={p.coverUrl} caption={pr.label} accent={PHASE_COLORS[pr.stage - 1]} />
+                  </div>
+                  <FilmStrip
+                    size="sm"
+                    frames={6}
+                    className="mt-3"
+                    segments={PHASES.map((ph, k) => ({ color: PHASE_COLORS[k], done: pr.phases[k] }))}
+                  />
+                  <p className="mt-2 flex justify-between gap-2 font-sans text-[13px]">
+                    <b className="font-semibold">{PHASES[pr.stage - 1].label}</b>
+                    <span className="truncate text-muted">{p.type ?? "Proyecto"}</span>
+                  </p>
+                </Link>
+              </li>
+            );
+          })}
+          <li>
+            <NewProjectPanel className="flex aspect-[2/3] w-full flex-col items-center justify-center gap-2 rounded-[4px] border-[1.5px] border-dashed border-line font-sans text-[15px] text-muted transition hover:border-accent hover:text-fg" />
+          </li>
+        </ul>
+      </section>
+
+      {/* ------------------------------------------------ escritorio */}
+      {screenplays.length > 0 && (
+        <section aria-labelledby="escritorio" className="mt-16">
+          <div className="flex items-baseline gap-4">
+            <h2 id="escritorio" className="poster-sub text-[32px]">
+              Tus guiones
             </h2>
-            <Link href="/app/tareas" className="link-action">
-              Ver todas →
+            <Link href="/app/guiones" className="eyebrow ml-auto hover:text-fg">
+              Todos los guiones →
             </Link>
           </div>
-          {pendingTasks.length === 0 ? (
-            <p className="mt-4 border-t border-line pt-4 font-sans text-sm text-muted">
-              Nada pendiente. Las tareas de todos tus proyectos aparecerán aquí.
-            </p>
-          ) : (
-            <ul className="mt-4 divide-y divide-line border-t border-line">
-              {pendingTasks.map((task) => (
-                <li key={task.id} className="flex items-center gap-3 py-2">
-                  <TaskCheck taskId={task.id} done={false} title={task.title} />
-                  <Link
-                    href={`/app/tareas/${task.id}`}
-                    className="min-w-0 flex-1 py-1 font-sans text-sm transition-colors hover:text-accent"
-                  >
-                    <span className="block truncate">{task.title}</span>
-                    {(task.project || task.dueDate) && (
-                      <span className="block truncate text-xs text-muted">
-                        {[
-                          task.project?.name,
-                          task.dueDate?.toLocaleDateString("es-ES", { day: "numeric", month: "short" }),
-                        ]
-                          .filter(Boolean)
-                          .join(" · ")}
+          <ul className="mt-6 grid grid-cols-2 gap-6 sm:grid-cols-4 lg:grid-cols-6">
+            {screenplays.map((s) => (
+              <li key={s.id}>
+                <Link href={`/app/guiones/${s.id}`} className="sp-cover group block">
+                  <span className={`sp-cover-sheet flex flex-col px-[10%] pt-[34%] pb-[8%] text-center text-[#1c1b19] ${COVER_SHADOW}`}>
+                    <span className="font-[family-name:var(--font-courier)] text-[12px] leading-tight font-bold uppercase underline underline-offset-4">
+                      {s.title}
+                    </span>
+                    {s.author && (
+                      <span className="mt-[14%] line-clamp-2 font-[family-name:var(--font-courier)] text-[10px] text-[#4a4842]">
+                        escrito por {s.author}
                       </span>
                     )}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
-        <section aria-labelledby="home-agenda">
-          <div className="flex items-baseline justify-between gap-3">
-            <h2 id="home-agenda" className={H2}>
-              Próximos 14 días
-            </h2>
-            <Link href="/app/calendario" className="link-action">
-              Calendario →
-            </Link>
-          </div>
-          {upcomingEvents.length === 0 ? (
-            <p className="mt-4 border-t border-line pt-4 font-sans text-sm text-muted">
-              Sin rodajes, ensayos ni entregas en las próximas dos semanas.
-            </p>
-          ) : (
-            <ul className="mt-4 divide-y divide-line border-t border-line">
-              {upcomingEvents.map((event) => (
-                <li key={event.id}>
-                  <Link href={event.href} className="group flex items-start gap-4 py-3">
-                    <span className="w-10 shrink-0 text-center">
-                      <span className="block font-display text-lg leading-none font-black">
-                        {event.date.getDate()}
-                      </span>
-                      <span className="mt-0.5 block font-mono text-[10px] tracking-widest text-muted uppercase">
-                        {event.date.toLocaleDateString("es-ES", { month: "short" }).replace(".", "")}
-                      </span>
+                    <span className="mt-auto text-left font-[family-name:var(--font-courier)] text-[10px] text-[#8f897c]">
+                      {s.pageCount} págs. · {s.sceneCount} escenas
                     </span>
-                    <span className="min-w-0 font-sans text-sm">
-                      <span className="block truncate transition-colors group-hover:text-accent">{event.title}</span>
-                      <span className="block truncate text-xs text-muted">
-                        {event.typeLabel}
-                        {event.projectName ? ` · ${event.projectName}` : ""}
-                      </span>
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
+                  </span>
+                </Link>
+                <p className="mt-2 font-sans text-[12.5px] text-muted">{relativeTime(s.updatedAt)}</p>
+              </li>
+            ))}
+          </ul>
         </section>
-
-        <section aria-labelledby="home-activity">
-          <h2 id="home-activity" className={H2}>
-            Actividad reciente
-          </h2>
-          {activity.length === 0 ? (
-            <p className="mt-4 border-t border-line pt-4 font-sans text-sm text-muted">
-              Aquí verás los cambios de tu equipo en cualquier proyecto.
-            </p>
-          ) : (
-            <ul className="mt-4 divide-y divide-line border-t border-line">
-              {activity.map((entry) => (
-                <li key={entry.id} className="py-3 font-sans text-sm leading-snug text-muted">
-                  <span className="font-semibold text-fg">
-                    {entry.user?.fullName ?? entry.user?.email ?? "Alguien"}
-                  </span>{" "}
-                  {entry.summary} en{" "}
-                  <Link
-                    href={`/app/${entry.project.id}`}
-                    className="text-fg underline decoration-line underline-offset-4 hover:decoration-accent"
-                  >
-                    {entry.project.name}
-                  </Link>
-                  <span className="mt-0.5 block font-mono text-[11px]">{relativeTime(entry.createdAt)}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      </DashboardReveal>
+      )}
     </div>
   );
 }

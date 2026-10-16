@@ -12,6 +12,7 @@ import { DeleteButton } from "@/components/DeleteButton";
 import { PdfLink } from "@/components/PdfLink";
 import { ExcelExport } from "@/components/ExcelExport";
 import { PageHeader } from "@/components/PageHeader";
+import { TOOL_GUIDES } from "@/lib/tool-guides";
 import { ActionButtonForm } from "@/components/ActionButtonForm";
 import { createStarterBudget } from "@/lib/actions/budget";
 import { FormField } from "@/components/FormField";
@@ -183,7 +184,8 @@ export default async function PresupuestoPage({
   return (
     <div className="pb-16">
       <PageHeader
-        eyebrow="Producción"
+        guide={TOOL_GUIDES["presupuesto"]}
+        eyebrow="Preparar"
         title="Presupuesto"
         description="Cuánto cuesta el rodaje y cuánto llevas gastado, partida a partida."
         actions={

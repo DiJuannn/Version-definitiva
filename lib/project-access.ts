@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import { getCurrentProfile, type Profile } from "@/lib/current-user";
 
@@ -35,12 +36,14 @@ export async function getProjectForProfile(profile: Profile, projectId: string) 
   return project;
 }
 
-export async function getProjectForCurrentUser(projectId: string) {
+// Una sola consulta por petición: el layout del proyecto y la página la
+// piden los dos (y algunas páginas más de una vez).
+export const getProjectForCurrentUser = cache(async (projectId: string) => {
   const profile = await getCurrentProfile();
   if (!profile) return null;
 
   return getProjectForProfile(profile, projectId);
-}
+});
 
 // Misma idea que getProjectForProfile pero para el listado — usada por
 // /app/proyectos y por la API de la app móvil.

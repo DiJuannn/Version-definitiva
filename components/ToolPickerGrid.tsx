@@ -56,7 +56,7 @@ export function ToolPickerGrid({
                       {tool.label}
                     </span>
                     {tool.pro && (
-                      <span className="rounded-full bg-accent/15 px-1.5 py-px font-mono text-[9px] tracking-widest text-accent uppercase">
+                      <span className="rounded-full bg-accent/15 px-1.5 py-px font-mono text-[10px] tracking-widest text-accent uppercase">
                         PRO
                       </span>
                     )}

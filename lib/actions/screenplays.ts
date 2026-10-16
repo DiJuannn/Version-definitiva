@@ -59,9 +59,9 @@ export async function createScreenplay(
   if ("error" in result) return result;
 
   revalidatePath("/app/guiones");
-  // Por dónde empieza: la idea, la escaleta o directamente el guion.
+  // Por dónde empieza: la idea o directamente el guion.
   const start = String(formData.get("start") ?? "");
-  const step = fountain || imported ? "guion" : start === "idea" || start === "escaleta" ? start : "guion";
+  const step = fountain || imported ? "guion" : start === "idea" ? "idea" : "guion";
   redirect(`/app/guiones/${result.id}?paso=${step}`);
 }
 
@@ -131,9 +131,13 @@ export async function linkScreenplayProject(id: string, projectId: string | null
   revalidatePath(`/app/guiones/${id}`);
   if (!projectId) return { ok: true, characters: 0, cards: 0 };
   const res = await syncScreenplayToProjectCore(id, profile.organizationId);
-  // Al vincular, las escenas del guion pasan también a producción.
-  if (res.ok) await syncScreenplayScenesCore(projectId, profile.organizationId);
+  // Al vincular, las escenas del guion pasan también a producción. Si eso
+  // falla se dice (los personajes ya están), para que no parezca vinculado del todo.
+  const scenes = res.ok ? await syncScreenplayScenesCore(projectId, profile.organizationId) : null;
   revalidateProjectScript(projectId);
+  if (res.ok && scenes && !scenes.ok) {
+    return { ...res, warning: `Las escenas no se han podido pasar a producción (${scenes.error}). Prueba con «Sincronizar escenas» en Guion.` };
+  }
   return res;
 }
 
@@ -263,4 +267,20 @@ export async function uploadScreenplayImage(id: string, formData: FormData): Pro
   const uploaded = await uploadProjectFile(`guiones/${id}`, file);
   if (!uploaded) return { error: "No se pudo subir la imagen. Inténtalo de nuevo." };
   return { url: uploaded.url };
+}
+
+// Desde el editor, mientras se escribe: las escenas del guion pasan solas al
+// proyecto vinculado (sin borrar nada de producción). Solo quien es de la
+// organización del guion.
+export async function autoSyncScreenplayScenes(id: string): Promise<SceneSyncResult> {
+  const profile = await getCurrentProfile();
+  if (!profile) return { ok: false, error: "Tu sesión ha caducado." };
+  const screenplay = await prisma.screenplay.findFirst({
+    where: { id, organizationId: profile.organizationId },
+    select: { projectId: true },
+  });
+  if (!screenplay?.projectId) return { ok: false, error: "Este guion no está vinculado a ningún proyecto." };
+  const res = await syncScreenplayScenesCore(screenplay.projectId, profile.organizationId);
+  if (res.ok && (res.added || res.updated)) revalidateProjectScript(screenplay.projectId);
+  return res;
 }

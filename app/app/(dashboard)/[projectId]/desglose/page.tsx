@@ -11,11 +11,21 @@ import {
 import { BREAKDOWN_CATEGORY_LABELS } from "@/lib/labels";
 import { BreakdownCategory } from "@/lib/generated/prisma";
 import { PageHeader } from "@/components/PageHeader";
+import { TOOL_GUIDES } from "@/lib/tool-guides";
+import { SceneToolSwitch } from "@/components/preproduccion/SceneToolSwitch";
+import { RefStrip } from "@/components/moodboard/RefStrip";
+import { getVisualRefs, refsFor } from "@/lib/visual-refs";
 import { SubmitButton } from "@/components/SubmitButton";
 import { BreakdownCategorySelect } from "@/components/BreakdownCategorySelect";
 import { CreateDialog, DialogCancel } from "@/components/CreateDialog";
 import { NextTool, SceneSlug } from "@/components/preproduccion/SceneSlug";
-import { BREAKDOWN_COLUMNS, CATEGORY_COLOR, type BreakdownColumn } from "@/components/preproduccion/palette";
+import { BREAKDOWN_COLUMNS, CATEGORY_COLOR, stripColor, type BreakdownColumn } from "@/components/preproduccion/palette";
+import { BreakdownScene } from "@/components/preproduccion/BreakdownScene";
+import { courierPrime } from "@/lib/screenplay/font";
+import { SceneChip } from "@/components/ScenePeek";
+import { SceneProgress } from "@/components/SceneProgress";
+import { getSceneStatuses, EMPTY_STATUS } from "@/lib/scene-status";
+import { getScenesText } from "@/lib/scene-text";
 
 // El desglose como se hace en producción: una matriz ESCENAS × CATEGORÍAS,
 // cada categoría con su color de siempre, y en cada celda cuántas cosas de
@@ -31,11 +41,13 @@ const ON_COLOR = "#141317";
 
 export default async function DesglosePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ projectId: string }>;
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ vista?: string; escena?: string }>;
 }) {
   const { projectId } = await params;
+  const sp = await searchParams;
 
   const project = await getProjectForCurrentUser(projectId);
   if (!project) notFound();
@@ -62,10 +74,14 @@ export default async function DesglosePage({
         intExt: true,
         dayPart: true,
         extrasNotes: true,
+        scriptSid: true,
+        description: true,
+        action: true,
+        dialogueNotes: true,
         location: { select: { name: true } },
         characters: { select: { character: { select: { name: true } } } },
         breakdownElements: {
-          select: { breakdownElement: { select: { name: true, category: true } } },
+          select: { breakdownElement: { select: { id: true, name: true, category: true } } },
         },
       },
     }),
@@ -132,12 +148,141 @@ export default async function DesglosePage({
 
   const sceneLink = (id: string) => `/app/${projectId}/guion/${id}`;
 
+  // Dos vistas: escena a escena (leer y marcar, la de trabajo) y la lista de
+  // lo que hay que conseguir (matriz y categorías, la de repaso).
+  const view = sp.vista === "lista" || scenes.length === 0 ? "lista" : "escena";
+  const tabs = scenes.length > 0 && (
+    <nav aria-label="Vistas del desglose" className="mt-8 flex gap-1 border-b border-line">
+      {[
+        ["escena", "Escena a escena", `/app/${projectId}/desglose`],
+        ["lista", "Lo que hay que conseguir", `/app/${projectId}/desglose?vista=lista`],
+      ].map(([key, label, href]) => (
+        <Link
+          key={key}
+          href={href}
+          aria-current={view === key ? "page" : undefined}
+          className={`-mb-px border-b-2 px-3.5 py-2.5 font-sans text-[14px] transition-colors ${
+            view === key ? "border-accent font-semibold text-fg" : "border-transparent text-muted hover:text-fg"
+          }`}
+        >
+          {label}
+        </Link>
+      ))}
+    </nav>
+  );
+
+  if (view === "escena") {
+    const index = Math.max(0, scenes.findIndex((s) => s.id === sp.escena));
+    const scene = scenes[index];
+    const [texts, statuses, visuals] = await Promise.all([getScenesText(projectId, [scene]), getSceneStatuses(projectId), getVisualRefs(projectId)]);
+    const linked = scene.breakdownElements.map((b) => b.breakdownElement);
+    const linkedIds = new Set(linked.map((e) => e.id));
+    const others = elements.filter((e) => !linkedIds.has(e.id)).map((e) => ({ id: e.id, name: e.name, category: e.category }));
+    const done = scenes.filter((s) => s.breakdownElements.length > 0).length;
+    const href = (id: string) => `/app/${projectId}/desglose?escena=${id}`;
+    const prev = scenes[index - 1];
+    const next = scenes[index + 1];
+    return (
+      <div className={`pb-16 ${courierPrime.variable}`}>
+        <PageHeader
+          guide={TOOL_GUIDES["desglose"]}
+          eyebrow="Preparar"
+          title="Desglose"
+          description="Lee cada escena y marca lo que hace falta para rodarla: selecciona la palabra y elige si es atrezzo, vestuario, un vehículo… Al final tienes la lista de todo lo que hay que conseguir."
+        />
+        {tabs}
+        <p className="mt-6 font-sans text-[15px]">
+          <b className="font-semibold">{done} de {scenes.length}</b>{" "}
+          <span className="text-muted">escenas con algo marcado · {elements.length} cosas que conseguir en total.</span>
+        </p>
+
+        <div className="mt-6 grid grid-cols-[minmax(0,1fr)] gap-8 lg:grid-cols-[13rem_minmax(0,1fr)]">
+          {/* Escenas: dónde estás y cuáles faltan. */}
+          <nav aria-label="Escenas" className="lg:sticky lg:top-28 lg:self-start">
+            <ol className="flex gap-1 overflow-x-auto pb-2 lg:block lg:space-y-0.5 lg:overflow-visible lg:pb-0">
+              {scenes.map((s) => {
+                const on = s.id === scene.id;
+                const count = s.breakdownElements.length;
+                return (
+                  <li key={s.id} className="shrink-0">
+                    <Link
+                      href={href(s.id)}
+                      aria-current={on ? "page" : undefined}
+                      className={`flex items-center gap-2.5 rounded-lg border-l-4 py-2 pr-2.5 pl-2.5 font-sans text-[13px] transition-colors ${
+                        on ? "bg-bg-raised text-fg" : "text-muted hover:bg-bg-raised/60 hover:text-fg"
+                      }`}
+                      style={{ borderLeftColor: stripColor(s.intExt, s.dayPart) }}
+                    >
+                      <span className="w-5 font-display font-black text-fg">{s.number}</span>
+                      <span className="hidden min-w-0 flex-1 truncate lg:block">{s.location?.name ?? "Sin localización"}</span>
+                      <span className={`font-mono text-[11px] ${count ? "text-fg/80" : "text-muted/60"}`}>{count || "—"}</span>
+                      <SceneProgress status={statuses.get(s.id) ?? EMPTY_STATUS} size={14} />
+                    </Link>
+                  </li>
+                );
+              })}
+            </ol>
+          </nav>
+
+          <section aria-labelledby="escena-titulo" className="min-w-0">
+            <div className="mb-4 flex flex-wrap items-baseline justify-between gap-3">
+              <h2 id="escena-titulo" className="flex items-baseline gap-3 text-lg">
+                <SceneChip sceneId={scene.id} number={scene.number}>
+                  <span className="font-display text-3xl font-black">{scene.number}</span>
+                </SceneChip>
+                <SceneSlug intExt={scene.intExt} dayPart={scene.dayPart} location={scene.location?.name} />
+              </h2>
+              <span className="flex items-center gap-4 font-sans text-sm">
+                {prev && (
+                  <Link href={href(prev.id)} className="text-muted hover:text-fg">
+                    ← Escena {prev.number}
+                  </Link>
+                )}
+                {next && (
+                  <Link href={href(next.id)} className="btn btn-outline btn-sm">
+                    Escena {next.number} →
+                  </Link>
+                )}
+              </span>
+            </div>
+            <div className="mb-5">
+              <SceneToolSwitch projectId={projectId} sceneId={scene.id} active="desglose" />
+            </div>
+            {(() => {
+              const looks = refsFor(visuals, { sceneId: scene.id }, ["vestuario", "arte"]);
+              return looks.length > 0 ? (
+                <div className="mb-5">
+                  <RefStrip refs={looks} projectId={projectId} title="Vestuario, arte y tono · del moodboard" />
+                </div>
+              ) : null;
+            })()}
+            <BreakdownScene
+              key={scene.id}
+              projectId={projectId}
+              sceneId={scene.id}
+              text={texts.get(scene.id) ?? { source: "ficha", blocks: [] }}
+              cast={scene.characters.map((c) => c.character.name)}
+              linked={linked}
+              others={others}
+            />
+          </section>
+        </div>
+        <NextTool
+          href={`/app/${projectId}/shot-list?escena=${scene.id}`}
+          label={`Planos de la escena ${scene.number}`}
+          hint="Con lo que hace falta ya marcado, decide cómo se rueda."
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="pb-16">
       <PageHeader
-        eyebrow="Preproducción"
+          guide={TOOL_GUIDES["desglose"]}
+        eyebrow="Preparar"
         title="Desglose"
-        description="Qué pide cada escena para poder rodarla, por categorías y con su color. Lo que sale en cada escena se marca en su ficha, en Guion."
+        description="Todo lo que hay que conseguir para el rodaje, por categorías y con su color, y en qué escenas sale cada cosa."
         actions={
           elements.length > 0 ? (
             <CreateDialog
@@ -150,6 +295,7 @@ export default async function DesglosePage({
           ) : undefined
         }
       />
+      {tabs}
 
       {elements.length === 0 && scenes.length === 0 ? (
         <section className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_24rem]">

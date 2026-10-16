@@ -8,7 +8,7 @@ import { useToast } from "@/components/Toast";
 function SaveButton() {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" disabled={pending} className="link-action whitespace-nowrap !text-accent transition-opacity hover:!text-fg focus-visible:opacity-100 lg:opacity-0 lg:group-hover/actual:opacity-100 lg:group-focus-within/actual:opacity-100">
+    <button type="submit" disabled={pending} className="link-action whitespace-nowrap !text-accent transition-opacity hover:!text-fg focus-visible:opacity-100 lg:opacity-0 pointer-coarse:opacity-100 lg:group-hover/actual:opacity-100 lg:group-focus-within/actual:opacity-100">
       {pending ? "…" : "Guardar"}
     </button>
   );
@@ -83,7 +83,7 @@ export function BudgetActualField({
           if (inputRef.current) inputRef.current.value = planned.toFixed(2);
           formRef.current?.requestSubmit();
         }}
-        className="link-action hidden whitespace-nowrap transition-opacity focus-visible:opacity-100 sm:inline-flex lg:opacity-0 lg:group-hover/actual:opacity-100 lg:group-focus-within/actual:opacity-100"
+        className="link-action hidden whitespace-nowrap transition-opacity focus-visible:opacity-100 sm:inline-flex lg:opacity-0 pointer-coarse:opacity-100 lg:group-hover/actual:opacity-100 lg:group-focus-within/actual:opacity-100"
         title="Poner el gasto igual al importe previsto"
       >
         = previsto

@@ -2,27 +2,104 @@
 @import "leaflet/dist/leaflet.css";
 
 :root {
+  /* ===================================================== Mesa de luz · v2
+     Primitivos (no se usan directamente en componentes: para eso están los
+     semánticos de abajo y las utilidades de @theme). */
+  --ink-0: #0b0b0d; /* sala: marco y cabecera */
+  --ink-1: #151519; /* mesa apagada: fondo de trabajo */
+  --ink-2: #1d1d22; /* panel, popover */
+  --ink-3: #2e2e35; /* filete */
+  --ink-4: #4a4a54; /* borde de campo (3:1 sobre la mesa) */
+  --bone-1: #f2f0ea; /* texto principal */
+  --bone-2: #a9a69e; /* texto secundario (≥ 4,5:1 sobre la mesa) */
+  --bone-3: #8c8a83; /* terciario, solo tamaños grandes o etiquetas */
+  --paper-0: #f1eee6; /* guion, hojas, documentos */
+  --paper-ink: #1c1b19;
+  --opal: #f3f1ec; /* cristal encendido */
+  /* Gelatinas de fase (misma luminosidad percibida). */
+  --gel-1: #ece8dc; /* Escribir */
+  --gel-2: #f0c94a; /* Preparar */
+  --gel-3: #f0503f; /* Rodar */
+  --gel-4: #4fc47f; /* Entregar */
+  /* Señales especiales. */
+  --pencil: #9cc7ee; /* lo que propone la IA: lápiz azul, nunca tinta */
+  --rec: #ff3b2f; /* LED de grabación: solo claqueta y modo set */
+  --keykode: #d9c27a; /* tinta del código de borde de la tira */
+
+  /* Fases: alias de las gelatinas (compatibilidad). */
+  --phase-1: var(--gel-1);
+  --phase-2: var(--gel-2);
+  --phase-3: var(--gel-3);
+  --phase-4: var(--gel-4);
+  /* La gelatina activa: la pone [data-phase] (proyecto); fuera, cristal. */
+  --gel: var(--opal);
+
+  /* Semánticos (los redefine cada superficie: .taller-ink, .taller-desk, .paper). */
   --bg: #0a0a0a;
   --bg-raised: #131313;
   --fg: #f2f0ea;
   --muted: #8a8a84;
   --line: #2a2a27;
+  --border: #4a4a54;
   --accent: #ff4d1c;
   --accent-purple: #4c1d95;
   --accent-purple-soft: #9b87c4;
-  /* Colores con significado — solo para completado, aviso y error/borrado.
-     El morado (--accent) queda para acción, selección, foco y progreso. */
-  --success: #6dbf8b;
-  --warn: #e3b25c;
-  --danger: #ef6b62;
-  /* Tiras de escena de Taller: el código de color clásico del plan de
-     rodaje (interior/exterior, día/noche; naranja para amanecer y
-     atardecer), aclarado para fondo oscuro. */
+  /* Estados: separados de las fases, y nunca solo con color. */
+  --success: #3dd68c;
+  --warn: #f5a524;
+  --danger: #e5484d;
+  /* Tiras de escena: código clásico del plan de rodaje (int/ext, día/noche). */
   --strip-int-day: #e9e6dc;
   --strip-ext-day: #f2cf5b;
   --strip-int-night: #6f9cf0;
   --strip-ext-night: #6cc58d;
   --strip-twilight: #f29a6b;
+
+  /* Forma: 5 radios, sombras con nombre, capas de profundidad. */
+  --r-xs: 3px; /* tira, chips de escena */
+  --r-sm: 6px; /* campos, botones */
+  --r-md: 10px; /* menús */
+  --r-lg: 14px; /* hojas, paneles */
+  --shadow-ring: 0 0 0 1px color-mix(in oklch, var(--fg) 8%, transparent);
+  --shadow-raise: 0 1px 0 rgba(255, 255, 255, 0.03), 0 6px 16px -10px rgba(0, 0, 0, 0.6);
+  --shadow-pop: 0 0 0 1px rgba(255, 255, 255, 0.07), 0 18px 40px -16px rgba(0, 0, 0, 0.75);
+  --shadow-modal: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 30px 70px -20px rgba(0, 0, 0, 0.85);
+  --shadow-drag: 0 24px 48px -16px rgba(0, 0, 0, 0.8);
+  /* Luz: lo seleccionado se enciende (halo), no lleva sombra negra. */
+  --glow: 0 0 0 1px color-mix(in oklch, var(--gel) 55%, transparent), 0 0 24px -6px color-mix(in oklch, var(--gel) 35%, transparent);
+  --focus-ring: 0 0 0 2px var(--ink-1), 0 0 0 4px color-mix(in oklch, var(--opal) 85%, transparent);
+
+  /* Movimiento: se mide en fotogramas (1/24 s). */
+  --f: 41.667ms;
+  --dur-press: calc(var(--f) * 2); /* 83 ms */
+  --dur-quick: calc(var(--f) * 3); /* 125 ms: hover, menús */
+  --dur-standard: calc(var(--f) * 5); /* 208 ms: pestañas, popovers */
+  --dur-panel: calc(var(--f) * 6); /* 250 ms: ficha rápida, cajones */
+  --dur-view: calc(var(--f) * 8); /* 333 ms: cambio de vista */
+  --dur-reveal: calc(var(--f) * 12); /* 500 ms: revelado de imagen */
+  --e-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --e-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --e-sheet: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* La gelatina de la fase en la que se está (la pone el layout del proyecto).
+   El acento se redeclara aquí: una variable se calcula donde se declara, y
+   la de .taller-desk (más arriba) se quedaría con el cristal. */
+[data-phase="1"] {
+  --gel: var(--gel-1);
+  --accent: var(--gel);
+}
+[data-phase="2"] {
+  --gel: var(--gel-2);
+  --accent: var(--gel);
+}
+[data-phase="3"] {
+  --gel: var(--gel-3);
+  --accent: var(--gel);
+}
+[data-phase="4"] {
+  --gel: var(--gel-4);
+  --accent: var(--gel);
 }
 
 /* Paleta de la web de la productora (home, equipo, legal, cabecera). */
@@ -56,54 +133,76 @@
    que no son blanco puro para no deslumbrar. Misma idea que el editor de
    guiones: la página clara sobre la mesa. */
 .taller-ink {
-  --bg: #0a0a0a;
-  --bg-raised: #120e1c;
-  --fg: #f2f0ea;
-  --muted: #8a8a84;
-  --line: #2a2536;
-  --accent: #a08fd0;
-  --success: #6dbf8b;
-  --warn: #e3b25c;
-  --danger: #ef6b62;
+  --bg: var(--ink-0);
+  --bg-raised: #141418;
+  --fg: var(--bone-1);
+  --muted: var(--bone-2);
+  --line: #26262c;
+  --border: var(--ink-4);
+  /* El acento es la gelatina de la fase (o el cristal fuera de un proyecto). */
+  --accent: var(--gel);
+  --success: #3dd68c;
+  --warn: #f5a524;
+  --danger: #e5484d;
   color-scheme: dark;
 }
 .taller-desk {
-  --bg: #141317;
-  --bg-raised: #1f1e23;
-  --fg: #ecebe6;
-  --muted: #9a99a0;
-  --line: #2f2e35;
-  --accent: #b3a4e6;
-  --success: #7cc79a;
-  --warn: #e3b25c;
-  --danger: #ef7b72;
+  --bg: var(--ink-1);
+  --bg-raised: var(--ink-2);
+  --fg: var(--bone-1);
+  --muted: var(--bone-2);
+  --line: var(--ink-3);
+  --border: var(--ink-4);
+  --accent: var(--gel);
+  --success: #3dd68c;
+  --warn: #f5a524;
+  --danger: #ef6b6f;
   color-scheme: dark;
 }
 .taller-paper,
 .taller-desk .paper {
-  --bg: #e3e1dc;
-  --bg-raised: #f5f4f0;
-  --fg: #1d1c21;
-  --muted: #605f66;
-  --line: #d3d0c9;
-  --accent: #5a46a8;
-  --success: #2f7d4f;
-  --warn: #a8640a;
+  --bg: #e4e1d9;
+  --bg-raised: var(--paper-0);
+  --fg: var(--paper-ink);
+  --muted: #5c5a54;
+  --line: #d4d0c6;
+  --border: #b9b5aa;
+  /* Sobre papel, la acción va en tinta (el amarillo no se lee en crema). */
+  --accent: var(--paper-ink);
+  --success: #23774a;
+  --warn: #9a5b00;
   --danger: #b4372f;
+  --focus-ring: 0 0 0 2px var(--paper-0), 0 0 0 4px var(--paper-ink);
   color-scheme: light;
   color: var(--fg);
 }
 body:has(.taller-desk) {
-  background: #141317;
+  background: var(--ink-1);
 }
 body:has(.taller-desk) > div[aria-hidden].fixed {
   display: none; /* el grano de película es de la web, no del trabajo */
 }
 .taller-desk ::selection {
-  background: rgba(179, 164, 230, 0.3);
+  background: color-mix(in oklch, var(--gel) 32%, transparent);
 }
 .taller-desk .paper ::selection {
-  background: rgba(90, 70, 168, 0.18);
+  background: rgba(28, 27, 25, 0.14);
+}
+/* Enlaces de acción: con el acento en la gelatina (que en Escribir es casi
+   blanco), el texto de acción lleva siempre un subrayado del color de la
+   fase para que se lea como enlace. */
+.taller-desk a.text-accent,
+.taller-ink a.text-accent {
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  text-decoration-color: color-mix(in oklch, var(--gel) 60%, transparent);
+}
+/* Foco visible y coherente en toda la herramienta. */
+.taller-desk :focus-visible,
+.taller-ink :focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 @keyframes menu-in {
@@ -126,29 +225,29 @@ body:has(.taller-desk) > div[aria-hidden].fixed {
      una hoja: dentro se separa con líneas (divide-y) y espacio. */
   .sheet {
     background: var(--bg-raised);
-    border-radius: 0.75rem;
-    box-shadow: 0 0 0 1px color-mix(in srgb, var(--fg) 7%, transparent);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-ring);
   }
   /* Papel: lo que se rellena o se lee como documento (formularios, modales,
      fichas abiertas, hojas de llamada, contratos). Claro pero no blanco puro.
      Dentro, los tokens pasan solos a la versión clara. */
   .paper {
-    background: #e6e4df;
-    border-radius: 0.75rem;
+    background: var(--paper-0);
+    border-radius: var(--r-lg);
     box-shadow: 0 18px 40px -24px rgba(0, 0, 0, 0.8);
   }
   /* Losa: superficie de la propia mesa, para navegar o resumir (atajos a
      herramientas, tarjetas de proyecto, cifras). Tampoco se anidan. */
   .tile {
     background: var(--bg-raised);
-    border-radius: 0.75rem;
-    box-shadow: 0 0 0 1px color-mix(in srgb, var(--fg) 6%, transparent);
+    border-radius: var(--r-lg);
+    box-shadow: var(--shadow-ring);
   }
   /* Campo de formulario: blanco, borde fino, foco con anillo de acento. */
   .field {
     min-width: 0;
-    border: 1px solid var(--line);
-    border-radius: 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
     background: var(--bg-raised);
     padding: 0.5rem 0.75rem;
     font-size: 0.875rem;
@@ -156,40 +255,38 @@ body:has(.taller-desk) > div[aria-hidden].fixed {
     color: var(--fg);
     outline: none;
     transition:
-      border-color 150ms ease,
-      box-shadow 150ms ease;
+      border-color var(--dur-quick) var(--e-out),
+      box-shadow var(--dur-quick) var(--e-out);
   }
   .field::placeholder {
     color: color-mix(in srgb, var(--muted) 75%, transparent);
   }
   .field:hover {
-    border-color: color-mix(in srgb, var(--fg) 22%, var(--line));
+    border-color: color-mix(in oklch, var(--fg) 35%, var(--border));
   }
   .field:focus,
   .field:focus-within {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent);
+    border-color: color-mix(in oklch, var(--fg) 70%, var(--border));
+    box-shadow: 0 0 0 3px color-mix(in oklch, var(--fg) 10%, transparent);
   }
   /* Desplegables del marco (menú principal, herramientas, proyectos). */
   .menu-panel {
-    border-radius: 0.875rem;
-    background: #16131e;
+    border-radius: var(--r-md);
+    background: var(--ink-2);
     padding: 0.375rem;
-    box-shadow:
-      0 0 0 1px rgba(255, 255, 255, 0.08),
-      0 24px 48px -12px rgba(0, 0, 0, 0.7);
-    animation: menu-in 140ms ease-out;
+    box-shadow: var(--shadow-pop);
+    animation: menu-in var(--dur-quick) var(--e-out);
   }
   .menu-item {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    border-radius: 0.5rem;
+    border-radius: var(--r-sm);
     padding: 0.5rem 0.75rem;
     color: var(--muted);
     transition:
-      background-color 120ms ease,
-      color 120ms ease;
+      background-color var(--dur-quick) var(--e-out),
+      color var(--dur-quick) var(--e-out);
   }
   .menu-item:hover,
   .menu-item:focus-visible {
@@ -198,8 +295,90 @@ body:has(.taller-desk) > div[aria-hidden].fixed {
   }
   .menu-item[aria-current="page"],
   .menu-item[data-active="true"] {
-    background: color-mix(in srgb, var(--accent) 16%, transparent);
+    background: rgba(255, 255, 255, 0.08);
     color: var(--fg);
+    box-shadow: inset 2px 0 0 var(--gel);
+  }
+  /* Título de cartel: Archivo condensada y negrísima, como un cartel de
+     cine. Solo para nombres de proyecto y cifras protagonistas. */
+  .poster-title {
+    font-family: var(--font-archivo), sans-serif;
+    font-weight: 900;
+    font-stretch: 62%;
+    line-height: 0.84;
+    letter-spacing: -0.005em;
+    text-transform: uppercase;
+  }
+  .poster-sub {
+    font-family: var(--font-archivo), sans-serif;
+    font-weight: 800;
+    font-stretch: 72%;
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+  }
+  /* Reloj de siete segmentos (claqueta, día de rodaje). Detrás de la cifra,
+     los segmentos apagados («88:88»), como en un display de verdad. */
+  .seg {
+    font-family: var(--font-seg), var(--font-jetbrains-mono), monospace;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+  .seg-display {
+    position: relative;
+    display: inline-block;
+  }
+  .seg-display::before {
+    content: attr(data-ghost);
+    position: absolute;
+    inset: 0;
+    opacity: 0.08;
+  }
+  /* Tira de película: el avance de un proyecto. Perforaciones arriba y
+     abajo; cada fotograma encendido lleva el color de su fase. */
+  .film-strip {
+    position: relative;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: 3px;
+    border-radius: 3px;
+    background: #050506;
+    padding: 11px 5px;
+  }
+  .film-strip::before,
+  .film-strip::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 8px;
+    background-image: radial-gradient(ellipse 3px 2.2px at center, #2b2a31 98%, transparent 100%);
+    background-size: 10px 8px;
+    background-repeat: repeat-x;
+  }
+  .film-strip::before {
+    top: 1px;
+  }
+  .film-strip::after {
+    bottom: 1px;
+  }
+  .film-strip > i {
+    height: 20px;
+    border-radius: 2px;
+    background: #1d1c22;
+  }
+  .film-strip.film-strip-sm {
+    padding: 8px 4px;
+    gap: 2px;
+  }
+  .film-strip.film-strip-sm::before,
+  .film-strip.film-strip-sm::after {
+    height: 6px;
+    background-size: 8px 6px;
+  }
+  .film-strip.film-strip-sm > i {
+    height: 12px;
   }
   /* Etiqueta pequeña de sección (PREPRODUCCIÓN, ACTORES…). */
   .eyebrow {
@@ -227,6 +406,28 @@ body:has(.taller-desk) > div[aria-hidden].fixed {
   --color-strip-ext-day: var(--strip-ext-day);
   --color-strip-int-night: var(--strip-int-night);
   --color-strip-ext-night: var(--strip-ext-night);
+  --color-border: var(--border);
+  --color-gel: var(--gel);
+  --color-gel-1: var(--gel-1);
+  --color-gel-2: var(--gel-2);
+  --color-gel-3: var(--gel-3);
+  --color-gel-4: var(--gel-4);
+  --color-ink-0: var(--ink-0);
+  --color-ink-1: var(--ink-1);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-paper: var(--paper-0);
+  --color-paper-ink: var(--paper-ink);
+  --color-opal: var(--opal);
+  --color-pencil: var(--pencil);
+  --color-rec: var(--rec);
+  --color-keykode: var(--keykode);
+  --shadow-ring: var(--shadow-ring);
+  --shadow-raise: var(--shadow-raise);
+  --shadow-pop: var(--shadow-pop);
+  --shadow-modal: var(--shadow-modal);
+  --shadow-drag: var(--shadow-drag);
+  --shadow-glow: var(--glow);
   --font-display: var(--font-archivo);
   --font-mono: var(--font-jetbrains-mono);
   --font-sans: var(--font-archivo);
@@ -466,63 +667,76 @@ input[type="radio"] {
 /* Sistema de botones: un primario (morado) por pantalla para avanzar, un
    secundario blanco para enviar formularios, contorno para acciones
    terciarias, peligro (rojo) solo para confirmar borrados. */
+/* Botones (v2). Planos, sin brillo ni degradado; esquinas poco redondeadas;
+   texto normal (no mono en mayúsculas). El principal lleva la gelatina de la
+   fase en la que se está; fuera de un proyecto, el cristal. */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.375rem;
-  border-radius: 9999px;
+  gap: 0.4rem;
+  min-height: 2.5rem;
+  border-radius: var(--r-sm);
   border: 1px solid transparent;
-  padding: 0.5rem 1.25rem;
-  font-family: var(--font-jetbrains-mono), monospace;
-  font-size: 0.75rem;
-  line-height: 1rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  padding: 0.5rem 1rem;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25rem;
+  letter-spacing: 0;
+  white-space: nowrap;
   cursor: pointer;
   transition:
-    opacity 0.2s,
-    background-color 0.2s,
-    border-color 0.2s,
-    color 0.2s,
-    transform 0.1s;
+    background-color var(--dur-quick) var(--e-out),
+    border-color var(--dur-quick) var(--e-out),
+    color var(--dur-quick) var(--e-out),
+    transform var(--dur-press) var(--e-out);
 }
 .btn:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 .btn:active:not(:disabled) {
-  transform: scale(0.97);
+  transform: translateY(1px);
 }
 .btn-sm {
-  padding: 0.375rem 1rem;
+  min-height: 2rem;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.8125rem;
 }
 .btn-primary {
   background: var(--accent);
-  color: var(--bg);
+  color: var(--ink-0);
+}
+.btn-primary:hover:not(:disabled) {
+  background: color-mix(in oklch, var(--accent) 88%, white);
 }
 .btn-secondary {
   background: var(--fg);
   color: var(--bg);
 }
-.btn-primary:hover:not(:disabled),
 .btn-secondary:hover:not(:disabled) {
-  opacity: 0.9;
+  background: color-mix(in oklch, var(--fg) 88%, transparent);
 }
 .btn-outline {
-  border-color: var(--line);
+  border-color: var(--border);
   color: var(--fg);
+  background: transparent;
 }
 .btn-outline:hover:not(:disabled) {
-  border-color: var(--accent);
-  color: var(--accent);
+  border-color: color-mix(in oklch, var(--fg) 55%, var(--border));
+  background: color-mix(in oklch, var(--fg) 5%, transparent);
 }
 .btn-danger {
   background: var(--danger);
-  color: var(--bg);
+  color: #fff;
 }
 .btn-danger:hover:not(:disabled) {
-  opacity: 0.9;
+  background: color-mix(in oklch, var(--danger) 88%, black);
+}
+.paper .btn-primary,
+.taller-paper .btn-primary {
+  color: var(--paper-0);
 }
 
 /* Botón de texto (Editar, Cancelar, Eliminar…) con zona táctil decente. */
@@ -532,13 +746,12 @@ input[type="radio"] {
   align-items: center;
   min-height: 2rem;
   padding: 0 0.25rem;
-  font-family: var(--font-jetbrains-mono), monospace;
-  font-size: 0.6875rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 500;
   color: var(--muted);
   cursor: pointer;
-  transition: color 0.2s;
+  transition: color var(--dur-quick) var(--e-out);
 }
 .link-action:hover {
   color: var(--fg);
@@ -973,7 +1186,7 @@ body:has(.sp-light) > div[aria-hidden].fixed {
   }
 }
 .sp-enter {
-  animation: sp-enter 380ms ease-out both;
+  animation: sp-enter 380ms ease-out backwards;
 }
 @media (prefers-reduced-motion: reduce) {
   .sp-cover,
@@ -1010,4 +1223,109 @@ body:has(.sp-light) > div[aria-hidden].fixed {
 .field-line:focus {
   border-bottom-color: var(--accent);
 }
+}
+
+/* Páginas que se imprimen tal cual (guion técnico): solo el documento, en
+   papel blanco, sin el marco de la app. */
+@media print {
+  body:has(.print-doc) > div > header,
+  body:has(.print-doc) .skip-link,
+  body:has(.print-doc) .print-hide,
+  body:has(.print-doc) [aria-label="Navegación del proyecto"] {
+    display: none !important;
+  }
+  body:has(.print-doc),
+  body:has(.print-doc) .taller-desk {
+    background: #fff !important;
+    color: #000 !important;
+    padding: 0 !important;
+  }
+  .print-doc .paper {
+    box-shadow: none !important;
+  }
+  .print-doc tr,
+  .print-doc .print-keep {
+    break-inside: avoid;
+  }
+}
+
+@keyframes peek-in {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* Comienzo de un acto dentro de la página (solo en pantalla). */
+.sp-actbreak {
+  position: relative;
+  margin: calc(var(--u) / 2.4) calc(var(--u) * -1) calc(var(--u) / 4) calc(var(--u) * -1.5);
+  border-top: 2px solid #a08fd0;
+  user-select: none;
+}
+.sp-actbreak::after {
+  content: attr(data-label);
+  position: absolute;
+  top: -0.8em;
+  left: calc(var(--u) * 1.5);
+  padding: 0 10px;
+  background: #fbfaf6;
+  color: #5a46a8;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+.sp-actbreak + .sp-block {
+  margin-top: 0;
+}
+@media (max-width: 640px) {
+  .sp-actbreak {
+    margin-left: -30px;
+    margin-right: -12px;
+  }
+  .sp-actbreak::after {
+    left: 30px;
+  }
+}
+/* Guion vacío: la ayuda para empezar va justo debajo del primer encabezado. */
+.sp-paper-empty .sp-doc {
+  min-height: 0;
+}
+
+/* Titulares de la herramienta: la Archivo del sistema en su ancho condensado
+   (la misma familia del cartel, un punto menos estrecha). Así los titulares
+   de sección de todas las herramientas hablan igual que el cartel, en vez de
+   la Archivo normal en negrita, que se veía ancha y genérica. */
+.taller-desk .font-display,
+.taller-ink .font-display {
+  font-stretch: 78%;
+  letter-spacing: 0;
+}
+
+/* La claqueta de Inicio se cierra una vez al entrar: el palo baja de
+   abierto a cerrado en 12 fotogramas y se queda entreabierto. */
+@keyframes clap {
+  0% { transform: rotate(-16deg); }
+  55% { transform: rotate(0deg); }
+  70% { transform: rotate(-3deg); }
+  100% { transform: rotate(-5deg); }
+}
+.clap-stick {
+  transform: rotate(-5deg);
+  animation: clap var(--dur-reveal) var(--e-out) calc(var(--f) * 6) backwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .clap-stick { animation: none; }
+}
+
+/* Dentro de un proyecto, su cabecera ([data-project-bar]) lleva el logo, el
+   Menú y la cuenta: la de la organización sobra (dos barras, no tres). */
+body:has([data-project-bar]) .app-header {
+  display: none;
 }

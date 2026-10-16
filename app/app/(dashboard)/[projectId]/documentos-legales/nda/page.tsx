@@ -32,7 +32,7 @@ export default async function NdaPage({
     <div className="pb-16">
       <PageHeader
         backHref={`/app/${projectId}/documentos-legales`}
-        backLabel="← Plantillas de documentos"
+        backLabel="← Contratos y permisos"
         eyebrow="Plantilla legal"
         title="Acuerdo de confidencialidad"
         description="Para quien vaya a leer el guion o ver material sin estrenar: se compromete a no contarlo ni difundirlo."

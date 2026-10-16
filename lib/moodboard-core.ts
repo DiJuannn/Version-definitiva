@@ -1,3 +1,4 @@
+import { FACET_KEYS, type Facet } from "@/lib/moodboard-types";
 import { prisma } from "@/lib/prisma";
 import { applyCardOps, type CardOps } from "@/lib/moodboard-merge";
 import { canonical } from "@/lib/project-map-merge";
@@ -39,6 +40,8 @@ function num(value: unknown, min: number, max: number, fallback: number): number
 function safeUrl(value: unknown): string | undefined {
   const url = str(value, 1000);
   if (!url) return undefined;
+  // Imágenes de la propia web (proyectos de ejemplo): rutas internas.
+  if (/^\/images\/[\w\-/.]+$/.test(url) && !url.includes("..")) return url;
   try {
     const parsed = new URL(url);
     return parsed.protocol === "https:" ? parsed.toString() : undefined;
@@ -91,6 +94,18 @@ export function sanitizeCards(input: unknown): MoodboardCard[] {
       card.refId = str(c.refId, 60);
       card.label = str(c.label, 160);
     }
+    if (type === "note" || type === "image" || type === "palette" || type === "reference") {
+      const facets = (Array.isArray(c.facets) ? c.facets : []).filter((f): f is Facet => (FACET_KEYS as string[]).includes(f as string));
+      if (facets.length) card.facets = [...new Set(facets)].slice(0, 4);
+      for (const key of ["scenes", "characters", "locations"] as const) {
+        const ids = (Array.isArray(c[key]) ? c[key] : []).filter((v): v is string => typeof v === "string" && v.length > 0 && v.length <= 60);
+        if (ids.length) card[key] = [...new Set(ids)].slice(0, 40);
+      }
+      if (type === "image" && Array.isArray(c.colors)) {
+        const colors = c.colors.filter((v): v is string => typeof v === "string" && HEX.test(v)).slice(0, 6).map((v) => v.toLowerCase());
+        if (colors.length) card.colors = colors;
+      }
+    }
     cards.push(card);
   }
   return cards;
@@ -133,11 +148,16 @@ export async function applyMoodboardOpsCore(projectId: string, ops: unknown, isP
   const safeOps = (ops && typeof ops === "object" ? ops : {}) as CardOps;
 
   // La fila puede no existir aún (primer guardado): se crea de forma segura ante dos a la vez.
-  await prisma.moodboard.upsert({
-    where: { projectId },
-    create: { projectId, data: { v: 1, cards: [] } as unknown as Prisma.InputJsonValue, cardCount: 0 },
-    update: {},
-  });
+  // (upsert no es atómico en Postgres: si la otra persona la creó justo antes, vale igual).
+  await prisma.moodboard
+    .upsert({
+      where: { projectId },
+      create: { projectId, data: { v: 1, cards: [] } as unknown as Prisma.InputJsonValue, cardCount: 0 },
+      update: {},
+    })
+    .catch((e: unknown) => {
+      if ((e as { code?: string })?.code !== "P2002") throw e;
+    });
 
   return prisma.$transaction(
     async (tx) => {

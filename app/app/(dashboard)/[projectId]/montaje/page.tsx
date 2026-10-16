@@ -11,6 +11,7 @@ import {
 import { DELIVERY_CATEGORY } from "@/lib/delivery-checklist";
 import { EDIT_CUT_STATUS_LABELS } from "@/lib/labels";
 import { PageHeader } from "@/components/PageHeader";
+import { TOOL_GUIDES } from "@/lib/tool-guides";
 import { SectionTabs } from "@/components/SectionTabs";
 import { EmptyState } from "@/components/EmptyState";
 import { CopyTextButton } from "@/components/CopyTextButton";
@@ -56,7 +57,8 @@ export default async function MontajePage({
   return (
     <div>
       <PageHeader
-        eyebrow="Entrega"
+        guide={TOOL_GUIDES["montaje"]}
+        eyebrow="Entregar"
         title="Montaje"
         description="Del rodaje a la entrega: las tomas buenas para quien monta, cada versión del montaje y lo que falta para entregar."
       />
@@ -117,6 +119,7 @@ export default async function MontajePage({
                 selects.scenes.length === 0 ? (
                   <EmptyState
                     title="Todavía no hay tomas marcadas"
+          preview="tomas"
                     description="En cuanto marques tomas buenas con la claqueta (o a mano en el Parte de script), aparecen aquí agrupadas por escena, listas para pasarle a quien monta."
                   />
                 ) : (
@@ -260,6 +263,7 @@ export default async function MontajePage({
               ) : !hasCredits ? (
                 <EmptyState
                   title="Todavía no hay a quién dar crédito"
+          preview="creditos"
                   description="Añade actores en Personajes y equipo técnico en Desglose, y aparecerán aquí ordenados y listos para copiar."
                 />
               ) : (

@@ -7,6 +7,22 @@ export type CardType = (typeof CARD_TYPES)[number];
 export const REFERENCE_KINDS = ["Película", "Serie", "Videoclip", "Publicidad", "Fotografía", "Otro"] as const;
 export const NOTE_COLORS = ["#f3e7a6", "#cfe8d5", "#cfe0f3", "#f3cfd9", "#e0d4f3"] as const;
 
+// Qué define una referencia: es lo que la lleva a cada departamento (la luz y
+// el encuadre a Planos, el vestuario y el arte al Desglose…) y lo que ordena
+// la Biblia visual.
+export const FACETS = [
+  { key: "tono", label: "Tono" },
+  { key: "color", label: "Color" },
+  { key: "luz", label: "Luz" },
+  { key: "encuadre", label: "Encuadre" },
+  { key: "vestuario", label: "Vestuario" },
+  { key: "arte", label: "Arte" },
+  { key: "lugar", label: "Lugar" },
+  { key: "sonido", label: "Sonido" },
+] as const;
+export type Facet = (typeof FACETS)[number]["key"];
+export const FACET_KEYS = FACETS.map((f) => f.key) as Facet[];
+
 export type MoodboardCard = {
   id: string;
   type: CardType;
@@ -30,6 +46,12 @@ export type MoodboardCard = {
   // sirve para volver a encontrarla si el id cambió (p. ej. al restaurar un guion)
   refId?: string;
   label?: string;
+  // Notas, imágenes, paletas y referencias: qué definen y para qué escenas,
+  // personajes y localizaciones del proyecto son (ids).
+  facets?: Facet[];
+  scenes?: string[];
+  characters?: string[];
+  locations?: string[];
 };
 
 export type MoodboardData = { v: 1; cards: MoodboardCard[] };

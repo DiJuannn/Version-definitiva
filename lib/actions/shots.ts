@@ -4,7 +4,14 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { optionalString } from "@/lib/form-utils";
-import { createShotCore, deleteShotCore, updateShotCharactersCore, updateShotCore } from "@/lib/shots-core";
+import {
+  createGuidedShotsCore,
+  createShotCore,
+  deleteShotCore,
+  updateShotCharactersCore,
+  updateShotCore,
+  type GuidedShotInput,
+} from "@/lib/shots-core";
 
 function optionalInt(value: FormDataEntryValue | null): number | null {
   const str = String(value ?? "").trim();
@@ -68,4 +75,13 @@ export async function deleteShot(projectId: string, shotId: string) {
 
   revalidatePath(`/app/${projectId}/shot-list`);
   redirect(`/app/${projectId}/shot-list`);
+}
+
+// Constructor de planos: uno o varios planos (cobertura) para una escena.
+export async function createGuidedShots(projectId: string, sceneId: string, shots: GuidedShotInput[]): Promise<number> {
+  const project = await getProjectForCurrentUser(projectId);
+  if (!project) return 0;
+  const created = await createGuidedShotsCore(projectId, sceneId, shots);
+  for (const tool of ["shot-list", "storyboard", "plan-de-rodaje"]) revalidatePath(`/app/${projectId}/${tool}`);
+  return created;
 }

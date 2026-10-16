@@ -238,6 +238,15 @@ export function ClaquetaBoard({
       setTake(Math.max(Number(saved.take) || 1, serverNext));
       /* eslint-enable react-hooks/set-state-in-effect */
     }
+    // Sin plano puesto (primera vez, o lo último era otra jornada): la
+    // claqueta empieza en el primer plano por rodar del plan del día, no en «—».
+    const first = dayPlan?.shots.find((s) => !s.done);
+    if (first && !saved?.shotNumber && scenes.some((s) => s.id === first.sceneId)) {
+      setSceneEntryMode("list");
+      setSceneId(first.sceneId);
+      setShotNumber(first.shotNumber);
+      setTake(nextTakeFor(first.sceneNumber, first.shotNumber));
+    }
     setRestored(true);
     // Solo al montar: después manda lo que la persona toque.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -585,7 +594,7 @@ export function ClaquetaBoard({
             >
               <div className="flex items-baseline justify-between gap-3 border-b border-fg/25 pb-3">
                 <div className="min-w-0">
-                  <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
+                  <p className="font-mono text-[10px] tracking-[0.3em] text-fg/50 uppercase">
                     Producción
                   </p>
                   <p className="mt-0.5 truncate font-display text-sm font-bold text-fg sm:text-base">
@@ -599,7 +608,7 @@ export function ClaquetaBoard({
 
               <div className="mt-3 grid grid-cols-3 gap-3 border-b border-fg/25 pb-3">
                 <div className="min-w-0">
-                  <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
+                  <p className="font-mono text-[10px] tracking-[0.3em] text-fg/50 uppercase">
                     Director
                   </p>
                   <p className="mt-0.5 truncate font-mono text-sm text-fg">
@@ -607,7 +616,7 @@ export function ClaquetaBoard({
                   </p>
                 </div>
                 <div className="min-w-0">
-                  <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
+                  <p className="font-mono text-[10px] tracking-[0.3em] text-fg/50 uppercase">
                     Cámara
                   </p>
                   <p className="mt-0.5 truncate font-mono text-sm text-fg">
@@ -615,7 +624,7 @@ export function ClaquetaBoard({
                   </p>
                 </div>
                 <div className="min-w-0">
-                  <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
+                  <p className="font-mono text-[10px] tracking-[0.3em] text-fg/50 uppercase">
                     Clip
                   </p>
                   <p className="mt-0.5 truncate font-mono text-sm text-fg">
@@ -626,7 +635,7 @@ export function ClaquetaBoard({
 
               <div className="mt-4 grid grid-cols-3 divide-x divide-fg/25 border-b border-fg/25 pb-4">
                 <div className="min-w-0 pr-2 sm:pr-4">
-                  <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
+                  <p className="font-mono text-[10px] tracking-[0.3em] text-fg/50 uppercase">
                     Escena
                   </p>
                   <p className="mt-1 truncate font-display text-3xl font-bold text-fg sm:text-5xl">
@@ -634,7 +643,7 @@ export function ClaquetaBoard({
                   </p>
                 </div>
                 <div className="min-w-0 px-2 sm:px-4">
-                  <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
+                  <p className="font-mono text-[10px] tracking-[0.3em] text-fg/50 uppercase">
                     Plano
                   </p>
                   <p className="mt-1 truncate font-display text-3xl font-bold text-fg sm:text-5xl">
@@ -642,7 +651,7 @@ export function ClaquetaBoard({
                   </p>
                 </div>
                 <div className="min-w-0 pl-2 sm:pl-4">
-                  <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
+                  <p className="font-mono text-[10px] tracking-[0.3em] text-fg/50 uppercase">
                     Toma
                   </p>
                   <p className="mt-1 truncate font-display text-3xl font-bold text-accent sm:text-5xl">
@@ -653,7 +662,7 @@ export function ClaquetaBoard({
 
               <div className="mt-4 grid grid-cols-2 sm:divide-x sm:divide-fg/25">
                 <div className="sm:pr-4">
-                  <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
+                  <p className="font-mono text-[10px] tracking-[0.3em] text-fg/50 uppercase">
                     Int/Ext
                   </p>
                   <p className="mt-0.5 font-mono text-sm text-fg">
@@ -661,7 +670,7 @@ export function ClaquetaBoard({
                   </p>
                 </div>
                 <div className="sm:pl-4">
-                  <p className="font-mono text-[9px] tracking-[0.3em] text-fg/50 uppercase">
+                  <p className="font-mono text-[10px] tracking-[0.3em] text-fg/50 uppercase">
                     Día/Noche
                   </p>
                   <p className="mt-0.5 font-mono text-sm text-fg">

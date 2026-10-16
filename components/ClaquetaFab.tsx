@@ -25,7 +25,7 @@ export function ClaquetaFab({ projectId }: { projectId: string }) {
     <Link
       href={claquetaHref}
       aria-label="Abrir claqueta digital"
-      className="fixed right-5 bottom-5 z-40 flex h-14 w-14 lg:hidden items-center justify-center rounded-full bg-accent text-bg shadow-lg shadow-accent/30 ring-1 ring-fg/10 transition-transform hover:scale-105 active:scale-95 print:hidden sm:right-6 sm:bottom-6"
+      className="fixed right-5 bottom-[calc(1.25rem+env(safe-area-inset-bottom))] z-40 flex h-14 w-14 lg:hidden items-center justify-center rounded-full bg-accent text-bg shadow-[var(--shadow-raise)] ring-1 ring-fg/10 transition-transform print:hidden sm:right-6 sm:bottom-[calc(1.5rem+env(safe-area-inset-bottom))]"
     >
       <ClaquetaIcon className="h-6 w-6" />
       <LinkPendingHint className="absolute top-1.5 right-1.5" />

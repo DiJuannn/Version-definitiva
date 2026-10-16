@@ -30,7 +30,7 @@ function Cover({ href, title, author }: { href: string; title: string; author: s
   return (
     <Link href={href} className={`sp-cover group block w-28 shrink-0 ${courierPrime.variable}`} aria-label={`Abrir «${title}» en Guiones`}>
       <span className={`sp-cover-sheet flex flex-col px-[10%] pt-[32%] pb-[8%] text-center text-[#1c1b19] ${COVER_SHADOW}`}>
-        <span className="line-clamp-3 font-[family-name:var(--font-courier)] text-[9px] leading-tight font-bold uppercase underline underline-offset-2">
+        <span className="line-clamp-3 font-[family-name:var(--font-courier)] text-[10px] leading-tight font-bold uppercase underline underline-offset-2">
           {title}
         </span>
         {author && (
@@ -163,7 +163,7 @@ export function ScriptSource({
           className={`sp-cover block w-28 shrink-0 ${courierPrime.variable}`}
         >
           <span className={`sp-cover-sheet flex flex-col items-center justify-center px-[10%] text-center text-[#1c1b19] ${COVER_SHADOW}`}>
-            <span className="font-[family-name:var(--font-courier)] text-[9px] font-bold uppercase">{isPdf ? "PDF" : "DOC"}</span>
+            <span className="font-[family-name:var(--font-courier)] text-[10px] font-bold uppercase">{isPdf ? "PDF" : "DOC"}</span>
             <span className="mt-2 line-clamp-4 font-[family-name:var(--font-courier)] text-[7px] break-all text-[#4a4842]">{uploadedFile.name}</span>
           </span>
         </div>

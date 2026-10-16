@@ -32,7 +32,7 @@ export default async function PermisoRodajePage({
     <div className="pb-16">
       <PageHeader
         backHref={`/app/${projectId}/documentos-legales`}
-        backLabel="← Plantillas de documentos"
+        backLabel="← Contratos y permisos"
         eyebrow="Plantilla legal"
         title="Permiso de rodaje"
         description="Para que el propietario o responsable de un sitio autorice grabar allí, con fechas y horario."

@@ -119,3 +119,59 @@ export async function updateShotCharactersCore(
   ]);
   return true;
 }
+
+export type GuidedShotInput = {
+  shotSize: string | null;
+  angle: string | null;
+  movement: string | null;
+  description: string | null;
+  // Qué se oye (diálogo, efectos, música) y cuánto dura, para el guion técnico.
+  audio?: string | null;
+  durationSec?: number | null;
+  // Quién sale; si no se dice, todo el reparto de la escena.
+  characterIds?: string[];
+};
+
+// Varios planos a la vez para una escena (constructor de planos y coberturas
+// rápidas). Se numeran detrás del último plano numérico de la escena.
+export async function createGuidedShotsCore(
+  projectId: string,
+  sceneId: string,
+  shots: GuidedShotInput[],
+): Promise<number> {
+  const scene = await prisma.scene.findFirst({
+    where: { id: sceneId, projectId },
+    select: {
+      id: true,
+      characters: { select: { characterId: true } },
+      shots: { select: { number: true } },
+    },
+  });
+  if (!scene || shots.length === 0) return 0;
+  const sceneCast = scene.characters.map((c) => c.characterId);
+  const allowed = new Set(sceneCast);
+  let next = Math.max(0, ...scene.shots.map((s) => Number.parseInt(s.number, 10)).filter(Number.isFinite)) + 1;
+  let order = scene.shots.length;
+  const clean = (v: string | null) => v?.trim().slice(0, 200) || null;
+
+  await prisma.$transaction(
+    shots.slice(0, 30).map((s) => {
+      const cast = (s.characterIds ?? sceneCast).filter((id) => allowed.has(id));
+      return prisma.shot.create({
+        data: {
+          sceneId,
+          number: String(next++),
+          order: order++,
+          shotSize: clean(s.shotSize),
+          angle: clean(s.angle),
+          movement: clean(s.movement),
+          description: clean(s.description),
+          audio: s.audio?.trim().slice(0, 2000) || null,
+          durationSec: s.durationSec && s.durationSec > 0 ? Math.min(Math.round(s.durationSec), 3600) : null,
+          characters: cast.length ? { create: cast.map((characterId) => ({ characterId })) } : undefined,
+        },
+      });
+    }),
+  );
+  return Math.min(shots.length, 30);
+}

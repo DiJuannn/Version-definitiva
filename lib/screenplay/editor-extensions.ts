@@ -167,6 +167,16 @@ export function setPageBreaks(editor: Editor, starts: { block: number; page: num
   editor.view.dispatch(editor.state.tr.setMeta(pageBreaksKey, starts).setMeta("addToHistory", false));
 }
 
+// -------------------------------------------------------------- actos
+
+// Dónde empieza cada acto (sid del encabezado → nombre): una raya con el
+// nombre del acto encima de esa escena. Solo en pantalla, no en el PDF.
+export const actBreaksKey = new PluginKey<DecorationSet>("sp-acts");
+
+export function setActBreaks(editor: Editor, acts: Record<string, string>) {
+  editor.view.dispatch(editor.state.tr.setMeta(actBreaksKey, acts).setMeta("addToHistory", false));
+}
+
 // ---------------------------------------------------------------- extensión
 
 function setType(editor: Editor, type: BlockType): boolean {
@@ -291,6 +301,43 @@ export const ScreenplayBehaviour = Extension.create({
         },
       }),
 
+      new Plugin<{ acts: Record<string, string>; set: DecorationSet }>({
+        key: actBreaksKey as unknown as PluginKey<{ acts: Record<string, string>; set: DecorationSet }>,
+        state: {
+          init: () => ({ acts: {}, set: DecorationSet.empty }),
+          apply(tr, prev) {
+            const next = tr.getMeta(actBreaksKey) as Record<string, string> | undefined;
+            if (!next && !tr.docChanged) return prev;
+            const acts = next ?? prev.acts;
+            const decos: Decoration[] = [];
+            tr.doc.forEach((node, offset) => {
+              const label = node.type.name === "sceneHeading" ? acts[node.attrs.sid as string] : undefined;
+              if (!label) return;
+              decos.push(
+                Decoration.widget(
+                  offset,
+                  () => {
+                    const el = document.createElement("div");
+                    el.className = "sp-actbreak";
+                    el.contentEditable = "false";
+                    el.setAttribute("aria-hidden", "true");
+                    el.dataset.label = label;
+                    return el;
+                  },
+                  { side: -1, key: `act-${label}-${node.attrs.sid}`, ignoreSelection: true },
+                ),
+              );
+            });
+            return { acts, set: DecorationSet.create(tr.doc, decos) };
+          },
+        },
+        props: {
+          decorations(state) {
+            return (actBreaksKey as unknown as PluginKey<{ set: DecorationSet }>).getState(state)?.set;
+          },
+        },
+      }),
+
       new Plugin<DecorationSet>({
         key: pageBreaksKey,
         state: {
@@ -348,8 +395,17 @@ export const ScreenplayBehaviour = Extension.create({
           decorations(state) {
             const decos: Decoration[] = [];
             let n = 0;
-            state.doc.forEach((node, offset) => {
-              if (node.type.name !== "sceneHeading" || !node.textContent.trim()) return;
+            // También cuentan las escenas aún sin encabezado que ya tienen
+            // algo escrito (las que salen de una idea suelta).
+            const kids: { node: import("@tiptap/pm/model").Node; offset: number }[] = [];
+            state.doc.forEach((node, offset) => kids.push({ node, offset }));
+            const hasBody = (k: number) => {
+              for (let j = k + 1; j < kids.length && kids[j].node.type.name !== "sceneHeading"; j++)
+                if (kids[j].node.textContent.trim()) return true;
+              return false;
+            };
+            kids.forEach(({ node, offset }, k) => {
+              if (node.type.name !== "sceneHeading" || (!node.textContent.trim() && !hasBody(k))) return;
               n += 1;
               const num = String(n);
               for (const side of ["left", "right"] as const) {

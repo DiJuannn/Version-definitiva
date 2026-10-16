@@ -8,12 +8,15 @@ import { CASTING_STATUS, ROLE_TYPES, sheetOf } from "@/lib/character-sheet";
 import { sceneStripColor } from "@/components/SceneTag";
 import { colorFor } from "@/components/canvas/presence";
 import { ActorAssignmentField } from "@/components/ActorAssignmentField";
+import { RefStrip } from "@/components/moodboard/RefStrip";
+import { getVisualRefs, refsFor } from "@/lib/visual-refs";
 import { CreateDialog, DialogCancel } from "@/components/CreateDialog";
 import { DeleteButton } from "@/components/DeleteButton";
 import { FormField } from "@/components/FormField";
 import { PageHeader } from "@/components/PageHeader";
+import { TOOL_GUIDES } from "@/lib/tool-guides";
 import { SubmitButton } from "@/components/SubmitButton";
-import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
+import { SceneChip } from "@/components/ScenePeek";
 import type { CharacterProfile } from "@/lib/screenplay-taller";
 
 // Personajes como la tabla de reparto de un director de producción: cada
@@ -70,7 +73,7 @@ export default async function PersonajesPage({
   const project = await getProjectForCurrentUser(projectId);
   if (!project) notFound();
 
-  const [actorRows, characters, people, sceneRows] = await Promise.all([
+  const [actorRows, characters, people, sceneRows, visuals] = await Promise.all([
     prisma.actor.findMany({
       where: { projectId },
       orderBy: { createdAt: "asc" },
@@ -110,6 +113,7 @@ export default async function PersonajesPage({
         shootingDayScenes: { select: { shootingDay: { select: { id: true, date: true } } } },
       },
     }),
+    getVisualRefs(projectId),
   ]);
 
   const actors = actorRows.map((a) => ({ ...a, rate: a.rate === null ? null : Number(a.rate) }));
@@ -224,7 +228,8 @@ export default async function PersonajesPage({
   return (
     <div className="pb-16">
       <PageHeader
-        eyebrow="Preproducción"
+        guide={TOOL_GUIDES["personajes"]}
+        eyebrow="Escribir"
         title="Personajes"
         description="Quién sale en la película, en qué escenas y qué actor lo interpreta."
         actions={newCharacter}
@@ -569,16 +574,19 @@ export default async function PersonajesPage({
                           {scenesIn.length > 0 ? (
                             <p className="mt-2.5 flex flex-wrap gap-1" aria-label={`Escenas: ${scenesIn.map((s) => s.number).join(", ")}`}>
                               {scenesIn.map((s) => (
-                                <span
+                                <SceneChip
                                   key={s.id}
-                                  title={`Escena ${s.number} · ${INT_EXT_LABELS[s.intExt]} ${DAY_PART_LABELS[s.dayPart]}${s.location ? ` · ${s.location.name}` : ""}${s.shootingDayScenes.length ? "" : " · sin jornada"}`}
-                                  className={`grid h-6 min-w-7 place-items-center rounded px-1.5 font-mono text-[11px] font-semibold text-[#0a0a0a] tabular-nums ${
-                                    s.shootingDayScenes.length ? "" : "opacity-45"
-                                  }`}
-                                  style={{ background: sceneStripColor(s.intExt, s.dayPart) }}
+                                  sceneId={s.id}
+                                  number={s.number}
+                                  className={s.shootingDayScenes.length ? "" : "opacity-45"}
                                 >
-                                  {s.number}
-                                </span>
+                                  <span
+                                    className="grid h-6 min-w-7 place-items-center rounded px-1.5 font-mono text-[11px] font-semibold text-[#0a0a0a] tabular-nums"
+                                    style={{ background: sceneStripColor(s.intExt, s.dayPart) }}
+                                  >
+                                    {s.number}
+                                  </span>
+                                </SceneChip>
                               ))}
                             </p>
                           ) : (
@@ -592,6 +600,15 @@ export default async function PersonajesPage({
                             <p className="mt-2 font-sans text-xs text-muted">Color = interior/exterior y día/noche · apagadas = aún sin jornada.</p>
                           )}
                         </div>
+
+                        {(() => {
+                          const looks = refsFor(visuals, { characterId: c.id }, ["vestuario"]);
+                          return looks.length > 0 ? (
+                            <div className="mt-6">
+                              <RefStrip refs={looks} projectId={projectId} title="Su aspecto · del moodboard" />
+                            </div>
+                          ) : null;
+                        })()}
 
                         {/* Editar la ficha */}
                         <details className="group/edit mt-6">

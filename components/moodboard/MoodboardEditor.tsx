@@ -19,6 +19,8 @@ import { findFreeSpot } from "@/components/canvas/free-spot";
 import { loadImageSize, prepareImage } from "@/components/canvas/image-utils";
 import { BoardProvider, CardNodeView, type CardNode } from "@/components/moodboard/nodes";
 import { MoodboardAiPanel } from "@/components/moodboard/MoodboardAiPanel";
+import { CardInspector } from "@/components/moodboard/CardInspector";
+import { extractColors } from "@/lib/image-colors";
 import { MOODBOARD_AI_EVENT } from "@/components/moodboard/MoodboardAiButton";
 import { RemoteCursors, type RemoteCursor } from "@/components/project-map/RemoteCursors";
 import { cleanColor, cleanName, colorFor, uniquePeers, type Peer } from "@/components/canvas/presence";
@@ -68,12 +70,6 @@ const TYPE_LABELS: { types: MoodboardCard["type"][]; one: string; many: string }
   { types: ["note"], one: "nota", many: "notas" },
   { types: ["scene", "character", "location"], one: "del proyecto", many: "del proyecto" },
 ];
-
-// «1, 2, 4 y 6»
-function listEs(items: string[]): string {
-  if (items.length <= 1) return items.join("");
-  return `${items.slice(0, -1).join(", ")} y ${items[items.length - 1]}`;
-}
 
 // Iconos de trazo (24×24) de la barra de herramientas.
 const ICONS = {
@@ -452,7 +448,7 @@ function Board(props: Props) {
 
   const addCard = useCallback(
     (partial: Omit<MoodboardCard, "id" | "x" | "y"> & { at?: { x: number; y: number } }) => {
-      if (!canAdd()) return;
+      if (!canAdd()) return null;
       const { at, ...rest } = partial;
       const spot = at
         ? { x: at.x - rest.w / 2, y: at.y - rest.h / 2 }
@@ -475,8 +471,19 @@ function Board(props: Props) {
       setNodes((ns) => [...ns.map((n) => (n.selected ? { ...n, selected: false } : n)), { ...toNode(card), selected: true }]);
       markDirty();
       setMenu(null);
+      return card.id;
     },
     [canAdd, centerPoint, markDirty],
+  );
+
+  // Cada foto trae su paleta: los colores dominantes se guardan en la tarjeta
+  // (alimentan la paleta de la película en la Biblia visual).
+  const withColors = useCallback(
+    (id: string | null, url: string) => {
+      if (!id) return;
+      void extractColors(url).then((colors) => colors.length && update(id, { colors }));
+    },
+    [update],
   );
 
   const addImageFile = useCallback(
@@ -497,13 +504,14 @@ function Board(props: Props) {
           return;
         }
         const w = 280;
-        addCard({
+        const id = addCard({
           type: "image",
           url: result.url,
           w,
           h: Math.min(520, Math.round((w * prepared.height) / prepared.width) + 30),
           at,
         });
+        withColors(id, result.url);
       } catch (e) {
         setNotice(
           e instanceof Error && e.message === "too-big"
@@ -514,7 +522,7 @@ function Board(props: Props) {
         setUploading((n) => n - 1);
       }
     },
-    [addCard, canAdd, projectId],
+    [addCard, canAdd, projectId, withColors],
   );
 
   async function addImageUrl() {
@@ -527,7 +535,7 @@ function Board(props: Props) {
     try {
       const size = await loadImageSize(url);
       const w = 280;
-      addCard({ type: "image", url, w, h: Math.min(520, Math.round((w * size.height) / size.width) + 30) });
+      withColors(addCard({ type: "image", url, w, h: Math.min(520, Math.round((w * size.height) / size.width) + 30) }), url);
       setImageUrl("");
     } catch {
       setNotice("No se pudo cargar esa imagen. Comprueba que el enlace lleva directo a una imagen.");
@@ -587,6 +595,10 @@ function Board(props: Props) {
   );
 
   const ctx = useMemo(() => ({ projectId, lookup, update, remove }), [projectId, lookup, update, remove]);
+  // La ficha de la referencia: con una sola tarjeta elegida que se pueda etiquetar.
+  const selectedCards = nodes.filter((n) => n.selected);
+  const inspected =
+    selectedCards.length === 1 && ["note", "image", "palette", "reference"].includes(selectedCards[0].data.card.type) ? selectedCards[0].data.card : null;
 
   // ---- Cómo va el tablero (en directo, a partir de las tarjetas)
   const cards = nodes.map((n) => n.data.card);
@@ -597,17 +609,6 @@ function Board(props: Props) {
 
   // Escenas del guion que ya tienen su tarjeta en el tablero (por id o, si el
   // id cambió, por número, igual que las tarjetas vivas).
-  const sceneCardBy = new Map<string, string>();
-  for (const n of nodes) {
-    const c = n.data.card;
-    if (c.type !== "scene") continue;
-    const s =
-      lookup.scenes.find((x) => x.id === c.refId) ??
-      lookup.scenes.find((x) => x.number.toLowerCase() === c.label?.toLowerCase());
-    if (s && !sceneCardBy.has(s.id)) sceneCardBy.set(s.id, n.id);
-  }
-  const missingScenes = lookup.scenes.filter((s) => !sceneCardBy.has(s.id));
-
   // Tarjetas vivas que apuntan a algo que ya no está en el proyecto.
   const brokenLive = cards.filter((c) => {
     const label = c.label?.toLowerCase();
@@ -619,18 +620,6 @@ function Board(props: Props) {
       return !lookup.locations.some((x) => x.id === c.refId || x.name.toLowerCase() === label);
     return false;
   }).length;
-
-  // Toque en un número de escena: si ya está en el tablero, se va a ella; si
-  // no, se pone su tarjeta viva.
-  function showScene(sceneId: string, number: string) {
-    const nodeId = sceneCardBy.get(sceneId);
-    if (nodeId) {
-      setNodes((ns) => ns.map((n) => ({ ...n, selected: n.id === nodeId })));
-      void fitView({ nodes: [{ id: nodeId }], padding: 0.8, maxZoom: 1, duration: 400 });
-      return;
-    }
-    addCard({ type: "scene", w: 240, h: 130, refId: sceneId, label: number });
-  }
 
   const status =
     saveState === "error"
@@ -657,7 +646,7 @@ function Board(props: Props) {
           sub: s.heading,
           type: "scene" as const,
           label: s.number,
-          onBoard: sceneCardBy.has(s.id),
+          onBoard: cards.some((x) => x.type === "scene" && (x.refId === s.id || x.label?.toLowerCase() === s.number.toLowerCase())),
         }))
       : projectTab === "characters"
         ? lookup.characters.map((c) => ({
@@ -677,16 +666,7 @@ function Board(props: Props) {
             onBoard: cards.some((x) => x.type === "location" && x.refId === l.id),
           }));
 
-  // Lo básico de un moodboard que aún no está en el tablero.
-  const essentials = [
-    { type: "palette", label: "una paleta de color" },
-    { type: "image", label: "imágenes" },
-    { type: "reference", label: "referencias" },
-  ].filter((e) => !cards.some((c) => c.type === e.type));
-
   const others = uniquePeers(peers);
-  const sceneCount = lookup.scenes.length;
-  const covered = sceneCount - missingScenes.length;
 
   return (
     <BoardProvider value={ctx}>
@@ -735,65 +715,8 @@ function Board(props: Props) {
         </div>
       </div>
 
-      {/* Qué escenas del guion ya tienen su tarjeta: se ve de un vistazo y un
-          toque pone la que falta (o lleva a la que ya está). */}
-      {sceneCount > 0 && (
-        <div
-          className={`mt-4 border-l-2 pl-3 ${missingScenes.length > 0 && nodes.length > 0 ? "border-warn" : "border-line"}`}
-        >
-          <p className="font-sans text-[13px] leading-relaxed text-fg">
-            {missingScenes.length === 0 ? (
-              <>Las {sceneCount} escenas del guion tienen su tarjeta en el tablero.</>
-            ) : covered === 0 ? (
-              <>
-                Ninguna escena del guion está aún en el tablero.{" "}
-                <span className="text-muted">Toca un número para traerla, con su encabezado y descripción.</span>
-              </>
-            ) : (
-              <>
-                {covered} de {sceneCount} escenas tienen tarjeta
-                {missingScenes.length <= 8 && (
-                  <>
-                    {" "}
-                    · {missingScenes.length === 1 ? "falta la escena" : "faltan las escenas"}{" "}
-                    {listEs(missingScenes.map((s) => s.number))}
-                  </>
-                )}
-                . <span className="text-muted">Toca un número para traerla o encontrarla.</span>
-              </>
-            )}
-          </p>
-          <ul className="mt-2.5 flex flex-wrap gap-1.5" aria-label="Escenas del guion">
-            {lookup.scenes.map((s) => {
-              const on = sceneCardBy.has(s.id);
-              return (
-                <li key={s.id}>
-                  <button
-                    type="button"
-                    onClick={() => showScene(s.id, s.number)}
-                    title={`${on ? "Ver" : "Añadir al tablero"}: escena ${s.number} · ${s.heading}`}
-                    aria-label={`Escena ${s.number}${on ? ", ya en el tablero: ver" : ": añadir al tablero"}`}
-                    className={`flex h-8 min-w-8 items-center justify-center rounded-md px-2 font-mono text-[11px] font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none ${
-                      on
-                        ? "bg-accent text-bg hover:opacity-90"
-                        : "text-muted ring-1 ring-line ring-inset hover:text-fg hover:ring-accent"
-                    }`}
-                  >
-                    {s.number}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      )}
-
-      {nodes.length > 0 && essentials.length > 0 && (
-        <p className="mt-3 border-l-2 border-line pl-3 font-sans text-[13px] text-muted">
-          Aún no hay {listEs(essentials.map((e) => e.label))} en el tablero.
-        </p>
-      )}
-
+      {/* Las escenas, personajes y lugares ya no hace falta traerlos como
+          tarjetas: cada referencia dice para cuáles es (ficha de la tarjeta). */}
       {brokenLive > 0 && (
         <p className="mt-3 border-l-2 border-warn pl-3 font-sans text-[13px] text-fg">
           {brokenLive === 1
@@ -856,6 +779,11 @@ function Board(props: Props) {
           )}
 
           <RemoteCursors cursors={cursors} />
+          {inspected && (
+            <Panel position="top-right" className="m-3!">
+              <CardInspector card={inspected} lookup={lookup} onChange={(patch) => update(inspected.id, patch)} />
+            </Panel>
+          )}
           <Panel position="top-left" className="m-3! max-w-[calc(100%-1.5rem)]">
             <div
               className="taller-ink flex flex-wrap items-center gap-0.5 rounded-xl bg-bg-raised p-1 text-fg"

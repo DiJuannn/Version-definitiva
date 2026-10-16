@@ -24,10 +24,13 @@ export function ProjectBreadcrumb({
   projectId,
   projectName,
   projects,
+  compact = false,
 }: {
   projectId: string;
   projectName: string;
   projects: ProjectOption[];
+  // Solo el nombre (con su desplegable), para ir dentro del menú del proyecto.
+  compact?: boolean;
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -41,12 +44,16 @@ export function ProjectBreadcrumb({
 
   return (
     <nav aria-label="Ruta" className="flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[11px] tracking-widest uppercase print:hidden">
-      <Link href="/app/proyectos" className="text-muted hover:text-fg">
-        Proyectos
-      </Link>
-      <span aria-hidden className="text-muted/50">
-        /
-      </span>
+      {!compact && (
+        <>
+          <Link href="/app/proyectos" className="text-muted hover:text-fg">
+            Proyectos
+          </Link>
+          <span aria-hidden className="text-muted/50">
+            /
+          </span>
+        </>
+      )}
       <div ref={ref} className="relative">
         <button
           type="button"
@@ -56,9 +63,17 @@ export function ProjectBreadcrumb({
           disabled={others.length === 0}
           className="flex min-h-8 items-center gap-1.5 text-fg disabled:cursor-default"
         >
-          <span className="max-w-[16rem] truncate normal-case tracking-normal">{projectName}</span>
+          <span
+            className={
+              compact
+                ? "poster-sub max-w-[14rem] truncate pb-0.5 text-[19px] tracking-normal normal-case"
+                : "max-w-[16rem] truncate normal-case tracking-normal"
+            }
+          >
+            {projectName}
+          </span>
           {others.length > 0 && (
-            <span aria-hidden className="text-[9px] text-muted">
+            <span aria-hidden className="text-[10px] text-muted">
               ▾
             </span>
           )}
@@ -83,7 +98,7 @@ export function ProjectBreadcrumb({
           </div>
         )}
       </div>
-      {toolLabel && (
+      {toolLabel && !compact && (
         <>
           <span aria-hidden className="text-muted/50">
             /

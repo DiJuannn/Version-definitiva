@@ -1,16 +1,29 @@
 import type { Metadata } from "next";
 import { Archivo, JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { MotionProvider } from "@/components/MotionProvider";
 
 const archivo = Archivo({
   variable: "--font-archivo",
   subsets: ["latin"],
+  // Ancho variable: la letra condensada de cartel (títulos de proyecto).
+  axes: ["wdth"],
 });
 
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
   subsets: ["latin"],
+});
+
+// Dígitos de siete segmentos (DSEG7, licencia OFL): el reloj de la claqueta y
+// del día de rodaje. Solo números, por eso pesa 5 KB.
+const seg = localFont({
+  src: "./fonts/DSEG7Classic-Bold.woff2",
+  variable: "--font-seg",
+  weight: "700",
+  display: "block",
+  preload: false,
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
@@ -52,7 +65,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="es"
-      className={`${archivo.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      className={`${archivo.variable} ${jetbrainsMono.variable} ${seg.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-bg text-fg font-sans relative">
         {/* Primer elemento con foco: con teclado o lector de pantalla se salta la navegación. */}

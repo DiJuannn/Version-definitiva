@@ -1,0 +1,51 @@
+# Comprobaciones en cada push y en cada PR: tipos, lint y pruebas (las de
+# base de datos contra un Postgres vacío con todas las migraciones).
+name: Comprobaciones
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: taller_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/taller_test
+      DIRECT_URL: postgresql://postgres:postgres@localhost:5432/taller_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Migraciones
+        run: npx prisma migrate deploy
+      # LayoutProps/PageProps son tipos globales que genera Next (.next/types).
+      - name: Tipos de rutas
+        run: npx next typegen
+      - name: Tipos
+        run: npx tsc --noEmit -p .
+      - name: Lint
+        run: npm run lint
+      - name: Pruebas
+        run: npm test

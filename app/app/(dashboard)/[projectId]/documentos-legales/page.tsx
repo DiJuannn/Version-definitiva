@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { isProjectOwnerPro } from "@/lib/project-plan";
 import { PageHeader } from "@/components/PageHeader";
+import { TOOL_GUIDES } from "@/lib/tool-guides";
 import { EmptyState } from "@/components/EmptyState";
 import { StatusLine } from "@/components/gestion/ToolStatus";
 
@@ -113,8 +114,9 @@ export default async function DocumentosLegalesPage({
   return (
     <div className="pb-16">
       <PageHeader
-        eyebrow="Gestión"
-        title="Plantillas de documentos"
+        guide={TOOL_GUIDES["documentos-legales"]}
+        eyebrow="Entregar"
+        title="Contratos y permisos"
         description="Permisos, contratos y cesiones ya escritos con los datos del proyecto: rellenas cuatro huecos y sale el PDF para firmar."
       />
 

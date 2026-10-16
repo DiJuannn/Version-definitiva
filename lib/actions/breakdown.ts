@@ -9,6 +9,8 @@ import {
   deleteBreakdownElementCore,
   deleteCrewMemberCore,
   updateBreakdownElementCategoryCore,
+  linkElementToSceneCore,
+  markElementInSceneCore,
 } from "@/lib/breakdown-core";
 
 export async function createBreakdownElement(
@@ -79,4 +81,30 @@ export async function deleteCrewMember(projectId: string, crewMemberId: string) 
   await deleteCrewMemberCore(projectId, crewMemberId);
 
   revalidatePath(`/app/${projectId}/equipo`);
+}
+
+// Desglose escena a escena (vista «Escena a escena» de Desglose).
+export async function markElementInScene(
+  projectId: string,
+  sceneId: string,
+  input: { name: string; category: string },
+): Promise<boolean> {
+  const project = await getProjectForCurrentUser(projectId);
+  if (!project) return false;
+  const res = await markElementInSceneCore(projectId, sceneId, input);
+  revalidatePath(`/app/${projectId}/desglose`);
+  return Boolean(res);
+}
+
+export async function setElementInScene(
+  projectId: string,
+  sceneId: string,
+  elementId: string,
+  on: boolean,
+): Promise<boolean> {
+  const project = await getProjectForCurrentUser(projectId);
+  if (!project) return false;
+  const ok = await linkElementToSceneCore(projectId, sceneId, elementId, on);
+  revalidatePath(`/app/${projectId}/desglose`);
+  return ok;
 }

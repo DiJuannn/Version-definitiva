@@ -8,6 +8,7 @@ import { computeDayTimeline, dayWarnings } from "@/lib/schedule-plan";
 import { ScheduleAssistant } from "@/components/ScheduleAssistant";
 import { EmptyState } from "@/components/EmptyState";
 import { PageHeader } from "@/components/PageHeader";
+import { TOOL_GUIDES } from "@/lib/tool-guides";
 import { SubmitButton } from "@/components/SubmitButton";
 import { ScheduleEditor } from "@/components/schedule/ScheduleEditor";
 import { ScheduleCalendar, ScheduleCoverage } from "@/components/schedule/ScheduleOverview";
@@ -37,6 +38,8 @@ export default async function PlanDeRodajePage({
   const todayISO = new Date().toISOString().slice(0, 10);
   const upcoming = data.days.find((d) => d.dateISO.slice(0, 10) >= todayISO) ?? data.days[data.days.length - 1];
   const day = data.days.find((d) => d.id === sp.dia) ?? upcoming;
+  const madrid = (iso: string | Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Madrid" }).format(new Date(iso));
+  const shootingToday = data.days.find((d) => madrid(d.dateISO) === madrid(new Date()));
 
   const pending = data.pool.shots.length + data.pool.scenes.length;
   const warningsTotal = data.days.reduce((n, d) => {
@@ -67,7 +70,8 @@ export default async function PlanDeRodajePage({
   return (
     <div>
       <PageHeader
-        eyebrow="Producción"
+        guide={TOOL_GUIDES["plan-de-rodaje"]}
+        eyebrow="Rodar"
         title="Plan de rodaje"
         description={
           data.days.length > 0 ? (
@@ -78,6 +82,14 @@ export default async function PlanDeRodajePage({
               {data.totals.retakes > 0 && <span className="text-danger"> · {data.totals.retakes} a repetir</span>}
               {warningsTotal > 0 && <span className="text-warn"> · {warningsTotal} aviso{warningsTotal === 1 ? "" : "s"}</span>}
             </>
+          ) : undefined
+        }
+        actions={
+          // El seguimiento en directo solo tiene sentido el día que se rueda.
+          shootingToday ? (
+            <Link href={`/app/${projectId}/plan-de-rodaje/directo?dia=${shootingToday.id}`} className="btn btn-primary">
+              Hoy se rueda: seguir el día
+            </Link>
           ) : undefined
         }
       />
@@ -104,6 +116,7 @@ export default async function PlanDeRodajePage({
       {Object.keys(data.scenes).length === 0 ? (
         <EmptyState
           title="Todavía no hay escenas"
+          preview="escenas"
           description="Créalas en Guion (o importa tu guion técnico en Lista de planos) para poder programarlas en jornadas de rodaje."
           actionLabel="Ir a Guion"
           actionHref={`/app/${projectId}/guion`}
@@ -111,6 +124,7 @@ export default async function PlanDeRodajePage({
       ) : data.days.length === 0 ? (
         <EmptyState
           title="Aún no hay jornadas de rodaje"
+          preview="jornadas"
           description="Añade la primera jornada con su fecha (arriba) o deja que el asistente las proponga. Luego reparte los planos en el orden en que se ruedan."
         />
       ) : (

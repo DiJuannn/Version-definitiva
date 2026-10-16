@@ -88,7 +88,7 @@ const STAGES: Stage[] = [
             ["Toma", "3"],
           ].map(([k, v]) => (
             <div key={k}>
-              <p className="text-[8px] tracking-widest text-fg/50 uppercase">{k}</p>
+              <p className="text-[10px] tracking-widest text-fg/50 uppercase">{k}</p>
               <p className={`font-display text-2xl font-black ${k === "Toma" ? "text-accent" : "text-fg"}`}>{v}</p>
             </div>
           ))}
