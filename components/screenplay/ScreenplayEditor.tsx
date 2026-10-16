@@ -50,6 +50,9 @@ import {
 import { ScenePanel } from "@/components/screenplay/ScenePanel";
 import { IdeaStep } from "@/components/screenplay/IdeaStep";
 import { StoryRail } from "@/components/screenplay/StoryRail";
+import { StoryStrip } from "@/components/screenplay/StoryStrip";
+import { Radiography } from "@/components/screenplay/Radiography";
+import { getScreenplayProduction, type ScreenplayProduction } from "@/lib/actions/screenplay-production";
 import { OpeningsPanel, StartHelp } from "@/components/screenplay/StartHelp";
 import { CharacterDrawer } from "@/components/screenplay/CharacterDrawer";
 import { AssistantDrawer } from "@/components/screenplay/AssistantDrawer";
@@ -359,13 +362,13 @@ export default function ScreenplayEditor({
   // Junto a la página, un solo panel a la vez (o ninguno): Estructura, Ideas
   // sueltas o Notas de la escena. Por defecto, solo la página. Se recuerda
   // cómo se dejó, y Ctrl/⌘ + «.» lo muestra u oculta.
-  type Panel = RailTab | "notas";
+  type Panel = RailTab | "notas" | "radiografia";
   const [panel, setPanelState] = useState<Panel | null>(initialStep === "escaleta" ? "estructura" : null);
   const lastPanel = useRef<Panel>("estructura");
   useEffect(() => {
     try {
       const saved = localStorage.getItem("sp-panel");
-      const valid = saved === "estructura" || saved === "ideas" || saved === "notas";
+      const valid = saved === "estructura" || saved === "ideas" || saved === "notas" || saved === "radiografia";
       if (valid) lastPanel.current = saved;
       // En pantallas estrechas el panel tapa la página: no se reabre solo.
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -406,6 +409,8 @@ export default function ScreenplayEditor({
   const railOpen = panel === "estructura" || panel === "ideas";
   const railTab: RailTab = panel === "ideas" ? "ideas" : "estructura";
   const notesOpen = panel === "notas";
+  const radioOpen = panel === "radiografia";
+  const sideOpen = notesOpen || radioOpen;
   const openRail = useCallback((tab: RailTab) => setPanel(tab), [setPanel]);
   const [openingsOpen, setOpeningsOpen] = useState(false);
   const openOpenings = useCallback(() => setOpeningsOpen(true), []);
@@ -661,6 +666,20 @@ export default function ScreenplayEditor({
     return () => clearTimeout(t);
   }, [editor, flushSave, linkedProject, sceneSig, screenplayId]);
 
+  // Lo que el proyecto vinculado sabe de cada escena (tira viva y
+  // radiografía): al abrir y después de cada paso al proyecto.
+  const [production, setProduction] = useState<ScreenplayProduction | null>(null);
+  useEffect(() => {
+    if (!linkedProject || prodSync === "syncing") return;
+    let alive = true;
+    getScreenplayProduction(screenplayId)
+      .then((p) => alive && setProduction(p))
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [linkedProject, prodSync, screenplayId]);
+
   const workspace: Workspace = {
     screenplayId,
     ydoc,
@@ -824,7 +843,7 @@ export default function ScreenplayEditor({
         className={
           step === "guion"
             ? `sp-enter grid gap-6 px-4 pb-24 lg:px-7 ${
-                railOpen ? "xl:grid-cols-[300px_minmax(0,1fr)]" : notesOpen ? "xl:grid-cols-[minmax(0,1fr)_320px]" : ""
+                railOpen ? "xl:grid-cols-[300px_minmax(0,1fr)]" : sideOpen ? "xl:grid-cols-[minmax(0,1fr)_320px]" : ""
               }`
             : "hidden"
         }
@@ -856,6 +875,7 @@ export default function ScreenplayEditor({
                   ["estructura", "Estructura"],
                   ["ideas", "Ideas sueltas"],
                   ["notas", "Notas"],
+                  ["radiografia", "Radiografía"],
                 ] as const
               ).map(([id, label], i) => (
                 <button
@@ -958,6 +978,7 @@ export default function ScreenplayEditor({
               <span className="font-semibold text-fg">{pageCount}</span> {pageCount === 1 ? "página" : "páginas"} · ≈{pageCount} min
             </span>
           </div>
+          <StoryStrip production={production} />
           <div className="sp-desk" onMouseDown={() => scenesOpen && setScenesOpen(false)}>
             <div className={`sp-paper ${isEmpty ? "sp-paper-empty" : ""}`}>
               <EditorContent editor={editor} />
@@ -966,10 +987,10 @@ export default function ScreenplayEditor({
           </div>
         </div>
 
-        {notesOpen && (
+        {sideOpen && (
           <aside className="pt-6">
             <div className="xl:sticky xl:top-24 xl:max-h-[calc(100vh-7rem)] xl:overflow-y-auto xl:pr-1">
-              <ScenePanel />
+              {notesOpen ? <ScenePanel /> : <Radiography production={production} />}
             </div>
           </aside>
         )}
