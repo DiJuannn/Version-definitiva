@@ -38,6 +38,8 @@ export default async function PlanDeRodajePage({
   const todayISO = new Date().toISOString().slice(0, 10);
   const upcoming = data.days.find((d) => d.dateISO.slice(0, 10) >= todayISO) ?? data.days[data.days.length - 1];
   const day = data.days.find((d) => d.id === sp.dia) ?? upcoming;
+  const madrid = (iso: string | Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Madrid" }).format(new Date(iso));
+  const shootingToday = data.days.find((d) => madrid(d.dateISO) === madrid(new Date()));
 
   const pending = data.pool.shots.length + data.pool.scenes.length;
   const warningsTotal = data.days.reduce((n, d) => {
@@ -83,9 +85,10 @@ export default async function PlanDeRodajePage({
           ) : undefined
         }
         actions={
-          data.days.length > 0 ? (
-            <Link href={`/app/${projectId}/plan-de-rodaje/directo${day ? `?dia=${day.id}` : ""}`} className="btn btn-primary">
-              Día de rodaje en directo
+          // El seguimiento en directo solo tiene sentido el día que se rueda.
+          shootingToday ? (
+            <Link href={`/app/${projectId}/plan-de-rodaje/directo?dia=${shootingToday.id}`} className="btn btn-primary">
+              Hoy se rueda: seguir el día
             </Link>
           ) : undefined
         }

@@ -9,6 +9,7 @@ import { Clapperboard } from "@/components/Clapperboard";
 import { getScheduleData } from "@/lib/schedule-data";
 import { computeDayTimeline, dayWarnings, formatDuration, formatHHMM, sunriseMinutes } from "@/lib/schedule-plan";
 import { liveForecast, REST_MIN_HOURS } from "@/lib/live-day";
+import { getProjectReadiness } from "@/lib/project-readiness";
 import { FilmStrip, PHASE_COLORS } from "@/components/FilmStrip";
 import { COVER_SHADOW } from "@/components/screenplay/cover-shadow";
 import { courierPrime } from "@/lib/screenplay/font";
@@ -130,7 +131,7 @@ export default async function DashboardPage() {
 
   // El día del próximo rodaje con su orden: fin previsto, avisos (luz,
   // jornada larga), descanso del reparto antes del día siguiente y la hoja.
-  const schedule = nextShoot ? await getScheduleData(nextShoot.projectId) : null;
+  const [schedule, prep] = nextShoot ? await Promise.all([getScheduleData(nextShoot.projectId), getProjectReadiness(nextShoot.projectId)]) : [null, null];
   const sDayIdx = schedule && nextShoot ? schedule.days.findIndex((d) => d.id === nextShoot.id) : -1;
   const sDay = schedule && sDayIdx >= 0 ? schedule.days[sDayIdx] : null;
   const timelineOf = (d: NonNullable<typeof sDay>) =>
@@ -166,6 +167,10 @@ export default async function DashboardPage() {
     else if (sDay.sheet.outdated) alerts.push({ tone: "warn", text: "La hoja de llamada no recoge el último cambio del plan", href: `${base}/call-sheets/${sDay.id}`, cta: "Revisarla" });
     else if (sDay.sheet.shared) alerts.push({ tone: "ok", text: "Hoja de llamada enviada al equipo", href: `${base}/call-sheets/${sDay.id}` });
     else alerts.push({ tone: "warn", text: "Hoja de llamada hecha, sin enviar", href: `${base}/call-sheets/${sDay.id}`, cta: "Enviarla" });
+  }
+  if (prep && nextIn !== 0) {
+    const t = prep.todos[0];
+    if (t) alerts.unshift({ tone: "warn", text: `Lo que más frena: ${t.title.charAt(0).toLowerCase()}${t.title.slice(1)}`, href: t.href, cta: t.cta });
   }
   if (overdue) alerts.push({ tone: "danger", text: overdue === 1 ? "1 tarea vencida" : `${overdue} tareas vencidas`, href: "/app/tareas", cta: "Ver tareas" });
   const sunrise = sDay ? sunriseMinutes(new Date(sDay.dateISO), sDay.lat ?? undefined, sDay.lng ?? undefined) : null;
@@ -272,9 +277,15 @@ export default async function DashboardPage() {
             <p className="mt-6 flex flex-wrap gap-3">
               {nextShoot && nextIn !== null && nextIn <= 14 ? (
                 <>
-                  <Link href={`/app/${nextShoot.projectId}/plan-de-rodaje/directo?dia=${nextShoot.id}`} className="btn btn-primary">
-                    {nextIn === 0 ? "Abrir el día de rodaje" : "Ver el día de rodaje"}
-                  </Link>
+                  {nextIn === 0 ? (
+                    <Link href={`/app/${nextShoot.projectId}/plan-de-rodaje/directo?dia=${nextShoot.id}`} className="btn btn-primary">
+                      Abrir el día de rodaje
+                    </Link>
+                  ) : (
+                    <Link href={`/app/${nextShoot.projectId}`} className="btn btn-primary">
+                      Seguir preparando
+                    </Link>
+                  )}
                   <Link href={`/app/${nextShoot.projectId}/call-sheets/${nextShoot.id}`} className="btn btn-outline">
                     Hoja de llamada
                   </Link>
