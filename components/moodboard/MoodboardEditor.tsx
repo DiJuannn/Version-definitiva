@@ -71,12 +71,6 @@ const TYPE_LABELS: { types: MoodboardCard["type"][]; one: string; many: string }
   { types: ["scene", "character", "location"], one: "del proyecto", many: "del proyecto" },
 ];
 
-// «1, 2, 4 y 6»
-function listEs(items: string[]): string {
-  if (items.length <= 1) return items.join("");
-  return `${items.slice(0, -1).join(", ")} y ${items[items.length - 1]}`;
-}
-
 // Iconos de trazo (24×24) de la barra de herramientas.
 const ICONS = {
   note: "M5 4h14v11l-5 5H5zM14 20v-5h5",
@@ -615,17 +609,6 @@ function Board(props: Props) {
 
   // Escenas del guion que ya tienen su tarjeta en el tablero (por id o, si el
   // id cambió, por número, igual que las tarjetas vivas).
-  const sceneCardBy = new Map<string, string>();
-  for (const n of nodes) {
-    const c = n.data.card;
-    if (c.type !== "scene") continue;
-    const s =
-      lookup.scenes.find((x) => x.id === c.refId) ??
-      lookup.scenes.find((x) => x.number.toLowerCase() === c.label?.toLowerCase());
-    if (s && !sceneCardBy.has(s.id)) sceneCardBy.set(s.id, n.id);
-  }
-  const missingScenes = lookup.scenes.filter((s) => !sceneCardBy.has(s.id));
-
   // Tarjetas vivas que apuntan a algo que ya no está en el proyecto.
   const brokenLive = cards.filter((c) => {
     const label = c.label?.toLowerCase();
@@ -637,18 +620,6 @@ function Board(props: Props) {
       return !lookup.locations.some((x) => x.id === c.refId || x.name.toLowerCase() === label);
     return false;
   }).length;
-
-  // Toque en un número de escena: si ya está en el tablero, se va a ella; si
-  // no, se pone su tarjeta viva.
-  function showScene(sceneId: string, number: string) {
-    const nodeId = sceneCardBy.get(sceneId);
-    if (nodeId) {
-      setNodes((ns) => ns.map((n) => ({ ...n, selected: n.id === nodeId })));
-      void fitView({ nodes: [{ id: nodeId }], padding: 0.8, maxZoom: 1, duration: 400 });
-      return;
-    }
-    addCard({ type: "scene", w: 240, h: 130, refId: sceneId, label: number });
-  }
 
   const status =
     saveState === "error"
@@ -695,16 +666,7 @@ function Board(props: Props) {
             onBoard: cards.some((x) => x.type === "location" && x.refId === l.id),
           }));
 
-  // Lo básico de un moodboard que aún no está en el tablero.
-  const essentials = [
-    { type: "palette", label: "una paleta de color" },
-    { type: "image", label: "imágenes" },
-    { type: "reference", label: "referencias" },
-  ].filter((e) => !cards.some((c) => c.type === e.type));
-
   const others = uniquePeers(peers);
-  const sceneCount = lookup.scenes.length;
-  const covered = sceneCount - missingScenes.length;
 
   return (
     <BoardProvider value={ctx}>
@@ -753,65 +715,8 @@ function Board(props: Props) {
         </div>
       </div>
 
-      {/* Qué escenas del guion ya tienen su tarjeta: se ve de un vistazo y un
-          toque pone la que falta (o lleva a la que ya está). */}
-      {sceneCount > 0 && (
-        <div
-          className={`mt-4 border-l-2 pl-3 ${missingScenes.length > 0 && nodes.length > 0 ? "border-warn" : "border-line"}`}
-        >
-          <p className="font-sans text-[13px] leading-relaxed text-fg">
-            {missingScenes.length === 0 ? (
-              <>Las {sceneCount} escenas del guion tienen su tarjeta en el tablero.</>
-            ) : covered === 0 ? (
-              <>
-                Ninguna escena del guion está aún en el tablero.{" "}
-                <span className="text-muted">Toca un número para traerla, con su encabezado y descripción.</span>
-              </>
-            ) : (
-              <>
-                {covered} de {sceneCount} escenas tienen tarjeta
-                {missingScenes.length <= 8 && (
-                  <>
-                    {" "}
-                    · {missingScenes.length === 1 ? "falta la escena" : "faltan las escenas"}{" "}
-                    {listEs(missingScenes.map((s) => s.number))}
-                  </>
-                )}
-                . <span className="text-muted">Toca un número para traerla o encontrarla.</span>
-              </>
-            )}
-          </p>
-          <ul className="mt-2.5 flex flex-wrap gap-1.5" aria-label="Escenas del guion">
-            {lookup.scenes.map((s) => {
-              const on = sceneCardBy.has(s.id);
-              return (
-                <li key={s.id}>
-                  <button
-                    type="button"
-                    onClick={() => showScene(s.id, s.number)}
-                    title={`${on ? "Ver" : "Añadir al tablero"}: escena ${s.number} · ${s.heading}`}
-                    aria-label={`Escena ${s.number}${on ? ", ya en el tablero: ver" : ": añadir al tablero"}`}
-                    className={`flex h-8 min-w-8 items-center justify-center rounded-md px-2 font-mono text-[11px] font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none ${
-                      on
-                        ? "bg-accent text-bg hover:opacity-90"
-                        : "text-muted ring-1 ring-line ring-inset hover:text-fg hover:ring-accent"
-                    }`}
-                  >
-                    {s.number}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      )}
-
-      {nodes.length > 0 && essentials.length > 0 && (
-        <p className="mt-3 border-l-2 border-line pl-3 font-sans text-[13px] text-muted">
-          Aún no hay {listEs(essentials.map((e) => e.label))} en el tablero.
-        </p>
-      )}
-
+      {/* Las escenas, personajes y lugares ya no hace falta traerlos como
+          tarjetas: cada referencia dice para cuáles es (ficha de la tarjeta). */}
       {brokenLive > 0 && (
         <p className="mt-3 border-l-2 border-warn pl-3 font-sans text-[13px] text-fg">
           {brokenLive === 1

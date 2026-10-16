@@ -8,6 +8,8 @@ import { PdfLink } from "@/components/PdfLink";
 import { PageHeader } from "@/components/PageHeader";
 import { TOOL_GUIDES } from "@/lib/tool-guides";
 import { SceneToolSwitch } from "@/components/preproduccion/SceneToolSwitch";
+import { RefStrip } from "@/components/moodboard/RefStrip";
+import { getVisualRefs, refsFor } from "@/lib/visual-refs";
 import { ShotBuilder } from "@/components/preproduccion/ShotBuilder";
 import { courierPrime } from "@/lib/screenplay/font";
 import { getScenesText } from "@/lib/scene-text";
@@ -82,6 +84,7 @@ export default async function ShotListPage({
 
   // Planificar una escena: el texto a un lado y el constructor de planos al otro.
   const planning = escena ? scenes.find((s) => s.id === escena) : undefined;
+  const visuals = planning ? await getVisualRefs(projectId) : [];
   if (planning) {
     const index = scenes.indexOf(planning);
     const texts = await getScenesText(projectId, [planning]);
@@ -132,6 +135,14 @@ export default async function ShotListPage({
         <div className="mt-6">
           <SceneToolSwitch projectId={projectId} sceneId={planning.id} active="planos" />
         </div>
+        {(() => {
+          const looks = refsFor(visuals, { sceneId: planning.id }, ["luz", "encuadre"]);
+          return looks.length > 0 ? (
+            <div className="mt-6">
+              <RefStrip refs={looks} projectId={projectId} title="Cómo se ve esta escena · del moodboard" />
+            </div>
+          ) : null;
+        })()}
         <div className="mt-6 grid gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
           <div className="space-y-8 lg:sticky lg:top-28 lg:self-start">
             <section aria-labelledby="pl-texto">

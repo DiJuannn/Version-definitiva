@@ -8,6 +8,8 @@ import { CASTING_STATUS, ROLE_TYPES, sheetOf } from "@/lib/character-sheet";
 import { sceneStripColor } from "@/components/SceneTag";
 import { colorFor } from "@/components/canvas/presence";
 import { ActorAssignmentField } from "@/components/ActorAssignmentField";
+import { RefStrip } from "@/components/moodboard/RefStrip";
+import { getVisualRefs, refsFor } from "@/lib/visual-refs";
 import { CreateDialog, DialogCancel } from "@/components/CreateDialog";
 import { DeleteButton } from "@/components/DeleteButton";
 import { FormField } from "@/components/FormField";
@@ -71,7 +73,7 @@ export default async function PersonajesPage({
   const project = await getProjectForCurrentUser(projectId);
   if (!project) notFound();
 
-  const [actorRows, characters, people, sceneRows] = await Promise.all([
+  const [actorRows, characters, people, sceneRows, visuals] = await Promise.all([
     prisma.actor.findMany({
       where: { projectId },
       orderBy: { createdAt: "asc" },
@@ -111,6 +113,7 @@ export default async function PersonajesPage({
         shootingDayScenes: { select: { shootingDay: { select: { id: true, date: true } } } },
       },
     }),
+    getVisualRefs(projectId),
   ]);
 
   const actors = actorRows.map((a) => ({ ...a, rate: a.rate === null ? null : Number(a.rate) }));
@@ -597,6 +600,15 @@ export default async function PersonajesPage({
                             <p className="mt-2 font-sans text-xs text-muted">Color = interior/exterior y día/noche · apagadas = aún sin jornada.</p>
                           )}
                         </div>
+
+                        {(() => {
+                          const looks = refsFor(visuals, { characterId: c.id }, ["vestuario"]);
+                          return looks.length > 0 ? (
+                            <div className="mt-6">
+                              <RefStrip refs={looks} projectId={projectId} title="Su aspecto · del moodboard" />
+                            </div>
+                          ) : null;
+                        })()}
 
                         {/* Editar la ficha */}
                         <details className="group/edit mt-6">

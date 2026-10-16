@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { RefStrip } from "@/components/moodboard/RefStrip";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { getScenePeek, type ScenePeekData } from "@/lib/actions/scene-peek";
 import { SceneProgress } from "@/components/SceneProgress";
@@ -282,6 +283,8 @@ export function ScenePeek({ projectId }: { projectId: string }) {
                   <p className="mt-2 font-sans text-sm text-muted">Sin planos.</p>
                 )}
               </section>
+
+              {data.visuals.length > 0 && <RefStrip refs={data.visuals} projectId={projectId} title="Cómo se ve" />}
 
               <section aria-labelledby="pk-dias">
                 <div className="flex items-baseline justify-between">

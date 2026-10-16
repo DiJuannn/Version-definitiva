@@ -13,6 +13,8 @@ import { BreakdownCategory } from "@/lib/generated/prisma";
 import { PageHeader } from "@/components/PageHeader";
 import { TOOL_GUIDES } from "@/lib/tool-guides";
 import { SceneToolSwitch } from "@/components/preproduccion/SceneToolSwitch";
+import { RefStrip } from "@/components/moodboard/RefStrip";
+import { getVisualRefs, refsFor } from "@/lib/visual-refs";
 import { SubmitButton } from "@/components/SubmitButton";
 import { BreakdownCategorySelect } from "@/components/BreakdownCategorySelect";
 import { CreateDialog, DialogCancel } from "@/components/CreateDialog";
@@ -172,7 +174,7 @@ export default async function DesglosePage({
   if (view === "escena") {
     const index = Math.max(0, scenes.findIndex((s) => s.id === sp.escena));
     const scene = scenes[index];
-    const [texts, statuses] = await Promise.all([getScenesText(projectId, [scene]), getSceneStatuses(projectId)]);
+    const [texts, statuses, visuals] = await Promise.all([getScenesText(projectId, [scene]), getSceneStatuses(projectId), getVisualRefs(projectId)]);
     const linked = scene.breakdownElements.map((b) => b.breakdownElement);
     const linkedIds = new Set(linked.map((e) => e.id));
     const others = elements.filter((e) => !linkedIds.has(e.id)).map((e) => ({ id: e.id, name: e.name, category: e.category }));
@@ -246,6 +248,14 @@ export default async function DesglosePage({
             <div className="mb-5">
               <SceneToolSwitch projectId={projectId} sceneId={scene.id} active="desglose" />
             </div>
+            {(() => {
+              const looks = refsFor(visuals, { sceneId: scene.id }, ["vestuario", "arte"]);
+              return looks.length > 0 ? (
+                <div className="mb-5">
+                  <RefStrip refs={looks} projectId={projectId} title="Vestuario, arte y tono · del moodboard" />
+                </div>
+              ) : null;
+            })()}
             <BreakdownScene
               key={scene.id}
               projectId={projectId}

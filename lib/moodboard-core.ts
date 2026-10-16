@@ -40,6 +40,8 @@ function num(value: unknown, min: number, max: number, fallback: number): number
 function safeUrl(value: unknown): string | undefined {
   const url = str(value, 1000);
   if (!url) return undefined;
+  // Imágenes de la propia web (proyectos de ejemplo): rutas internas.
+  if (/^\/images\/[\w\-/.]+$/.test(url) && !url.includes("..")) return url;
   try {
     const parsed = new URL(url);
     return parsed.protocol === "https:" ? parsed.toString() : undefined;

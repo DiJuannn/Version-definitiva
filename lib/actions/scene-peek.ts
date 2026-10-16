@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getProjectForCurrentUser } from "@/lib/project-access";
 import { getScenesText, type SceneTextBlock } from "@/lib/scene-text";
 import { sceneStatus, SCENE_STATUS_SELECT, type SceneStatus } from "@/lib/scene-status";
+import { getVisualRefs, refsFor, type VisualRef } from "@/lib/visual-refs";
 import { BREAKDOWN_CATEGORY_LABELS, DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
 
 export type ScenePeekData = {
@@ -25,6 +26,7 @@ export type ScenePeekData = {
   breakdown: { category: string; label: string; items: string[] }[];
   shots: { id: string; number: string; shotSize: string | null; description: string | null; done: boolean; durationSec: number | null }[];
   days: { id: string; date: string; index: number }[];
+  visuals: VisualRef[];
 };
 
 // Todo lo de una escena en una sola lectura, para la ficha rápida que se abre
@@ -32,7 +34,7 @@ export type ScenePeekData = {
 export async function getScenePeek(projectId: string, sceneId: string): Promise<ScenePeekData | null> {
   const project = await getProjectForCurrentUser(projectId);
   if (!project) return null;
-  const [all, scene, days] = await Promise.all([
+  const [all, scene, days, visuals] = await Promise.all([
     prisma.scene.findMany({ where: { projectId }, orderBy: [{ order: "asc" }, { number: "asc" }], select: { id: true } }),
     prisma.scene.findFirst({
       where: { id: sceneId, projectId },
@@ -46,6 +48,7 @@ export async function getScenePeek(projectId: string, sceneId: string): Promise<
       },
     }),
     prisma.shootingDay.findMany({ where: { projectId }, orderBy: { date: "asc" }, select: { id: true, date: true } }),
+    getVisualRefs(projectId),
   ]);
   if (!scene) return null;
 
@@ -80,5 +83,6 @@ export async function getScenePeek(projectId: string, sceneId: string): Promise<
     })),
     shots: scene.shots.map((s) => ({ id: s.id, number: s.number, shotSize: s.shotSize, description: s.description, done: s.done, durationSec: s.durationSec })),
     days: days.map((d, i) => ({ id: d.id, date: d.date.toISOString(), index: i + 1 })).filter((d) => dayIds.has(d.id)),
+    visuals: refsFor(visuals, { sceneId: scene.id }).slice(0, 12),
   };
 }
