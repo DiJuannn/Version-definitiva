@@ -40,6 +40,9 @@ jobs:
       - run: npm ci
       - name: Migraciones
         run: npx prisma migrate deploy
+      # LayoutProps/PageProps son tipos globales que genera Next (.next/types).
+      - name: Tipos de rutas
+        run: npx next typegen
       - name: Tipos
         run: npx tsc --noEmit -p .
       - name: Lint
