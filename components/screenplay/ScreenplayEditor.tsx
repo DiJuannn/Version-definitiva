@@ -48,6 +48,13 @@ import { OpeningsPanel, StartHelp } from "@/components/screenplay/StartHelp";
 import { CharacterDrawer } from "@/components/screenplay/CharacterDrawer";
 import { AssistantDrawer } from "@/components/screenplay/AssistantDrawer";
 import { SettingsDialog, type SettingsProps } from "@/components/screenplay/SettingsDialog";
+// gv2:ayudas
+import { HelpDock } from "@/components/screenplay/HelpDock";
+import { LineGuide } from "@/components/screenplay/LineGuide";
+import { ShortcutsButton, ShortcutsSheet } from "@/components/screenplay/ShortcutsSheet";
+import { FindReplace } from "@/components/screenplay/FindReplace";
+import { FocusMode } from "@/components/screenplay/FocusMode";
+// /gv2:ayudas
 import { Sheet } from "@/components/ui/Sheet";
 import { useMediaQuery } from "@/components/ui/use-media-query";
 import {
@@ -869,6 +876,7 @@ export default function ScreenplayEditor({
             </div>
             <ExportMenu items={exports} onExport={(it) => void exportScript(it)} />
             {/* gv2:ayudas — botón «?» de atajos (ShortcutsSheet, Ctrl+/): va aquí, antes del Asistente. */}
+            <ShortcutsButton />
             {/* /gv2:ayudas */}
             <button type="button" onClick={() => (assistantOpen ? setAssistantOpen(false) : openAssistant())} className="sp-ai-btn h-8 !py-0">
               <span className="hidden sm:inline">Asistente IA</span>
@@ -936,11 +944,13 @@ export default function ScreenplayEditor({
             )}
           </div>
           {/* gv2:ayudas — NextStep («¿Y ahora qué?»): tarjeta junto al papel. Su montaje va aquí. */}
+          <HelpDock onOpenSettings={openSettings} />
           {/* /gv2:ayudas */}
           <div className="sp-desk">
             <div className={`sp-paper relative ${isEmpty ? "sp-paper-empty" : ""}`}>
               <EditorContent editor={editor} />
               {/* gv2:ayudas — LineGuide (guía de la línea, al margen del papel, con coordsAtPos): va aquí. */}
+              <LineGuide />
               {/* /gv2:ayudas */}
               {isEmpty && <StartHelp onWrite={() => editor?.chain().focus("start").run()} />}
             </div>
@@ -983,6 +993,9 @@ export default function ScreenplayEditor({
       {characterOpen && <CharacterDrawer name={characterOpen} onClose={() => setCharacterOpen(null)} />}
       {assistantOpen && <AssistantDrawer onClose={() => setAssistantOpen(false)} />}
       {/* gv2:ayudas — ShortcutsSheet y demás hojas de ayuda: se montan aquí. */}
+      <ShortcutsSheet />
+      <FindReplace />
+      <FocusMode />
       {/* /gv2:ayudas */}
       <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} settings={settings} />
     </WorkspaceProvider>

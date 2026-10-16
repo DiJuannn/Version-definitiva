@@ -31,13 +31,15 @@ import {
   type LooseIdea,
   type OpeningKey,
 } from "@/lib/screenplay/story";
+import { MOMENTS } from "@/lib/screenplay/moments";
+import { parseCoachQuestion, parseSceneCheck, type CoachFocus, type SceneCheck } from "@/lib/screenplay-coach";
 
 export const SCREENPLAY_AI_MODEL = "mistral-small-latest";
 
 // Por encima de esto el guion se resume escena a escena (largos enteros).
 const FULL_TEXT_MAX = 45_000;
 
-const GUARDRAIL = `Regla absoluta: NUNCA escribes texto del guion. No propones diálogos, frases, acciones, escenas, finales ni giros redactados. No reescribes nada. Tu trabajo es entender la historia y ayudar a quien escribe con referencias, preguntas y observaciones; la historia es suya.`;
+export const GUARDRAIL = `Regla absoluta: NUNCA escribes texto del guion. No propones diálogos, frases, acciones, escenas, finales ni giros redactados. No reescribes nada. Tu trabajo es entender la historia y ayudar a quien escribe con referencias, preguntas y observaciones; la historia es suya.`;
 
 // ------------------------------------------------------------------ contexto
 
@@ -650,4 +652,125 @@ export async function findStructure(doc: Y.Doc, ctx: Context): Promise<{ beats: 
     })
     .filter((b) => keys.has(b.beat) && b.why && !seen.has(b.beat) && seen.add(b.beat));
   return { beats, note: str(raw.observacion, 600) };
+}
+
+// ------------------------------------------------------------------ 8. el Compañero: una pregunta, nunca una respuesta
+
+// Para quien escribe su PRIMER guion. Una sola pregunta, corta, sobre lo que
+// acaba de escribir. Las respuestas son suyas (se guardan en Ideas sueltas).
+export const COACH_SYSTEM = `Eres un profesor de guion paciente que acompaña a alguien que escribe su PRIMER guion. Hablas en español, de tú, con frases cortas y sin jerga (si usas un término técnico, explícalo en 6 palabras).
+
+${GUARDRAIL}`;
+
+const COACH_QUESTION_RULES = `Devuelve UNA sola pregunta (máx. 25 palabras) que ayude a quien escribe a concretar o profundizar en el FOCO. Debe:
+- nombrar a los personajes u objetos reales;
+- poder contestarse en una línea;
+- no contener la respuesta ni dos opciones cerradas;
+- si el FOCO ya es concreto y claro, preguntar por el porqué emocional.
+Devuelve también "motivo": por qué lo preguntas (máx. 20 palabras), empezando por "Lo pregunto porque…".
+No repitas ninguna de las PREGUNTAS YA HECHAS.
+JSON: {"pregunta": string, "motivo": string}`;
+
+const COACH_CHECK_RULES = `Lee la ESCENA y su PREGUNTA GUÍA (lo que debía pasar según quien escribe).
+Si la escena responde a la pregunta guía, devuelve {"ok": true}.
+Si no, devuelve {"ok": false, "observacion": "<máx. 25 palabras, en forma de pregunta, sin proponer solución>"}.
+Si hay un error de formato evidente (acción en pasado, pensamientos que no se ven), añade "formato": "<máx. 15 palabras>".
+Responde solo con el JSON pedido.`;
+
+const COACH_QUESTION_SCHEMA = {
+  type: "object",
+  properties: { pregunta: { type: "string" }, motivo: { type: "string" } },
+  required: ["pregunta", "motivo"],
+};
+
+const COACH_CHECK_SCHEMA = {
+  type: "object",
+  properties: { ok: { type: "boolean" }, observacion: { type: "string" }, formato: { type: "string" } },
+  required: ["ok"],
+};
+
+// Lo que debía pasar en una escena, en palabras de quien escribe: la línea
+// del esqueleto (sinopsis), sus notas y la pregunta del momento de la
+// historia que ha marcado en ella. Vacío si no hay nada de eso.
+export function sceneGuide(doc: Y.Doc, blocks: ScreenplayBlock[], sid: string): string {
+  const maps = storyMaps(doc);
+  const scene = scenesFromBlocks(blocks, "A4", { untitled: true }).find((s) => s.sid === sid);
+  if (!scene) return "";
+  const synopsis = maps.scenes.get(sid)?.synopsis?.trim();
+  const notes = blocks
+    .slice(scene.start + 1, scene.end)
+    .filter((b) => b.type === "note" && b.text.trim())
+    .map((b) => b.text.trim().slice(0, 300));
+  const moments = [...maps.beats.entries()]
+    .filter(([, s]) => s === sid)
+    .map(([key]) => MOMENTS.find((m) => m.id === key))
+    .filter((m): m is (typeof MOMENTS)[number] => Boolean(m))
+    .map((m) => `Es el momento «${m.plain}» (${m.technical}): ${m.question}`);
+  return [synopsis && `Lo que quiere que pase: ${synopsis.slice(0, 400)}`, ...notes.map((n) => `Nota: ${n}`), ...moments]
+    .filter(Boolean)
+    .join("\n");
+}
+
+// El mensaje para la IA (exportado para los tests: lleva el foco y las
+// preguntas ya hechas, para no repetirlas).
+export function coachQuestionPrompt(doc: Y.Doc, ctx: Context, focus: CoachFocus, asked: string[] = []): string | null {
+  const blocks = blocksFromYDoc(doc);
+  let foco: string;
+  if (focus.kind === "scene") {
+    const around = sceneWithNeighbours(blocks, focus.sid);
+    if (!around) return null;
+    const guide = sceneGuide(doc, blocks, focus.sid);
+    foco = `FOCO: la escena ${around.number}, que quien escribe acaba de escribir.\n${guide ? `PREGUNTA GUÍA DE LA ESCENA:\n${guide}\n\n` : ""}${around.text}`;
+  } else if (focus.kind === "answer") {
+    const what = focus.step === 3 ? "qué quiere su protagonista" : "qué se lo impide";
+    foco = `FOCO: su respuesta a «${what}»: ${focus.text}`;
+  } else {
+    foco = `FOCO: la tarjeta ${focus.index + 1} de su esqueleto de escenas: ${focus.text}`;
+  }
+  return [
+    header(ctx),
+    devText(doc),
+    charactersText(doc),
+    focus.kind !== "scene" && blocks.some((b) => b.text.trim()) ? `LO QUE HAY ESCRITO (escena a escena):\n${outlineText(doc, blocks)}` : "",
+    asked.length ? `PREGUNTAS YA HECHAS:\n${asked.map((q) => `- ${q}`).join("\n")}` : "",
+    foco,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+export async function coachQuestion(
+  doc: Y.Doc,
+  ctx: Context,
+  focus: CoachFocus,
+  asked: string[] = [],
+): Promise<{ question: string; why: string } | null> {
+  const user = coachQuestionPrompt(doc, ctx, focus, asked);
+  if (!user) return null;
+  const raw = await callJson("companero_pregunta", `${COACH_SYSTEM}\n\n${COACH_QUESTION_RULES}`, user, COACH_QUESTION_SCHEMA, 0.7);
+  return parseCoachQuestion(raw);
+}
+
+// «Señal» al terminar una escena: ¿responde a lo que debía pasar? Sin
+// pregunta guía no hay nada que comprobar (devuelve null sin llamar a la IA).
+export function coachSceneCheckPrompt(doc: Y.Doc, ctx: Context, sid: string): string | null {
+  const blocks = blocksFromYDoc(doc);
+  const guide = sceneGuide(doc, blocks, sid);
+  const scene = scenesFromBlocks(blocks, "A4", { untitled: true }).find((s) => s.sid === sid);
+  if (!guide || !scene) return null;
+  return [
+    header(ctx),
+    charactersText(doc),
+    `PREGUNTA GUÍA:\n${guide}`,
+    `ESCENA ${scene.number}:\n${toFountain(blocks.slice(scene.start, scene.end)).slice(0, 6000)}`,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+export async function coachSceneCheck(doc: Y.Doc, ctx: Context, sid: string): Promise<SceneCheck | null> {
+  const user = coachSceneCheckPrompt(doc, ctx, sid);
+  if (!user) return null;
+  const raw = await callJson("companero_escena", `${COACH_SYSTEM}\n\n${COACH_CHECK_RULES}`, user, COACH_CHECK_SCHEMA, 0.3);
+  return parseSceneCheck(raw);
 }
