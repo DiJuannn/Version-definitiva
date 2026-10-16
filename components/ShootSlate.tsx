@@ -32,10 +32,16 @@ export function ShootSlate({
   const countdown = inDays <= 0 ? "Hoy" : inDays === 1 ? "Mañana" : `${inDays} días`;
   const when = day.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", timeZone: "Europe/Madrid" });
 
-  const cell = (label: string, value: string) => (
+  // Un dato que falta no se pinta como «—» (parece un error): se dice que
+  // está por fijar, apagado.
+  const cell = (label: string, value: string | null) => (
     <div className="border-b border-line py-3 odd:border-r odd:pr-3 even:pl-4">
       <p className="eyebrow">{label}</p>
-      <p className="poster-sub mt-1.5 text-[28px] leading-none normal-case">{value}</p>
+      {value ? (
+        <p className="poster-sub mt-1.5 text-[28px] leading-none normal-case">{value}</p>
+      ) : (
+        <p className="mt-2 font-sans text-[15px] leading-none text-muted">Por fijar</p>
+      )}
     </div>
   );
 
@@ -49,10 +55,10 @@ export function ShootSlate({
         <p className="eyebrow">{eyebrow}</p>
         <p className="poster-title mt-1 text-[42px] first-letter:uppercase">{when}</p>
         <div className="mt-3 grid grid-cols-2 border-t border-line">
-          {cell("Citación", callTime ?? "—")}
+          {cell("Citación", callTime)}
           {cell(wrap ? "Fin previsto" : "Cuenta atrás", wrap ?? countdown)}
-          {cell("Escenas", scenes || "—")}
-          {cell("Planos", String(shots))}
+          {cell("Escenas", scenes || null)}
+          {cell("Planos", shots ? String(shots) : null)}
         </div>
         {warning && <p className="mt-3 font-sans text-[13px] text-warn">● {warning}</p>}
         {action && (

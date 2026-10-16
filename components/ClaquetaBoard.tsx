@@ -238,6 +238,15 @@ export function ClaquetaBoard({
       setTake(Math.max(Number(saved.take) || 1, serverNext));
       /* eslint-enable react-hooks/set-state-in-effect */
     }
+    // Sin plano puesto (primera vez, o lo último era otra jornada): la
+    // claqueta empieza en el primer plano por rodar del plan del día, no en «—».
+    const first = dayPlan?.shots.find((s) => !s.done);
+    if (first && !saved?.shotNumber && scenes.some((s) => s.id === first.sceneId)) {
+      setSceneEntryMode("list");
+      setSceneId(first.sceneId);
+      setShotNumber(first.shotNumber);
+      setTake(nextTakeFor(first.sceneNumber, first.shotNumber));
+    }
     setRestored(true);
     // Solo al montar: después manda lo que la persona toque.
     // eslint-disable-next-line react-hooks/exhaustive-deps

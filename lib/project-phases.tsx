@@ -52,7 +52,7 @@ export const PHASES: Phase[] = [
       pick("call-sheets"),
       pick("claqueta"),
       pick("script"),
-      pick("vehiculos", { label: "Material y vehículos" }),
+      pick("vehiculos"),
     ],
   },
   {

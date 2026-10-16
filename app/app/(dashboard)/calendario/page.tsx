@@ -143,6 +143,8 @@ export default async function CalendarioPage({
 }) {
   const { month } = await searchParams;
   const monthStart = parseMonthParam(month);
+  // Último día del mes (para la rejilla). Para las consultas se usa «antes del día 1
+  // del mes siguiente»: con «hasta el último día a las 00:00» se perdía ese día.
   const monthEnd = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0);
   const prevMonth = new Date(monthStart.getFullYear(), monthStart.getMonth() - 1, 1);
   const nextMonth = new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 1);
@@ -158,12 +160,12 @@ export default async function CalendarioPage({
 
   const [events, shootingDays, projects, nextShootingDay, upcomingDeadlines] = await Promise.all([
     prisma.calendarEvent.findMany({
-      where: { organizationId, date: { gte: monthStart, lte: monthEnd } },
+      where: { organizationId, date: { gte: monthStart, lt: nextMonth } },
       orderBy: { date: "asc" },
       include: { project: true },
     }),
     prisma.shootingDay.findMany({
-      where: { project: { organizationId }, date: { gte: monthStart, lte: monthEnd } },
+      where: { project: { organizationId }, date: { gte: monthStart, lt: nextMonth } },
       orderBy: { date: "asc" },
       include: { project: true },
     }),

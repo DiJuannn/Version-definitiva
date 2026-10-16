@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getProjectForCurrentUser } from "@/lib/project-access";
+import { getProjectProgress } from "@/lib/project-progress";
 import { buildProjectHighlights, getProjectSummary, type SummaryTool } from "@/lib/project-summary";
 import { isProjectOwnerPro } from "@/lib/project-plan";
 import { PdfLink } from "@/components/PdfLink";
@@ -10,7 +11,6 @@ import {
   INT_EXT_LABELS,
   BREAKDOWN_CATEGORY_LABELS,
   INVENTORY_CATEGORY_LABELS,
-  PROJECT_STATUS_LABELS,
 } from "@/lib/labels";
 import { BreakdownCategory } from "@/lib/generated/prisma";
 import { PageHeader } from "@/components/PageHeader";
@@ -196,7 +196,7 @@ export default async function ProjectSummaryPage({
 
   const isPro = await isProjectOwnerPro(access.organizationId);
 
-  const data = await getProjectSummary(projectId);
+  const [data, phase] = await Promise.all([getProjectSummary(projectId), getProjectProgress(projectId)]);
   const {
     project,
     locations,
@@ -283,7 +283,8 @@ export default async function ProjectSummaryPage({
       <dl className="mt-8 grid grid-cols-2 gap-y-6 border-y border-line py-6 lg:grid-cols-4 lg:divide-x lg:divide-line">
         <div className="pr-6">
           <dt className={LABEL}>Estado</dt>
-          <dd className="mt-2 font-display text-xl font-black tracking-tight">{PROJECT_STATUS_LABELS[project.status]}</dd>
+          {/* La misma fase que dice la portada (no el campo de estado, que puede quedarse atrás). */}
+          <dd className="mt-2 font-display text-xl font-black tracking-tight">{phase.label.split(" · ")[0]}</dd>
         </div>
         <div className="pr-6 lg:pl-6">
           <dt className={LABEL}>Escenas</dt>

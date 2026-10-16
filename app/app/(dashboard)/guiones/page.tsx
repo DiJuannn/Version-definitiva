@@ -175,12 +175,6 @@ export default async function GuionesPage() {
                     </Link>
                   </>
                 )}
-                {s.stage < 3 && (
-                  <span className="font-normal text-muted">
-                    {" "}
-                    · paso {s.stage + 1} de {STAGES.length}
-                  </span>
-                )}
               </p>
               <p className="mt-1 font-mono text-[11px] tracking-wide text-muted">
                 {plural(s.pageCount, "pág.", "pág.")} · {plural(s.sceneCount, "escena", "escenas")} ·{" "}

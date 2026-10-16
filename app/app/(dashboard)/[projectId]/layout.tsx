@@ -5,7 +5,7 @@ import { ClaquetaFab } from "@/components/ClaquetaFab";
 import { ScenePeek } from "@/components/ScenePeek";
 import { ProjectPresence } from "@/components/ProjectPresence";
 import { getCurrentProfile } from "@/lib/current-user";
-import { getProjectForProfile, listProjectsForProfile } from "@/lib/project-access";
+import { getProjectForCurrentUser, listProjectsForProfile } from "@/lib/project-access";
 import { getProjectFacts, getToolMode } from "@/lib/tool-access";
 import { computeAccess, computeStage } from "@/lib/tool-rules";
 
@@ -21,12 +21,19 @@ export default async function ProjectLayout({
 }) {
   const { projectId } = await params;
   const profile = await getCurrentProfile();
-  const [project, projects] = profile
-    ? await Promise.all([getProjectForProfile(profile, projectId), listProjectsForProfile(profile)])
-    : [null, []];
+  // Todo a la vez (antes eran dos rondas seguidas): si el proyecto no es
+  // accesible, los datos de las herramientas simplemente no se usan.
+  const [project, projects, factsIfAny, modeIfAny] = profile
+    ? await Promise.all([
+        getProjectForCurrentUser(projectId),
+        listProjectsForProfile(profile),
+        getProjectFacts(projectId),
+        getToolMode(profile.organizationId),
+      ])
+    : [null, [], null, "full" as const];
   // Qué herramientas se enseñan: las que ya sirven en este proyecto (o todas en modo completo).
-  const [facts, mode] =
-    profile && project ? await Promise.all([getProjectFacts(projectId), getToolMode(profile.organizationId)]) : [null, "full" as const];
+  const facts = project ? factsIfAny : null;
+  const mode = project ? modeIfAny : ("full" as const);
   const access = facts ? computeAccess(facts) : {};
   const stage = facts ? computeStage(facts) : 1;
 

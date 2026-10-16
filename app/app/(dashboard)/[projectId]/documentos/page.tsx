@@ -250,7 +250,7 @@ export default async function DocumentosPage({
       <PageHeader
         guide={TOOL_GUIDES["documentos"]}
         eyebrow="Entregar"
-        title="Biblioteca de archivos"
+        title="Archivos"
         description="Los papeles del proyecto en un sitio, y cuáles te faltan antes de rodar."
         actions={
           documents.length > 0 && (

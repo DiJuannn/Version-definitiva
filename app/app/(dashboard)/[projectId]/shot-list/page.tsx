@@ -254,7 +254,7 @@ export default async function ShotListPage({
     <div className="pb-16">
       <PageHeader
         eyebrow="Preparar"
-        title="Lista de planos"
+        title="Planos"
         guide={TOOL_GUIDES["planos"]}
         description="Cómo se va a rodar cada escena, plano a plano: encuadre, ángulo y movimiento. ¿Ya tienes el guion técnico? Impórtalo y la IA propone los planos."
         actions={

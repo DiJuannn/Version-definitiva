@@ -40,7 +40,7 @@ export async function GET(
     getProjectFacts(projectId),
   ]);
 
-  // `steps` es la misma Hoja de ruta que ProjectRoadmap.tsx en la web — se
+  // `steps` es la misma Hoja de ruta que la portada del proyecto en la web — se
   // añade aquí en vez de crear una ruta nueva porque ya se calcula junto
   // con `healthMetrics` en la misma consulta a getProjectOverview.
   return NextResponse.json(

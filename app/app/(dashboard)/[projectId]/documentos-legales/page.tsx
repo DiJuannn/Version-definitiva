@@ -116,7 +116,7 @@ export default async function DocumentosLegalesPage({
       <PageHeader
         guide={TOOL_GUIDES["documentos-legales"]}
         eyebrow="Entregar"
-        title="Plantillas de documentos"
+        title="Contratos y permisos"
         description="Permisos, contratos y cesiones ya escritos con los datos del proyecto: rellenas cuatro huecos y sale el PDF para firmar."
       />
 

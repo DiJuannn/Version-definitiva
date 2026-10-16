@@ -39,7 +39,7 @@ export default async function ContratoColaboracionPage({
     <div className="pb-16">
       <PageHeader
         backHref={`/app/${projectId}/documentos-legales`}
-        backLabel="← Plantillas de documentos"
+        backLabel="← Contratos y permisos"
         eyebrow="Plantilla legal"
         title="Contrato de colaboración"
         description="Acuerdo básico con un actor o técnico: qué hace, cuándo y a cambio de qué."

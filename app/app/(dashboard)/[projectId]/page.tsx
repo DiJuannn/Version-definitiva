@@ -109,7 +109,13 @@ export default async function ProjectTallerPage({
     ? await prisma.shootingDay.count({ where: { projectId, date: { lt: nextShoot.date } } })
     : 0;
 
-  const director = project.director ?? screenplay?.author ?? null;
+  // Quien dirige: el dato del proyecto o, si no, quien del equipo tiene el
+  // puesto de dirección (no «de fotografía», «de arte» ni «ayudante de»). Los
+  // autores del guion van aparte, como guion.
+  const isDirection = (role: string | null) =>
+    !!role && /^(director|directora|dirección|direccion|realizador|realizadora)$/i.test(role.trim());
+  const director = project.director ?? crew.find((c) => isDirection(c.role))?.name ?? null;
+  const writers = screenplay?.author ?? null;
   const billing = [
     director ? `Un proyecto de ${director}` : null,
     cast.length ? `con ${cast.map((c) => c.actor?.name).filter(Boolean).slice(0, 4).join(" · ")}` : null,
@@ -121,7 +127,11 @@ export default async function ProjectTallerPage({
   const pending = steps.filter((s) => !s.isDone).slice(0, 5);
   const credits: [string, string][] = [
     ...(director ? [["Dirigido por", director] as [string, string]] : []),
-    ...crew.slice(0, 5).map((c) => [c.role ?? "Equipo", c.name] as [string, string]),
+    ...(writers && writers !== director ? [["Guion", writers] as [string, string]] : []),
+    ...crew
+      .filter((c) => !isDirection(c.role))
+      .slice(0, 5)
+      .map((c) => [c.role ?? "Equipo", c.name] as [string, string]),
     ...(project.producer ? [["Producción", project.producer] as [string, string]] : []),
   ];
 

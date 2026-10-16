@@ -32,7 +32,7 @@ export default async function CesionImagenPage({
     <div className="pb-16">
       <PageHeader
         backHref={`/app/${projectId}/documentos-legales`}
-        backLabel="← Plantillas de documentos"
+        backLabel="← Contratos y permisos"
         eyebrow="Plantilla legal"
         title="Cesión de derechos de imagen"
         description="Para que una persona autorice usar su imagen y su voz en el proyecto y en su promoción."

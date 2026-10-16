@@ -26,7 +26,7 @@ export default async function AutorizacionMenorPage({
     <div className="pb-16">
       <PageHeader
         backHref={`/app/${projectId}/documentos-legales`}
-        backLabel="← Plantillas de documentos"
+        backLabel="← Contratos y permisos"
         eyebrow="Plantilla legal"
         title="Autorización de menor en pantalla"
         description="Consentimiento del padre, madre o tutor legal para que un menor aparezca en el material."

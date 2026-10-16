@@ -24,7 +24,7 @@ export function DashboardStagger({
   return (
     <motion.div className={className} initial="hidden" animate="show" variants={container}>
       {Children.map(children, (child) => (
-        <motion.div data-reveal className="contents" variants={item}>
+        <motion.div data-reveal className="min-w-0" variants={item}>
           {child}
         </motion.div>
       ))}
