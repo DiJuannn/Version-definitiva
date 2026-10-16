@@ -146,6 +146,12 @@ export default function TallerMarketingPage() {
                     Probar Taller
                   </Link>
                   <Link
+                    href="/demo"
+                    className="border border-line px-6 py-3 font-mono text-xs tracking-widest text-fg uppercase transition-colors hover:border-accent"
+                  >
+                    ▶ Ver la demo · 2 min
+                  </Link>
+                  <Link
                     href="/app/login"
                     className="font-mono text-xs tracking-widest text-muted uppercase hover:text-accent"
                   >
