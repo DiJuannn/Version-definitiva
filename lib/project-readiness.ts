@@ -7,6 +7,7 @@
 import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import { DAY_PART_LABELS, INT_EXT_LABELS } from "@/lib/labels";
+import type { DayPart, IntExt } from "@/lib/generated/prisma";
 
 export type StepState = "done" | "partial" | "empty";
 
@@ -16,6 +17,8 @@ export type ResourceStatus = { key: string; meta: string | null; warn: boolean }
 export type ReadinessScene = {
   id: string;
   number: string;
+  intExt: IntExt;
+  dayPart: DayPart;
   slug: string;
   breakdown: number;
   shots: number;
@@ -92,6 +95,8 @@ export const getProjectReadiness = cache(async function getProjectReadiness(proj
     return {
       id: s.id,
       number: s.number,
+      intExt: s.intExt,
+      dayPart: s.dayPart,
       slug: `${INT_EXT_LABELS[s.intExt]} ${s.location?.name ?? ""} — ${DAY_PART_LABELS[s.dayPart]}`.replace(/\s+—/, " —").toUpperCase(),
       breakdown: s._count.breakdownElements,
       shots: s.shots.length,
