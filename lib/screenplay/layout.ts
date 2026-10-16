@@ -6,7 +6,7 @@
 // y el contador de páginas del editor usa esta misma función: lo que dice el
 // editor es lo que sale impreso.
 
-import { characterName, type BlockType, type ScreenplayBlock } from "@/lib/screenplay/blocks";
+import { UNTITLED_HEADING, characterName, sceneNumbering, type BlockType, type ScreenplayBlock } from "@/lib/screenplay/blocks";
 
 export type PageSize = "A4" | "LETTER";
 
@@ -92,20 +92,21 @@ type Chunk = {
 type Group = { kind: "plain" | "dialogue" | "heading"; chunks: Chunk[]; speaker?: string };
 
 function toChunks(blocks: ScreenplayBlock[], sceneNumbers: boolean): Chunk[] {
-  let scene = 0;
+  const numbers = sceneNumbering(blocks);
   const chunks: Chunk[] = [];
   for (const [index, b] of blocks.entries()) {
     if (b.type === "note") continue; // las notas no se imprimen
     const f = FORMAT[b.type];
+    const number = b.type === "sceneHeading" ? numbers.get(index) : undefined;
     let text = b.text.trim();
+    // Escena sin encabezado pero con texto: se imprime un encabezado de
+    // relleno para que la numeración sea la misma que en el editor.
+    if (!text && number !== undefined) text = UNTITLED_HEADING;
     if (!text) continue;
     if (f.upper) text = text.toUpperCase();
     if (b.type === "parenthetical" && !text.startsWith("(")) text = `(${text})`;
     const chunk: Chunk = { index, type: b.type, lines: wrap(text, f.width), before: f.before };
-    if (b.type === "sceneHeading") {
-      scene += 1;
-      if (sceneNumbers) chunk.sceneNumber = String(scene);
-    }
+    if (number !== undefined && sceneNumbers) chunk.sceneNumber = String(number);
     chunks.push(chunk);
   }
   if (chunks[0]) chunks[0].before = 0;
@@ -134,10 +135,26 @@ function lineX(type: BlockType, text: string, pageWidth: number): number {
   return MARGIN.left + FORMAT[type].indent;
 }
 
+// La misma lista de bloques se maqueta varias veces seguidas (marcas de
+// página, escenas, contadores): se recuerda el último resultado por lista.
+// Las páginas que devuelve no se deben modificar.
+const layoutMemo = new WeakMap<readonly ScreenplayBlock[], Map<string, LayoutPage[]>>();
+
 export function layoutScreenplay(
   blocks: ScreenplayBlock[],
   opts: { size?: PageSize; sceneNumbers?: boolean } = {},
 ): LayoutPage[] {
+  const key = `${opts.size ?? "A4"}:${opts.sceneNumbers ?? true}`;
+  let byOpts = layoutMemo.get(blocks);
+  const hit = byOpts?.get(key);
+  if (hit) return hit;
+  const pages = layoutUncached(blocks, opts);
+  if (!byOpts) layoutMemo.set(blocks, (byOpts = new Map()));
+  byOpts.set(key, pages);
+  return pages;
+}
+
+function layoutUncached(blocks: ScreenplayBlock[], opts: { size?: PageSize; sceneNumbers?: boolean }): LayoutPage[] {
   const size = opts.size ?? "A4";
   const pageWidth = PAGE_SIZES[size].width;
   const capacity = linesPerPage(size);
@@ -251,10 +268,56 @@ export function pageStarts(pages: LayoutPage[]): { block: number; page: number }
   return out;
 }
 
+// ------------------------------------------------------------ duración
+
+// La medida del guion, una sola para toda la UI (barra, Radiografía, menú de
+// exportar, lista de guiones): sale de la maquetación real, la misma que el PDF.
+export type ScriptLength = {
+  printedPages: number; // páginas del PDF, sin la portada
+  eighths: number; // largo en octavos de página (como en producción)
+  minutes: number; // ≈ 1 página por minuto, redondeado
+  seconds: number; // lo mismo en segundos (para «10 min 45 s»)
+  pagesLabel: string; // «10 6/8 págs.» · «1 pág.» · «Sin páginas»
+  minutesLabel: string; // «≈ 11 min» · «< 1 min»
+  label: string; // «10 6/8 págs. · ≈ 11 min»
+};
+
+export function scriptLength(blocks: ScreenplayBlock[], size: PageSize = "A4"): ScriptLength {
+  const hasText = blocks.some((b) => b.type !== "note" && b.text.trim());
+  if (!hasText) {
+    return { printedPages: 0, eighths: 0, minutes: 0, seconds: 0, pagesLabel: "Sin páginas", minutesLabel: "0 min", label: "Sin páginas" };
+  }
+  const pages = layoutScreenplay(blocks, { size });
+  const perPage = linesPerPage(size);
+  const lines = (pages.length - 1) * perPage + pages[pages.length - 1].lines.length;
+  const eighths = Math.max(1, Math.round((lines / perPage) * 8));
+  const seconds = Math.round((lines / perPage) * 60);
+  const minutes = Math.round(seconds / 60);
+  const pagesLabel = `${formatPagesEighths(eighths)} ${eighths <= 8 ? "pág." : "págs."}`;
+  const minutesLabel = minutes < 1 ? "< 1 min" : `≈ ${minutes} min`;
+  return { printedPages: pages.length, eighths, minutes, seconds, pagesLabel, minutesLabel, label: `${pagesLabel} · ${minutesLabel}` };
+}
+
+// 0 → «0», 6 → «6/8», 86 → «10 6/8» (el formato de los octavos de producción).
+export function formatPagesEighths(eighths: number): string {
+  const whole = Math.floor(eighths / 8);
+  const rest = eighths % 8;
+  if (!whole) return rest ? `${rest}/8` : "0";
+  return rest ? `${whole} ${rest}/8` : `${whole}`;
+}
+
+// «10 min 45 s», «45 s», «2 min».
+export function formatDuration(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  if (!m) return `${s} s`;
+  return s ? `${m} min ${s} s` : `${m} min`;
+}
+
 // Estadísticas rápidas que se guardan junto al guion (lista de guiones).
 export function screenplayStats(blocks: ScreenplayBlock[], size: PageSize = "A4") {
-  const pages = blocks.some((b) => b.type !== "note" && b.text.trim()) ? layoutScreenplay(blocks, { size }).length : 0;
-  const scenes = blocks.filter((b) => b.type === "sceneHeading" && b.text.trim()).length;
+  const pages = scriptLength(blocks, size).printedPages;
+  const scenes = sceneNumbering(blocks).size;
   const words = blocks
     .filter((b) => b.type !== "note")
     .reduce((n, b) => n + (b.text.trim() ? b.text.trim().split(/\s+/).length : 0), 0);

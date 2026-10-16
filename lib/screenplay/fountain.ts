@@ -9,6 +9,9 @@
 import {
   SCENE_PREFIX,
   TRANSITION_PATTERN,
+  UNTITLED_HEADING,
+  looksLikeTransition,
+  sceneNumbering,
   type BlockType,
   type ScreenplayBlock,
 } from "@/lib/screenplay/blocks";
@@ -184,9 +187,12 @@ export function toFountain(blocks: ScreenplayBlock[], titlePage: TitlePage = {})
     });
   if (tpLines.length) out.push(tpLines.join("\n"));
 
+  // Las escenas sin encabezado salen con uno de relleno, como en el PDF:
+  // así el número de cada escena es el mismo en todas partes.
+  const numbers = sceneNumbering(blocks);
   let prev: BlockType | null = null;
-  for (const b of blocks) {
-    const text = b.text.trim();
+  for (const [i, b] of blocks.entries()) {
+    const text = b.text.trim() || (b.type === "sceneHeading" && numbers.has(i) ? UNTITLED_HEADING : "");
     if (!text) continue;
     const inDialogue = (b.type === "dialogue" || b.type === "parenthetical") &&
       (prev === "character" || prev === "dialogue" || prev === "parenthetical");
@@ -231,4 +237,71 @@ export function toFountain(blocks: ScreenplayBlock[], titlePage: TitlePage = {})
   }
 
   return `${out.join("\n").trim()}\n`;
+}
+
+// ------------------------------------------------------------------ pegar
+
+// Texto pegado desde Word, Google Docs, un correo o un .fountain: se
+// reconoce como guion. Si trae líneas en blanco entre párrafos, es Fountain
+// tal cual. Si no (lo normal al copiar de un procesador de textos: un
+// párrafo por línea), cada línea se clasifica por su forma y su contexto:
+//
+//   INT. BAR - NOCHE          → Lugar y hora
+//   Marta entra empapada.     → Lo que se ve
+//   MARTA                     → Quién habla (mayúsculas, corta, sin punto final, con algo debajo)
+//   (sin aliento)             → Cómo lo dice
+//   ¿Has visto a Lucía?       → Lo que dice (una línea tras el nombre o la acotación)
+//   CORTE A:                  → Cambio de escena
+export function parsePastedText(source: string): ScreenplayBlock[] {
+  const text = source.replace(/\r\n?/g, "\n").replace(/\u00a0/g, " ").replace(/\t/g, "    ");
+  const trimmed = text.replace(/^\s*\n|\n\s*$/g, "");
+  if (/\n[ \t]*\n/.test(trimmed)) return parseFountain(trimmed).blocks;
+
+  const lines = trimmed.split("\n").map((l) => l.trim()).filter(Boolean);
+  const blocks: ScreenplayBlock[] = [];
+  const isName = (l: string) => {
+    const bare = l.replace(/\(.*?\)/g, "").replace(/^@/, "").trim();
+    return (
+      (l.startsWith("@") || (/\p{L}/u.test(bare) && bare === bare.toUpperCase())) &&
+      bare.length <= 38 &&
+      !/[.!?:,;]$/.test(bare) &&
+      bare.split(/\s+/).length <= 4
+    );
+  };
+  // Estado: tras un nombre o una acotación viene lo que dice.
+  let expect: "any" | "dialogue" | "afterDialogue" = "any";
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const next = lines[i + 1];
+
+    if (expect === "dialogue") {
+      if (/^\(.*\)$/.test(line)) {
+        blocks.push({ type: "parenthetical", text: line });
+        continue;
+      }
+      blocks.push({ type: "dialogue", text: line });
+      expect = "afterDialogue";
+      continue;
+    }
+    // Una acotación justo después de lo que dice: sigue hablando.
+    if (expect === "afterDialogue" && /^\(.*\)$/.test(line) && next !== undefined) {
+      blocks.push({ type: "parenthetical", text: line });
+      expect = "dialogue";
+      continue;
+    }
+    expect = "any";
+
+    if (/^\[\[[\s\S]*\]\]$/.test(line)) blocks.push({ type: "note", text: line.slice(2, -2).trim() });
+    else if (SCENE_PREFIX.test(line) || /^\.[^.]/.test(line)) {
+      const heading = line.startsWith(".") && !SCENE_PREFIX.test(line) ? line.slice(1) : line;
+      blocks.push({ type: "sceneHeading", text: heading.toUpperCase() });
+    } else if (line.startsWith(">") && !line.endsWith("<")) blocks.push({ type: "transition", text: line.slice(1).trim().toUpperCase() });
+    else if (looksLikeTransition(line) || /^(FADE (IN|OUT)|FUNDIDO A NEGRO)[.:]?$/.test(line)) blocks.push({ type: "transition", text: line.toUpperCase() });
+    else if (line.startsWith("!")) blocks.push({ type: "action", text: line.slice(1).trim() });
+    else if (isName(line) && next !== undefined && !SCENE_PREFIX.test(next) && !isName(next)) {
+      blocks.push({ type: "character", text: line.replace(/^@/, "").replace(/\s*\^$/, "") });
+      expect = "dialogue";
+    } else blocks.push({ type: "action", text: line });
+  }
+  return blocks.filter((b) => b.text);
 }
