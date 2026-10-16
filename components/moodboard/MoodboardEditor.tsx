@@ -19,6 +19,8 @@ import { findFreeSpot } from "@/components/canvas/free-spot";
 import { loadImageSize, prepareImage } from "@/components/canvas/image-utils";
 import { BoardProvider, CardNodeView, type CardNode } from "@/components/moodboard/nodes";
 import { MoodboardAiPanel } from "@/components/moodboard/MoodboardAiPanel";
+import { CardInspector } from "@/components/moodboard/CardInspector";
+import { extractColors } from "@/lib/image-colors";
 import { MOODBOARD_AI_EVENT } from "@/components/moodboard/MoodboardAiButton";
 import { RemoteCursors, type RemoteCursor } from "@/components/project-map/RemoteCursors";
 import { cleanColor, cleanName, colorFor, uniquePeers, type Peer } from "@/components/canvas/presence";
@@ -452,7 +454,7 @@ function Board(props: Props) {
 
   const addCard = useCallback(
     (partial: Omit<MoodboardCard, "id" | "x" | "y"> & { at?: { x: number; y: number } }) => {
-      if (!canAdd()) return;
+      if (!canAdd()) return null;
       const { at, ...rest } = partial;
       const spot = at
         ? { x: at.x - rest.w / 2, y: at.y - rest.h / 2 }
@@ -475,8 +477,19 @@ function Board(props: Props) {
       setNodes((ns) => [...ns.map((n) => (n.selected ? { ...n, selected: false } : n)), { ...toNode(card), selected: true }]);
       markDirty();
       setMenu(null);
+      return card.id;
     },
     [canAdd, centerPoint, markDirty],
+  );
+
+  // Cada foto trae su paleta: los colores dominantes se guardan en la tarjeta
+  // (alimentan la paleta de la película en la Biblia visual).
+  const withColors = useCallback(
+    (id: string | null, url: string) => {
+      if (!id) return;
+      void extractColors(url).then((colors) => colors.length && update(id, { colors }));
+    },
+    [update],
   );
 
   const addImageFile = useCallback(
@@ -497,13 +510,14 @@ function Board(props: Props) {
           return;
         }
         const w = 280;
-        addCard({
+        const id = addCard({
           type: "image",
           url: result.url,
           w,
           h: Math.min(520, Math.round((w * prepared.height) / prepared.width) + 30),
           at,
         });
+        withColors(id, result.url);
       } catch (e) {
         setNotice(
           e instanceof Error && e.message === "too-big"
@@ -514,7 +528,7 @@ function Board(props: Props) {
         setUploading((n) => n - 1);
       }
     },
-    [addCard, canAdd, projectId],
+    [addCard, canAdd, projectId, withColors],
   );
 
   async function addImageUrl() {
@@ -527,7 +541,7 @@ function Board(props: Props) {
     try {
       const size = await loadImageSize(url);
       const w = 280;
-      addCard({ type: "image", url, w, h: Math.min(520, Math.round((w * size.height) / size.width) + 30) });
+      withColors(addCard({ type: "image", url, w, h: Math.min(520, Math.round((w * size.height) / size.width) + 30) }), url);
       setImageUrl("");
     } catch {
       setNotice("No se pudo cargar esa imagen. Comprueba que el enlace lleva directo a una imagen.");
@@ -587,6 +601,10 @@ function Board(props: Props) {
   );
 
   const ctx = useMemo(() => ({ projectId, lookup, update, remove }), [projectId, lookup, update, remove]);
+  // La ficha de la referencia: con una sola tarjeta elegida que se pueda etiquetar.
+  const selectedCards = nodes.filter((n) => n.selected);
+  const inspected =
+    selectedCards.length === 1 && ["note", "image", "palette", "reference"].includes(selectedCards[0].data.card.type) ? selectedCards[0].data.card : null;
 
   // ---- Cómo va el tablero (en directo, a partir de las tarjetas)
   const cards = nodes.map((n) => n.data.card);
@@ -856,6 +874,11 @@ function Board(props: Props) {
           )}
 
           <RemoteCursors cursors={cursors} />
+          {inspected && (
+            <Panel position="top-right" className="m-3!">
+              <CardInspector card={inspected} lookup={lookup} onChange={(patch) => update(inspected.id, patch)} />
+            </Panel>
+          )}
           <Panel position="top-left" className="m-3! max-w-[calc(100%-1.5rem)]">
             <div
               className="taller-ink flex flex-wrap items-center gap-0.5 rounded-xl bg-bg-raised p-1 text-fg"

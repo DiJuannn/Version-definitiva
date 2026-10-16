@@ -3,7 +3,7 @@
 import { createContext, useContext, useState } from "react";
 import Link from "next/link";
 import { NodeResizer, type Node, type NodeProps } from "@xyflow/react";
-import { NOTE_COLORS, REFERENCE_KINDS, type MoodboardCard, type MoodboardLookup } from "@/lib/moodboard-types";
+import { FACETS, NOTE_COLORS, REFERENCE_KINDS, type MoodboardCard, type MoodboardLookup } from "@/lib/moodboard-types";
 
 // Una sola clase de nodo ("card") que pinta un tipo u otro según card.type.
 export type CardNode = Node<{ card: MoodboardCard }, "card">;
@@ -81,6 +81,18 @@ function Frame({
   );
 }
 
+// Lo que define la tarjeta y para qué es, en una línea al pie (si lo tiene).
+function Tags({ card }: { card: MoodboardCard }) {
+  const { lookup } = useBoard();
+  const facets = (card.facets ?? []).map((f) => FACETS.find((x) => x.key === f)?.label).filter(Boolean);
+  const scenes = (card.scenes ?? []).map((id) => lookup.scenes.find((s) => s.id === id)?.number).filter(Boolean);
+  const people = (card.characters ?? []).map((id) => lookup.characters.find((c) => c.id === id)?.name).filter(Boolean);
+  const places = (card.locations ?? []).map((id) => lookup.locations.find((l) => l.id === id)?.name).filter(Boolean);
+  const parts = [facets.join(" · "), scenes.length ? `esc. ${scenes.join(", ")}` : "", ...people, ...places].filter(Boolean);
+  if (!parts.length) return null;
+  return <p className={`${LABEL} shrink-0 truncate px-1 pb-1.5 text-[color-mix(in_srgb,currentColor_70%,transparent)]`}>{parts.join(" · ")}</p>;
+}
+
 function NoteCard({ id, card, selected }: { id: string; card: MoodboardCard; selected: boolean }) {
   const { update } = useBoard();
   return (
@@ -99,6 +111,7 @@ function NoteCard({ id, card, selected }: { id: string; card: MoodboardCard; sel
           aria-label="Texto de la nota"
           className={`${FIELD} min-h-0 flex-1 resize-none font-sans text-[13.5px] leading-snug focus:bg-black/[0.03]`}
         />
+        <Tags card={card} />
         {selected && (
           <div className="nodrag mt-2 flex gap-1.5" role="group" aria-label="Color de la nota">
             {NOTE_COLORS.map((c) => (
@@ -157,6 +170,16 @@ function ImageCard({ id, card, selected }: { id: string; card: MoodboardCard; se
           aria-label="Pie de foto"
           className={`${FIELD} shrink-0 px-1 py-1.5 font-sans text-xs text-fg`}
         />
+        {card.colors && card.colors.length > 0 && (
+          <div className="flex h-2 shrink-0 overflow-hidden rounded-[2px]" title={card.colors.join(" ")}>
+            {card.colors.map((c) => (
+              <span key={c} className="flex-1" style={{ background: c }} />
+            ))}
+          </div>
+        )}
+        <div className="pt-1">
+          <Tags card={card} />
+        </div>
       </div>
     </Frame>
   );
@@ -219,6 +242,9 @@ function PaletteCard({ id, card, selected }: { id: string; card: MoodboardCard; 
             </button>
           )}
         </div>
+        <div className="pt-1.5">
+          <Tags card={card} />
+        </div>
       </div>
     </Frame>
   );
@@ -270,6 +296,7 @@ function ReferenceCard({ id, card, selected }: { id: string; card: MoodboardCard
           aria-label="Por qué sirve"
           className={`${FIELD} mt-0.5 min-h-0 flex-1 resize-none font-sans text-xs leading-snug text-muted`}
         />
+        <Tags card={card} />
         {card.title && (
           <a
             href={`https://www.google.com/search?q=${query}`}

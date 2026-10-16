@@ -102,11 +102,12 @@ async function syncCore(screenplayId: string, organizationId: string): Promise<S
   const sceneBySid = new Map(prodScenes.map((sc) => [sc.scriptSid as string, sc]));
   const characterByName = new Map(prodCharacters.map((c) => [c.name.trim().toUpperCase(), c]));
 
-  type Group = { key: string; order: number; head?: MoodboardCard; cards: MoodboardCard[] };
+  // `link`: para qué es cada tarjeta de la columna (su escena o su personaje).
+  type Group = { key: string; order: number; head?: MoodboardCard; cards: MoodboardCard[]; link: Partial<MoodboardCard> };
   const groups = new Map<string, Group>();
-  const group = (key: string, order: number, head?: MoodboardCard) => {
+  const group = (key: string, order: number, head?: MoodboardCard, link: Partial<MoodboardCard> = {}) => {
     let g = groups.get(key);
-    if (!g) groups.set(key, (g = { key, order, head, cards: [] }));
+    if (!g) groups.set(key, (g = { key, order, head, cards: [], link }));
     return g;
   };
   const sceneOrder = (n: string) => Number.parseFloat(n) || 0;
@@ -116,14 +117,14 @@ async function syncCore(screenplayId: string, organizationId: string): Promise<S
       if (sc)
         return group(`s${anchor.sid}`, 1000 + sceneOrder(sc.number), {
           id: `${prefix}s${anchor.sid}`.slice(0, 60), type: "scene", x: 0, y: 0, w: 260, h: 120, refId: sc.id, label: sc.number,
-        });
+        }, { scenes: [sc.id] });
     }
     if (anchor.type === "character") {
       const ch = characterByName.get(anchor.name.trim().toUpperCase());
       if (ch)
         return group(`c${ch.name.toUpperCase()}`, 500, {
           id: `${prefix}h${ch.id}`.slice(0, 60), type: "character", x: 0, y: 0, w: 240, h: 110, refId: ch.id, label: ch.name,
-        });
+        }, { characters: [ch.id] });
     }
     return group("script", 0);
   };
@@ -131,7 +132,7 @@ async function syncCore(screenplayId: string, organizationId: string): Promise<S
   for (const r of maps.refs.values()) {
     const g = groupFor(r.anchor);
     if (r.image) {
-      g.cards.push({ id: `${prefix}i${r.id}`.slice(0, 60), type: "image", x: 0, y: 0, w: 240, h: 200, url: r.image, caption: r.title.slice(0, 200) });
+      g.cards.push({ id: `${prefix}i${r.id}`.slice(0, 60), type: "image", x: 0, y: 0, w: 240, h: 200, url: r.image, caption: r.title.slice(0, 200), ...g.link });
     }
     g.cards.push({
       id: `${prefix}r${r.id}`.slice(0, 60),
@@ -144,6 +145,7 @@ async function syncCore(screenplayId: string, organizationId: string): Promise<S
       year: r.year ?? "",
       kind: MOODBOARD_KIND[r.kind] ?? "Otro",
       why: [r.author, REFERENCE_KINDS[r.kind], r.detail, r.url].filter(Boolean).join(" · ").slice(0, 700),
+      ...g.link,
     });
   }
   for (const { name, meta } of characters) {
@@ -159,6 +161,8 @@ async function syncCore(screenplayId: string, organizationId: string): Promise<S
         h: 220,
         url: img.url,
         caption: `${name}${img.caption ? ` · ${img.caption}` : ""}`.slice(0, 200),
+        facets: ["vestuario"],
+        ...g.link,
       });
     }
   }
@@ -209,7 +213,21 @@ async function syncCore(screenplayId: string, organizationId: string): Promise<S
         continue;
       }
       if (old) {
-        upsert.push({ ...c, x: old.x, y: old.y, w: old.w, h: old.h });
+        // Lo que se le haya puesto a mano en el moodboard (qué define, para
+        // qué es, sus colores) se respeta: el guion solo añade su escena.
+        const union = (a?: string[], b?: string[]) => (a?.length || b?.length ? [...new Set([...(b ?? []), ...(a ?? [])])] : undefined);
+        upsert.push({
+          ...c,
+          x: old.x,
+          y: old.y,
+          w: old.w,
+          h: old.h,
+          facets: old.facets ?? c.facets,
+          colors: old.colors ?? c.colors,
+          scenes: union(c.scenes, old.scenes),
+          characters: union(c.characters, old.characters),
+          locations: old.locations,
+        });
       } else {
         upsert.push({ ...c, x, y });
         y += c.h + 30;

@@ -1,3 +1,4 @@
+import { FACET_KEYS, type Facet } from "@/lib/moodboard-types";
 import { prisma } from "@/lib/prisma";
 import { applyCardOps, type CardOps } from "@/lib/moodboard-merge";
 import { canonical } from "@/lib/project-map-merge";
@@ -90,6 +91,18 @@ export function sanitizeCards(input: unknown): MoodboardCard[] {
     } else {
       card.refId = str(c.refId, 60);
       card.label = str(c.label, 160);
+    }
+    if (type === "note" || type === "image" || type === "palette" || type === "reference") {
+      const facets = (Array.isArray(c.facets) ? c.facets : []).filter((f): f is Facet => (FACET_KEYS as string[]).includes(f as string));
+      if (facets.length) card.facets = [...new Set(facets)].slice(0, 4);
+      for (const key of ["scenes", "characters", "locations"] as const) {
+        const ids = (Array.isArray(c[key]) ? c[key] : []).filter((v): v is string => typeof v === "string" && v.length > 0 && v.length <= 60);
+        if (ids.length) card[key] = [...new Set(ids)].slice(0, 40);
+      }
+      if (type === "image" && Array.isArray(c.colors)) {
+        const colors = c.colors.filter((v): v is string => typeof v === "string" && HEX.test(v)).slice(0, 6).map((v) => v.toLowerCase());
+        if (colors.length) card.colors = colors;
+      }
     }
     cards.push(card);
   }
