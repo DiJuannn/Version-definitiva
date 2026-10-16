@@ -3,6 +3,7 @@ import { ProjectPhaseNav } from "@/components/ProjectPhaseNav";
 import { ProjectBreadcrumb } from "@/components/ProjectBreadcrumb";
 import { ClaquetaFab } from "@/components/ClaquetaFab";
 import { ScenePeek } from "@/components/ScenePeek";
+import { PhaseScope } from "@/components/PhaseScope";
 import { ProjectPresence } from "@/components/ProjectPresence";
 import { getCurrentProfile } from "@/lib/current-user";
 import { getProjectForCurrentUser, listProjectsForProfile } from "@/lib/project-access";
@@ -38,7 +39,7 @@ export default async function ProjectLayout({
   const stage = facts ? computeStage(facts) : 1;
 
   return (
-    <div>
+    <PhaseScope stage={stage}>
       {/* Cabecera del proyecto en negro, a todo el ancho, pegada a la barra
           de arriba: es parte del marco. Debajo empieza la herramienta. */}
       <div className="taller-ink -mt-8 mx-[calc(50%-50vw)] bg-bg px-[calc(50vw-50%)] pt-3 text-fg print:hidden sm:-mt-12">
@@ -63,6 +64,6 @@ export default async function ProjectLayout({
       <div className="mt-8 sm:mt-10">{children}</div>
       {project && <ScenePeek projectId={projectId} />}
       {(mode === "full" || access.claqueta?.unlocked !== false) && <ClaquetaFab projectId={projectId} />}
-    </div>
+    </PhaseScope>
   );
 }

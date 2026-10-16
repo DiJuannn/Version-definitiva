@@ -436,7 +436,7 @@ export default async function CalendarioPage({
                       <p className="mt-1 flex flex-wrap justify-center gap-1 sm:hidden" aria-label={entriesForDay.map((e) => `${e.kind}: ${e.label}`).join(", ")}>
                         {entriesForDay.map((entry) =>
                           entry.href ? (
-                            <span key={entry.id} className="h-1.5 w-3 rounded-full bg-accent" />
+                            <span key={entry.id} className="h-1.5 w-3 rounded-full bg-gel-3" />
                           ) : (
                             <span key={entry.id} style={colorVar(entry.color!)} className="h-1.5 w-1.5 rounded-full bg-[var(--c)]" />
                           ),
@@ -451,7 +451,7 @@ export default async function CalendarioPage({
                             key={entry.id}
                             href={entry.href}
                             title={`Rodaje · ${entry.label}`}
-                            className="flex items-start gap-1.5 rounded-md bg-accent px-1.5 py-1 font-sans text-[11px] leading-tight font-semibold text-bg transition-opacity hover:opacity-85"
+                            className="flex items-start gap-1.5 rounded-md bg-gel-3 px-1.5 py-1 font-sans text-[11px] leading-tight font-semibold text-ink-0 transition-opacity hover:opacity-85"
                           >
                             <entry.Icon className="mt-px h-3 w-3 shrink-0" />
                             <span className="line-clamp-2">{entry.label}</span>
@@ -477,7 +477,7 @@ export default async function CalendarioPage({
 
           <ul aria-label="Leyenda" className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 font-sans text-[13px] text-muted">
             <li className="flex items-center gap-1.5">
-              <span aria-hidden className="h-2.5 w-4 rounded-sm bg-accent" />
+              <span aria-hidden className="h-2.5 w-4 rounded-sm bg-gel-3" />
               Rodaje
             </li>
             {Object.values(CalendarEventType).map((value) => (
@@ -517,7 +517,7 @@ export default async function CalendarioPage({
                           <li key={entry.id}>
                             <Link
                               href={entry.href}
-                              className="group block rounded-lg bg-accent px-3 py-2 text-bg transition-opacity hover:opacity-90"
+                              className="group block rounded-lg bg-gel-3 px-3 py-2 text-ink-0 transition-opacity hover:opacity-90"
                             >
                               <span className="flex items-center gap-2 font-sans text-[14px] font-semibold">
                                 <entry.Icon className="h-3.5 w-3.5 shrink-0" />
