@@ -272,7 +272,9 @@ export function LineTypeMenu({ editor, type, mac, compact }: { editor: Editor | 
 
 // «Enter → Lo que se ve · Tab → Quién habla»
 export function KeyHints({ type, empty }: { type: BlockType; empty: boolean }) {
-  const hints = lineKeyHints(type, empty);
+  // En la barra, si Tab y Enter llevan al mismo tipo, basta con Enter (la guía de la línea explica los dos).
+  const all = lineKeyHints(type, empty);
+  const hints = all.filter((h, i) => i === 0 || h.label !== all[0].label);
   const back = shiftTabHint(type);
   const title = [
     ...hints.map((h) =>
