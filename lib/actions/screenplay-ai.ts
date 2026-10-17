@@ -20,8 +20,19 @@ import {
   readStory,
   suggestReferences,
   type SuggestScope,
+  coachQuestion,
+  coachSceneCheck,
+  coachSceneCheckPrompt,
 } from "@/lib/screenplay-ai";
-import type { Questions, Review, StoryReading, Suggestion } from "@/lib/screenplay/story";
+import { scenesFromBlocks, type Questions, type Review, type StoryReading, type Suggestion } from "@/lib/screenplay/story";
+import { blocksFromYDoc } from "@/lib/screenplay/ydoc";
+import {
+  cleanCoachFocus,
+  localCoachQuestion,
+  type CoachFocus,
+  type CoachQuestion,
+  type SceneCheck,
+} from "@/lib/screenplay-coach";
 
 type Fail = { ok: false; error: string; upgrade?: boolean };
 
@@ -160,4 +171,119 @@ export async function findStructureAction(
     return { ok: false, error: "La IA no ha encontrado la estructura esta vez. Inténtalo de nuevo." };
   }
   return { ok: true, ...res.value };
+}
+
+// ------------------------------------------------------------------ el Compañero
+
+// ¿Hay IA en este servidor? (el navegador no ve las claves). Sin IA, el
+// Compañero hace preguntas de oficio y el resto de ayudas funcionan igual.
+export async function screenplayAiStatusAction(): Promise<{ configured: boolean }> {
+  return { configured: aiConfigured() };
+}
+
+// Por qué una pregunta no viene de la IA (para decirlo en la tarjeta, sin alarmar).
+export type CoachNote = "no-ai" | "plan" | "limit" | "short" | "failed" | null;
+
+type CoachOptions = { auto?: boolean; asked?: string[] };
+
+const cleanAsked = (v: unknown) =>
+  (Array.isArray(v) ? v : []).filter((q): q is string => typeof q === "string").map((q) => q.slice(0, 260)).slice(0, 12);
+
+const SCENE_MIN_WORDS = 12;
+
+function sceneWords(doc: Y.Doc, sid: string): number {
+  const blocks = blocksFromYDoc(doc);
+  const scene = scenesFromBlocks(blocks, "A4", { untitled: true }).find((s) => s.sid === sid);
+  if (!scene) return 0;
+  return blocks
+    .slice(scene.start, scene.end)
+    .filter((b) => b.type !== "note")
+    .reduce((n, b) => n + (b.text.trim() ? b.text.trim().split(/\s+/).length : 0), 0);
+}
+
+// Decide si se puede usar la IA para el Compañero y, si no, por qué. Las
+// tarjetas que salen solas (`auto`) no gastan las ayudas del día del plan
+// gratuito: para ese plan usan preguntas de oficio.
+async function coachSlot(
+  id: string,
+  loaded: Exclude<Awaited<ReturnType<typeof load>>, { error: string }>,
+  focus: CoachFocus,
+  auto: boolean,
+): Promise<CoachNote> {
+  if (!aiConfigured()) return "no-ai";
+  if (focus.kind === "scene" && sceneWords(loaded.doc, focus.sid) < SCENE_MIN_WORDS) return "short";
+  if (focus.kind !== "scene" && focus.text.split(/\s+/).length < 3) return "short";
+  if (auto && !loaded.pro) return "plan";
+  if (!(await claim(id, loaded.pro))) return "limit";
+  return null;
+}
+
+function localFor(doc: Y.Doc, focus: CoachFocus, asked: string[], stuck = false): CoachQuestion {
+  const blocks = blocksFromYDoc(doc);
+  const scenes = scenesFromBlocks(blocks, "A4", { untitled: true });
+  return localCoachQuestion(blocks, scenes, focus.kind === "scene" ? focus.sid : null, {
+    skip: asked,
+    stuck,
+    seed: Math.floor(Date.now() / 1000),
+  });
+}
+
+// Una pregunta sobre el foco (una escena, una respuesta del arranque o una
+// tarjeta del esqueleto). Siempre devuelve una pregunta: de la IA si se puede,
+// si no, una de oficio, y `note` dice por qué.
+export async function coachQuestionAction(
+  id: string,
+  rawFocus: CoachFocus,
+  options: CoachOptions & { stuck?: boolean } = {},
+): Promise<{ ok: true; question: CoachQuestion; note: CoachNote } | Fail> {
+  const focus = cleanCoachFocus(rawFocus);
+  if (!focus) return { ok: false, error: "No sé sobre qué preguntarte." };
+  const loaded = await load(id);
+  if ("error" in loaded) return { ok: false, error: loaded.error ?? "Error" };
+  const asked = cleanAsked(options.asked);
+  const stuck = options.stuck === true;
+  const note = await coachSlot(id, loaded, focus, options.auto === true);
+  if (note) return { ok: true, question: localFor(loaded.doc, focus, asked, stuck), note };
+  try {
+    const q = await withMistralSlot(() => coachQuestion(loaded.doc, loaded.ctx, focus, asked));
+    if (!q) {
+      await refund(id);
+      return { ok: true, question: localFor(loaded.doc, focus, asked, stuck), note: "failed" };
+    }
+    return {
+      ok: true,
+      question: { ...q, source: "ai", sid: focus.kind === "scene" ? focus.sid : null, at: Date.now() },
+      note: null,
+    };
+  } catch (error) {
+    await refund(id);
+    if (!(error instanceof MistralBusyError)) Sentry.captureException(error);
+    return { ok: true, question: localFor(loaded.doc, focus, asked, stuck), note: "failed" };
+  }
+}
+
+// Al terminar una escena: ¿hace lo que su nota (o el momento marcado) decía?
+// `check: null` si no hay nada con lo que compararla o no se puede usar la IA.
+export async function coachSceneCheckAction(
+  id: string,
+  sid: string,
+  options: { auto?: boolean } = {},
+): Promise<{ ok: true; check: SceneCheck | null; note: CoachNote } | Fail> {
+  if (typeof sid !== "string" || !sid.trim()) return { ok: false, error: "No sé de qué escena hablas." };
+  const focus: CoachFocus = { kind: "scene", sid: sid.trim().slice(0, 40) };
+  const loaded = await load(id);
+  if ("error" in loaded) return { ok: false, error: loaded.error ?? "Error" };
+  // Sin pregunta guía no se compara nada (y no se gasta una ayuda).
+  if (!coachSceneCheckPrompt(loaded.doc, loaded.ctx, focus.sid)) return { ok: true, check: null, note: null };
+  const note = await coachSlot(id, loaded, focus, options.auto === true);
+  if (note) return { ok: true, check: null, note };
+  try {
+    const check = await withMistralSlot(() => coachSceneCheck(loaded.doc, loaded.ctx, focus.sid));
+    if (!check) await refund(id);
+    return { ok: true, check, note: check ? null : "failed" };
+  } catch (error) {
+    await refund(id);
+    if (!(error instanceof MistralBusyError)) Sentry.captureException(error);
+    return { ok: true, check: null, note: "failed" };
+  }
 }

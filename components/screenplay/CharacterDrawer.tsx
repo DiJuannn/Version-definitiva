@@ -21,9 +21,9 @@ import {
 const FIELDS: { key: "want" | "need" | "fear" | "secret" | "arc" | "notes"; label: string; placeholder: string }[] = [
   { key: "want", label: "Quiere", placeholder: "Lo que persigue en la historia" },
   { key: "need", label: "Necesita", placeholder: "Lo que de verdad le hace falta" },
-  { key: "fear", label: "Teme", placeholder: "—" },
-  { key: "secret", label: "Oculta", placeholder: "—" },
-  { key: "arc", label: "Arco", placeholder: "De dónde sale y a dónde llega" },
+  { key: "fear", label: "Teme", placeholder: "Lo que más miedo le da" },
+  { key: "secret", label: "Oculta", placeholder: "Lo que no cuenta a nadie" },
+  { key: "arc", label: "Cómo cambia", placeholder: "Cómo es al principio y cómo acaba (su arco)" },
   { key: "notes", label: "Notas", placeholder: "Pasado, cómo habla, cómo viste…" },
 ];
 

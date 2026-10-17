@@ -1,23 +1,98 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useYMap } from "@/lib/screenplay/use-ymap";
 import { LOOSE_KINDS, OPENINGS, guessLooseKind, referenceId, type LooseIdea, type OpeningKey } from "@/lib/screenplay/story";
 import { proposeOpeningsAction } from "@/lib/actions/screenplay-ai";
 import type { OpeningProposal } from "@/lib/screenplay-ai";
 import { useWorkspace } from "@/components/screenplay/workspace";
+import { useGuidedData, useGuidedMode } from "@/components/screenplay/guided/use-guided";
 
 // La página en blanco: no hace falta empezar por el principio. Tres caminos
-// para arrancar con lo que se tenga.
-export function StartHelp({ onWrite }: { onWrite: () => void }) {
-  const { openRail, openOpenings } = useWorkspace();
+// para arrancar con lo que se tenga (y, para quien nunca ha escrito un guion,
+// las 5 preguntas del camino guiado).
+//
+// No desaparece para siempre al primer carácter: sigue a la vista mientras
+// se escribe la primera línea, después se pliega en «¿Por dónde sigo?» y se
+// puede volver a abrir (también desde fuera, con el evento START_HELP_EVENT).
+export const START_HELP_EVENT = "sp:start-help";
+
+export function StartHelp({ empty = true }: { empty?: boolean; onWrite?: () => void }) {
+  const { editor, blocks, maps, screenplayId, openRail, openOpenings, setStep, currentSid } = useWorkspace();
+  const mode = useGuidedMode(maps, screenplayId);
+  const { skeleton } = useGuidedData(maps);
+  const [reopened, setReopened] = useState(false);
+  const [closed, setClosed] = useState(false);
+  const [hint, setHint] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const filled = blocks.filter((b) => b.type !== "note" && b.text.trim()).length;
+  const ids = new Set(blocks.map((b) => b.id).filter(Boolean));
+  // Con las escenas del esqueleto en la página, cada una lleva ya su pregunta.
+  const skeletonOnPage = Boolean(skeleton?.cards.some((c) => c.sid && ids.has(c.sid)));
+  const early = !closed && (filled <= 1 || (hint && filled <= 2));
+  const open = !skeletonOnPage && (empty || reopened || early);
+
+  // Con poco escrito, el texto no reserva el alto del folio (el folio sí lo
+  // tiene): la ayuda, o su enlace para volver a abrirla, va justo debajo de
+  // lo escrito y no a un palmo. Se fija en cada cambio (React reescribe la
+  // clase de la página al pasar de vacía a escrita).
+  const compact = empty || open || filled <= 6;
+  useEffect(() => {
+    ref.current?.closest(".sp-paper")?.classList.toggle("sp-paper-empty", compact && !skeletonOnPage);
+  });
+
+  useEffect(() => {
+    const onOpen = () => {
+      setClosed(false);
+      setReopened(true);
+      requestAnimationFrame(() => ref.current?.scrollIntoView({ block: "center", behavior: "smooth" }));
+    };
+    window.addEventListener(START_HELP_EVENT, onOpen);
+    return () => window.removeEventListener(START_HELP_EVENT, onOpen);
+  }, []);
+
+  // «Escribir la escena»: deja escrito «INT. » (lo primero de toda escena)
+  // con el cursor detrás, y una pista de qué va ahí.
+  const write = () => {
+    if (!editor) return;
+    const { doc } = editor.state;
+    const first = doc.firstChild;
+    if (doc.childCount <= 2 && first && !doc.textContent.trim()) {
+      editor.chain().focus("start").setNode("sceneHeading").insertContent("INT. ").run();
+    } else {
+      editor
+        .chain()
+        .insertContentAt(doc.content.size, { type: "sceneHeading", content: [{ type: "text", text: "INT. " }] })
+        .focus("end")
+        .run();
+    }
+    setHint(true);
+    setReopened(false);
+  };
+
+  if (skeletonOnPage) return null;
+
+  if (!open) {
+    return (
+      <div ref={ref} contentEditable={false} className="mt-8 font-[family-name:var(--font-archivo)] select-none">
+        <button type="button" onClick={() => setReopened(true)} className="text-[13px] text-[#8a867c] hover:text-[#5a46a8]">
+          ¿Por dónde sigo? <span className="underline underline-offset-4">Ver las formas de empezar</span>
+        </button>
+      </div>
+    );
+  }
+
+  const heading = blocks.find((b) => b.type === "sceneHeading" && b.id === currentSid)?.text.trim() ?? "";
+  const headingDone = /\s-\s*\S/.test(heading) || (heading.length > 5 && editor?.state.selection.$from.parent.type.name !== "sceneHeading");
+
   const options = [
     {
       mark: "→",
       title: "Escribir la escena que tengo en la cabeza",
-      text: "Escribe arriba la que tengas más clara, aunque sea del medio o del final. Luego se mueve a su sitio.",
-      onClick: onWrite,
-      main: true,
+      text: "Te dejo escrito «INT. », que es como empieza toda escena: dónde y cuándo pasa. Puede ser del medio o del final; luego se mueve a su sitio.",
+      onClick: write,
+      main: !mode.on,
     },
     {
       mark: "◎",
@@ -32,25 +107,84 @@ export function StartHelp({ onWrite }: { onWrite: () => void }) {
       onClick: openOpenings,
     },
   ];
+
   return (
-    <div className="mt-[calc(var(--u)/2)] font-[family-name:var(--font-archivo)] select-none" contentEditable={false}>
-      <p className="text-[28px] leading-[1.1] font-extrabold tracking-[-0.02em] max-sm:text-[22px]">
-        No hace falta empezar
-        <br />
-        por el principio.
-      </p>
-      <p className="mt-2.5 max-w-[30rem] text-[14.5px] leading-relaxed text-[#5f5b52]">
-        Escribe lo que tengas más claro. El orden se decide después.
-      </p>
-      <div className="mt-6 grid max-w-[34rem] gap-2.5">
+    <div ref={ref} className="mt-[calc(var(--u)/2)] font-[family-name:var(--font-archivo)] select-none" contentEditable={false}>
+      {hint ? (
+        <div className="max-w-[34rem] rounded-xl border border-[#b9a6f0] bg-[#faf8ff] px-4 py-3.5" role="status" aria-live="polite">
+          {!headingDone ? (
+            <>
+              <p className="text-[15px] font-semibold text-[#1c1b19]">Primera línea: lugar y hora</p>
+              <p className="mt-1 text-[13.5px] leading-relaxed text-[#5f5b52]">
+                Sigue detrás de «INT.» con <b>dónde</b> pasa y, tras un guion, <b>cuándo</b>:{" "}
+                <span className="font-[family-name:var(--font-courier)] text-[#1c1b19]">INT. COCINA - NOCHE</span>.
+              </p>
+              <p className="mt-1 text-[12.5px] text-[#8a867c]">INT. = dentro · EXT. = fuera · Si aún no lo sabes, pulsa Enter y sigue.</p>
+            </>
+          ) : (
+            <>
+              <p className="text-[15px] font-semibold text-[#1c1b19]">Ahora, lo que se ve</p>
+              <p className="mt-1 text-[13.5px] leading-relaxed text-[#5f5b52]">
+                Pulsa <kbd className="sp-kbd">Enter</kbd> y cuenta en presente lo que pasa, como si lo vieras:{" "}
+                <span className="font-[family-name:var(--font-courier)] text-[#1c1b19]">Lucía abre la nevera.</span>
+              </p>
+              <p className="mt-1 text-[12.5px] text-[#8a867c]">
+                <kbd className="sp-kbd">Enter</kbd> otra línea · <kbd className="sp-kbd">Tab</kbd> en una línea vacía: que hable alguien
+              </p>
+            </>
+          )}
+        </div>
+      ) : (
+        <>
+          <p className="text-[28px] leading-[1.1] font-extrabold tracking-[-0.02em] max-sm:text-[22px]">
+            No hace falta empezar
+            <br />
+            por el principio.
+          </p>
+          <p className="mt-2.5 max-w-[30rem] text-[14.5px] leading-relaxed text-[#5f5b52]">
+            Escribe lo que tengas más claro. El orden se decide después.
+          </p>
+          <p className="mt-1.5 max-w-[30rem] text-[13px] leading-relaxed text-[#8a867c]">
+            Un guion es una lista de escenas. Cada escena dice dónde pasa (lugar y hora), qué se ve y qué se dice.
+          </p>
+        </>
+      )}
+
+      {mode.on && !hint && (
+        <button
+          type="button"
+          onClick={() => setStep(skeleton ? "esqueleto" : "empezar")}
+          className="mt-6 flex w-full max-w-[34rem] items-start gap-3.5 rounded-xl border border-[#b9a6f0] bg-[#faf8ff] px-4 py-3.5 text-left transition-colors hover:border-[#5a46a8]"
+        >
+          <span className="w-5 shrink-0 text-[20px] leading-none font-extrabold text-[#a08fd0]">✓</span>
+          {skeleton ? (
+            <span>
+              <span className="block text-[15px] font-semibold text-[#1c1b19]">Pasar tu esqueleto al guion</span>
+              <span className="mt-0.5 block text-[13px] leading-snug text-[#6d695f]">
+                Tienes {skeleton.cards.length} tarjetas: cada una será una escena, con su pregunta guía encima.
+              </span>
+            </span>
+          ) : (
+            <span>
+              <span className="block text-[15px] font-semibold text-[#1c1b19]">Responder 5 preguntas y que me prepare las escenas</span>
+              <span className="mt-0.5 block text-[13px] leading-snug text-[#6d695f]">
+                Unos 3 minutos. Qué quieres contar, quién, qué quiere, qué se lo impide y cómo acaba. Todo lo escribes tú.
+              </span>
+            </span>
+          )}
+        </button>
+      )}
+
+      <div className={`grid max-w-[34rem] gap-2.5 ${hint ? "mt-4" : mode.on ? "mt-2.5" : "mt-6"}`}>
+        {mode.on && !hint && <p className="mt-2 text-[12.5px] text-[#8a867c]">O a tu aire:</p>}
         {options.map((o) => (
           <button
             key={o.title}
             type="button"
             onClick={o.onClick}
             className={`flex items-start gap-3.5 rounded-xl border px-4 py-3.5 text-left transition-colors hover:border-[#a08fd0] ${
-              o.main ? "border-[#b9a6f0] bg-[#faf8ff]" : "border-[#e1ded5] bg-transparent"
-            }`}
+              o.main && !hint ? "border-[#b9a6f0] bg-[#faf8ff]" : "border-[#e1ded5] bg-transparent"
+            } ${hint && o.mark === "→" ? "hidden" : ""}`}
           >
             <span className="w-5 shrink-0 text-[20px] leading-none font-extrabold text-[#a08fd0]">{o.mark}</span>
             <span>
@@ -60,6 +194,34 @@ export function StartHelp({ onWrite }: { onWrite: () => void }) {
           </button>
         ))}
       </div>
+
+      <p className="mt-4 flex max-w-[34rem] flex-wrap gap-x-4 gap-y-1 text-[12.5px] text-[#8a867c]">
+        {!mode.on && (
+          <button
+            type="button"
+            onClick={() => {
+              mode.set(true);
+              setStep("empezar");
+            }}
+            className="text-[#5a46a8] hover:underline"
+          >
+            ¿Es tu primer guion? Te guío con 5 preguntas →
+          </button>
+        )}
+        {!empty && (
+          <button
+            type="button"
+            onClick={() => {
+              setReopened(false);
+              setClosed(true);
+              setHint(false);
+            }}
+            className="ml-auto hover:text-[#1c1b19]"
+          >
+            Ocultar
+          </button>
+        )}
+      </p>
     </div>
   );
 }

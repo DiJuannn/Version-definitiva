@@ -11,6 +11,7 @@ import {
   updateScreenplayDetails,
   type ScreenplayDetailsState,
 } from "@/lib/actions/screenplays";
+import { HelpSettings } from "@/components/screenplay/HelpSettings"; // gv2:ayudas
 
 const FIELD =
   "w-full rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm outline-none transition-colors focus:border-[var(--accent)]";
@@ -118,6 +119,10 @@ export function SettingsDialog({ open, onClose, settings }: { open: boolean; onC
             : (linkMsg ?? "Al vincularlo, los personajes aparecen en Personajes y las referencias e imágenes en el Moodboard, y se mantienen al día solos.")}
         </p>
       </div>
+
+      {/* gv2:ayudas — guía de la línea, «¿Y ahora qué?» y el Compañero */}
+      <HelpSettings screenplayId={settings.id} />
+      {/* /gv2:ayudas */}
 
       <div className="mt-6 flex justify-between border-t border-[var(--line)] pt-5">
         <DangerConfirmButton

@@ -6,8 +6,8 @@
 // el guion sin tablas nuevas. Este archivo no depende de Yjs: son los tipos y
 // los cálculos que se hacen a partir de los bloques.
 
-import { characterName, parseSceneHeading, type ScreenplayBlock } from "@/lib/screenplay/blocks";
-import { layoutScreenplay, linesPerPage, type PageSize } from "@/lib/screenplay/layout";
+import { characterName, parseSceneHeading, sceneNumbering, type ScreenplayBlock } from "@/lib/screenplay/blocks";
+import { layoutScreenplay, linesPerPage, type LayoutPage, type PageSize } from "@/lib/screenplay/layout";
 
 // ------------------------------------------------------------------ tipos
 
@@ -154,19 +154,24 @@ export function formatEighths(eighths: number): string {
   return rest ? `${pages} ${rest}/8` : `${pages}`;
 }
 
-// `untitled`: cuenta también las escenas aún sin encabezado (las que nacen de
+// `untitled`: incluye también las escenas aún sin encabezado (las que nacen de
 // una idea suelta) si ya tienen algo escrito. Solo para escribir: producción
-// necesita el encabezado.
-export function scenesFromBlocks(blocks: ScreenplayBlock[], size: PageSize = "A4", { untitled = false } = {}): SceneInfo[] {
+// necesita el encabezado. El número es el mismo en los dos casos (y el mismo
+// que en el editor y el PDF: ver sceneNumbering), así que sin `untitled` puede
+// haber huecos.
+// `pages`: la maquetación ya hecha de estos mismos bloques, si se tiene.
+export function scenesFromBlocks(
+  blocks: ScreenplayBlock[],
+  size: PageSize = "A4",
+  { untitled = false, pages }: { untitled?: boolean; pages?: LayoutPage[] } = {},
+): SceneInfo[] {
   const scenes: SceneInfo[] = [];
-  const hasBody = (i: number) => {
-    for (let k = i + 1; k < blocks.length && blocks[k].type !== "sceneHeading"; k++) if (blocks[k].text.trim()) return true;
-    return false;
-  };
-  const headings = blocks
-    .map((b, i) => ({ b, i }))
-    .filter(({ b, i }) => b.type === "sceneHeading" && b.id && (b.text.trim() || (untitled && hasBody(i))));
-  if (!headings.length) return scenes;
+  const numbers = sceneNumbering(blocks);
+  // Todas las escenas numeradas (para saber dónde acaba cada una)…
+  const all = [...numbers.keys()].sort((a, b) => a - b);
+  // …y las que se devuelven.
+  const wanted = new Set(all.filter((i) => blocks[i].id && (untitled || blocks[i].text.trim())));
+  if (!wanted.size) return scenes;
 
   // Dónde empieza cada bloque en el guion impreso (página y línea), para
   // medir cada escena en octavos desde su inicio hasta el de la siguiente:
@@ -174,20 +179,31 @@ export function scenesFromBlocks(blocks: ScreenplayBlock[], size: PageSize = "A4
   const perPage = linesPerPage(size);
   const startAt = new Map<number, number>();
   let endAt = 0;
-  for (const page of layoutScreenplay(blocks, { size })) {
+  for (const page of pages ?? layoutScreenplay(blocks, { size })) {
     page.lines.forEach((line, i) => {
       const at = (page.number - 1) * perPage + i;
       if (line.block !== undefined && !startAt.has(line.block)) startAt.set(line.block, at);
       endAt = at + 1;
     });
   }
+  // Dónde empieza en papel la escena que abre el bloque i: su encabezado o,
+  // si no se imprime nada de él, lo primero que se imprima de la escena.
+  const sceneStart = (i: number, end: number): number => {
+    for (let k = i; k < end; k++) {
+      const at = startAt.get(k);
+      if (at !== undefined) return at;
+    }
+    return -1;
+  };
 
   const allSpeakers = new Set(
     blocks.filter((b) => b.type === "character" && b.text.trim()).map((b) => characterName(b.text)),
   );
 
-  headings.forEach(({ b, i }, n) => {
-    const end = headings[n + 1]?.i ?? blocks.length;
+  all.forEach((i, n) => {
+    if (!wanted.has(i)) return;
+    const b = blocks[i];
+    const end = all[n + 1] ?? blocks.length;
     const body = blocks.slice(i + 1, end);
     const speakers = [...new Set(body.filter((x) => x.type === "character" && x.text.trim()).map((x) => characterName(x.text)))];
     const actionText = body
@@ -197,14 +213,20 @@ export function scenesFromBlocks(blocks: ScreenplayBlock[], size: PageSize = "A4
     const mentioned = [...allSpeakers].filter(
       (name) => !speakers.includes(name) && new RegExp(`(^|[^\\p{L}])${escapeRegExp(name)}([^\\p{L}]|$)`, "iu").test(actionText),
     );
-    const from = startAt.get(i) ?? 0;
-    const nextHeading = headings[n + 1]?.i;
-    const to = nextHeading !== undefined ? (startAt.get(nextHeading) ?? endAt) : endAt;
-    const lines = Math.max(0, to - from);
+    const from = sceneStart(i, end);
+    let to = endAt;
+    for (let k = n + 1; k < all.length; k++) {
+      const at = sceneStart(all[k], all[k + 1] ?? blocks.length);
+      if (at !== -1) {
+        to = at;
+        break;
+      }
+    }
+    const lines = from === -1 ? 0 : Math.max(0, to - from);
     const { place, time } = parseSceneHeading(b.text);
     scenes.push({
       sid: b.id!,
-      number: n + 1,
+      number: numbers.get(i)!,
       heading: b.text.trim().toUpperCase(),
       place,
       time,

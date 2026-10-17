@@ -4,7 +4,8 @@ import { useState } from "react";
 import { suggestReferencesAction } from "@/lib/actions/screenplay-ai";
 import { characterName } from "@/lib/screenplay/blocks";
 import { useYMap } from "@/lib/screenplay/use-ymap";
-import { DEV_FIELDS, type CharacterMeta, type Reference } from "@/lib/screenplay/story";
+import { DEV_FIELDS, type CharacterMeta, type DevKey, type Reference } from "@/lib/screenplay/story";
+import { useGuidedMode } from "@/components/screenplay/guided/use-guided";
 import {
   AiButton,
   InlineText,
@@ -17,6 +18,36 @@ import {
   suggestionsOf,
   useWorkspace,
 } from "@/components/screenplay/workspace";
+
+// Los campos de la Idea en palabras normales y con un ejemplo cada uno (los
+// nombres técnicos van detrás, pequeños: «logline», «tesis»).
+const FIELD_TEXT: Record<DevKey, { label: string; hint: string; example: string }> = {
+  idea: {
+    label: "La idea",
+    hint: "En una frase, como se la contarías a alguien.",
+    example: "Una niña quiere arreglar la bici de su madre antes de que su abuelo la venda.",
+  },
+  thesis: {
+    label: "De qué habla en el fondo",
+    hint: "Opcional. Lo que la historia dice sin decirlo (a veces se llama tesis).",
+    example: "Que crecer es aprender a soltar cosas.",
+  },
+  logline: {
+    label: "Tu historia en una frase",
+    hint: "Quién, qué quiere y qué se lo impide. A esto se le llama logline.",
+    example: "Nora, 11 años, quiere arreglar la bicicleta de su madre antes del sábado, pero su abuelo ya la ha vendido.",
+  },
+  synopsis: {
+    label: "Sinopsis",
+    hint: "La historia de principio a fin, en un párrafo o dos. Con el final.",
+    example: "Nora encuentra la bici en el garaje… y al final el abuelo le sujeta el sillín.",
+  },
+  tone: {
+    label: "Tono y mundo",
+    hint: "Cómo se ve, cómo suena, qué se siente.",
+    example: "Verano en un pueblo, luz de siesta, humor seco.",
+  },
+};
 
 // Paso 1 · Idea: lo que hay antes del guion, en un solo documento guiado.
 // Todo es opcional; los personajes y las escenas se rellenan solos al escribir.
@@ -33,6 +64,7 @@ export function IdeaStep({ title, subtitle }: { title: string; subtitle: string 
   const scriptRefs = Object.values(refs).filter((r) => r.anchor.type === "script");
   const suggestions = suggestionsOf(ai).filter((s) => s.anchor.type === "script");
   const filled = DEV_FIELDS.filter((f) => dev[f.key]?.trim()).length;
+  const guided = useGuidedMode(maps, screenplayId);
 
   return (
     <div className="grid gap-10 px-5 py-10 lg:grid-cols-[1fr_760px_1fr] lg:px-8">
@@ -41,30 +73,58 @@ export function IdeaStep({ title, subtitle }: { title: string; subtitle: string 
       <article className="min-w-0">
         <p className="sp-label">{subtitle}</p>
         <h1 className="mt-2 text-4xl leading-none font-black tracking-tight sm:text-5xl">{title}</h1>
-        {filled === 0 && scenes.length === 0 && (
-          <p className="mt-5 max-w-lg text-[15px] leading-relaxed text-muted">
-            Todo lo de aquí es opcional. Si ya tienes la historia en la cabeza,{" "}
-            <button type="button" onClick={() => setStep("guion")} className="font-medium text-[var(--accent)] hover:underline">
-              empieza directamente a escribir el guion
+        {guided.on ? (
+          <p className="mt-5 text-[14px] text-muted">
+            Todo el desarrollo, para cuando quieras afinar.{" "}
+            <button type="button" onClick={() => setStep("esqueleto")} className="font-medium text-[var(--accent)] hover:underline">
+              ← Volver al esqueleto
             </button>
-            : los personajes y las escenas se irán rellenando solos.
           </p>
+        ) : (
+          filled === 0 &&
+          scenes.length === 0 && (
+            <div className="mt-5 max-w-lg text-[15px] leading-relaxed text-muted">
+              <p>
+                Todo lo de aquí es opcional. Si ya tienes la historia en la cabeza,{" "}
+                <button type="button" onClick={() => setStep("guion")} className="font-medium text-[var(--accent)] hover:underline">
+                  empieza directamente a escribir el guion
+                </button>
+                : los personajes y las escenas se irán rellenando solos.
+              </p>
+              <p className="mt-3">
+                ¿Es tu primer guion?{" "}
+                <button
+                  type="button"
+                  onClick={() => {
+                    guided.set(true);
+                    setStep("empezar");
+                  }}
+                  className="font-medium text-[var(--accent)] hover:underline"
+                >
+                  Responde 5 preguntas y te preparo las escenas →
+                </button>
+              </p>
+            </div>
+          )
         )}
 
         {DEV_FIELDS.map((f) => (
           <section key={f.key} className="mt-10 grid gap-2 sm:grid-cols-[150px_1fr] sm:gap-6">
             <h2 className="pt-1 text-[13px] font-bold">
-              {f.label}
-              <span className="mt-1 block text-[12px] leading-snug font-normal text-muted">{f.hint}</span>
+              {FIELD_TEXT[f.key].label}
+              <span className="mt-1 block text-[12px] leading-snug font-normal text-muted">{FIELD_TEXT[f.key].hint}</span>
             </h2>
+            <div>
             <InlineText
-              label={f.label}
+              label={FIELD_TEXT[f.key].label}
               value={dev[f.key] ?? ""}
               onSave={(v) => (v ? maps.dev.set(f.key, v) : maps.dev.delete(f.key))}
               placeholder={f.key === "synopsis" ? "Cuenta la historia de principio a fin…" : "Escribe aquí…"}
               rows={f.rows}
               className="text-[17px] leading-relaxed"
             />
+            {!dev[f.key]?.trim() && <p className="mt-1 text-[12.5px] text-[#8a867c] italic">Ej.: {FIELD_TEXT[f.key].example}</p>}
+            </div>
           </section>
         ))}
 
@@ -150,6 +210,12 @@ export function IdeaStep({ title, subtitle }: { title: string; subtitle: string 
           linked={Boolean(linkedProject)}
           userName={userName}
         />
+
+        <div className="mt-14 border-t border-[var(--line)] pt-6">
+          <button type="button" onClick={() => setStep("guion")} className="rounded-md bg-[#1c1b19] px-4 py-2.5 text-[14.5px] font-semibold text-white hover:bg-black">
+            Ir a escribir el guion →
+          </button>
+        </div>
       </article>
 
       <aside className="hidden lg:block">
@@ -159,7 +225,7 @@ export function IdeaStep({ title, subtitle }: { title: string; subtitle: string 
             {DEV_FIELDS.map((f) => (
               <li key={f.key} className="flex items-center gap-2.5">
                 <span className={`h-2 w-2 rounded-full ${dev[f.key]?.trim() ? "bg-[var(--accent)]" : "bg-[var(--line)]"}`} />
-                {f.label}
+                {FIELD_TEXT[f.key].label}
               </li>
             ))}
             <li className="flex items-center gap-2.5">

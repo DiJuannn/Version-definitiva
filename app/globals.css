@@ -865,6 +865,137 @@ input[type="radio"] {
   color: #b3ada0;
   pointer-events: none;
 }
+/* gv2:motor — autocompletado (texto fantasma + desplegable) y avisos del
+   editor, pintados como decoraciones dentro del papel. */
+.sp-sugg {
+  position: relative;
+}
+.sp-heading-hint::before {
+  content: attr(data-hint);
+  float: left;
+  height: 0;
+  color: #b9b4a8;
+  font-weight: 400;
+  text-transform: none;
+  pointer-events: none;
+}
+.sp-ghost-key {
+  margin-left: 0.6em;
+  padding: 0 4px;
+  border: 1px solid #d9d4c7;
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  color: #8f897c;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-transform: none;
+  vertical-align: 1px;
+  white-space: nowrap;
+}
+.sp-sugg-list {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: -0.5em;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  min-width: 15em;
+  max-width: 26em;
+  padding: 4px;
+  border: 1px solid #e3e0d6;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 12px 28px -12px rgba(28, 27, 25, 0.35);
+  color: #1c1b19;
+  font-weight: 400;
+  text-align: left;
+  white-space: nowrap;
+}
+.sp-transition .sp-sugg-list {
+  right: 0;
+  left: auto;
+}
+.sp-sugg-item {
+  display: block;
+  overflow: hidden;
+  padding: 3px 8px;
+  border-radius: 5px;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+.sp-sugg-item b {
+  font-weight: 700;
+}
+.sp-sugg-item:hover {
+  background: #f3f1ea;
+}
+.sp-sugg-item[aria-selected="true"] {
+  background: #ece8f8;
+  color: #3d2f7a;
+}
+.sp-sugg-foot {
+  margin-top: 2px;
+  padding: 4px 8px 2px;
+  border-top: 1px solid #efece4;
+  color: #8f897c;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 11px;
+  text-transform: none;
+}
+.sp-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  margin: calc(var(--u) / 12) 0 0 calc(var(--u) * -0.25);
+  padding: 7px 10px 7px calc(var(--u) * 0.25 - 3px);
+  border-left: 3px solid #5a46a8;
+  border-radius: 0 6px 6px 0;
+  background: #f1eefa;
+  color: #2c2550;
+  font-family: var(--font-archivo), system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.45;
+  user-select: none;
+  animation: sp-notice-in 160ms ease-out;
+}
+.sp-notice-text {
+  flex: 1 1 18em;
+}
+.sp-notice-action {
+  color: #5a46a8;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.sp-notice-close {
+  margin-left: auto;
+  padding: 0 4px;
+  color: #6c6c72;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+.sp-notice-action:focus-visible,
+.sp-notice-close:focus-visible {
+  outline: 2px solid #5a46a8;
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+@keyframes sp-notice-in {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sp-notice {
+    animation: none;
+  }
+}
 .sp-scene-num {
   position: absolute;
   top: 0;
@@ -1329,3 +1460,79 @@ body:has(.sp-light) > div[aria-hidden].fixed {
 body:has([data-project-bar]) .app-header {
   display: none;
 }
+
+/* gv2:paneles — menús, hojas inferiores y barra del teclado del guion
+   (components/ui/Popover.tsx, components/ui/Sheet.tsx,
+   components/screenplay/EditorToolbar.tsx). */
+.sp-pop {
+  border-radius: var(--r-md);
+  background: #fff;
+  color: #17171b;
+  padding: 6px;
+  box-shadow:
+    0 0 0 1px var(--line),
+    0 18px 40px -16px rgba(0, 0, 0, 0.35);
+  animation: sp-pop-in var(--dur-standard) var(--e-out);
+  transform-origin: top left;
+}
+.sp-pop-item {
+  border-radius: 8px;
+  padding: 7px 10px;
+  transition: background-color var(--dur-quick) ease;
+}
+.sp-pop-item:hover,
+.sp-pop-item:focus-visible {
+  background: rgba(0, 0, 0, 0.045);
+  outline: none;
+}
+.sp-pop-item:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+@keyframes sp-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.98);
+  }
+}
+.sp-tip {
+  transition: opacity var(--dur-quick) ease;
+}
+.group:hover > .sp-tip {
+  transition-delay: 350ms;
+}
+.sp-sheet {
+  border-radius: 18px 18px 0 0;
+  background: #fff;
+  box-shadow: 0 -20px 50px -10px rgba(0, 0, 0, 0.3);
+  animation: sp-sheet-in var(--dur-panel) var(--e-out);
+}
+.sp-sheet-handle {
+  background: #d4d2cc;
+}
+.sp-sheet-backdrop {
+  background: rgba(10, 10, 12, 0.35);
+  animation: sp-fade-in var(--dur-panel) ease;
+}
+@keyframes sp-sheet-in {
+  from {
+    transform: translateY(40%);
+    opacity: 0.4;
+  }
+}
+@keyframes sp-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+.sp-keybar {
+  padding-bottom: max(6px, env(safe-area-inset-bottom));
+  scrollbar-width: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sp-pop,
+  .sp-sheet,
+  .sp-sheet-backdrop {
+    animation: none;
+  }
+}
+/* /gv2:paneles */
