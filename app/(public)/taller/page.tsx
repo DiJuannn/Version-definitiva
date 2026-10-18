@@ -3,6 +3,7 @@ import { PlaceholderFrame } from "@/components/PlaceholderFrame";
 import { Reveal } from "@/components/Reveal";
 import { TallerJourney } from "@/components/TallerJourney";
 import { FREE_FEATURES, PRO_FEATURES } from "@/lib/plan-features";
+import { ALL_ACCESS } from "@/lib/plan";
 import {
   BudgetIcon,
   CalendarIcon,
@@ -86,7 +87,25 @@ const FLUJO = [
   "Documentación",
 ];
 
-const PREGUNTAS = [
+// Con el acceso total activo no hay planes: fuera las preguntas sobre límites y pagos.
+const PREGUNTAS_ACCESO_TOTAL = [
+  {
+    question: "¿Cuánto cuesta?",
+    answer:
+      "Ahora mismo nada: todas las herramientas están abiertas para todo el mundo, sin tarjeta y sin límites. Si algún día hay funciones de pago, avisaremos antes.",
+  },
+  {
+    question: "¿Puedo invitar a mi equipo?",
+    answer: "Sí, a todas las personas que necesites en cada proyecto.",
+  },
+  {
+    question: "¿Mis datos y guiones son privados?",
+    answer:
+      "Sí, cada proyecto es visible solo para quien invites — no compartimos ni indexamos nada.",
+  },
+];
+
+const PREGUNTAS_PLANES = [
   {
     question: "¿Necesito tarjeta para probarlo?",
     answer:
@@ -113,6 +132,8 @@ const PREGUNTAS = [
       "Sí, sin permanencia — si cancelas, tu organización vuelve al plan gratuito y conserva sus datos.",
   },
 ];
+
+const PREGUNTAS = ALL_ACCESS ? PREGUNTAS_ACCESO_TOTAL : PREGUNTAS_PLANES;
 
 export default function TallerMarketingPage() {
   return (
@@ -301,6 +322,30 @@ export default function TallerMarketingPage() {
         </div>
       </section>
 
+      {ALL_ACCESS ? (
+      <section id="precios" className="scroll-mt-24 border-t border-line px-6 py-24">
+        <div className="mx-auto max-w-6xl">
+          <Reveal>
+            <span className="font-mono text-xs tracking-widest text-accent uppercase">
+              Precio
+            </span>
+            <h2 className="mt-4 max-w-2xl font-display text-4xl font-black uppercase sm:text-5xl">
+              Todo abierto. Gratis.
+            </h2>
+            <p className="mt-4 max-w-xl font-mono text-sm text-muted">
+              Ahora mismo todas las herramientas están disponibles para todo el
+              mundo, sin tarjeta y sin límites.
+            </p>
+            <Link
+              href="/app/signup"
+              className="mt-8 inline-block border border-accent bg-accent px-5 py-2.5 font-mono text-xs tracking-widest text-bg uppercase transition-opacity hover:opacity-90"
+            >
+              Empieza ahora
+            </Link>
+          </Reveal>
+        </div>
+      </section>
+      ) : (
       <section id="precios" className="scroll-mt-24 border-t border-line px-6 py-24">
         <div className="mx-auto max-w-6xl">
           <Reveal>
@@ -379,6 +424,7 @@ export default function TallerMarketingPage() {
           </p>
         </div>
       </section>
+      )}
 
       <section className="border-t border-line px-6 py-28 text-center">
         <div className="mx-auto max-w-6xl">

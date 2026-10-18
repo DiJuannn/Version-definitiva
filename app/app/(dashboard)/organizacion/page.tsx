@@ -8,7 +8,7 @@ import { DeleteButton } from "@/components/DeleteButton";
 import { SubmitButton } from "@/components/SubmitButton";
 import { InviteForm } from "@/components/InviteForm";
 import { getCheckoutUrls, buildCheckoutUrl } from "@/lib/lemonsqueezy";
-import { isPro } from "@/lib/plan";
+import { ALL_ACCESS, isPaidPlan } from "@/lib/plan";
 import { FREE_FEATURES, PRO_FEATURES } from "@/lib/plan-features";
 import { DeleteAccountCard } from "@/components/DeleteAccountCard";
 import { PageHeader } from "@/components/PageHeader";
@@ -35,7 +35,10 @@ export default async function OrganizacionPage() {
   const adminCount = members.filter((m) => m.role === "ADMIN").length;
   const checkoutUrls = getCheckoutUrls();
 
-  const pro = isPro(profile.organization.plan);
+  // Con el acceso total activo, todo el mundo usa todo; aquí se sigue
+  // enseñando el plan que se paga de verdad.
+  const pro = isPaidPlan(profile.organization.plan);
+  const planLabel = pro ? "PRO" : ALL_ACCESS ? "Acceso completo" : "Gratis";
   const prices = checkoutUrls
     ? [
         { id: "monthly", price: "6,99 €", per: "al mes", note: "Cancela cuando quieras", url: checkoutUrls.monthly, featured: false },
@@ -66,7 +69,7 @@ export default async function OrganizacionPage() {
       {/* Cómo voy */}
       <div className="mt-8 space-y-2 font-sans text-[15px] leading-relaxed text-muted">
         <p>
-          Plan <span className={pro ? "font-medium text-accent" : "text-fg"}>{pro ? "PRO" : "Gratis"}</span> ·{" "}
+          Plan <span className={pro || ALL_ACCESS ? "font-medium text-accent" : "text-fg"}>{planLabel}</span> ·{" "}
           <span className="text-fg">
             {members.length} {members.length === 1 ? "persona" : "personas"} con acceso
           </span>{" "}
@@ -196,10 +199,10 @@ export default async function OrganizacionPage() {
           </h2>
           <span
             className={`rounded-full px-3 py-1 font-mono text-[10px] tracking-widest uppercase ${
-              pro ? "bg-accent text-bg" : "bg-fg/[0.07] text-muted"
+              pro || ALL_ACCESS ? "bg-accent text-bg" : "bg-fg/[0.07] text-muted"
             }`}
           >
-            {pro ? "PRO" : "Gratis"}
+            {planLabel}
           </span>
         </div>
 
@@ -218,6 +221,13 @@ export default async function OrganizacionPage() {
                 </li>
               ))}
             </ul>
+          </div>
+        ) : ALL_ACCESS ? (
+          <div className="tile mt-4 p-5 sm:p-6">
+            <p className="max-w-xl font-sans text-[15px] leading-relaxed">
+              Ahora mismo <strong>todas las herramientas están abiertas para todo el mundo</strong>, sin límites ni
+              pagos. Más adelante decidiremos qué funciones serán de pago y te avisaremos antes.
+            </p>
           </div>
         ) : (
           <>
