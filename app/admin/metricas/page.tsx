@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { isPro, PRO_PLANS } from "@/lib/plan";
+import { isPaidPlan as isPro, PRO_PLANS } from "@/lib/plan";
 import {
   SCRIPT_ANALYSIS_FREE_DAILY_LIMIT,
   SCRIPT_ANALYSIS_FREE_LIFETIME_LIMIT,

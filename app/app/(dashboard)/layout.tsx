@@ -8,7 +8,7 @@ import { AccountMenu } from "@/components/AccountMenu";
 import { MainContainer } from "@/components/MainContainer";
 import { signOut } from "@/lib/actions/auth";
 import { getCurrentProfile } from "@/lib/current-user";
-import { isPro } from "@/lib/plan";
+import { ALL_ACCESS, isPro } from "@/lib/plan";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -44,7 +44,7 @@ export default async function DashboardLayout({
             </Link>
             <DashboardNav items={APP_NAV} />
             <div className="ml-auto flex shrink-0 items-center gap-3 sm:gap-4">
-              {profile && (
+              {profile && !ALL_ACCESS && (
                 <Link
                   href="/app/organizacion"
                   className={
