@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1920, height=1080" />
+<title>Taller · El ajolote en 3D</title>
+<script src="assets/gsap.min.js"></script>
+<script src="assets/three.min.js"></script>
+<script src="assets/cues.js"></script>
+<script src="assets/ajolote3d.js"></script>
+<script src="assets/panels.js"></script>
+<style>
+  @font-face { font-family: "Archivo"; src: url("assets/fonts/archivo.woff2") format("woff2"); font-weight: 100 900; font-stretch: 62% 125%; }
+  @font-face { font-family: "JB Mono"; src: url("assets/fonts/jbmono.woff2") format("woff2"); font-weight: 100 800; }
+  @font-face { font-family: "Courier Prime"; src: url("assets/fonts/courier-400.woff2") format("woff2"); font-weight: 400; }
+  @font-face { font-family: "Courier Prime"; src: url("assets/fonts/courier-700.woff2") format("woff2"); font-weight: 700; }
+  html, body { margin: 0; background: #120d0b; }
+  #root { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: #120d0b; }
+  #gl { position: absolute; inset: 0; display: block; }
+  #vig { position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 260px 40px rgba(0,0,0,0.55); }
+  #flash { position: absolute; inset: 0; background: #fff8ee; opacity: 0; pointer-events: none; }
+  #title { position: absolute; left: 150px; top: 330px; color: #f2eee7; font-family: "Archivo"; opacity: 0; }
+  #title .a { font-weight: 900; font-stretch: 100%; font-size: 112px; line-height: 0.95; letter-spacing: -0.02em; }
+  #title .b { margin-top: 18px; font-family: "JB Mono"; font-weight: 600; font-size: 30px; letter-spacing: 0.32em; color: #f0c94a; }
+  #title .c { margin-top: 36px; font-family: "Archivo"; font-weight: 500; font-size: 40px; color: #d8d3ca; }
+  #title .bar { display: block; height: 8px; width: 0; margin-top: 30px; background: #f0c94a; border-radius: 4px; }
+  .pre { position: absolute; left: -9999px; }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="12" data-width="1920" data-height="1080">
+  <canvas id="gl" width="1920" height="1080"></canvas>
+  <div id="vig"></div>
+  <div id="flash"></div>
+  <div id="title"><div class="a">Versión<br>definitiva</div><div class="b">TALLER</div><span class="bar"></span><div class="c">Prepara la película. No el caos.</div></div>
+  <div class="pre" style="font-family:'Courier Prime';font-weight:700">Aa</div><div class="pre" style="font-family:'Courier Prime'">Aa</div>
+  <div class="pre" style="font-family:'JB Mono'">Aa</div><div class="pre" style="font-family:Archivo;font-weight:900">Aa</div>
+  <audio id="banda" src="assets/audio/banda.wav" data-start="0" data-duration="12" data-track-index="9"></audio>
+</div>
+<script>
+(function () {
+  THREE.ColorManagement.legacyMode = false;
+  const CU = window.CUES, H = CU.hits, PN = CU.panels, PAL = CU.palette, DUR = CU.dur;
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v)), lerp = (a, b, u) => a + (b - a) * u;
+  const seg = (t, a, b) => clamp((t - a) / (b - a), 0, 1);
+  const sstep = (u) => u * u * (3 - 2 * u), ease = (u) => 1 - Math.pow(1 - u, 3), eio = (u) => (u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2);
+  const back = (u) => { const s = 1.9; u -= 1; return u * u * ((s + 1) * u + s) + 1; };
+  const V = (x, y, z) => new THREE.Vector3(x, y, z);
+  function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+
+  // ───────── render ─────────
+  const R = new THREE.WebGLRenderer({ canvas: document.getElementById("gl"), antialias: true, preserveDrawingBuffer: true });
+  R.setPixelRatio(1); R.setSize(1920, 1080, false);
+  R.outputEncoding = THREE.sRGBEncoding; R.toneMapping = THREE.ACESFilmicToneMapping; R.toneMappingExposure = 1.0;
+  R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFSoftShadowMap;
+  const scene = new THREE.Scene(); scene.background = new THREE.Color("#120d0b"); scene.fog = new THREE.FogExp2("#120d0b", 0.045);
+  const cam = new THREE.PerspectiveCamera(34, 16 / 9, 0.05, 120);
+
+  // luces: llave cálida con sombras, contra rosada, cielo/suelo suave
+  const key = new THREE.DirectionalLight("#fff0e2", 1.7); key.position.set(3.5, 9, 6); key.castShadow = true;
+  key.shadow.mapSize.set(4096, 4096); Object.assign(key.shadow.camera, { left: -9, right: 9, top: 7, bottom: -7, near: 1, far: 30 }); key.shadow.bias = -0.0004; key.shadow.radius = 3;
+  scene.add(key); scene.add(key.target);
+  const rim = new THREE.DirectionalLight("#ffb7c8", 1.1); rim.position.set(-6, 4, -7); scene.add(rim);
+  scene.add(new THREE.HemisphereLight("#ffe9df", "#2a1813", 0.5));
+  const fill = new THREE.PointLight("#ffe2d6", 0.9, 3.5, 2); scene.add(fill);            // relleno que viaja con el ajolote (la cara se lee)
+
+  // suelo del estudio (lejos, recibe sombras y halos)
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), new THREE.MeshStandardMaterial({ color: "#1c1411", roughness: 0.95 }));
+  floor.rotation.x = -Math.PI / 2; floor.position.y = -1.9; floor.receiveShadow = true; scene.add(floor);
+
+  // halo radial (textura) para el brillo de pantallas
+  const haloTex = (() => { const c = document.createElement("canvas"); c.width = c.height = 256; const g = c.getContext("2d"); const gr = g.createRadialGradient(128, 128, 0, 128, 128, 128); gr.addColorStop(0, "rgba(255,255,255,1)"); gr.addColorStop(1, "rgba(255,255,255,0)"); g.fillStyle = gr; g.fillRect(0, 0, 256, 256); return new THREE.CanvasTexture(c); })();
+
+  // ───────── paneles: losas con su lienzo encima ─────────
+  const panels = {};
+  for (const [name, glow] of [["guion", "#ffe8b8"], ["plan", "#8fe0b0"], ["hoja", "#9fe2ff"]]) {
+    const p = PN[name], cv = document.createElement("canvas"); cv.width = p.px[0]; cv.height = p.px[1];
+    const tex = new THREE.CanvasTexture(cv); tex.encoding = THREE.sRGBEncoding; tex.anisotropy = 8;
+    const top = new THREE.MeshStandardMaterial({ map: tex, emissiveMap: tex, emissive: new THREE.Color("#ffffff"), emissiveIntensity: 0.55, roughness: 0.7 });
+    const side = new THREE.MeshStandardMaterial({ color: name === "guion" ? "#d9d3c4" : "#26262c", roughness: 0.5 });
+    const g = new THREE.Group(); g.position.set(p.x, p.y, p.z); scene.add(g);
+    const slab = new THREE.Mesh(new THREE.BoxGeometry(p.w, 0.09, p.d), [side, side, top, side, side, side]);
+    slab.position.y = -0.045; slab.castShadow = true; slab.receiveShadow = true; g.add(slab);
+    const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: haloTex, color: glow, transparent: true, opacity: 0.32, depthWrite: false, blending: THREE.AdditiveBlending }));
+    halo.scale.set(p.w * 2.4, p.d * 2.4, 1); halo.position.y = -1.0; g.add(halo);
+    const lamp = new THREE.PointLight(glow, 0.55, 5, 2); lamp.position.set(0, 1.2, 0.4); g.add(lamp);
+    panels[name] = { p, cv, ctx: cv.getContext("2d"), tex, top, g, slab, halo, lamp };
+  }
+  const spot = (k) => { const [n, u, v] = CU.spots[k]; if (n === "claqueta") return null; const p = PN[n]; return V(p.x + u, p.y, p.z + v); };
+
+  // ───────── claqueta (de pie) con el palo abierto ─────────
+  const CQ = PN.claqueta;
+  const clap = new THREE.Group(); clap.position.set(CQ.x, 0.15, CQ.z); scene.add(clap);
+  const boardCv = document.createElement("canvas"); boardCv.width = 1024; boardCv.height = 640;
+  (function drawBoard() {
+    const g = boardCv.getContext("2d"); g.fillStyle = "#1b1b20"; g.fillRect(0, 0, 1024, 640);
+    g.strokeStyle = "#f2eee7"; g.lineWidth = 4; g.strokeRect(36, 36, 952, 568);
+    g.fillStyle = "#f2eee7"; g.font = '900 78px "Archivo"'; g.fillText("EL ÚLTIMO VERANO", 70, 150);
+    g.beginPath(); g.moveTo(36, 200); g.lineTo(988, 200); g.moveTo(36, 420); g.lineTo(988, 420); g.moveTo(354, 200); g.lineTo(354, 420); g.moveTo(672, 200); g.lineTo(672, 420); g.stroke();
+    [["ESCENA", "1"], ["PLANO", "1"], ["TOMA", "1"]].forEach(([l, v], i) => { g.font = '600 30px "JB Mono"'; g.fillStyle = "#9a978f"; g.fillText(l, 70 + i * 318, 250); g.font = '900 120px "Archivo"'; g.fillStyle = "#f2eee7"; g.fillText(v, 70 + i * 318, 390); });
+    g.font = '600 30px "JB Mono"'; g.fillStyle = "#9a978f"; g.fillText("DIRECCIÓN", 70, 480); g.fillStyle = "#f2eee7"; g.fillText("ANA · VERSIÓN DEFINITIVA", 70, 530);
+  })();
+  const boardTex = new THREE.CanvasTexture(boardCv); boardTex.encoding = THREE.sRGBEncoding;
+  const stripeCv = document.createElement("canvas"); stripeCv.width = 1024; stripeCv.height = 96;
+  (function () { const g = stripeCv.getContext("2d"); g.fillStyle = "#f2eee7"; g.fillRect(0, 0, 1024, 96); g.fillStyle = "#1b1b20"; for (let x = -96; x < 1100; x += 128) { g.beginPath(); g.moveTo(x, 96); g.lineTo(x + 64, 96); g.lineTo(x + 128, 0); g.lineTo(x + 64, 0); g.fill(); } })();
+  const stripeTex = new THREE.CanvasTexture(stripeCv); stripeTex.encoding = THREE.sRGBEncoding;
+  const dark = new THREE.MeshStandardMaterial({ color: "#1b1b20", roughness: 0.4 });
+  const BW = 1.7, BH = 1.05, BT = 0.07;
+  const board = new THREE.Mesh(new THREE.BoxGeometry(BW, BH, BT), [dark, dark, dark, dark, new THREE.MeshStandardMaterial({ map: boardTex, emissiveMap: boardTex, emissive: "#ffffff", emissiveIntensity: 0.35, roughness: 0.5 }), dark]);
+  board.position.y = BH / 2; board.castShadow = board.receiveShadow = true; clap.add(board);
+  const stripeMat = new THREE.MeshStandardMaterial({ map: stripeTex, roughness: 0.45 });
+  const fixedStick = new THREE.Mesh(new THREE.BoxGeometry(BW, 0.13, BT + 0.01), [dark, dark, dark, dark, stripeMat, stripeMat]);
+  fixedStick.position.y = BH + 0.065; fixedStick.castShadow = true; clap.add(fixedStick);
+  const hinge = new THREE.Group(); hinge.position.set(-BW / 2, BH + 0.13, 0); clap.add(hinge);
+  const stick = new THREE.Mesh(new THREE.BoxGeometry(BW, 0.13, BT + 0.01), [dark, dark, dark, dark, stripeMat, stripeMat]);
+  stick.position.set(BW / 2, 0.065, 0); stick.castShadow = true; hinge.add(stick);
+  const clapTopY = () => clap.position.y + BH + 0.13 + 0.13;
+  const ACC = V(CQ.x + 0.25, 0, CQ.z);                                // dónde aterriza (sobre el palo)
+  const stickY = (t) => { const ang = hinge.rotation.z; return clap.position.y + BH + 0.13 + Math.sin(ang) * (ACC.x - (CQ.x - BW / 2)) + 0.13 * Math.cos(ang); };
+
+  // ───────── avión de papel ─────────
+  const planeG = new THREE.Group(); scene.add(planeG);
+  (function () {
+    const geo = new THREE.BufferGeometry();
+    const v = [0, 0, 0.55, -0.42, 0.02, -0.4, 0, -0.06, -0.4, 0, 0, 0.55, 0, -0.06, -0.4, 0.42, 0.02, -0.4, 0, 0, 0.55, 0, -0.06, -0.4, 0, -0.16, -0.32];
+    geo.setAttribute("position", new THREE.Float32BufferAttribute(v, 3)); geo.computeVertexNormals();
+    const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: "#f4f0e6", roughness: 0.8, side: THREE.DoubleSide })); m.castShadow = true; planeG.add(m);
+  })();
+  planeG.visible = false;
+  const P0 = V(PN.hoja.x + 1.05, PN.hoja.y + 0.32, PN.hoja.z - 0.1);
+  const planePath = new THREE.CatmullRomCurve3([P0, V(3.2, 1.75, 1.2), V(1.9, 2.15, 2.4), V(CQ.x + 0.6, 2.05, CQ.z + 0.2)]);
+
+  // ───────── ajolote ─────────
+  const AX = window.Ajolote3D(THREE); scene.add(AX.root);
+  AX.root.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+  const shadowBlob = new THREE.Mesh(new THREE.CircleGeometry(0.26, 32), new THREE.MeshBasicMaterial({ color: "#000", transparent: true, opacity: 0.25, depthWrite: false }));
+  shadowBlob.rotation.x = -Math.PI / 2; scene.add(shadowBlob);
+
+  // confeti del «pop» (papelitos de colores de Taller)
+  const conf = []; { const r = rng(2026), cols = ["#f0c94a", "#5fd38d", "#ff8a5e", "#7fd3e6", "#f2eee7", "#f7c1cc"];
+    for (let i = 0; i < 46; i++) { const m = new THREE.Mesh(new THREE.PlaneGeometry(0.035, 0.055), new THREE.MeshStandardMaterial({ color: cols[i % cols.length], side: THREE.DoubleSide, roughness: 0.6 }));
+      m.userData = { vx: (r() - 0.5) * 2.2, vy: 1.4 + r() * 2.0, vz: (r() - 0.5) * 2.2, rx: r() * 12, ry: r() * 12 }; m.visible = false; scene.add(m); conf.push(m); } }
+  const conf2 = conf.map((m) => m.clone()); conf2.forEach((m, i) => { m.material = conf[i].material; m.userData = { ...conf[i].userData, vy: conf[i].userData.vy * 0.8 }; scene.add(m); });
+  // anillos de llamada (knock)
+  const ring = new THREE.Mesh(new THREE.RingGeometry(0.3, 0.34, 64), new THREE.MeshBasicMaterial({ color: "#f0c94a", transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide }));
+  ring.rotation.x = -Math.PI / 2; scene.add(ring);
+  const flashSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: haloTex, color: "#fff4dc", transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending })); scene.add(flashSprite);
+
+  // ───────── trayectoria: estancias y saltos ─────────
+  const S0 = spot("sticker");
+  // [t0, t1, from, to, apex, extra]
+  const HOPS = [
+    [2.12, H.g1, S0, spot("g1"), 0.42], [2.62, H.g2, spot("g1"), spot("g2"), 0.38], [3.12, H.g3, spot("g2"), spot("g3"), 0.38],
+    [H.leap1, H.landPlan, spot("g3"), spot("landPlan"), 1.25, { flip: 1 }],
+    [4.62, H.d1, spot("landPlan"), spot("d1"), 0.32], [5.12, H.d2, spot("d1"), spot("d2"), 0.36], [5.62, H.d3, spot("d2"), spot("d3"), 0.36],
+    [H.leap2, H.landHoja, spot("d3"), spot("landHoja"), 1.0, { spin: 1 }],
+    [7.12, H.c1, spot("landHoja"), spot("c1"), 0.34], [7.62, H.c2, spot("c1"), spot("c2"), 0.36],
+    [8.62, H.ride, spot("c2"), P0, 0.4, { toPlane: 1 }],
+    [H.rideEnd, H.accion, null, ACC, 0.55, { fromPlane: 1, toClap: 1 }],
+  ];
+  function planeState(t) {
+    if (t < H.fold) return null;
+    const ap = seg(t, H.fold, H.fold + 0.3);                          // aparece doblándose
+    let pos, dir;
+    if (t < H.ride) { pos = P0.clone(); pos.y += 0.04 * Math.sin(t * 9); dir = V(-1, 0, 0.6).normalize(); }
+    else { const u = eio(seg(t, H.ride, H.rideEnd + 0.35)); pos = planePath.getPoint(Math.min(u, 0.999)); dir = planePath.getTangent(Math.min(u, 0.999)); }
+    return { pos, dir, ap };
+  }
+  function ajo(t) {
+    // devuelve { pos, yaw, rx, ry, sq, air }
+    if (t < H.pop) return { pos: S0.clone(), yaw: 0, sq: 0, air: 0, card: true };
+    for (const [t0, t1, a0, b, apex, ex = {}] of HOPS) {
+      if (t >= t0 && t < t1) {
+        const u = (t - t0) / (t1 - t0);
+        let a = a0; if (ex.fromPlane) { const ps = planeState(t0); a = ps.pos.clone().add(V(0, 0.1, 0)); }
+        let bb = b.clone(); if (ex.toClap) bb.y = stickY(t1); if (ex.toPlane) bb = P0.clone().add(V(0, 0.1, 0));
+        const pos = a.clone().lerp(bb, u); pos.y += Math.sin(Math.PI * u) * apex;
+        const d = bb.clone().sub(a); const yaw = Math.atan2(d.x, d.z);
+        return { pos, yaw, sq: -0.55 * Math.sin(Math.PI * Math.min(1, u * 1.6)) * (1 - u), air: 1, u, flip: ex.flip ? u * Math.PI * 2 : 0, spin: ex.spin ? u * Math.PI * 2 : 0 };
+      }
+    }
+    // en el avión
+    if (t >= H.ride && t < H.rideEnd) { const ps = planeState(t); return { pos: ps.pos.clone().add(V(0, 0.1, 0)), yaw: Math.atan2(ps.dir.x, ps.dir.z), sq: 0, air: 0, onPlane: 1, roll: Math.sin(t * 3) * 0.15 }; }
+    // de pie: última posición alcanzada
+    let last = S0, lastT = H.pop, lastTo = null;
+    for (const [t0, t1, a0, b, apex, ex = {}] of HOPS) if (t >= t1) { last = ex.toClap ? V(b.x, stickY(t), b.z) : ex.toPlane ? P0.clone().add(V(0, 0.1, 0)) : b; lastT = t1; }
+    // squash de aterrizaje y anticipación del siguiente salto
+    const since = t - lastT; let sq = since < 0.3 ? 0.75 * Math.exp(-since * 12) * Math.cos(since * 30) : 0;
+    const next = HOPS.find((h) => h[0] > t); if (next && next[0] - t < 0.14) sq = Math.max(sq, 0.55 * (1 - (next[0] - t) / 0.14));
+    return { pos: last.clone(), yaw: null, sq, air: 0 };
+  }
+  // posición suavizada para la cámara
+  const ajoSmooth = (t) => { const acc = V(0, 0, 0); for (let i = 0; i < 6; i++) acc.add(ajo(Math.max(0, t + (i - 2.5) * 0.05)).pos); return acc.multiplyScalar(1 / 6); };
+
+  // ───────── cámara: llaves fijas o de seguimiento ─────────
+  const CAM = [
+    { t: 0.0, fix: [-0.6, 5.2, 8.6], look: [-1.4, 0.0, 0.0] },
+    { t: 1.3, fix: [-2.6, 2.3, 3.9], look: [-3.8, 0.15, 0.85] },
+    { t: 2.05, off: [0.4, 1.0, 2.6], lo: [0, 0.35, 0] },
+    { t: 3.6, off: [1.5, 1.1, 2.5], lo: [0, 0.3, 0] },
+    { t: 4.15, off: [0.3, 2.0, 3.8], lo: [0, 0.4, 0] },
+    { t: 4.7, off: [-1.1, 1.05, 2.4], lo: [0, 0.3, 0] },
+    { t: 6.1, off: [-0.5, 1.25, 2.7], lo: [0, 0.3, 0] },
+    { t: 6.7, off: [0.2, 1.9, 3.5], lo: [0, 0.4, 0] },
+    { t: 7.2, off: [-1.3, 1.0, 2.3], lo: [0, 0.3, 0] },
+    { t: 8.3, off: [0.9, 1.35, 3.7], lo: [0, 0.35, 0] },
+    { t: 9.0, off: [-1.4, 0.9, 3.0], lo: [0, 0.2, 0] },
+    { t: 9.75, off: [0.3, 0.75, 4.6], lo: [0, 0.15, 0] },
+    { t: 10.1, fix: [CQ.x + 0.2, 2.0, CQ.z + 3.4], look: [CQ.x + 0.1, 1.5, CQ.z] },
+    { t: 10.5, fix: [-0.4, 2.1, 7.4], look: [-0.5, 1.15, 2.4] },
+    { t: 12.0, fix: [-0.4, 1.9, 6.6], look: [-0.5, 1.25, 2.4] },
+  ];
+  function camAt(t) {
+    const resolve = (k) => { if (k.fix) return { p: V(...k.fix), l: V(...k.look) }; const a = ajoSmooth(t); return { p: a.clone().add(V(...k.off)), l: a.clone().add(V(...k.lo)) }; };
+    let i = CAM.length - 2; for (let j = 0; j < CAM.length - 1; j++) if (t < CAM[j + 1].t) { i = j; break; }
+    const A = CAM[i], B = CAM[i + 1], u = sstep(seg(t, A.t, B.t)), ra = resolve(A), rb = resolve(B);
+    return { p: ra.p.lerp(rb.p, u), l: ra.l.lerp(rb.l, u) };
+  }
+
+  // ───────── render(t) ─────────
+  const title = document.getElementById("title"), bar = title.querySelector(".bar"), flash = document.getElementById("flash");
+  function render(t) {
+    // paneles: estado + apagado y caída final
+    Object.entries(panels).forEach(([name, P], i) => {
+      Panels[name](P.ctx, P.cv.width, P.cv.height, t); P.tex.needsUpdate = true;
+      const d0 = H.down + i * 0.12, k = seg(t, d0, d0 + 0.22), f = seg(t, d0 + 0.18, d0 + 0.9);
+      P.top.emissiveIntensity = 0.55 * (1 - k) * (k > 0 ? (Math.floor(t * 30) % 2 ? 0.6 : 1) : 1);
+      P.lamp.intensity = 0.55 * (1 - k); P.halo.material.opacity = 0.32 * (1 - k);
+      P.g.position.y = P.p.y - 9 * f * f; P.g.rotation.x = f * 0.5 * (i % 2 ? 1 : -1); P.g.rotation.z = f * 0.3 * (i - 1);
+    });
+    // claqueta: entra, palo abierto, se cierra en ¡ACCIÓN!
+    const ce = back(seg(t, 8.7, 9.35)); clap.position.y = lerp(-3.2, 0.15, ce); clap.rotation.y = lerp(0.6, -0.12, ce);
+    const close = seg(t, H.accion - 0.05, H.accion); hinge.rotation.z = lerp(0.45, 0, close * close) + (t > H.accion ? 0.03 * Math.exp(-(t - H.accion) * 14) * Math.sin((t - H.accion) * 60) : 0);
+    // avión
+    const ps = planeState(t);
+    planeG.visible = !!ps && t < H.rideEnd + 0.4;
+    if (ps) { planeG.position.copy(ps.pos); planeG.scale.setScalar(0.62 * Math.max(0.01, back(ps.ap))); planeG.lookAt(ps.pos.clone().add(ps.dir)); planeG.rotateZ(Math.sin(t * 3) * 0.15); if (t > H.rideEnd) planeG.position.y += (t - H.rideEnd) * 1.2; }
+    // ajolote
+    const a = ajo(t);
+    const toCam = Math.atan2(cam.position.x - a.pos.x, cam.position.z - a.pos.z);
+    const yaw = a.yaw == null ? toCam : a.yaw;
+    AX.root.position.copy(a.pos);
+    AX.root.rotation.set(0, 0, 0); AX.root.rotateY(yaw); if (a.flip) AX.root.rotateX(-a.flip); if (a.spin) AX.root.rotateY(a.spin); if (a.roll) AX.root.rotateZ(a.roll);
+    const blink = [0.9, 3.9, 6.3, 8.2, 11.6].some((b) => t > b && t < b + 0.12) ? 1 : 0;
+    const waving = t > H.wave;
+    const happy = (t > H.g3 && t < H.g3 + 0.4) || (t > H.d3 && t < H.d3 + 0.4) || (t > H.accion && t < H.accion + 0.5) || waving;
+    if (t < H.pop) {
+      // pegatina plana sobre el guion: llama dos veces y se despega
+      const kn = [H.knock1, H.knock2].reduce((m, k) => Math.max(m, t > k && t < k + 0.25 ? Math.sin(((t - k) / 0.25) * Math.PI) : 0), 0);
+      const peel = ease(seg(t, H.peel, H.pop));
+      AX.root.rotation.set(lerp(-Math.PI / 2, 0, peel), 0, 0);
+      AX.root.position.y += 0.012 + kn * 0.05 + peel * 0.08;
+      AX.root.scale.setScalar(1 + kn * 0.06);
+      AX.pose({ card: true, curl: Math.sin(peel * Math.PI) * 1.0 });
+    } else {
+      const pop = seg(t, H.pop, H.pop + 0.35); AX.root.scale.setScalar(t < H.pop + 0.35 ? lerp(0.55, 1, back(pop)) : 1);
+      AX.pose({ squash: a.sq, blink, happy: happy ? 1 : 0, mouth: a.air || (t > H.accion && t < H.accion + 0.5) ? 1 : 0, gill: t * 7, gillAmp: a.air ? 0.3 : 0.1, gillLift: a.air ? -0.15 : 0,
+        armL: a.air ? 1.1 : 0.1 * Math.sin(t * 3), armR: waving ? 2.3 + 0.5 * Math.sin((t - H.wave) * 16) : a.air ? 1.1 : 0.1 * Math.sin(t * 3 + 1), tail: t * 3, look: 0, tilt: a.onPlane ? 0.12 : waving ? 0.12 * Math.sin((t - H.wave) * 8) : 0 });
+    }
+    // sombra de contacto
+    const groundY = a.air ? Math.max(...["guion", "plan", "hoja"].map((n) => (Math.abs(a.pos.x - PN[n].x) < PN[n].w / 2 && Math.abs(a.pos.z - PN[n].z) < PN[n].d / 2 ? PN[n].y : -9))) : a.pos.y;
+    shadowBlob.visible = groundY > -5 && t >= H.pop; shadowBlob.position.set(a.pos.x, groundY + 0.005, a.pos.z); shadowBlob.material.opacity = 0.28 * (a.air ? clamp(1 - (a.pos.y - groundY) / 1.2, 0.2, 1) : 1);
+    fill.position.copy(a.pos).add(V(0.6, 0.9, 1.2));
+    // llamadas y pop
+    const kk = [H.knock1, H.knock2].map((k) => seg(t, k, k + 0.45)).find((u) => u > 0 && u < 1) || 0;
+    ring.position.set(S0.x, PN.guion.y + 0.01, S0.z - 0.3); ring.scale.setScalar(0.6 + kk * 1.6); ring.material.opacity = kk ? 0.9 * (1 - kk) : 0;
+    const pf = seg(t, H.pop, H.pop + 0.4); flashSprite.position.copy(S0).add(V(0, 0.45, 0)); flashSprite.scale.setScalar(0.5 + pf * 3.2); flashSprite.material.opacity = pf > 0 && pf < 1 ? 1 - pf : 0;
+    [[conf, H.pop, S0.clone().add(V(0, 0.4, 0))], [conf2, H.accion, ACC.clone().add(V(0, clapTopY() - 0.1, 0))]].forEach(([arr, t0, o]) => arr.forEach((m) => {
+      const d = t - t0, u = m.userData; m.visible = d > 0 && d < 1.8;
+      if (m.visible) { m.position.set(o.x + u.vx * d, o.y + u.vy * d - 4.9 * d * d * 0.6, o.z + u.vz * d); m.rotation.set(u.rx * d, u.ry * d, 0); }
+    }));
+    // cámara (+ temblor en ¡ACCIÓN!)
+    const c = camAt(t); cam.position.copy(c.p);
+    const sh = t > H.accion && t < H.accion + 0.4 ? 0.035 * (1 - (t - H.accion) / 0.4) : 0;
+    cam.position.x += sh * Math.sin(t * 91); cam.position.y += sh * Math.cos(t * 73);
+    cam.lookAt(c.l);
+    // capas DOM: destellos y título final
+    const fa = seg(t, H.pop, H.pop + 0.18), fb = seg(t, H.accion, H.accion + 0.22);
+    flash.style.opacity = (fa > 0 && fa < 1 ? 0.55 * (1 - fa) : 0) + (fb > 0 && fb < 1 ? 0.8 * (1 - fb) : 0);
+    const tt = seg(t, H.logo, H.logo + 0.5); title.style.opacity = ease(tt); title.style.transform = `translateY(${lerp(40, 0, ease(tt))}px)`;
+    bar.style.width = `${ease(seg(t, H.logo + 0.25, H.logo + 0.75)) * 260}px`;
+    R.render(scene, cam);
+  }
+
+  // ───────── registrar cuando estén fuentes y la pegatina ─────────
+  const ready = Promise.all([document.fonts.ready, ...["700 20px 'Courier Prime'", "400 20px 'Courier Prime'", "600 20px 'JB Mono'", "900 20px Archivo"].map((f) => document.fonts.load(f)),
+    new Promise((res) => { const im = new Image(); im.onload = res; im.onerror = res; im.src = "assets/ajolote-2d.png"; })]);
+  ready.then(() => {
+    AX.card.material.map.needsUpdate = true;
+    const tl = gsap.timeline({ paused: true }), drv = { t: 0 };
+    tl.fromTo(drv, { t: 0 }, { t: DUR, duration: DUR, ease: "none", onUpdate: () => render(drv.t) }, 0);
+    render(0);
+    window.__timelines = window.__timelines || {}; window.__timelines["main"] = tl;
+    // render-suave.mjs: dibuja t con desplazamiento sub-píxel de cámara (antialiasing por muestras)
+    // kit/checks/choques-3d.js: sólidos que no deben atravesarse
+    window.__solidos = { ajolote: AX.root, guion: panels.guion.g, plan: panels.plan.g, hoja: panels.hoja.g, claqueta: clap, avion: planeG };
+    window.renderAt = (t, j = {}) => { if (j.jx || j.jy) cam.setViewOffset(1920, 1080, j.jx, j.jy, 1920, 1080); else cam.clearViewOffset(); render(t); };
+  });
+})();
+</script>
+</body>
+</html>

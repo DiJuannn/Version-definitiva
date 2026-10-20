@@ -1,6 +1,6 @@
 ---
 name: trailer-motion
-description: Método probado (v2, con el enfoque «estudio, no prompt») para hacer reels, tráileres / vídeos promocionales de producto en motion graphics con nivel "Apple / Linear / Buck" (mascota animada que guía con voz en off, UI simulada, cámara viva, música sincronizada por beats, todo sintetizado en local) usando HyperFrames + GSAP y equipos de agentes. Usar SIEMPRE que pidan un tráiler, vídeo demo, promo, explainer animado o "un vídeo como el del ajolote", para este u otro producto/público. Contiene el pipeline completo, las plantillas de prompts para los agentes, la librería de sonido y voz, el rig de personaje y un ejemplo real terminado.
+description: Método probado (v3: «estudio, no prompt» + películas de personaje en 3D del método Claw Machine) para hacer reels, tráileres / vídeos promocionales de producto y piezas cortas de personaje en motion graphics o 3D (Three.js) con nivel "Apple / Linear / Buck" (mascota animada que guía con voz en off, UI simulada, cámara viva, música sincronizada por beats, todo sintetizado en local) usando HyperFrames + GSAP y equipos de agentes. Usar SIEMPRE que pidan un tráiler, vídeo demo, promo, explainer animado, una pieza «épica» en 3D con un personaje o "un vídeo como el del ajolote", para este u otro producto/público. Contiene el pipeline completo, las plantillas de prompts para los agentes, la librería de sonido y voz, el rig de personaje y un ejemplo real terminado.
 ---
 
 # Tráiler en motion graphics · método "ajolote"
@@ -41,7 +41,7 @@ Este método produjo el tráiler v2 de *Versión definitiva · Taller* (65,5 s, 
 | Fuentes | Archivo variable (wdth 62–125, wght 100–900), JetBrains Mono, Courier Prime (texto de guion), Permanent Marker (notas a rotulador, ≤4 usos) | `npm pack @fontsource-variable/archivo`, `@fontsource-variable/jetbrains-mono`, `@fontsource/courier-prime`, `@fontsource/permanent-marker` → extraer los `.woff2` de `files/` |
 | Verificación | `npx hyperframes check`, `npx hyperframes snapshot --at … --no-end --describe false`, ffmpeg para extraer fotogramas y medir audio (`ebur128`, `volumedetect`) | — |
 
-**Entorno:** Chromium ya instalado (`PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers`). HyperFrames descarga su propio Chrome la primera vez. El render es por software (no hay WebGL), así que **nada de shaders**; el 3D CSS sí funciona. Usa siempre `ffmpeg -nostdin` dentro de bucles.
+**Entorno:** Chromium ya instalado (`PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers`). HyperFrames descarga su propio Chrome la primera vez. El render es por software, pero **WebGL2 sí funciona** (ANGLE + SwiftShader): Three.js renderiza a unos 0,4 s por fotograma a 1080p (ver §4 ter). Los shaders pesados y el post-proceso de muchas pasadas son lentos; el 3D CSS también funciona. Usa siempre `ffmpeg -nostdin` dentro de bucles.
 
 ---
 
@@ -214,7 +214,56 @@ Sale de dos reels de marca (JD Molina, 9:16) y de las fichas de Clawd Motion Lab
     - Sonoridad: −14 LUFS para redes y −1 dBTP.
     - Vídeo: H.264 CRF 17–18 con `+faststart`.
     - Grano sutil solo si no dispara el bitrate.
-13. **3D real** (mascota que sale de la pantalla, coches, mundos): Blender + GPU, en el PC del usuario. Ver `referencias/blender-3d.md`. En la nube no hay GPU: quédate en HyperFrames.
+13. **3D:**
+    - **Estilizado** (juguete de vinilo, paneles, objetos): se hace en la nube con Three.js dentro de HyperFrames (§4 ter).
+    - **Fotorrealista** (pelo, líquidos, path tracing): Blender + GPU en el PC del usuario. Ver `referencias/blender-3d.md`.
+
+---
+
+## 4 ter. Película de personaje en 3D (método Claw Machine, v3)
+
+Para piezas de 10–25 s en las que **un personaje actúa una historia con objetos**: el ajolote que salta por la app, o la mascota que juega en una máquina de gancho. Fuentes:
+- `referencias/claw-machine.md`, con el prompt literal, la tabla de beats por fotograma y el PDF original.
+- Nuestro `ejemplo-ajolote-3d/`.
+
+1. **Prompt de 6 bloques** (`kit/prompts/pelicula-de-personaje.md`): MARCA · FORMATO · LOOK · BEATS · CÁMARA · CHECKS.
+   - Unas 280 palabras.
+   - Solo cambia MARCA, que incluye **cómo falla cada intento** (drop / slip / win).
+2. **Cada fotograma, función pura de t.** `renderAt(t)` muestrea una simulación física **precalculada al cargar** (*bake* con semilla, cannon-es) o curvas propias.
+   - Así se puede dibujar a cualquier ritmo, en paralelo y a 2×.
+3. **Guioniza el drama, simula el resto.** El tambaleo en el borde es un keyframe con forma; cuando cae, manda la física.
+   - **Apunta al premio, no al mecanismo**: lo que acaba sobre el objetivo es el objeto.
+4. **Actuar con un plan:**
+   - los ojos van antes que el gesto;
+   - *take* y *double take* en cada gag;
+   - fallos distintos que suben la tensión;
+   - **una respiración contenida** antes del gran momento (quietud y la música baja a un latido);
+   - **una sola mirada a cámara**;
+   - la emoción final se sostiene (el abrazo, el parpadeo del peluche).
+5. **Cámara: un movimiento continuo** con una función en cada beat. Si el héroe mira una máquina o pantalla, **la cámara entra en ella** para ver su cara.
+   - La cámara de seguimiento promedia posiciones **centradas** en t, no pasadas: si no, se retrasa en los saltos y el personaje se sale del cuadro.
+6. **Medir, no adivinar** (compuertas nuevas):
+   - `kit/checks/choques-3d.js`: registro de choques por fotograma, hasta que salga vacío. «Pueden tocarse, nunca hundirse.»
+   - `kit/checks/medir-color.py`: el color del héroe medido en los fotogramas finales. Propone el albedo corregido en luz lineal.
+   - `kit/checks/sincronia-golpes.py`: cada sonido, de 0 a 2 fotogramas **después** de su imagen (ideal: 1).
+   - Probar la trayectoria de la cámara contra la geometría: snapshots en ±2 fotogramas de cada golpe.
+7. **Sonido en un prompt aparte** (`kit/prompts/prompt-de-sonido.md`):
+   - bloques ROOM / MACHINE / PROPS / TRIES / WIN / MIX;
+   - cama de ambiente siempre presente;
+   - mecanismos ligados a su velocidad;
+   - cada aterrizaje de la simulación, un golpe;
+   - master con `kit/audio/limitador.py`: −14 LUFS, ≤ −2 dBTP **en el MP4** y el limitador nunca quita más de 3 dB. Si quita más, se re-equilibra la mezcla.
+8. **Render suave** (`kit/render/render-suave.mjs`): N muestras por fotograma dentro de un obturador de 0,45 fotogramas, con desplazamiento sub-píxel, mezcladas en luz lineal, con dither y grano con semilla.
+   - En la nube, 6 muestras ≈ 6,7 s por fotograma a 1080p. Úsalo para la entrega final o los planos héroe.
+   - Para iterar, sigue usando `npx hyperframes render`.
+9. **Correcciones como en la ficha** (`kit/prompts/follow-ups.md`): siete rondas, cada una diciendo qué evidencia se miró. El problema que vuelve (la cara tapada) no se cierra hasta que la foto lo demuestra.
+
+**Three.js en HyperFrames** (lo que funcionó en `ejemplo-ajolote-3d/`):
+- `three@0.149.0` en UMD.
+- `THREE.ColorManagement.legacyMode = false`, `outputEncoding = sRGBEncoding`, tone mapping ACES, sombras `PCFSoftShadowMap` y `preserveDrawingBuffer: true`.
+- Paneles de interfaz en `CanvasTexture`, redibujados en cada fotograma.
+- `toneMapped: false` para las pegatinas 2D.
+- Un timeline GSAP pausado de duración fija con `onUpdate: () => render(t)`, registrado después de `document.fonts.ready` y de cargar las imágenes.
 
 ---
 
@@ -233,15 +282,24 @@ kit/
   workflows/fase1-especialistas.js   script de Workflow: 5 especialistas (adaptar CONTEXTO y rutas)
   workflows/fase2-constructores.js   script de Workflow: 5 constructores (adaptar secciones y rutas)
   prompts/contrato-de-produccion.md  plantilla de brief: bloque MARCA intercambiable + beats + compuertas
-  prompts/follow-ups.md              cómo escribir correcciones con números (ejemplos reales)
+  prompts/follow-ups.md              cómo escribir correcciones con números (ejemplos reales + las 7 del Claw Machine)
+  prompts/pelicula-de-personaje.md   plantilla de 6 bloques (MARCA·FORMATO·LOOK·BEATS·CÁMARA·CHECKS) para 3D
+  prompts/prompt-de-sonido.md        prompt de sonido aparte + las 3 correcciones de mezcla con números
   checks/                  hoja-contactos.sh, tira-transicion.sh, sonoridad-medio-segundo.py,
-                           espectrograma.sh, costura-bucle.py
+                           espectrograma.sh, costura-bucle.py,
+                           choques-3d.js (atravesamientos por fotograma en Three.js),
+                           medir-color.py (ΔE del color de marca + albedo corregido),
+                           sincronia-golpes.py (sonido 0–2 fotogramas después de la imagen)
+  audio/limitador.py       master a −14 LUFS con limitador con anticipación e informe (≤ 3 dB de reducción)
+  render/render-suave.mjs  + mezclar-muestras.py: desenfoque de movimiento y AA por muestras en luz lineal
   warp/                    mapa partitura→tiempo real (estirar, pausas animadas, cortes de pulso):
                            build-con-mapa.py (audio), envoltorio-seccion.js (imagen), sincronizar-duraciones.py
 referencias/
   clawd-no-after-effects.pdf, clawd-neon-jump.pdf   fichas originales (Blender + Opus)
+  clawd-claw-machine.pdf, claw-machine.md            película de personaje en Three.js: prompt literal, beats, correcciones
   motion-engineering-articulo.md                     artículo «Build a Video Studio Around Opus»
   blender-3d.md            cuándo pasar a 3D y las técnicas que se copian aunque sigamos en 2D
+ejemplo-ajolote-3d/        película de personaje Three.js real (12 s): index.html, cues.js, modelo, paneles, banda
 ejemplo-taller/
   investigacion/01-referencias.md … 05-coreografia.md   entregables reales de F1 (modelo de profundidad)
   BUILD.md                 contrato real de F3
