@@ -1,6 +1,6 @@
 ---
 name: trailer-motion
-description: Método probado para hacer tráileres / vídeos promocionales de producto en motion graphics con nivel "Apple / Linear / Buck" (mascota animada que guía con voz en off, UI simulada, cámara viva, música sincronizada por beats, todo sintetizado en local) usando HyperFrames + GSAP y equipos de agentes. Usar SIEMPRE que pidan un tráiler, vídeo demo, promo, explainer animado o "un vídeo como el del ajolote", para este u otro producto/público. Contiene el pipeline completo, las plantillas de prompts para los agentes, la librería de sonido y voz, el rig de personaje y un ejemplo real terminado.
+description: Método probado (v2, con el enfoque «estudio, no prompt») para hacer reels, tráileres / vídeos promocionales de producto en motion graphics con nivel "Apple / Linear / Buck" (mascota animada que guía con voz en off, UI simulada, cámara viva, música sincronizada por beats, todo sintetizado en local) usando HyperFrames + GSAP y equipos de agentes. Usar SIEMPRE que pidan un tráiler, vídeo demo, promo, explainer animado o "un vídeo como el del ajolote", para este u otro producto/público. Contiene el pipeline completo, las plantillas de prompts para los agentes, la librería de sonido y voz, el rig de personaje y un ejemplo real terminado.
 ---
 
 # Tráiler en motion graphics · método "ajolote"
@@ -184,6 +184,40 @@ Pide en cada prompt que **critique la v1** y que **pruebe su propuesta** (snapsh
 
 ---
 
+## 4 bis. Método «estudio, no prompt» (v2 de la skill)
+
+Sale de dos reels de marca (JD Molina, 9:16) y de las fichas de Clawd Motion Lab / *Motion Engineering* (`referencias/`). Es lo que separa un vídeo «hecho con IA» que se parece a todos (texto grande centrado, degradado, fundidos y logo al final) de uno dirigido.
+
+1. **Contrato de producción, no «vibe prompt».** Usa `kit/prompts/contrato-de-produccion.md`:
+   - Un bloque **MARCA** que es lo único que cambia: HÉROE, PRODUCTO, RESULTADO, MUNDO, PALETA y HECHOS.
+   - FORMATO, BEATS (con estado de entrada, estado de salida y motivo), CÁMARA, LOOK, una regla de movimiento por cada clase de objeto, y COMPUERTAS.
+2. **Hechos frente a decisiones.** El modelo inventa la cámara; nunca la interfaz, los créditos, las cifras ni el papel de cada persona.
+   - Ejemplo: en *A un minuto de la libertad*, JD Molina fue ayudante, no director.
+   - Si falta un asset o un dato: **parar y preguntar**, o marcarlo `[CONFIRMAR]` y dejarlo fuera de la imagen. Antes de dibujar un dato, compruébalo en la fuente: la hora 1:39 salía del PDF del guion.
+3. **Una tabla para todo:** `cues.js` con los tiempos (hits) **y** las posiciones (layout). La leen la imagen, el audio y los textos. El tempo se elige para que N compases llenen la duración.
+4. **Cada movimiento cambia algo.** Si un beat no cambia el estado de la pantalla, se corta. Muestra la lógica real del oficio: keyframes, cabezal, CORTE / L-CUT / J-CUT.
+5. **Ritmo legible.** Cada titular o imagen importante se lee con calma (≥ 1,2 s). Se puede acelerar sin perder legibilidad.
+   - Para re-temporizar una pieza ya hecha **sin rehacerla**, usa el mapa partitura→tiempo real de `kit/warp/`: estirar ×K (120 → 96 BPM), pausas animadas y cortes de pulso entero.
+   - El audio aplica el mismo mapa (`R()`, `cut()`).
+6. **El logo nunca quieto.** Si tiene que quedarse en pantalla, entra un visor, empuja y se cierra (el sting JDM de 0,8 s).
+7. **Las fotos flojas se sustituyen por motion graphics con intención:** una página de guion digital en lugar de la foto borrosa de la hoja, o un plano de planta dibujándose en lugar de una foto de ensayo.
+8. **Mide, no adivines.** Usa los scripts de `kit/checks/`:
+   - `hoja-contactos.sh`: un fotograma por beat.
+   - `tira-transicion.sh`: fotogramas consecutivos en los cortes rápidos.
+   - `sonoridad-medio-segundo.py`: comprueba que el drop cae donde explota la imagen.
+   - `espectrograma.sh`: detecta un muro de graves o un slow-mo sin hueco.
+   - `costura-bucle.py`: para loops, la costura tiene que quedar dentro del rango de los fotogramas vecinos.
+9. **Correcciones con números** (`kit/prompts/follow-ups.md`): lo que se ve → el cambio exacto → solo ese tramo.
+10. **Variantes compuestas, no recortadas.** El 9:16 se monta de nuevo, con tipografía mayor y menos elementos a la vez.
+11. **El estudio vive en archivos.** BUILD.md, cues.js, build.py, la guía de estilo y los checks. La siguiente pieza cambia la MARCA y conserva todo lo demás.
+12. **Entrega:**
+    - Sonoridad: −14 LUFS para redes y −1 dBTP.
+    - Vídeo: H.264 CRF 17–18 con `+faststart`.
+    - Grano sutil solo si no dispara el bitrate.
+13. **3D real** (mascota que sale de la pantalla, coches, mundos): Blender + GPU, en el PC del usuario. Ver `referencias/blender-3d.md`. En la nube no hay GPU: quédate en HyperFrames.
+
+---
+
 ## 5. Archivos de esta skill
 
 ```
@@ -198,6 +232,16 @@ kit/
   arte/arte.css            tokens y componentes de la dirección "Mesa de luz"
   workflows/fase1-especialistas.js   script de Workflow: 5 especialistas (adaptar CONTEXTO y rutas)
   workflows/fase2-constructores.js   script de Workflow: 5 constructores (adaptar secciones y rutas)
+  prompts/contrato-de-produccion.md  plantilla de brief: bloque MARCA intercambiable + beats + compuertas
+  prompts/follow-ups.md              cómo escribir correcciones con números (ejemplos reales)
+  checks/                  hoja-contactos.sh, tira-transicion.sh, sonoridad-medio-segundo.py,
+                           espectrograma.sh, costura-bucle.py
+  warp/                    mapa partitura→tiempo real (estirar, pausas animadas, cortes de pulso):
+                           build-con-mapa.py (audio), envoltorio-seccion.js (imagen), sincronizar-duraciones.py
+referencias/
+  clawd-no-after-effects.pdf, clawd-neon-jump.pdf   fichas originales (Blender + Opus)
+  motion-engineering-articulo.md                     artículo «Build a Video Studio Around Opus»
+  blender-3d.md            cuándo pasar a 3D y las técnicas que se copian aunque sigamos en 2D
 ejemplo-taller/
   investigacion/01-referencias.md … 05-coreografia.md   entregables reales de F1 (modelo de profundidad)
   BUILD.md                 contrato real de F3
